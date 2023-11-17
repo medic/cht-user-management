@@ -1,0 +1,10 @@
+<div id="place_form_parent">
+    {% include "place/form_header.html" %}
+    {% if op == "bulk" %}
+    {% include "place/bulk_create_form.html" %}
+    {% elsif op == "replace"%}
+    {% include "place/replace_user_form.html" %}
+    {% else %}
+    {% include "place/create_form.html" %}
+    {% endif %}
+</div>

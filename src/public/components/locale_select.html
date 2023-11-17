@@ -1,0 +1,14 @@
+<form id="form-locale-select">
+    <div class="field">
+        <label class="label is-small">Locale</label>
+        <div class="select is-small">
+            <select name="locale" title="locale" required hx-post="/workbook/locale?workbook={{workbookId}}"
+                hx-target="#form-locale-select" hx-swap="outerHTML">
+                {% for locale in locales %}
+                <option value="{{ locale }}" {% if workbook_locale==locale %}selected {% endif %}>{{ locale }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+</form>

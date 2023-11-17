@@ -1,0 +1,9 @@
+{% if op == "bulk" %}
+<h5 id="form_place_create_header" class="title is-5">Bulk Import {{pagePlaceType}}</h5>
+{% elsif op == "replace" %}
+<h5 id="form_place_create_header" class="title is-5">Replace {{pagePlaceType}} Contact</h5>
+{% elsif op == "edit" %}
+<h5 id="form_place_create_header" class="title is-5">Edit {{pagePlaceType}}</h5>
+{% else %}
+<h5 id="form_place_create_header" class="title is-5">New {{pagePlaceType}}</h5>
+{% endif %}

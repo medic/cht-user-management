@@ -1,0 +1,9 @@
+<ul>
+    {%- for workbook in workbooks %}
+    <li>
+        <a hx-get="/workbook/{{workbook}}" hx-push-url="true" hx-target="#container" hx-swap="innerHTML">
+            {{workbook}}
+        </a>
+    </li>
+    {%- endfor%}
+</ul>

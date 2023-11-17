@@ -1,0 +1,5 @@
+<input id="place_search" name="place_search" type="search" class="input"
+    hx-post="/search/parent?workbook={{workbookId}}&type={{pagePlaceType}}" hx-vals=""
+    placeholder="start typing to see suggestions" hx-trigger="keyup changed delay:250ms, search"
+    hx-target="#search_results" hx-swap="innerHTML" required {% if data.place_search %}value="{{data.place_search}}" {%
+    endif %} {% if oob %} hx-swap-oob="true" {%endif%} hx-encoding="application/x-www-form-urlencoded" />

@@ -1,0 +1,54 @@
+{
+  "locales": [
+    "ke"
+  ],
+  "contact_types": [
+    {
+      "name": "c_community_health_unit",
+      "friendly": "CHU",
+      "parent_type": "b_sub_county",
+      "contact_type": "person",
+      "roles": ["community_health_assistant"],
+      "properties": [
+        {
+          "csv_name": "Sub County Name",
+          "doc_name": "PARENT",
+          "type": "string",
+          "required": true
+        },
+        {
+          "csv_name": "CHU Code",
+          "doc_name": "chu_code",
+          "type": "integer",
+          "required": true
+        },
+        {
+          "csv_name": "Link Facility Name",
+          "doc_name": "facility_name",
+          "type": "integer",
+          "required": true
+        },
+        {
+          "csv_name": "Link Facility MFL Code",
+          "doc_name": "facility_code",
+          "type": "facility_mfl",
+          "required": true
+        }
+      ],
+      "contact_properties": [
+        {
+          "csv_name": "CHA Name",
+          "doc_name": "name",
+          "type": "name",
+          "required": true
+        },
+        {
+          "csv_name": "CHA Phone",
+          "doc_name": "phone",
+          "type": "phone",
+          "required": true
+        }
+      ]
+    }
+  ]
+}

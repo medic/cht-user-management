@@ -1,0 +1,12 @@
+<div class="dropdown is-active">
+    <div class="dropdown-menu" id="dropdown-menu" role="menu">
+        <div class="dropdown-content">
+            {% for result in results %}
+            <a hx-post="/place/parent?workbook={{workbookId}}&id={{result.id}}&place_type={{pagePlaceType}}"
+                class="dropdown-item" hx-target="#place_form_parent" hx-encoding="application/x-www-form-urlencoded">
+                {{result.name}}
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+</div>

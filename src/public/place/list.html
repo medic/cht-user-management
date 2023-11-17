@@ -1,0 +1,39 @@
+<table id="table_places" {% if oob %} hx-swap-oob="true" {%endif%} class="table is-fullwidth">
+    <thead>
+        <tr>
+            <th>Place</th>
+            <th>-</th>
+            <th>Location</th>
+            <th>Contact</th>
+            <th>Role</th>
+            <th>Sex</th>
+            <th>Phone</th>
+            <th>-</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for place in places %}
+        <tr>
+            <td>{{place.place.name}}</td>
+            <td>{{place.place.type}}</td>
+            <td>{{place.place.parent.name}}</td>
+            <td>{{place.contact.name}}</td>
+            <td>{{place.contact.role}}</td>
+            <td>{{place.contact.sex}}</td>
+            <td>{{place.contact.phone}}</td>
+            {%if place.valid%}
+            <td><span class="tag is-info is-light">{{place.state.status}}</span></td>
+            {%else%}
+            <td><span class="tag is-danger is-light">INVALID</span></td>
+            {%endif%}
+            <td>
+                {%if place.place.remoteId%}
+                {%else%}
+                <a hx-target="#workflow-content" hx-swap="innerHTML" hx-get="/place/edit/{{place.place.id}}">Edit</a>
+                {%endif%}
+            </td>
+        </tr>
+        {% endfor%}
+    </tbody>
+</table>

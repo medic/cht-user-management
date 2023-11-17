@@ -1,0 +1,17 @@
+<div id="table_controls" class="buttons is-right mb-3" {% if oob %} hx-swap-oob="true" {%endif%}>
+    <button class="button is-dark" hx-target="#workflow-content" hx-swap="innerHTML"
+        hx-get="/place/form?workbook={{workbookId}}&op=new">+
+        Add</button>
+    {%if workbookState == "done"%}
+    <a class="button is-dark" href="/files/credentials?workbook={{workbookId}}">Export Credentials</a>
+    {%if hasFailedJobs "%}
+    <button class="button is-dark" hx-post="/retry/failed?workbook={{workbookId}}" hx-target="this"
+        hx-swap="outerHTML">Retry({{failedJobCount}})</button>
+    {%endif%}
+    {%else%}
+    <button class="button is-dark {%if workbookState == 'in_progress' %}is-loading{%endif%}"
+        hx-post="/workbook/{{workbookId}}/submit" hx-target="this" hx-swap="outerHTML">Apply Changes {%if
+        scheduledJobCount >
+        0%}({{scheduledJobCount}}){%endif%}</button>
+    {%endif%}
+</div>
