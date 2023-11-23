@@ -32,7 +32,6 @@ export default async function workbook(fastify: FastifyInstance) {
 
     const tmplData = {
       title: id,
-      connected: true,
       workbookId: id,
       hierarchy: contactTypes,
       contactTypes,
@@ -77,7 +76,6 @@ export default async function workbook(fastify: FastifyInstance) {
     const tmplData = {
       view: "add",
       title: id,
-      connected: true,
       workbookId: id,
       locales: LOCALES,
       workbook_locale: cache.getWorkbook(id).locale,

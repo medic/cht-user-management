@@ -1,17 +1,21 @@
-import Fastify, { FastifyInstance, FastifyServerOptions } from "fastify";
-import view from "@fastify/view";
-import formbody from "@fastify/formbody";
+import Fastify, { FastifyInstance, FastifyReply, FastifyRequest, FastifyServerOptions } from "fastify";
 import autoload from "@fastify/autoload";
+import cookie from "@fastify/cookie";
+import formbody from "@fastify/formbody";
 import multipart from "@fastify/multipart";
+import view from "@fastify/view";
 import { Liquid } from "liquidjs";
 import { FastifySSEPlugin } from "fastify-sse-v2";
 import path from "path";
+
+import Auth from './lib/authentication';
 
 const build = (opts: FastifyServerOptions): FastifyInstance => {
   const fastify = Fastify(opts);
   fastify.register(formbody);
   fastify.register(multipart);
   fastify.register(FastifySSEPlugin);
+  fastify.register(cookie);
   fastify.register(view, {
     engine: {
       liquid: new Liquid({ extname: ".html", root: "src/public" }),
@@ -23,6 +27,26 @@ const build = (opts: FastifyServerOptions): FastifyInstance => {
   fastify.register(autoload, {
     dir: path.join(__dirname, "routes"),
   });
+
+  Auth.assertEnvironmentSetup();
+
+  fastify.addHook('preValidation', async (req: FastifyRequest, reply: FastifyReply) => {
+    if (req.unauthenticated) {
+      return;
+    }
+
+    const cookieToken = req.cookies[Auth.AUTH_COOKIE_NAME] as string;
+    if (!cookieToken) {
+      reply.redirect('/login');
+      throw new Error('user must login');
+    }
+
+    const decoded = Auth.decodeToken(cookieToken);
+    if (!decoded) {
+      throw new Error('invalid authentication');
+    }
+  });
+
   return fastify;
 };
 

@@ -1,0 +1,21 @@
+<html>
+
+<head>
+    <title>cht-usr</title>
+    <script src="https://unpkg.com/htmx.org@1.9.6"
+        integrity="sha384-FhXw7b6AlE/jyjlZH5iHa/tTe9EpJ1Y55RjcgPbjeWMskSxZt1v9qkxLJWNJaGni"
+        crossorigin="anonymous"></script>
+    <script src="https://unpkg.com/htmx.org/dist/ext/sse.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+</head>
+
+<body>
+    <div class="content">
+        <div class="column is-one-quarter"></div>
+        <div class="column is-half">
+            {% include "auth/form.html" %}
+        </div>
+    </div>
+</body>
+
+</html>

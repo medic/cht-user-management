@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios, { AxiosHeaders } from "axios";
 
 export type contactType = {
   id: string;
@@ -62,6 +62,17 @@ export class ChtApi {
       roles: Object.keys(respBody["roles"]),
       hierarchy: respBody["contact_types"],
     };
+  };
+
+  public static async getSessionToken(domain: string, username : string, password: string): Promise<string> {
+    const url = `https://${username}:${password}@${domain}/_session`;
+    const resp = await axios.post(url, {
+      name: username,
+      password,
+    });
+    
+    const header = (resp.headers as AxiosHeaders).get('set-cookie') as AxiosHeaders;
+    return header?.[0].split(';').find((h : string) => h.startsWith('AuthSession='));
   };
 
   getDoc = async (id: string): Promise<any> => {

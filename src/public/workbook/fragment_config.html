@@ -1,40 +1,11 @@
 <div class="p-3 pr-4 pl-5">
     <div>
-        {% if connected %}
         <div class="is-flex is-flex-direction-row is-align-items-center mb-3">
             <div class="mr-2" style="width: 8px; height: 8px; background-color: greenyellow; border-radius: 4px;"></div>
             <div class="is-flex-grow-1">
                 <p>Connected</p>
             </div>
         </div>
-        {% else %}
-        <div class="is-flex is-flex-direction-row is-align-items-center mb-3">
-            <div class="mr-2" style="width: 8px; height: 8px; background-color: maroon; border-radius: 4px;"></div>
-            <div class="is-flex-grow-1">
-                <p>Not Connected</p>
-            </div>
-        </div>
-        <form>
-            <div class="field">
-                <label class="label is-small">Instance URL</label>
-                <div class="control">
-                    <input class="input is-small" type="text" placeholder="instance">
-                </div>
-            </div>
-            <div class="field">
-                <label class="label is-small">Credentials</label>
-                <div class="control">
-                    <input class="input is-small" type="text" placeholder="username">
-                </div>
-            </div>
-            <div class="field">
-                <div class="control">
-                    <input class="input is-small" type="password" placeholder="password">
-                </div>
-            </div>
-            <button class="button is-primary is-small">Sign In</button>
-        </form>
-        {% endif %}
         {% include "components/locale_select.html" %}
     </div>
 </div>

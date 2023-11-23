@@ -4,15 +4,7 @@ import fp from "fastify-plugin";
 import { ChtApi } from "../lib/cht";
 import { getHierarchy, getRoles } from "../lib/utils";
 import { MemCache } from "../services/cache";
-import { UploadManager } from "../services/job";
-
-declare module "fastify" {
-  interface FastifyInstance {
-    cache: MemCache;
-    cht: ChtApi;
-    jobManager: UploadManager;
-  }
-}
+import { UploadManager } from "../services/upload-manager";
 
 async function services(fastify: FastifyInstance) {
   const client = new ChtApi({

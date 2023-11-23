@@ -6,7 +6,7 @@ import { once } from "events";
 import { MultipartFile, MultipartValue } from "@fastify/multipart";
 
 import { Config } from "../lib/config";
-import { jobState } from "../services/job";
+import { jobState } from "../services/upload-manager";
 import { uploadState, workBookState, place, person } from "../services/models";
 import { illegalNameCharRegex, LOCALES } from "../services/cache";
 
@@ -412,7 +412,6 @@ export default async function place(fastify: FastifyInstance) {
     const tmplData = {
       view: "edit",
       workbookId: place.workbookId,
-      connected: true,
       locales: LOCALES,
       workbook_locale: workbook.locale,
       op: "edit",

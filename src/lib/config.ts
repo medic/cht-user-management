@@ -1,3 +1,4 @@
+import _ from "lodash";
 import config from "../config.json";
 
 export type ContactTypes = {
@@ -17,10 +18,19 @@ export type ContactProperty = {
   required: boolean,
 };
 
+export type AuthenticationDomains = {
+  friendly: string,
+  domain: string,
+};
+
 export class Config {
   private constructor() {}
 
   public static contactTypes() : ContactTypes[] {
     return config.contact_types;
+  }
+
+  public static domains() : AuthenticationDomains[] {
+    return _.sortBy(config.domains, 'friendly');
   }
 }
