@@ -3,18 +3,13 @@ import { CountryCode } from "libphonenumber-js";
 export type person = {
   id: string;
   remoteId?: string;
-  name: string;
-  phone: string;
-  sex: string;
-  role: string;
+  [key: string]: any;
 };
 
 export type place = {
   id: string;
   remoteId?: string;
-  name: string;
-  type: string;
-  contact: string;
+  [key: string]: any;
   action: "create" | "replace_contact"; // we def need another model now
   parent?: {
     id: string;

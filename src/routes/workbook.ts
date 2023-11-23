@@ -2,6 +2,7 @@ import { FastifyInstance } from "fastify";
 import { uploadState } from "../services/models";
 import { v4 as uuidv4 } from "uuid";
 import { LOCALES } from "../services/cache";
+import {Config} from "../lib/config";
 
 export default async function workbook(fastify: FastifyInstance) {
   const { cache, jobManager } = fastify;
@@ -27,12 +28,14 @@ export default async function workbook(fastify: FastifyInstance) {
       uploadState.SCHEDULED
     );
     const hasFailedJobs = failed.length > 0;
+    const contactTypes = Config.contactTypes();
 
     const tmplData = {
       title: id,
       connected: true,
       workbookId: id,
-      hierarchy: cache.getPlaceTypes(),
+      hierarchy: contactTypes,
+      contactTypes,
       places: cache.getPlacesForDisplay(id),
       workbookState: cache.getWorkbookState(id)?.state,
       hasFailedJobs: hasFailedJobs,

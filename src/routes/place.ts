@@ -1,11 +1,13 @@
 import { FastifyInstance, FastifyReply } from "fastify";
 import { isValidNumberForRegion } from "libphonenumber-js";
-import { jobState } from "../services/job";
-import { uploadState, workBookState, place, person } from "../services/models";
 import { v4 as uuidv4 } from "uuid";
 import { parse } from "csv";
 import { once } from "events";
 import { MultipartFile, MultipartValue } from "@fastify/multipart";
+
+import { Config } from "../lib/config";
+import { jobState } from "../services/job";
+import { uploadState, workBookState, place, person } from "../services/models";
 import { illegalNameCharRegex, LOCALES } from "../services/cache";
 
 export default async function place(fastify: FastifyInstance) {
@@ -213,25 +215,9 @@ export default async function place(fastify: FastifyInstance) {
     const parser = parse(csvBuf, { delimiter: ",", from_line: 1 });
     const userRole = (fileData.fields["contact_role"] as MultipartValue<string>)
       .value;
-    // validate fields here
-    const isMissingParent =
-      cache.getParentType(placeType) && !fileData.fields["place_parent"];
-    if (isMissingParent) {
-      return resp.view("src/public/place/bulk_create_form.html", {
-        workbookId: workbookId,
-        pagePlaceType: placeType,
-        userRoles: cache.getUserRoles(),
-        hasParent: cache.getParentType(placeType),
-        data: {
-          contact_role: userRole,
-        },
-        errors: {
-          missingParent: isMissingParent,
-        },
-      });
-    }
 
     let parent: any = undefined;
+    // TOFIX: what is this?
     if (fileData.fields["place_parent"]) {
       const result = cache.getCachedSearchResult(
         (fileData.fields["place_parent"] as MultipartValue<string>).value,
@@ -244,29 +230,60 @@ export default async function place(fastify: FastifyInstance) {
     }
 
     let columns: string[];
+    const contactTypes = Config.contactTypes();
+    const placeTypeConfig = contactTypes.find((ct) => ct.name === placeType);
+    
+    const placePropeties = (placeTypeConfig?.place_properties)!
+      .map(p => ({ [p.csv_name]: p.doc_name }));
+    const mapPlaceCsvnameDocName  = Object.assign({}, ...placePropeties);
+
+    // todo: again or put in func
+    const mapContactCsvnameDocName = (placeTypeConfig?.contact_properties)!!.map((p) => {
+      return {[p.csv_name]: p.doc_name};
+    }).reduce((acc, curr) => {
+      return {...acc, ...curr};
+    }, {});
+
+    let line = 0;
     parser.on("data", function (row: string[]) {
-      if (!columns) {
+      if (line === 0) {
+        // validate the header
+        const missingColumns = [...Object.keys(mapPlaceCsvnameDocName), ...Object.keys(mapContactCsvnameDocName)]
+          .filter((csvName) => !row.includes(csvName));
+        if (missingColumns.length > 0) {
+          resp.code(400);
+          resp.send(`Missing columns: ${missingColumns.join(", ")}`);
+          return;
+        }
         columns = row;
       } else {
         const id = uuidv4();
         const contact: person = {
           id: "person::" + id,
-          name: row[columns.indexOf("contact")],
-          phone: row[columns.indexOf("phone")],
-          sex: row[columns.indexOf("sex")],
           role: userRole,
         };
+        const contactColumns = Object.keys(mapContactCsvnameDocName);
+        for (const contactColumn of contactColumns) {
+          const docName = mapContactCsvnameDocName[contactColumn];
+          contact[docName] = row[columns.indexOf(contactColumn)];
+        }
         const placeData: place = {
           id: "place::" + id,
-          name: row[columns.indexOf("place")],
           type: placeType,
           action: "create",
           contact: contact.id,
           parent: parent,
           workbookId: workbookId,
         };
+        // todo: func?
+        const placeColumns = Object.keys(mapPlaceCsvnameDocName);
+        for (const placeColumn of placeColumns) {
+          const docName = mapPlaceCsvnameDocName[placeColumn];
+          placeData[docName] = row[columns.indexOf(placeColumn)];
+        }
         cache.savePlace(workbookId, placeData, contact);
       }
+      line++;
     });
     // wait
     await once(parser, "finish");
@@ -275,6 +292,7 @@ export default async function place(fastify: FastifyInstance) {
     return fastify.view("src/public/workbook/content_places.html", {
       oob: true,
       places: cache.getPlacesForDisplay(workbookId),
+      contactTypes,
       workbookId: workbookId,
       workbookState: cache.getWorkbookState(workbookId)?.state,
       scheduledJobCount: cache.getPlaceByUploadState(
@@ -352,16 +370,16 @@ export default async function place(fastify: FastifyInstance) {
 
   fastify.get("/place/form", async (req, resp) => {
     const queryParams: any = req.query;
+    const contactTypes = Config.contactTypes();
     const placeType = cache.getPlaceTypes()[0];
     const op = queryParams.op || "new";
     resp.header("HX-Push-Url", `/workbook/${queryParams.workbook}/add`);
     return resp.view("src/public/workbook/fragment_form.html", {
       op: op,
       workbookId: queryParams.workbook,
-      hierarchy: cache.getPlaceTypes(),
+      hierarchy: contactTypes.map(type => type.name),
       pagePlaceType: placeType,
-      userRoles: cache.getUserRoles(),
-      hasParent: cache.getParentType(placeType),
+      userRoles: cache.getUserRoles()
     });
   });
 

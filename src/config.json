@@ -9,7 +9,7 @@
       "parent_type": "b_sub_county",
       "contact_type": "person",
       "roles": ["community_health_assistant"],
-      "properties": [
+      "place_properties": [
         {
           "csv_name": "Sub County Name",
           "doc_name": "PARENT",

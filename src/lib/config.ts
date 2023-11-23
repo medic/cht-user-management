@@ -6,7 +6,8 @@ export type ContactTypes = {
   parent_type: string,
   contact_type: string,
   roles: string[],
-  properties: ContactProperty[],
+  place_properties: ContactProperty[],
+  contact_properties: ContactProperty[],
 };
 
 export type ContactProperty = {

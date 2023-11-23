@@ -1,27 +1,29 @@
-<table id="table_places" {% if oob %} hx-swap-oob="true" {%endif%} class="table is-fullwidth">
-    <thead>
+{% for contactType in contactTypes %}
+<div id="{{contactType.name}}">
+    <h2 class="title is-4">{{contactType.friendly}}</h2>
+    <br>
+    <table id="table_places" {% if oob %} hx-swap-oob="true" {%endif%} class="table is-fullwidth">
+        <thead>
         <tr>
-            <th>Place</th>
-            <th>-</th>
-            <th>Location</th>
-            <th>Contact</th>
-            <th>Role</th>
-            <th>Sex</th>
-            <th>Phone</th>
+            {% for property in contactType.place_properties %}
+            <th id="place_{{property.doc_name}}">{{property.doc_name}}</th>
+            {% endfor %}
+            {% for contact_property in contactType.contact_properties %}
+            <th id="contact_{{contact_property.doc_name}}">{{contact_property.doc_name}}</th>
+            {% endfor %}
             <th>-</th>
             <th></th>
         </tr>
-    </thead>
-    <tbody>
+        </thead>
+        <tbody>
         {% for place in places %}
         <tr>
-            <td>{{place.place.name}}</td>
-            <td>{{place.place.type}}</td>
-            <td>{{place.place.parent.name}}</td>
-            <td>{{place.contact.name}}</td>
-            <td>{{place.contact.role}}</td>
-            <td>{{place.contact.sex}}</td>
-            <td>{{place.contact.phone}}</td>
+            {% for property in contactType.place_properties %}
+            <th id="place_{{place.place.id}}">{{place.place[property.doc_name]}}</th>
+            {% endfor %}
+            {% for contact_property in contactType.contact_properties %}
+            <th id="contact_{{place.contact.id}}">{{place.contact[contact_property.doc_name]}}</th>
+            {% endfor %}
             {%if place.valid%}
             <td><span class="tag is-info is-light">{{place.state.status}}</span></td>
             {%else%}
@@ -35,5 +37,7 @@
             </td>
         </tr>
         {% endfor%}
-    </tbody>
-</table>
+        </tbody>
+    </table>
+</div>
+{% endfor %}
