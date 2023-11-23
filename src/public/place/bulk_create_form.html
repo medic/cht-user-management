@@ -7,9 +7,24 @@
             <input type="file" name="users">
         </div>
     </div>
+
+    <div class="field">
+        <label class="label">User Role*</label>
+        <div class="control">
+            <div class="select">
+                <select name="contact_role" title="roles">
+                    {% for role in userRoles %}
+                    <option value="{{ role }}" {% if data.contact_role==role %}selected {% endif %}>{{ role }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+    </div>
+    
     <div class="field">
         <div class="control">
-            Don't have a template? <a href="/files/template?type={{pagePlaceType}}" download="users.tmpl.csv">Download one now</a>
+            Don't have a template? <a href="/files/template/{{pagePlaceType}}" download="users.{{pagePlaceType}}.tmpl.csv">Download Template</a>
         </div>
     </div>
 

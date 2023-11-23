@@ -201,6 +201,12 @@
       "roles": ["community_health_assistant"],
       "place_properties": [
         {
+          "csv_name": "CHU Name",
+          "doc_name": "name",
+          "type": "name",
+          "required": true
+        },
+        {
           "csv_name": "Sub County Name",
           "doc_name": "PARENT",
           "type": "string",

@@ -2,10 +2,11 @@ import { FastifyInstance } from "fastify";
 import { uploadState } from "../services/models";
 import { v4 as uuidv4 } from "uuid";
 import { LOCALES } from "../services/cache";
-import {Config} from "../lib/config";
+import { Config } from "../lib/config";
+import { ChtApi } from "../lib/cht";
 
 export default async function workbook(fastify: FastifyInstance) {
-  const { cache, jobManager } = fastify;
+  const { cache } = fastify;
 
   fastify.get("/", async (req, resp) => {
     const workbookId = uuidv4();
@@ -16,10 +17,11 @@ export default async function workbook(fastify: FastifyInstance) {
   fastify.get("/workbook/:id", async (req, resp) => {
     const params: any = req.params;
     const id = params.id;
-    const placeTypes = cache.getPlaceTypes();
-
     const queryParams: any = req.query;
-    const placeType = queryParams.type || placeTypes[0];
+
+    const contactTypes = Config.contactTypes();
+    const placeTypeName = queryParams.type || contactTypes[0].name;
+    const contactType = Config.getContactType(placeTypeName);
     const op = queryParams.op || "new";
 
     const failed = cache.getPlaceByUploadState(id, uploadState.FAILURE);
@@ -27,25 +29,23 @@ export default async function workbook(fastify: FastifyInstance) {
       id,
       uploadState.SCHEDULED
     );
-    const hasFailedJobs = failed.length > 0;
-    const contactTypes = Config.contactTypes();
 
     const tmplData = {
       title: id,
       workbookId: id,
-      hierarchy: contactTypes,
+      hierarchy: contactTypes.map(t => t.name),
       contactTypes,
       places: cache.getPlacesForDisplay(id),
       workbookState: cache.getWorkbookState(id)?.state,
-      hasFailedJobs: hasFailedJobs,
+      hasFailedJobs: failed.length > 0,
       failedJobCount: failed.length,
       scheduledJobCount: scheduledJobs.length,
-      userRoles: cache.getUserRoles(),
+      userRoles: contactType.roles,
       locales: LOCALES,
       workbook_locale: cache.getWorkbook(id).locale,
-      pagePlaceType: placeType,
-      op: op,
-      hasParent: cache.getParentType(placeType),
+      pagePlaceType: placeTypeName,
+      op,
+      hasParent: !!contactType.parent_type,
     };
 
     const isHxReq = req.headers["hx-request"];
@@ -67,10 +67,14 @@ export default async function workbook(fastify: FastifyInstance) {
   fastify.get("/workbook/:id/add", async (req, resp) => {
     const params: any = req.params;
     const id = params.id;
-    const placeTypes = cache.getPlaceTypes();
-
     const queryParams: any = req.query;
-    const placeType = queryParams.type || placeTypes[0];
+
+    const contactTypes = Config.contactTypes();
+    const placeTypeName = queryParams.type || contactTypes[0].name;
+    const contactType = Config.getContactType(placeTypeName);
+    if (!contactType) {
+      throw new Error(`unrecognized contact type: "${placeTypeName}"`);
+    }
     const op = queryParams.op || "new";
 
     const tmplData = {
@@ -79,11 +83,11 @@ export default async function workbook(fastify: FastifyInstance) {
       workbookId: id,
       locales: LOCALES,
       workbook_locale: cache.getWorkbook(id).locale,
-      hierarchy: placeTypes,
-      userRoles: cache.getUserRoles(),
-      pagePlaceType: placeType,
-      op: op,
-      hasParent: cache.getParentType(placeType),
+      hierarchy: contactTypes.map(t => t.name),
+      userRoles: contactType.roles,
+      pagePlaceType: placeTypeName,
+      op,
+      hasParent: !!contactType.parent_type,
     };
 
     return resp.view("src/public/workbook/view.html", tmplData);
@@ -108,7 +112,7 @@ export default async function workbook(fastify: FastifyInstance) {
   fastify.post("/workbook/:id/submit", async (req) => {
     const params: any = req.params;
     const workbookId = params.id!!;
-    jobManager.doUpload(workbookId);
+    fastify.uploadManager.doUpload(workbookId, req.chtSession);
     return `<button class="button is-dark" hx-post="/workbook/${workbookId}/submit" hx-target="this" hx-swap="outerHTML">Apply Changes</button>`;
   });
 }

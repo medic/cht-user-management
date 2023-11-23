@@ -6,15 +6,10 @@ import { Config } from "../lib/config";
 export default async function files(fastify: FastifyInstance) {
   const { cache } = fastify;
 
-  fastify.get("/files/template", async (req, resp) => {
-    const queryParams: any = req.query;
-    const placeType = queryParams.type!!;
-    const contactTypes = Config.contactTypes();
-    const placeTypeConfig = contactTypes.find(ct => ct.name === placeType);
-    if (!placeTypeConfig) {
-      throw new Error("Invalid place type");
-    };
-    
+  fastify.get("/files/template/:placeType", async (req, resp) => {
+    const params: any = req.params;
+    const placeType = params.placeType;
+    const placeTypeConfig = Config.getContactType(placeType);
     const columns = [
       ...placeTypeConfig.place_properties,
       ...placeTypeConfig.contact_properties

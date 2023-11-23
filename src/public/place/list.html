@@ -6,10 +6,10 @@
         <thead>
         <tr>
             {% for property in contactType.place_properties %}
-            <th id="place_{{property.doc_name}}">{{property.doc_name}}</th>
+            <th id="place_{{property.doc_name}}">{{property.csv_name}}</th>
             {% endfor %}
             {% for contact_property in contactType.contact_properties %}
-            <th id="contact_{{contact_property.doc_name}}">{{contact_property.doc_name}}</th>
+            <th id="contact_{{contact_property.doc_name}}">{{contact_property.csv_name}}</th>
             {% endfor %}
             <th>-</th>
             <th></th>

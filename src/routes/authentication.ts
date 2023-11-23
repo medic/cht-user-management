@@ -23,22 +23,17 @@ export default async function authentication(fastify: FastifyInstance) {
     const data: any = req.body;
     const { username, password, domain } = data;
 
-    const authToken = await ChtApi.getSessionToken(domain, username, password);
-    if (!authToken) {
+    const session = await ChtApi.createSession(domain, username, password);
+    if (!session.sessionToken) {
       return resp.view("src/public/auth/form.html", {
         domains: Config.domains,
         errors: true,
       });
     }
     
-    const token = Auth.encodeToken({ 
-      username,
-      domain,
-      authToken,
-    });
-
+    const tokenizedSession = Auth.encodeToken(session);
     const expires = Auth.cookieExpiry();
-    resp.setCookie(Auth.AUTH_COOKIE_NAME, token, {
+    resp.setCookie(Auth.AUTH_COOKIE_NAME, tokenizedSession, {
       signed: false,
       httpOnly: true,
       expires,

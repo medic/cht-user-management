@@ -41,9 +41,12 @@ const build = (opts: FastifyServerOptions): FastifyInstance => {
       throw new Error('user must login');
     }
 
-    const decoded = Auth.decodeToken(cookieToken);
-    if (!decoded) {
-      throw new Error('invalid authentication');
+    try {
+      const chtSession = Auth.decodeToken(cookieToken);
+      req.chtSession = chtSession;
+    } catch (e) {
+      reply.redirect('/login');
+      throw e;
     }
   });
 

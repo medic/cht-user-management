@@ -1,11 +1,11 @@
-import { CountryCode, isValidNumberForRegion } from "libphonenumber-js";
+import { CountryCode } from "libphonenumber-js";
 import {
   PersonPayload,
   PlacePayload,
   PlaceSearchResult,
   UserPayload,
 } from "../lib/cht";
-import { Hierarchy } from "../lib/utils";
+
 import {
   workBookState,
   uploadState,
@@ -18,13 +18,12 @@ import {
   displayPlace,
 } from "./models";
 
+import { Config } from '../lib/config';
+
 export const illegalNameCharRegex = new RegExp(`[^a-zA-Z'\\s]`);
 export const LOCALES: CountryCode[] = ["KE", "UG"]; //for now
 
 export class MemCache {
-  private hierarchy: Hierarchy;
-  private userRoles: string[];
-
   private workbooks: Map<string, workBookState>;
   private places: Map<string, place> = new Map();
   private people: Map<string, person> = new Map();
@@ -33,9 +32,7 @@ export class MemCache {
   private jobState: Map<string, jobState> = new Map();
   private credList: Map<string, userCredentials> = new Map();
 
-  constructor(hierachy: Hierarchy, userRoles: string[]) {
-    this.hierarchy = hierachy;
-    this.userRoles = userRoles;
+  constructor() {
     this.workbooks = new Map();
   }
 
@@ -46,16 +43,12 @@ export class MemCache {
    */
   saveWorkbook = (name: string): string => {
     const id = name.toLowerCase().split(" ").join("");
-    const places = Object.keys(this.hierarchy!!).filter(
-      (key) => !this.hierarchy!![key].parentPlaceContactType
-    );
-    const active = places[0];
     const workflowState: workBookState = {
       id: id,
       places: new Map(),
       locale: LOCALES[0],
     };
-    workflowState.places.set(active, []);
+
     this.workbooks.set(id, workflowState);
     return id;
   };
@@ -160,8 +153,10 @@ export class MemCache {
       throw new Error("workbook does not exist");
     }
     const places: place[] = [];
-    for (const placeType of this.getPlaceTypes()) {
-      const data = workbook.places.get(placeType) || [];
+
+    const placeTypes = Config.contactTypes();
+    for (const placeType of placeTypes) {
+      const data = workbook.places.get(placeType.name) || [];
       data.forEach((placeId: string) => {
         places.push(this.getPlace(placeId)!!);
       });
@@ -188,8 +183,9 @@ export class MemCache {
       throw new Error("workbook does not exist");
     }
     const places: displayPlace[] = [];
-    for (const placeType of this.getPlaceTypes()) {
-      const data = workbook.places.get(placeType) || [];
+    const placeTypes = Config.contactTypes();
+    for (const placeType of placeTypes) {
+      const data = workbook.places.get(placeType.name) || [];
       data.forEach((placeId: string) => {
         const place = this.getPlace(placeId)!!;
         const person = this.getPerson(place.contact)!!;
@@ -206,55 +202,14 @@ export class MemCache {
     return places;
   };
 
-  /**
-   *
-   * @param hierarchy
-   */
-  setHierarchy = (hierarchy: Hierarchy) => {
-    this.hierarchy = hierarchy;
-  };
-
-  /**
-   *
-   * @returns list of place contact types in the hierarchy
-   */
-  getPlaceTypes = (): string[] => {
-    return Object.keys(this.hierarchy!!);
-  };
-
-  /**
-   *
-   * @param roles
-   */
-  setUserRoles = (roles: string[]) => {
-    this.userRoles = roles;
-  };
-
-  /**
-   *
-   * @returns list of configured user roles for the project
-   */
-  getUserRoles = (): string[] => {
-    return this.userRoles!!;
-  };
-
-  /**
-   *
-   * @param placeType
-   * @returns the parent place contact type if any
-   */
-  getParentType = (placeType: string): string | undefined => {
-    return this.hierarchy!![placeType].parentPlaceContactType;
-  };
-
   findPlace = async (
     workbookId: string,
     placeType: string,
     searchStr: string
   ): Promise<PlaceSearchResult[]> => {
     const workbook = this.getWorkbook(workbookId);
-    return workbook.places
-      .get(placeType)!!
+    const placesOfType = workbook.places.get(placeType) || [];
+    return placesOfType
       .filter((placeId: string) => {
         const place = this.getPlace(placeId)!!;
         return (
@@ -275,10 +230,7 @@ export class MemCache {
     });
   };
 
-  getCachedSearchResult = (
-    id: string,
-    workbook: string
-  ): PlaceSearchResult | undefined => {
+  getCachedSearchResult = (id: string, workbook: string): PlaceSearchResult | undefined => {
     let result = this.searchResultCache.get(id);
     if (!result) {
       const place = this.getPlaces(workbook).find(
@@ -341,14 +293,6 @@ export class MemCache {
     });
   };
 
-  /**
-   *
-   * @param placeType
-   * @returns person contact type that is expected in places of type placeType
-   */
-  getPersonContactType = (placeType: string): string =>
-    this.hierarchy[placeType].personContactType!!;
-
   buildUserPayload = (
     placeId: string,
     contactId: string,
@@ -387,7 +331,7 @@ export class MemCache {
       contact_type: place.type,
       contact: this.buildContactPayload(
         person,
-        this.getPersonContactType(place.type),
+        Config.getContactType(place.type).contact_type as string,
         place.action === "replace_contact" ? place.id : undefined
       ),
     };

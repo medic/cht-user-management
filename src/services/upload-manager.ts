@@ -1,5 +1,5 @@
 import EventEmitter from "events";
-import { ChtApi, UserPayload } from "../lib/cht";
+import { ChtApi, ChtSession, UserPayload } from "../lib/cht";
 import { MemCache } from "./cache";
 import {
   workBookState,
@@ -8,6 +8,8 @@ import {
   workbookuploadState,
   userCredentials,
 } from "./models";
+
+import { Config } from '../lib/config';
 
 type batch = {
   workbookId: string;
@@ -23,27 +25,27 @@ export type jobState = {
 
 export class UploadManager extends EventEmitter {
   private cache: MemCache;
-  private chtApi: ChtApi;
-  private workbookCancel = new Map<string, boolean>();
-  constructor(chtApi: ChtApi, cache: MemCache) {
+  
+  constructor(cache: MemCache) {
     super();
     this.cache = cache;
-    this.chtApi = chtApi;
   }
 
-  doUpload = (workbookId: string) => {
+  doUpload = (workbookId: string, chtSession: ChtSession) => {
     const batches = this.prepareUpload(this.cache.getWorkbook(workbookId)!!);
-    this.upload(batches);
+    const chtApi = new ChtApi(chtSession);
+    this.upload(batches, chtApi);
   };
 
   private prepareUpload = (workbook: workBookState): batch[] => {
     const batches: batch[] = [];
-    for (const placeType of this.cache.getPlaceTypes()) {
+    const placeTypes = Config.contactTypes();
+    for (const placeType of placeTypes) {
       const batch: batch = {
         workbookId: workbook.id,
-        placeType: placeType,
+        placeType: placeType.name,
         placeIds:
-          workbook.places.get(placeType)?.filter((placeId: string) => {
+          workbook.places.get(placeType.name)?.filter((placeId: string) => {
             const state = this.cache.getJobState(placeId);
             return state && state.status === uploadState.SCHEDULED;
           }) ?? [],
@@ -53,7 +55,7 @@ export class UploadManager extends EventEmitter {
     return batches;
   };
 
-  private upload = async (batches: batch[]) => {
+  private upload = async (batches: batch[], chtApi: ChtApi) => {
     let state: workbookuploadState = {
       id: batches[0].workbookId,
       state: "in_progress",
@@ -62,7 +64,7 @@ export class UploadManager extends EventEmitter {
     this.emitWorkbookStateChange(state);
 
     for (const batch of batches) {
-      await this.uploadBatch(batch);
+      await this.uploadBatch(batch, chtApi);
     }
 
     state.state = "done";
@@ -70,7 +72,7 @@ export class UploadManager extends EventEmitter {
     this.emitWorkbookStateChange(state);
   };
 
-  private uploadBatch = async (job: batch) => {
+  private uploadBatch = async (job: batch, chtApi: ChtApi) => {
     for (const placeId of job.placeIds) {
       this.cache.setJobState(placeId, uploadState.IN_PROGESS);
       this.emitJobStateChange(job.workbookId, placeId, uploadState.IN_PROGESS);
@@ -78,9 +80,9 @@ export class UploadManager extends EventEmitter {
       try {
         let creds: userCredentials;
         if (place.action === "create") {
-          creds = await this.uploadPlace(place);
+          creds = await this.uploadPlace(place, chtApi);
         } else if (place.action === "replace_contact") {
-          creds = await this.replaceContact(place);
+          creds = await this.replaceContact(place, chtApi);
         }
         this.cache.setUserCredentials(placeId, creds!!);
         this.cache.setJobState(placeId, uploadState.SUCCESS);
@@ -101,20 +103,20 @@ export class UploadManager extends EventEmitter {
     }
   };
 
-  private uploadPlace = async (placeData: place): Promise<userCredentials> => {
+  private uploadPlace = async (placeData: place, chtApi: ChtApi): Promise<userCredentials> => {
     const contact = this.cache.getPerson(placeData.contact)!!;
     let placeId = this.cache.getRemoteId(placeData.id!!);
     if (!placeId) {
       const placePayload = this.cache.buildPlacePayload(placeData, contact);
-      placeId = await this.chtApi.createPlace(placePayload);
+      placeId = await chtApi.createPlace(placePayload);
       this.cache.setRemoteId(placeData.id!!, placeId);
     }
 
     // why...we don't get a contact id when we create a place with a contact defined.
     // then the created contact doesn't get a parent assigned so we can't create a user for it
-    const contactId: string = await this.chtApi.getPlaceContactId(placeId);
+    const contactId: string = await chtApi.getPlaceContactId(placeId);
     this.cache.setRemoteId(contact.id, contactId);
-    await this.chtApi.updateContactParent(contactId, placeId);
+    await chtApi.updateContactParent(contactId, placeId);
 
     const userPayload: UserPayload = this.cache.buildUserPayload(
       placeId,
@@ -122,7 +124,7 @@ export class UploadManager extends EventEmitter {
       contact.name,
       contact.role
     );
-    const { username, pass } = await this.tryCreateUser(userPayload);
+    const { username, pass } = await this.tryCreateUser(userPayload, chtApi);
     return {
       place: placeId,
       contact: contactId,
@@ -131,20 +133,18 @@ export class UploadManager extends EventEmitter {
     };
   };
 
-  private replaceContact = async (
-    placeData: place
-  ): Promise<userCredentials> => {
+  private replaceContact = async (placeData: place, chtApi: ChtApi): Promise<userCredentials> => {
     const contact = this.cache.getPerson(placeData.contact)!!;
     let contactId = this.cache.getRemoteId(contact.id!!);
     if (!contactId) {
       const contactPayload = this.cache.buildContactPayload(
         contact,
-        this.cache.getPersonContactType(placeData.type),
+        Config.getContactType(placeData.type).contact_type as string,
         placeData.id
       );
-      contactId = await this.chtApi.createContact(contactPayload);
+      contactId = await chtApi.createContact(contactPayload);
       this.cache.setRemoteId(contact.id, contactId);
-      await this.chtApi.updatePlaceContact(placeData.id, contactId);
+      await chtApi.updatePlaceContact(placeData.id, contactId);
     }
     const userPayload: UserPayload = this.cache.buildUserPayload(
       placeData.id,
@@ -152,7 +152,7 @@ export class UploadManager extends EventEmitter {
       contact.name,
       contact.role
     );
-    const { username, pass } = await this.tryCreateUser(userPayload);
+    const { username, pass } = await this.tryCreateUser(userPayload, chtApi);
     return {
       place: placeData.id,
       contact: contactId,
@@ -161,14 +161,12 @@ export class UploadManager extends EventEmitter {
     };
   };
 
-  private tryCreateUser = async (
-    userPayload: UserPayload
-  ): Promise<{ username: string; pass: string }> => {
-    let retryCount = 0,
-      username = userPayload.username;
+  private tryCreateUser = async (userPayload: UserPayload, chtApi: ChtApi): Promise<{ username: string; pass: string }> => {
+    let retryCount = 0;
+    let username = userPayload.username;
     do {
       try {
-        await this.chtApi.createUser(userPayload);
+        await chtApi.createUser(userPayload);
         return { username: userPayload.username, pass: userPayload.password };
       } catch (err: any) {
         retryCount++;

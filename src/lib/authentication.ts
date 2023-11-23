@@ -1,5 +1,6 @@
 import { env } from "process";
 import jwt from "jsonwebtoken";
+import { ChtSession } from "./cht";
 
 const LOGIN_EXPIRES_AFTER_MS = 2 * 24 * 60 * 60 * 1000;
 const { COOKIE_PRIVATE_KEY } = env;
@@ -13,15 +14,24 @@ export default class Auth {
     }
   }
 
-  public static encodeToken (content: any) {
-    return jwt.sign(content, COOKIE_PRIVATE_KEY, { expiresIn: '1 day' });
+  public static encodeToken (session: ChtSession) {
+    return jwt.sign(session, COOKIE_PRIVATE_KEY, { expiresIn: '1 day' });
   }
 
   public static cookieExpiry() {
     return new Date(new Date().getTime() + LOGIN_EXPIRES_AFTER_MS);
   }
 
-  public static decodeToken (token: string) {
-    return token && jwt.verify(token, COOKIE_PRIVATE_KEY);
+  public static decodeToken (token: string) : ChtSession {
+    if (!token) {
+      throw new Error('invalid authentication token');
+    }
+
+    const session = jwt.verify(token, COOKIE_PRIVATE_KEY) as ChtSession;
+    if (!session.sessionToken || !session.domain) {
+      throw new Error('invalid authentication token');
+    }
+
+    return session;
   }
 };
