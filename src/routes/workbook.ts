@@ -1,12 +1,12 @@
 import { FastifyInstance } from "fastify";
 import { uploadState } from "../services/models";
 import { v4 as uuidv4 } from "uuid";
-import { LOCALES } from "../services/cache";
+import { LOCALES, MemCache } from "../services/cache";
 import { Config } from "../lib/config";
-import { ChtApi } from "../lib/cht";
+import { getFormProperties } from "./utils";
 
 export default async function workbook(fastify: FastifyInstance) {
-  const { cache } = fastify;
+  const cache: MemCache = fastify.cache;
 
   fastify.get("/", async (req, resp) => {
     const workbookId = uuidv4();
@@ -29,18 +29,22 @@ export default async function workbook(fastify: FastifyInstance) {
       id,
       uploadState.SCHEDULED
     );
-
+    const placeData = contactTypes.map((item) => {
+      return {
+        ...item,
+        places: cache.getPlacesForDisplay(id, item.name),
+      };
+    });
     const tmplData = {
       title: id,
       workbookId: id,
-      hierarchy: contactTypes.map(t => t.name),
-      contactTypes,
+      contactTypes: placeData,
+      hierarchy: contactTypes.map((t) => t.name),
       places: cache.getPlacesForDisplay(id),
       workbookState: cache.getWorkbookState(id)?.state,
       hasFailedJobs: failed.length > 0,
       failedJobCount: failed.length,
       scheduledJobCount: scheduledJobs.length,
-      userRoles: contactType.roles,
       locales: LOCALES,
       workbook_locale: cache.getWorkbook(id).locale,
       pagePlaceType: placeTypeName,
@@ -70,24 +74,26 @@ export default async function workbook(fastify: FastifyInstance) {
     const queryParams: any = req.query;
 
     const contactTypes = Config.contactTypes();
-    const placeTypeName = queryParams.type || contactTypes[0].name;
-    const contactType = Config.getContactType(placeTypeName);
-    if (!contactType) {
-      throw new Error(`unrecognized contact type: "${placeTypeName}"`);
-    }
+    const contactType = queryParams.type
+      ? Config.getContactType(queryParams.type)
+      : contactTypes[0];
     const op = queryParams.op || "new";
-
+    const {
+      placeProps: placeFormProperties,
+      contactProps: contactFormProperties,
+    } = getFormProperties(contactType);
     const tmplData = {
       view: "add",
       title: id,
       workbookId: id,
       locales: LOCALES,
       workbook_locale: cache.getWorkbook(id).locale,
-      hierarchy: contactTypes.map(t => t.name),
-      userRoles: contactType.roles,
-      pagePlaceType: placeTypeName,
+      hierarchy: contactTypes.map((type) => type.name),
+      pagePlaceType: contactType.name,
       op,
-      hasParent: !!contactType.parent_type,
+      placeProperties: placeFormProperties,
+      contactProperties: contactFormProperties,
+      placeParentType: contactType.parent_type,
     };
 
     return resp.view("src/public/workbook/view.html", tmplData);

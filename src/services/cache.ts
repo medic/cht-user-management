@@ -1,11 +1,5 @@
 import { CountryCode } from "libphonenumber-js";
-import {
-  PersonPayload,
-  PlacePayload,
-  PlaceSearchResult,
-  UserPayload,
-} from "../lib/cht";
-
+import { PlaceSearchResult } from "../lib/cht";
 import {
   workBookState,
   uploadState,
@@ -18,7 +12,7 @@ import {
   displayPlace,
 } from "./models";
 
-import { Config } from '../lib/config';
+import { Config } from "../lib/config";
 
 export const illegalNameCharRegex = new RegExp(`[^a-zA-Z'\\s]`);
 export const LOCALES: CountryCode[] = ["KE", "UG"]; //for now
@@ -177,16 +171,23 @@ export class MemCache {
    * @param workbookId
    * @returns list of places in the workbook
    */
-  getPlacesForDisplay = (workbookId: string): displayPlace[] => {
+  getPlacesForDisplay = (
+    workbookId: string,
+    placeType?: string
+  ): displayPlace[] => {
     const workbook = this.workbooks.get(workbookId);
     if (!workbook) {
       throw new Error("workbook does not exist");
     }
     const places: displayPlace[] = [];
-    const placeTypes = Config.contactTypes();
+    const placeTypes: string[] = [];
+    if (placeType) {
+      placeTypes.push(placeType);
+    } else {
+      placeTypes.push(...Config.contactTypes().map((item) => item.name));
+    }
     for (const placeType of placeTypes) {
-      const data = workbook.places.get(placeType.name) || [];
-      data.forEach((placeId: string) => {
+      workbook.places.get(placeType)?.forEach((placeId: string) => {
         const place = this.getPlace(placeId)!!;
         const person = this.getPerson(place.contact)!!;
         const isValid = this.isPlaceValid(place, person, workbook.locale);
@@ -202,24 +203,31 @@ export class MemCache {
     return places;
   };
 
-  findPlace = async (
+  findPlace = (
     workbookId: string,
     placeType: string,
-    searchStr: string
-  ): Promise<PlaceSearchResult[]> => {
+    searchStr: string,
+    options?: { exact: boolean }
+  ): PlaceSearchResult[] => {
     const workbook = this.getWorkbook(workbookId);
-    const placesOfType = workbook.places.get(placeType) || [];
-    return placesOfType
+    const places = workbook.places.get(placeType);
+    if (!places) {
+      return [];
+    }
+    return places
       .filter((placeId: string) => {
-        const place = this.getPlace(placeId)!!;
+        const { remoteId, properties } = this.getPlace(placeId)!;
+        if (options?.exact) {
+          return properties.name === searchStr;
+        }
         return (
-          place.name.toUpperCase().includes(searchStr.toUpperCase()) &&
-          !place.remoteId
+          properties.name.toUpperCase().includes(searchStr.toUpperCase()) &&
+          !remoteId
         );
       })
       .map((placeId: string) => {
-        const place = this.getPlace(placeId)!!;
-        return { id: place.id, name: place.name };
+        const place = this.getPlace(placeId)!;
+        return { id: place.id, name: place.properties.name };
       });
   };
 
@@ -230,13 +238,21 @@ export class MemCache {
     });
   };
 
-  getCachedSearchResult = (id: string, workbook: string): PlaceSearchResult | undefined => {
+  getCachedSearchResult = (
+    id: string,
+    workbook: string
+  ): PlaceSearchResult | undefined => {
     let result = this.searchResultCache.get(id);
     if (!result) {
       const place = this.getPlaces(workbook).find(
-        (place) => !this.getRemoteId(place.id!!) && place.id === id
+        (place) => !this.getRemoteId(place.id) && place.id === id
       );
-      if (place) result = { id: place.id!!, name: place.name };
+      if (place) {
+        result = {
+          id: place.id,
+          name: place.properties.name,
+        };
+      }
     }
     return result;
   };
@@ -268,13 +284,13 @@ export class MemCache {
         (place) => this.getJobState(place.id)?.status === uploadState.SUCCESS
       )
       .map((place) => {
-        const contact = this.people.get(place.contact)!!;
+        const { properties: personData } = this.people.get(place.contact)!;
         return {
-          placeName: place.name,
+          placeName: place.properties.name,
           placeType: place.type,
-          placeParent: place.parent?.name,
-          contactName: contact.name,
-          creds: this.credList.get(place.id!!)!!,
+          placeParent: parent?.name,
+          contactName: personData.name,
+          creds: this.credList.get(place.id),
         } as placeWithCreds;
       });
   };
@@ -291,57 +307,5 @@ export class MemCache {
     return this.getPlaces(workbookId).filter((place) => {
       return this.getJobState(place.id)?.status === state;
     });
-  };
-
-  buildUserPayload = (
-    placeId: string,
-    contactId: string,
-    contactName: string,
-    role: string
-  ): UserPayload => {
-    const data: UserPayload = {
-      username: contactName.toLowerCase().split(" ").join("_"),
-      password: "medic@1234!",
-      type: role,
-      place: placeId,
-      contact: contactId,
-    };
-    return data;
-  };
-
-  buildContactPayload = (
-    person: person,
-    contactType: string,
-    parent?: string
-  ): PersonPayload => {
-    return {
-      name: person.name,
-      phone: person.phone,
-      sex: person.sex,
-      type: "contact",
-      contact_type: contactType,
-      place: parent,
-    };
-  };
-
-  buildPlacePayload = (place: place, person: person): PlacePayload => {
-    const data: PlacePayload = {
-      name: place.name,
-      type: "contact",
-      contact_type: place.type,
-      contact: this.buildContactPayload(
-        person,
-        Config.getContactType(place.type).contact_type as string,
-        place.action === "replace_contact" ? place.id : undefined
-      ),
-    };
-    if (place.parent) {
-      if (place.parent.id.startsWith("place::")) {
-        data.parent = this.getRemoteId(place.parent.id);
-      } else {
-        data.parent = place.parent.id;
-      }
-    }
-    return data;
   };
 }

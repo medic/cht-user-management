@@ -1,18 +1,18 @@
 import { FastifyInstance, FastifyReply } from "fastify";
-import { isValidNumberForRegion } from "libphonenumber-js";
 import { v4 as uuidv4 } from "uuid";
 import { parse } from "csv";
 import { once } from "events";
-import { MultipartFile, MultipartValue } from "@fastify/multipart";
+import { MultipartFile } from "@fastify/multipart";
 
-import { Config } from "../lib/config";
+import { Config, ContactType } from "../lib/config";
 import { jobState } from "../services/upload-manager";
-import { uploadState, workBookState, place, person } from "../services/models";
-import { illegalNameCharRegex, LOCALES } from "../services/cache";
+import { uploadState, workBookState, person, place } from "../services/models";
+import { LOCALES, MemCache } from "../services/cache";
 import { ChtApi } from "../lib/cht";
+import { getFormProperties } from "./utils";
 
 export default async function place(fastify: FastifyInstance) {
-  const { cache } = fastify;
+  const cache: MemCache = fastify.cache;
 
   // search for a place given its type and name
   // return search results dropdown
@@ -36,12 +36,9 @@ export default async function place(fastify: FastifyInstance) {
     });
   });
 
-  // search for a place's possible parents given its type
-  // return search results dropdown
-  fastify.post("/search/parent", async (req, resp) => {
+  // returns search results dropdown
+  fastify.post("/place/search", async (req, resp) => {
     const queryParams: any = req.query;
-    const contactType = Config.getContactType(queryParams.type);
-    const parentType = contactType.parent_type;
     const workbookId = queryParams.workbook;
     const op = queryParams.op;
 
@@ -50,11 +47,14 @@ export default async function place(fastify: FastifyInstance) {
 
     const localResults = await cache.findPlace(
       workbookId,
-      parentType,
+      queryParams.type,
       searchString
     );
     const chtApi = new ChtApi(req.chtSession);
-    const remoteResults = await chtApi.searchPlace(parentType, searchString);
+    const remoteResults = await chtApi.searchPlace(
+      queryParams.type,
+      searchString
+    );
     cache.cacheRemoteSearchResult(remoteResults);
 
     const results = localResults.concat(remoteResults);
@@ -75,27 +75,31 @@ export default async function place(fastify: FastifyInstance) {
   fastify.post("/place/parent", async (req, resp) => {
     const data: any = req.body;
     const params: any = req.query;
-    
+
     const placeId = params.id;
     const workbookId = params.workbook;
-    const op = params.op; 
-
-    if (placeId === "na" || !op) {
-      throw new Error('placeId is "na" or op is undefined');
+    if (placeId === "na") {
+      throw new Error('placeId cannot be "na"');
     }
 
     const place = cache.getCachedSearchResult(placeId, workbookId);
-    data.place_parent = place.id;
-    data.place_search = place.name;
+    data.place_parent = place?.id;
+    data.place_search = place?.name;
 
     const contactType = Config.getContactType(data.place_type);
+    // to avoid key collisions between place and person keys
+    const {
+      placeProps: placeFormProperties,
+      contactProps: contactFormProperties,
+    } = getFormProperties(contactType);
     return resp.view("src/public/components/place_create_form.html", {
-      workbookId,
-      op,
-      data,
+      workbookId: workbookId,
+      op: "new",
+      data: data,
+      placeProperties: placeFormProperties,
+      contactProperties: contactFormProperties,
       pagePlaceType: data.place_type!!,
-      userRoles: contactType.roles,
-      hasParent: !!contactType.parent_type,
+      placeParentType: contactType.parent_type,
     });
   });
 
@@ -116,11 +120,17 @@ export default async function place(fastify: FastifyInstance) {
     data.place_search = place!!.name;
     const contactType = Config.getContactType(data.place_type);
     return resp.view("src/public/components/place_create_form.html", {
-      workbookId,
+      workbookId: workbookId,
       op,
       data,
-      userRoles: contactType.roles,
-      pagePlaceType: contactType.name,
+      pagePlaceType: data.place_type!!,
+      placeParentType: contactType.parent_type,
+      placeProperties: Config.contactTypes().find(
+        (item) => item.name === data.place_type
+      )?.place_properties,
+      contactProperties: Config.contactTypes().find(
+        (item) => item.name === data.place_type
+      )?.contact_properties,
     });
   });
 
@@ -134,11 +144,17 @@ export default async function place(fastify: FastifyInstance) {
     } else if (op === "bulk") {
       // read the date we uploaded
       const fileData = await req.file();
-      return createPlaces(workbookId, queryParams.type, fileData!!, resp);
+      return createPlaces(
+        workbookId,
+        queryParams.type,
+        fileData!!,
+        resp,
+        new ChtApi(req.chtSession)
+      );
     } else if (op === "replace") {
-      return replaceContact(workbookId, req.body, resp);
+      throw new Error("not implmented");
     } else {
-      throw new Error('unknown op');
+      throw new Error("unknown op");
     }
   });
 
@@ -148,69 +164,173 @@ export default async function place(fastify: FastifyInstance) {
     data: any,
     resp: FastifyReply
   ): Promise<any> => {
-    // validate fields here
-    const workbook = cache.getWorkbook(workbookId);
+    // @TODO validate fields here
+    //
     const contactType = Config.getContactType(data.place_type);
-    const isMissingParent = contactType.parent_type && !data.place_parent;
-    const isPhoneValid = isValidNumberForRegion(
-      data.contact_phone,
-      workbook.locale
-    );
-    if (!isPhoneValid || isMissingParent) {
-      return resp.view("src/public/place/create_form.html", {
-        workbookId,
-        pagePlaceType: contactType.name,
-        userRoles: contactType.roles,
-        hasParent: !!contactType.parent_type,
-        data,
-        errors: {
-          phoneInvalid: !isPhoneValid,
-          missingParent: isMissingParent,
-        },
-      });
-    }
+    const userRole = contactType.contact_role;
+    const placeProperties = contactType.place_properties;
+    const contactProperties = contactType.contact_properties;
+    // to avoid key collisions between place and person keys
+    const {
+      placeProps: placeFormProperties,
+      contactProps: contactFormProperties,
+    } = getFormProperties(contactType);
+    const personData: { [key: string]: string } = { role: userRole };
+    contactFormProperties.forEach((prop, idx) => {
+      if (data[prop.doc_name]) {
+        personData[contactProperties[idx].doc_name] = data[prop.doc_name];
+      }
+    });
+    const placeData: { [key: string]: string } = {};
+    placeFormProperties.forEach((prop, idx) => {
+      if (data[prop.doc_name]) {
+        placeData[placeProperties[idx].doc_name] = data[prop.doc_name];
+      }
+    });
     // build the place object, and save it.
     const id = uuidv4();
-    const contactData: person = {
+    const person: person = {
       id: "person::" + id,
-      name: data.contact_name,
-      phone: data.contact_phone,
-      sex: data.contact_sex,
-      role: data.contact_role,
+      properties: personData,
     };
-    const placeData: place = {
+    const place: place = {
       id: "place::" + id,
-      name: data.place_name,
       type: data.place_type,
-      action: "create",
-      contact: contactData.id,
+      contact: person.id,
       workbookId,
+      properties: placeData,
     };
     // set parent if any
     if (data.place_parent) {
       const parent = cache.getCachedSearchResult(
         data.place_parent,
         workbookId
-      );
-      placeData.parent = {
+      )!;
+      const configParentKey = placeProperties.find(
+        (item) => item.type === "parent"
+      )!.doc_name;
+      place.properties[configParentKey] = parent.name; // so we can see the name on the UI
+      place.parent = {
         id: parent.id,
         name: parent.name,
       };
     }
     // save the place
-    cache.savePlace(workbookId, placeData, contactData);
+    cache.savePlace(workbookId, place, person);
     // back to places list
-    resp.header("HX-Replace-Url", `/workbook/${workbookId}`);
-    return fastify.view("src/public/workbook/content_places.html", {
-      oob: true,
-      places: cache.getPlacesForDisplay(workbookId),
-      workbookId,
-      workbookState: cache.getWorkbookState(workbookId)?.state,
-      scheduledJobCount: cache.getPlaceByUploadState(
-        workbookId,
-        uploadState.SCHEDULED
-      ).length,
+    resp.header("HX-Redirect", `/workbook/${workbookId}`);
+  };
+
+  const readCsv = async (
+    csvBuf: Buffer,
+    workbookId: string,
+    placeType: string
+  ): Promise<{ place: place; contact: person }[]> => {
+    const contactType = Config.getContactType(placeType);
+    const userRole = contactType.contact_role;
+    const mapPlaceCsvnameDocName = Config.getCSVNameDocNameMap(
+      contactType.place_properties
+    );
+    const mapContactCsvnameDocName = Config.getCSVNameDocNameMap(
+      contactType.contact_properties
+    );
+    const contactColumns = Object.keys(mapContactCsvnameDocName);
+    const placeColumns = Object.keys(mapPlaceCsvnameDocName);
+
+    const csvColumns: string[] = [];
+    const places: { place: place; contact: person }[] = [];
+
+    const parser = parse(csvBuf, { delimiter: ",", from_line: 1 });
+    parser.on("data", function (row: string[]) {
+      if (csvColumns.length === 0) {
+        const missingColumns = [
+          ...Object.keys(mapPlaceCsvnameDocName),
+          ...Object.keys(mapContactCsvnameDocName),
+        ].filter((csvName) => !row.includes(csvName));
+        if (missingColumns.length > 0) {
+          throw new Error(`Missing columns: ${missingColumns.join(", ")}`);
+        }
+        csvColumns.push(...row);
+      } else {
+        const personData: { [key: string]: string } = { role: userRole };
+        for (const contactColumn of contactColumns) {
+          const docName = mapContactCsvnameDocName[contactColumn];
+          personData[docName] = row[csvColumns.indexOf(contactColumn)];
+        }
+        const placeData: { [key: string]: string } = {};
+        for (const placeColumn of placeColumns) {
+          const docName = mapPlaceCsvnameDocName[placeColumn];
+          placeData[docName] = row[csvColumns.indexOf(placeColumn)];
+        }
+        const id = uuidv4();
+        const person: person = {
+          id: "person::" + id,
+          properties: personData,
+        };
+        const place: place = {
+          id: "place::" + id,
+          type: placeType,
+          contact: person.id,
+          workbookId: workbookId,
+          properties: placeData,
+        };
+        places.push({ place: place, contact: person });
+      }
     });
+    // wait till dones
+    await once(parser, "finish");
+    return places;
+  };
+
+  const getParents = async (
+    places: { place: place; contact: person }[],
+    workbookId: string,
+    contactType: ContactType,
+    cht: ChtApi
+  ): Promise<Map<string, string>> => {
+    const configParentKey = contactType!!.place_properties.find(
+      (item) => item.type === "parent"
+    )!!.doc_name;
+    const parents: Set<string> = new Set(
+      places.map((place) => place.place.properties[configParentKey])
+    );
+
+    const parentMap = new Map<string, string>();
+
+    const nonLocalParents = Array.from(parents).filter((name) => {
+      const results = cache.findPlace(
+        workbookId,
+        contactType.parent_type,
+        name,
+        { exact: true }
+      );
+      if (results.length > 1) {
+        throw new Error("multiple parents found with name: " + name);
+      }
+      if (results.length === 1) {
+        parentMap.set(name, results[0].id);
+      }
+      return results.length === 0;
+    });
+
+    const remoteResults = await cht.searchPlace(
+      contactType.parent_type,
+      nonLocalParents
+    );
+    if (remoteResults.length != nonLocalParents.length) {
+      const remoteNames = remoteResults.map((i) => i.name);
+      throw new Error(
+        `Missing ${
+          contactType.parent_type
+        } on instance: ${nonLocalParents.filter(
+          (x) => !remoteNames.includes(x)
+        )}. Fix ${contactType.parent_type}(s) in CSV and retry upload`
+      );
+    }
+    remoteResults.forEach((result) => parentMap.set(result.name, result.id));
+    cache.cacheRemoteSearchResult(remoteResults);
+
+    return parentMap;
   };
 
   // handle bulk place load
@@ -218,194 +338,66 @@ export default async function place(fastify: FastifyInstance) {
     workbookId: string,
     placeType: string,
     fileData: MultipartFile,
-    resp: FastifyReply
+    resp: FastifyReply,
+    cht: ChtApi
   ): Promise<any> => {
-    // read the csv we uploaded
+    // read the csv
     const csvBuf = await fileData.toBuffer();
-    const parser = parse(csvBuf, { delimiter: ",", from_line: 1 });
-    const userRole = (fileData.fields["contact_role"] as MultipartValue<string>)
-      .value;
+    const places = await readCsv(csvBuf, workbookId, placeType);
 
-    let parent: any = undefined;
-    // TOFIX: what is this?
-    if (fileData.fields["place_parent"]) {
-      const result = cache.getCachedSearchResult(
-        (fileData.fields["place_parent"] as MultipartValue<string>).value,
-        workbookId
-      )!!;
-      parent = {
-        id: result.id,
-        name: result.name,
-      };
-    }
-
-    let columns: string[];
-    const contactTypes = Config.contactTypes();
     const placeTypeConfig = Config.getContactType(placeType);
-    
-    const placePropeties = placeTypeConfig.place_properties.map(p => ({ [p.csv_name]: p.doc_name }));
-    const mapPlaceCsvnameDocName  = Object.assign({}, ...placePropeties);
-
-    // todo: again or put in func
-    const mapContactCsvnameDocName = placeTypeConfig.contact_properties.map((p) => {
-      return {[p.csv_name]: p.doc_name};
-    }).reduce((acc, curr) => {
-      return {...acc, ...curr};
-    }, {});
-
-    let line = 0;
-    parser.on("data", function (row: string[]) {
-      if (line === 0) {
-        // validate the header
-        const missingColumns = [...Object.keys(mapPlaceCsvnameDocName), ...Object.keys(mapContactCsvnameDocName)]
-          .filter((csvName) => !row.includes(csvName));
-        if (missingColumns.length > 0) {
-          throw new Error(`Missing columns: ${missingColumns.join(", ")}`);
-        }
-        columns = row;
-      } else {
-        const id = uuidv4();
-        const contact: person = {
-          id: "person::" + id,
-          role: userRole,
-        };
-        const contactColumns = Object.keys(mapContactCsvnameDocName);
-        for (const contactColumn of contactColumns) {
-          const docName = mapContactCsvnameDocName[contactColumn];
-          contact[docName] = row[columns.indexOf(contactColumn)];
-        }
-        const placeData: place = {
-          id: "place::" + id,
-          type: placeType,
-          action: "create",
-          contact: contact.id,
-          parent: parent,
-          workbookId,
-        };
-        // todo: func?
-        const placeColumns = Object.keys(mapPlaceCsvnameDocName);
-        for (const placeColumn of placeColumns) {
-          const docName = mapPlaceCsvnameDocName[placeColumn];
-          placeData[docName] = row[columns.indexOf(placeColumn)];
-        }
-        cache.savePlace(workbookId, placeData, contact);
+    let parentMap: Map<string, string>;
+    if (placeTypeConfig.parent_type) {
+      try {
+        parentMap = await getParents(places, workbookId, placeTypeConfig, cht);
+      } catch (error) {
+        return fastify.view("src/public/place/bulk_create_form.html", {
+          workbookId: workbookId,
+          pagePlaceType: placeType,
+          errors: {
+            message: error,
+          },
+        });
       }
-      line++;
-    });
-    // wait
-    await once(parser, "finish");
-    // back to places list
-    resp.header("HX-Replace-Url", `/workbook/${workbookId}`);
-    return fastify.view("src/public/workbook/content_places.html", {
-      oob: true,
-      places: cache.getPlacesForDisplay(workbookId),
-      contactTypes,
-      workbookId,
-      workbookState: cache.getWorkbookState(workbookId)?.state,
-      scheduledJobCount: cache.getPlaceByUploadState(
-        workbookId,
-        uploadState.SCHEDULED
-      ).length,
-    });
-  };
-
-  const replaceContact = async (
-    workbookId: string,
-    data: any,
-    resp: FastifyReply
-  ) => {
-    // kind of like a layout "event" trigger where we just return the form with the data
-    const contactType = Config.getContactType(data.place_type);
-    if (data.layout) {
-      return resp.view("src/public/place/replace_user_form.html", {
-        workbookId,
-        pagePlaceType: contactType.name,
-        userRoles: contactType.roles,
-        data,
-      });
     }
-    const workbook = cache.getWorkbook(workbookId);
-    // validate the inputs here
-    const isPhoneValid = isValidNumberForRegion(
-      data.contact_phone,
-      workbook.locale
-    );
-    if (!isPhoneValid || !data.place_id) {
-      if (!data.place_id) data.place_search = "";
-      return resp.view("src/public/place/replace_user_form.html", {
-        workbookId,
-        pagePlaceType: contactType.name,
-        userRoles: contactType.roles,
-        data,
-        errors: {
-          phoneInvalid: !isPhoneValid,
-          missingPlace: !data.place_id,
-        },
-      });
-    }
-    // build the models
-    const id = uuidv4();
-    const contact: person = {
-      id: "person::" + id,
-      name: data.contact_name,
-      phone: data.contact_phone,
-      sex: data.contact_sex,
-      role: data.contact_role,
-    };
-    const placeData: place = {
-      id: data.place_id,
-      name: data.place_search,
-      type: data.place_type,
-      action: "replace_contact",
-      contact: contact.id,
-      workbookId,
-    };
-    // save the place and contact
-    cache.savePlace(workbookId, placeData, contact);
+    const parentKey = placeTypeConfig?.place_properties.find(
+      (item) => item.type === "parent"
+    )?.doc_name;
+    //save the places
+    places.forEach(({ place, contact }) => {
+      if (placeTypeConfig.parent_type) {
+        if (!parentKey || !parentMap) {
+          throw new Error("error getting parents");
+        }
+        place.parent = {
+          id: parentMap.get(place.properties[parentKey])!,
+          name: place.properties[parentKey],
+        };
+      }
+      cache.savePlace(workbookId, place, contact);
+    });
     // back to places list
-    resp.header("HX-Replace-Url", `/workbook/${workbookId}`);
-    return fastify.view("src/public/workbook/content_places.html", {
-      oob: true,
-      places: cache.getPlacesForDisplay(workbookId),
-      workbookId,
-      workbookState: cache.getWorkbookState(workbookId)?.state,
-      scheduledJobCount: cache.getPlaceByUploadState(
-        workbookId,
-        uploadState.SCHEDULED
-      ).length,
-    });
+    resp.header("HX-Redirect", `/workbook/${workbookId}`);
   };
-
-  fastify.get("/place/form", async (req, resp) => {
-    const queryParams: any = req.query;
-    const contactTypes = Config.contactTypes();
-    const pagePlaceType = contactTypes[0].name;
-    const op = queryParams.op || "new";
-    resp.header("HX-Push-Url", `/workbook/${queryParams.workbook}/add`);
-    const contactType = Config.getContactType(pagePlaceType);
-    return resp.view("src/public/workbook/fragment_form.html", {
-      op,
-      workbookId: queryParams.workbook,
-      hierarchy: contactTypes.map(type => type.name),
-      pagePlaceType,
-      userRoles: contactType.roles,
-      hasParent: !!contactType.parent_type,
-    });
-  });
 
   fastify.post("/place/form/update", async (req, resp) => {
     const queryParams: any = req.query;
     const data: any = req.body;
-    const placeType = data.type;
+    const placeType: string = data.type;
     const op = data.op || "new";
     resp.header("HX-Replace-Url", `?type=${placeType}&op=${op}`);
     const contactType = Config.getContactType(placeType);
+    const {
+      placeProps: placeFormProperties,
+      contactProps: contactFormProperties,
+    } = getFormProperties(contactType);
     return resp.view("src/public/components/place_create_form.html", {
       workbookId: queryParams.workbook,
       op,
       pagePlaceType: placeType,
-      userRoles: contactType.roles,
-      hasParent: !!contactType.parent_type,
+      placeProperties: placeFormProperties,
+      contactProperties: contactFormProperties,
+      placeParentType: contactType.parent_type,
     });
   });
 
@@ -415,11 +407,33 @@ export default async function place(fastify: FastifyInstance) {
 
     const place = cache.getPlace(id);
     if (!place || place.remoteId) {
-      throw new Error('unknonwn place or place has remoteId');
+      throw new Error("unknonwn place or place has remoteId");
     }
     const person = cache.getPerson(place.contact)!!;
     const workbook = cache.getWorkbook(place.workbookId);
+
     const contactType = Config.getContactType(place.type);
+    const placeProperties = contactType.place_properties;
+    const contactProperties = contactType.contact_properties;
+    // to avoid key collisions between place and person keys
+    const {
+      placeProps: placeFormProperties,
+      contactProps: contactFormProperties,
+    } = getFormProperties(contactType);
+
+    const formData: any = {};
+    contactFormProperties?.forEach((prop, idx) => {
+      formData[prop.doc_name] =
+        person.properties[contactProperties[idx].doc_name];
+    });
+    placeFormProperties?.forEach((prop, idx) => {
+      formData[prop.doc_name] = place.properties[placeProperties[idx].doc_name];
+    });
+    if (place.parent) {
+      formData.place_parent = place.parent.id;
+      formData.place_search = place.parent.name;
+    }
+
     const tmplData = {
       view: "edit",
       workbookId: place.workbookId,
@@ -427,25 +441,16 @@ export default async function place(fastify: FastifyInstance) {
       workbook_locale: workbook.locale,
       op: "edit",
       pagePlaceType: place.type,
-      hasParent: !!contactType.parent_type,
+      placeParentType: contactType.parent_type,
+      placeProperties: placeFormProperties,
+      contactProperties: contactFormProperties,
       backend: `/place/edit/${id}`,
-      userRoles: contactType.roles,
-      data: {
-        place_name: place.name,
-        contact_name: person.name,
-        contact_sex: person.sex,
-        contact_phone: person.phone,
-        contact_role: person.role,
-        place_search: place.parent?.name,
-        place_parent: place.parent?.id,
-      },
+      data: formData,
       errors: {
-        phoneInvalid: !isValidNumberForRegion(person.phone, workbook.locale),
-        placeNameInvalid: place.name.match(illegalNameCharRegex),
-        contactNameInvalid: person.name.match(illegalNameCharRegex),
-        contactSexInvalid: !["male", "female"].some(
-          (item) => item === person.sex?.toLowerCase()
-        ),
+        phoneInvalid: false,
+        placeNameInvalid: false,
+        contactNameInvalid: false,
+        contactSexInvalid: false,
       },
     };
     resp.header("HX-Push-Url", `/place/edit/${id}`);
@@ -462,42 +467,42 @@ export default async function place(fastify: FastifyInstance) {
 
     const place = cache.getPlace(id);
     if (!place || place.remoteId) {
-      throw new Error('unknonwn place or place has remoteId');
+      throw new Error("unknonwn place or place has remoteId");
     }
 
     const person = cache.getPerson(place.contact)!!;
     const data: any = req.body;
 
-    const workbook = cache.getWorkbook(place.workbookId);
-    const contactType = Config.getContactType(data.place_type);
-    const isMissingParent = contactType.parent_type && !data.place_parent;
-    const isPhoneValid = isValidNumberForRegion(data.contact_phone, workbook.locale);
-    if (!isPhoneValid || isMissingParent) {
-      return resp.view("src/public/place/create_form.html", {
-        workbookId: place.workbookId,
-        backend: `/place/edit/${id}`,
-        pagePlaceType: data.place_type,
-        userRoles: contactType.roles,
-        hasParent: !!contactType.parent_type,
-        data,
-        errors: {
-          phoneInvalid: !isPhoneValid,
-          missingParent: isMissingParent,
-        },
-      });
-    }
+    const contactType = Config.getContactType(place.type);
+    const placeProperties = contactType.place_properties;
+    const contactProperties = contactType.contact_properties;
+    // to avoid key collisions between place and person keys
+    const {
+      placeProps: placeFormProperties,
+      contactProps: contactFormProperties,
+    } = getFormProperties(contactType);
 
-    place.name = data.place_name;
-    person.name = data.contact_name;
-    person.phone = data.contact_phone;
-    person.role = data.contact_role;
-    person.sex = data.contact_sex;
+    placeFormProperties.forEach((prop, idx) => {
+      if (data[prop.doc_name]) {
+        place.properties[placeProperties[idx].doc_name] = data[prop.doc_name];
+      }
+    });
+    contactFormProperties.forEach((prop, idx) => {
+      if (data[prop.doc_name]) {
+        person.properties[contactProperties[idx].doc_name] =
+          data[prop.doc_name];
+      }
+    });
     // set or update parent if any
     if (data.place_parent) {
       const parent = cache.getCachedSearchResult(
         data.place_parent,
         place.workbookId
-      )!!;
+      )!;
+      const configParentKey = placeProperties.find(
+        (item) => item.type === "parent"
+      )!.doc_name;
+      place.properties[configParentKey] = parent.name;
       place.parent = {
         id: parent.id,
         name: parent.name,
@@ -506,24 +511,21 @@ export default async function place(fastify: FastifyInstance) {
     // update place and person
     cache.updatePlace(place.workbookId, place, person);
     // back to places list
-    resp.header("HX-Replace-Url", `/workbook/${place.workbookId}`);
-    return fastify.view("src/public/workbook/content_places.html", {
-      oob: true,
-      places: cache.getPlacesForDisplay(place.workbookId),
-      workbookId: place.workbookId,
-      workbookState: cache.getWorkbookState(place.workbookId)?.state,
-      scheduledJobCount: cache.getPlaceByUploadState(
-        place.workbookId,
-        uploadState.SCHEDULED
-      ).length,
-    });
+    resp.header("HX-Redirect", `/workbook/${place.workbookId}`);
   });
 
   fastify.get("/places", async (req, resp) => {
     const queryParams: any = req.query;
     const workbookId = queryParams.workbook!!;
+    const contactTypes = Config.contactTypes();
+    const placeData = contactTypes.map((item) => {
+      return {
+        ...item,
+        places: cache.getPlacesForDisplay(workbookId, item.name),
+      };
+    });
     return resp.view("src/public/place/list.html", {
-      places: cache.getPlacesForDisplay(workbookId),
+      contactTypes: placeData,
     });
   });
 

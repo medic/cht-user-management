@@ -6,20 +6,9 @@
         <div class="control">
             <input type="file" name="users">
         </div>
-    </div>
-
-    <div class="field">
-        <label class="label">User Role*</label>
-        <div class="control">
-            <div class="select">
-                <select name="contact_role" title="roles">
-                    {% for role in userRoles %}
-                    <option value="{{ role }}" {% if data.contact_role==role %}selected {% endif %}>{{ role }}
-                    </option>
-                    {% endfor %}
-                </select>
-            </div>
-        </div>
+        {% if errors %}
+        <span class='error-message' style="color:maroon">{{errors.message}}</span>
+        {% endif %}
     </div>
     
     <div class="field">

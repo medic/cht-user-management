@@ -3,8 +3,10 @@
         hx-swap="innerHTML">
         {% include "place/controls.html" %}
     </div>
-    <div id="places_parent" class="tile is-child" hx-get="/places?workbook={{workbookId}}" hx-target="table"
-        hx-trigger="sse:state_change">
-        {% include "place/list.html" %}
+    <div id="places_parent" class="tile is-child" hx-get="/places?workbook={{workbookId}}" hx-target="#place_tables"
+        hx-swap="innerHTML" hx-trigger="sse:state_change">
+        <div id="place_tables">
+            {% include "place/list.html" %}
+        </div>
     </div>
 </div>

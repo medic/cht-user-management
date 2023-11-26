@@ -198,7 +198,7 @@
       "friendly": "CHU",
       "parent_type": "b_sub_county",
       "contact_type": "person",
-      "roles": ["community_health_assistant"],
+      "contact_role": "community_health_assistant",
       "place_properties": [
         {
           "csv_name": "CHU Name",
@@ -207,9 +207,9 @@
           "required": true
         },
         {
-          "csv_name": "Sub County Name",
+          "csv_name": "Sub County",
           "doc_name": "PARENT",
-          "type": "string",
+          "type": "parent",
           "required": true
         },
         {
@@ -221,13 +221,13 @@
         {
           "csv_name": "Link Facility Name",
           "doc_name": "facility_name",
-          "type": "integer",
+          "type": "name",
           "required": true
         },
         {
           "csv_name": "Link Facility MFL Code",
           "doc_name": "facility_code",
-          "type": "facility_mfl",
+          "type": "string",
           "required": true
         }
       ],
@@ -240,6 +240,41 @@
         },
         {
           "csv_name": "CHA Phone",
+          "doc_name": "phone",
+          "type": "phone",
+          "required": true
+        }
+      ]
+    },
+    {
+      "name": "d_community_health_volunteer_area",
+      "friendly": "CHV Area",
+      "parent_type": "c_community_health_unit",
+      "contact_type": "person",
+      "contact_role": "community_health_volunteer",
+      "place_properties": [
+        {
+          "csv_name": "CHV Area Name",
+          "doc_name": "name",
+          "type": "name",
+          "required": true
+        },
+        {
+          "csv_name": "CHU",
+          "doc_name": "PARENT",
+          "type": "parent",
+          "required": true
+        }
+      ],
+      "contact_properties": [
+        {
+          "csv_name": "CHV Name",
+          "doc_name": "name",
+          "type": "name",
+          "required": true
+        },
+        {
+          "csv_name": "CHV Phone",
           "doc_name": "phone",
           "type": "phone",
           "required": true

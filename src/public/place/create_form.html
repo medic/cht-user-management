@@ -1,86 +1,28 @@
 <form id="form_place_create" autocomplete="off" {% if backend %} hx-post="{{backend}}" {%else%}
     hx-post="/place?workbook={{workbookId}}&op=new" {%endif%} hx-target="this" hx-swap="outerHTML">
     <input name="place_type" value="{{pagePlaceType}}" hidden />
+    {% for prop in placeProperties %}
     <div class="field">
-        <label class="label">Place*</label>
+        <label class="label">{{prop.csv_name}}*</label>
         <div class="control">
-            <input name="place_name" type="text" placeholder="eg. Division One" class="input" required
-                pattern="^[a-zA-Z'\s]+$" {% if data.place_name %}value="{{data.place_name}}" {% endif %} />
-            {% if errors.placeNameInvalid %}
-            <span class='error-message' style="color:maroon">Found invalid characters in place name</span>
-            {% endif %}
-        </div>
-    </div>
-
-    {% if hasParent %}
-    <div class="field">
-        <label class="label">Where does this {{pagePlaceType}} belong?</label>
-        <div class="control">
+            {% if prop.type == "parent" %}
             {% include "place/parent_search_input.html" %}
+            {%else%}
+            <input name="{{prop.doc_name}}" type="text" class="input" {% if prop.required %} required{% endif %} {% if
+                data[prop.doc_name] %}value="{{data[prop.doc_name]}}" {% endif %} />
+            {%endif%}
         </div>
-        <div id="search_results" class="control">
-        </div>
-        {% if errors.missingParent %}
-        <span class='error-message' style="color:maroon">Search and select a place from the drop down shown</span>
-        {% endif %}
-        {% if data.place_parent %}
-        <select name="place_parent" hidden>
-            <option value="{{ data.place_parent }}" selected>{{ data.place_search }}</option>
-        </select>
-        {% endif %}
     </div>
-    {% endif %}
-
+    {% endfor %}
+    {% for prop in contactProperties %}
     <div class="field">
-        <label class="label">Contact*</label>
-        <div class="field is-grouped">
-            <div class="control is-expanded">
-                <input name="contact_name" type="text" placeholder="eg. Jane Doe" class="input" required
-                    pattern="^[a-zA-Z'\s]+$" {% if data.contact_name %}value="{{data.contact_name}}" {% endif %} />
-                {% if errors.contactNameInvalid %}
-                <span class='error-message' style="color:maroon">Found invalid characters in contact name</span>
-                {% endif %}
-            </div>
-            <div class="control">
-                <div class="select">
-                    <select name="contact_sex" title="sex" required>
-                        <option value="male" {% if data.contact_sex=="male" %}selected {% endif %}>Male</option>
-                        <option value="female" {% if data.contact_sex=="female" %}selected {% endif %}>Female</option>
-                    </select>
-                    {% if errors.contactSexInvalid %}
-                    <span class='error-message' style="color:maroon">Invalid: {{data.contact_sex}}</span>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-
-    </div>
-
-    <div class="field">
-        <label class="label">Phone*</label>
+        <label class="label">{{prop.csv_name}}*</label>
         <div class="control">
-            <input name="contact_phone" type="tel" placeholder="eg. +254712345678" class="input" required
-                pattern="^[+-\d]+$" / {% if data.contact_phone %}value="{{data.contact_phone}}" {% endif %}>
-            {% if errors.phoneInvalid %}
-            <span class='error-message' style="color:maroon">Invalid Phone Number format</span>
-            {% endif %}
+            <input name="{{prop.doc_name}}" type="text" class="input" {% if prop.required %} required{% endif %} {% if
+                data[prop.doc_name] %}value="{{data[prop.doc_name]}}" {% endif %} />
         </div>
     </div>
-
-    <div class="field">
-        <label class="label">User Role*</label>
-        <div class="control">
-            <div class="select">
-                <select name="contact_role" title="roles">
-                    {% for role in userRoles %}
-                    <option value="{{ role }}" {% if data.contact_role==role %}selected {% endif %}>{{ role }}
-                    </option>
-                    {% endfor %}
-                </select>
-            </div>
-        </div>
-    </div>
-
+    {% endfor %}
     <div class=" field is-grouped is-grouped-right">
         <div class="control">
             <button id="place_create_submit" class="button is-link">Save</button>

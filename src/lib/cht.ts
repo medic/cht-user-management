@@ -7,11 +7,9 @@ export type ChtSession = {
 
 export type PersonPayload = {
   name: string;
-  phone: string;
-  sex: string;
   type: string;
   contact_type: string;
-  place?: string;
+  [key: string]: any;
 };
 
 export type PlacePayload = {
@@ -20,6 +18,7 @@ export type PlacePayload = {
   contact_type: string;
   contact: PersonPayload;
   parent?: string;
+  [key: string]: any;
 };
 
 export type UserPayload = {
@@ -114,16 +113,20 @@ export class ChtApi {
 
   searchPlace = async (
     placeType: string,
-    searchStr: string
+    searchStr: string | string[]
   ): Promise<PlaceSearchResult[]> => {
     const url = `https://${this.session.domain}/medic/\_find`;
+    const nameSelector: { [key: string]: any } = {};
+    if (typeof searchStr === "string") {
+      nameSelector["$regex"] = `^(?i)${searchStr}`;
+    } else {
+      nameSelector["$in"] = searchStr;
+    }
     const payload = {
       selector: {
         contact_type: placeType,
-        name: {
-          $regex: `^(?i)${searchStr}`,
-        },
-      }
+        name: nameSelector,
+      },
     };
     const resp = await axios.post(url, payload, this.authorizationOptions());
     const { docs } = resp.data;
