@@ -1,7 +1,8 @@
-import { CountryCode } from "libphonenumber-js";
-
 export type person = {
   id: string;
+  name?: string,
+  phone?: string,
+  sex?: string,
   remoteId?: string;
   properties: {
     [key: string]: any;
@@ -37,7 +38,6 @@ export type displayPlace = {
 
 export type workBookState = {
   id: string;
-  locale: CountryCode;
   places: Map<string, string[]>;
   state?: workbookuploadState;
 };

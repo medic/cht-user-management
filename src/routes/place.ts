@@ -1,14 +1,13 @@
 import { FastifyInstance, FastifyReply } from "fastify";
 import { v4 as uuidv4 } from "uuid";
-import { parse } from "csv";
-import { once } from "events";
 import { MultipartFile } from "@fastify/multipart";
 
 import { Config, ContactType } from "../lib/config";
-import { jobState } from "../services/upload-manager";
-import { uploadState, workBookState, person, place } from "../services/models";
-import { LOCALES, MemCache } from "../services/cache";
 import { ChtApi } from "../lib/cht";
+import CsvReader from "../lib/csv-reader";
+import { jobState } from "../services/upload-manager";
+import { MemCache } from "../services/cache";
+import { uploadState, workBookState, person, place } from "../services/models";
 import { getFormProperties } from "./utils";
 
 export default async function place(fastify: FastifyInstance) {
@@ -200,6 +199,11 @@ export default async function place(fastify: FastifyInstance) {
       workbookId,
       properties: placeData,
     };
+    placeFormProperties.forEach((prop, idx) => {
+      if (data[prop.doc_name]) {
+        placeData[placeProperties[idx].doc_name] = data[prop.doc_name];
+      }
+    });
     // set parent if any
     if (data.place_parent) {
       const parent = cache.getCachedSearchResult(
@@ -219,67 +223,6 @@ export default async function place(fastify: FastifyInstance) {
     cache.savePlace(workbookId, place, person);
     // back to places list
     resp.header("HX-Redirect", `/workbook/${workbookId}`);
-  };
-
-  const readCsv = async (
-    csvBuf: Buffer,
-    workbookId: string,
-    placeType: string
-  ): Promise<{ place: place; contact: person }[]> => {
-    const contactType = Config.getContactType(placeType);
-    const userRole = contactType.contact_role;
-    const mapPlaceCsvnameDocName = Config.getCSVNameDocNameMap(
-      contactType.place_properties
-    );
-    const mapContactCsvnameDocName = Config.getCSVNameDocNameMap(
-      contactType.contact_properties
-    );
-    const contactColumns = Object.keys(mapContactCsvnameDocName);
-    const placeColumns = Object.keys(mapPlaceCsvnameDocName);
-
-    const csvColumns: string[] = [];
-    const places: { place: place; contact: person }[] = [];
-
-    const parser = parse(csvBuf, { delimiter: ",", from_line: 1 });
-    parser.on("data", function (row: string[]) {
-      if (csvColumns.length === 0) {
-        const missingColumns = [
-          ...Object.keys(mapPlaceCsvnameDocName),
-          ...Object.keys(mapContactCsvnameDocName),
-        ].filter((csvName) => !row.includes(csvName));
-        if (missingColumns.length > 0) {
-          throw new Error(`Missing columns: ${missingColumns.join(", ")}`);
-        }
-        csvColumns.push(...row);
-      } else {
-        const personData: { [key: string]: string } = { role: userRole };
-        for (const contactColumn of contactColumns) {
-          const docName = mapContactCsvnameDocName[contactColumn];
-          personData[docName] = row[csvColumns.indexOf(contactColumn)];
-        }
-        const placeData: { [key: string]: string } = {};
-        for (const placeColumn of placeColumns) {
-          const docName = mapPlaceCsvnameDocName[placeColumn];
-          placeData[docName] = row[csvColumns.indexOf(placeColumn)];
-        }
-        const id = uuidv4();
-        const person: person = {
-          id: "person::" + id,
-          properties: personData,
-        };
-        const place: place = {
-          id: "place::" + id,
-          type: placeType,
-          contact: person.id,
-          workbookId: workbookId,
-          properties: placeData,
-        };
-        places.push({ place: place, contact: person });
-      }
-    });
-    // wait till dones
-    await once(parser, "finish");
-    return places;
   };
 
   const getParents = async (
@@ -343,9 +286,9 @@ export default async function place(fastify: FastifyInstance) {
   ): Promise<any> => {
     // read the csv
     const csvBuf = await fileData.toBuffer();
-    const places = await readCsv(csvBuf, workbookId, placeType);
-
     const placeTypeConfig = Config.getContactType(placeType);
+    const places = await CsvReader.fromBuffer(csvBuf, workbookId, placeTypeConfig);
+
     let parentMap: Map<string, string>;
     if (placeTypeConfig.parent_type) {
       try {
@@ -437,8 +380,6 @@ export default async function place(fastify: FastifyInstance) {
     const tmplData = {
       view: "edit",
       workbookId: place.workbookId,
-      locales: LOCALES,
-      workbook_locale: workbook.locale,
       op: "edit",
       pagePlaceType: place.type,
       placeParentType: contactType.parent_type,

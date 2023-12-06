@@ -26,13 +26,6 @@
             {%endif%}
         </div>
     </div>
-    <script>
-        document.body.addEventListener('htmx:afterSwap', function (evt) {
-            if (evt.detail.successful && evt.detail.target.id == "form-locale-select") {
-                location.reload()
-            }
-        });
-    </script>
 </body>
 
 </html>

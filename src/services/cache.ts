@@ -14,9 +14,6 @@ import {
 
 import { Config } from "../lib/config";
 
-export const illegalNameCharRegex = new RegExp(`[^a-zA-Z'\\s]`);
-export const LOCALES: CountryCode[] = ["KE", "UG"]; //for now
-
 export class MemCache {
   private workbooks: Map<string, workBookState>;
   private places: Map<string, place> = new Map();
@@ -40,7 +37,6 @@ export class MemCache {
     const workflowState: workBookState = {
       id: id,
       places: new Map(),
-      locale: LOCALES[0],
     };
 
     this.workbooks.set(id, workflowState);
@@ -58,10 +54,6 @@ export class MemCache {
       throw new Error("workbook does not exist");
     }
     return workbook;
-  };
-
-  setLocale = (workbookId: string, locale: CountryCode) => {
-    this.getWorkbook(workbookId)!!.locale = locale;
   };
 
   /**
@@ -93,7 +85,7 @@ export class MemCache {
     if (workbook.state) {
       workbook.state.state = "pending";
     }
-    if (this.isPlaceValid(placeData, personData, workbook.locale)) {
+    if (this.isPlaceValid(placeData, personData)) {
       this.setJobState(placeData.id, uploadState.SCHEDULED);
     } else {
       this.setJobState(placeData.id, uploadState.PENDING);
@@ -112,7 +104,7 @@ export class MemCache {
     if (workbook.state) {
       workbook.state.state = "pending";
     }
-    if (this.isPlaceValid(placeData, personData, workbook.locale)) {
+    if (this.isPlaceValid(placeData, personData)) {
       this.setJobState(placeData.id, uploadState.SCHEDULED);
     } else {
       this.setJobState(placeData.id, uploadState.PENDING);
@@ -160,8 +152,7 @@ export class MemCache {
 
   isPlaceValid = (
     place: place,
-    person: person,
-    locale: CountryCode
+    person: person
   ): boolean => {
     // TODO: Implement validation
     return true;
@@ -190,7 +181,7 @@ export class MemCache {
       workbook.places.get(placeType)?.forEach((placeId: string) => {
         const place = this.getPlace(placeId)!!;
         const person = this.getPerson(place.contact)!!;
-        const isValid = this.isPlaceValid(place, person, workbook.locale);
+        const isValid = this.isPlaceValid(place, person);
         const state = this.getJobState(place.id)!!;
         places.push({
           place: place,

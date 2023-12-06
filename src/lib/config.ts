@@ -15,6 +15,7 @@ export type ContactProperty = {
   csv_name: string;
   doc_name: string;
   type: string;
+  validator? : string | string[];
   required: boolean;
 };
 
@@ -29,7 +30,23 @@ export class Config {
   public static contactTypes(): ContactType[] {
     return config.contact_types;
   }
-  
+
+  public static getFormProperties(contactType: ContactType): {
+    placeProps: ContactProperty[];
+    contactProps: ContactProperty[];
+  } {
+    const placeFormProperties = contactType.place_properties.map((prop) => {
+      return { ...prop, doc_name: "place_" + prop.doc_name };
+    });
+    const contactFormProperties = contactType.contact_properties.map((prop) => {
+      return { ...prop, doc_name: "person_" + prop.doc_name };
+    });
+    return {
+      placeProps: placeFormProperties,
+      contactProps: contactFormProperties,
+    };
+  }
+
   public static getCSVNameDocNameMap(props: ContactProperty[]): {
     [key: string]: string;
   } {

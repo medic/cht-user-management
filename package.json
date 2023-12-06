@@ -26,11 +26,18 @@
     "uuid": "^9.0.1"
   },
   "devDependencies": {
+    "@types/chai": "^4.3.11",
+    "@types/mocha": "^10.0.6",
+    "@types/rewire": "^2.5.30",
     "@types/uuid": "^9.0.6",
+    "chai": "^4.3.10",
+    "mocha": "^10.2.0",
+    "rewire": "^7.0.0",
+    "ts-mocha": "^10.0.0",
     "tsc-watch": "^6.0.4"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "npx ts-mocha test/{,**}/*.spec.ts",
     "build": "tsc",
     "start": "node dist/index.js",
     "dev": "tsc-watch --onSuccess \"node dist/index.js\""

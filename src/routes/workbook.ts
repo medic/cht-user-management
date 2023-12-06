@@ -1,7 +1,7 @@
 import { FastifyInstance } from "fastify";
 import { uploadState } from "../services/models";
 import { v4 as uuidv4 } from "uuid";
-import { LOCALES, MemCache } from "../services/cache";
+import { MemCache } from "../services/cache";
 import { Config } from "../lib/config";
 import { getFormProperties } from "./utils";
 
@@ -45,8 +45,6 @@ export default async function workbook(fastify: FastifyInstance) {
       hasFailedJobs: failed.length > 0,
       failedJobCount: failed.length,
       scheduledJobCount: scheduledJobs.length,
-      locales: LOCALES,
-      workbook_locale: cache.getWorkbook(id).locale,
       pagePlaceType: placeTypeName,
       op,
       hasParent: !!contactType.parent_type,
@@ -86,8 +84,6 @@ export default async function workbook(fastify: FastifyInstance) {
       view: "add",
       title: id,
       workbookId: id,
-      locales: LOCALES,
-      workbook_locale: cache.getWorkbook(id).locale,
       hierarchy: contactTypes.map((type) => type.name),
       pagePlaceType: contactType.name,
       op,
@@ -97,21 +93,6 @@ export default async function workbook(fastify: FastifyInstance) {
     };
 
     return resp.view("src/public/workbook/view.html", tmplData);
-  });
-
-  // set locale for workbook
-  fastify.post("/workbook/locale", async (req, resp) => {
-    const queryParams: any = req.query;
-    const workbookId = queryParams.workbook!!;
-
-    const body: any = req.body;
-    cache.setLocale(workbookId, body.locale);
-
-    return resp.view("src/public/components/locale_select.html", {
-      workbookId: workbookId,
-      workbook_locale: body.locale,
-      locales: LOCALES,
-    });
   });
 
   // initiates place creation via the job manager
