@@ -1,11 +1,10 @@
 import { FastifyInstance } from "fastify";
 import { transform, stringify } from "csv/sync";
-import { placeWithCreds } from "../services/models";
 import { Config } from "../lib/config";
+import SessionCache from "../services/session-cache";
+import Place, { UserCreationDetails as UserCreationDetails } from "../services/place";
 
 export default async function files(fastify: FastifyInstance) {
-  const { cache } = fastify;
-
   fastify.get("/files/template/:placeType", async (req, resp) => {
     const params: any = req.params;
     const placeType = params.placeType;
@@ -19,17 +18,22 @@ export default async function files(fastify: FastifyInstance) {
   });
 
   fastify.get("/files/credentials", async (req, resp) => {
-    const queryParams: any = req.query;
-    const workbookId = queryParams.workbook!!;
-    const creds = cache.getUserCredentials(workbookId);
-    const refinedRecords = transform(creds, function (data: placeWithCreds) {
+    const sessionCache: SessionCache = req.sessionCache;
+    const uploaded = sessionCache.getPlaces({ created: true });
+    const refinedRecords = transform(uploaded, (place: Place) => {
       return [
-        data.placeName,
-        data.contactName,
-        data.creds.user,
-        data.creds.pass,
+        place.type.name,
+        place.name,
+        place.contact.name,
+        place.parentDetails?.id,
+        place.parentDetails?.name,
+        place.creationDetails.placeId,
+        place.creationDetails.contactId,
+        place.creationDetails.username,
+        place.creationDetails.password,
       ];
     });
+
     return stringify(refinedRecords);
   });
 }

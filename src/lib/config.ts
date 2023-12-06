@@ -31,34 +31,6 @@ export class Config {
     return config.contact_types;
   }
 
-  public static getFormProperties(contactType: ContactType): {
-    placeProps: ContactProperty[];
-    contactProps: ContactProperty[];
-  } {
-    const placeFormProperties = contactType.place_properties.map((prop) => {
-      return { ...prop, doc_name: "place_" + prop.doc_name };
-    });
-    const contactFormProperties = contactType.contact_properties.map((prop) => {
-      return { ...prop, doc_name: "person_" + prop.doc_name };
-    });
-    return {
-      placeProps: placeFormProperties,
-      contactProps: contactFormProperties,
-    };
-  }
-
-  public static getCSVNameDocNameMap(props: ContactProperty[]): {
-    [key: string]: string;
-  } {
-    return props
-      .map((p) => {
-        return { [p.csv_name]: p.doc_name };
-      })
-      .reduce((acc, curr) => {
-        return { ...acc, ...curr };
-      }, {});
-  }
-
   public static getContactType(name: string) : ContactType {
     const contactMatch = config.contact_types.find(c => c.name === name);
     if (!contactMatch) {

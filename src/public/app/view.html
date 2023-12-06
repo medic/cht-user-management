@@ -10,19 +10,14 @@
 </head>
 
 <body>
-    <div id="workbook" class="tile is-ancestor" style="min-height: 100vh">
-        <div class="tile is-2 is-parent">
-            <div class="tile is-child" style="background-color:#f8f9fa;">
-                {% include "workbook/fragment_config.html" %}
-            </div>
-        </div>
+    <div id="app" class="tile is-ancestor" style="min-height: 100vh">
         <div id="workflow-content" class="tile is-parent">
             {%if view=="add"%}
-            {% include "workbook/fragment_form.html" %}
+            {% include "app/fragment_form.html" %}
             {%elsif view=="edit"%}
-            {% include "workbook/fragment_edit_form.html" %}
+            {% include "app/fragment_edit_form.html" %}
             {%else%}
-            {% include "workbook/fragment_places.html" %}
+            {% include "app/fragment_places.html" %}
             {%endif%}
         </div>
     </div>

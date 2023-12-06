@@ -1,12 +1,14 @@
 import _ from 'lodash';
 
-import { ContactProperty, ContactType } from './config';
-import { person, place } from '../services/models';
+import { ContactProperty } from './config';
 
 import ValidatorString from './validator-string';
 import ValidatorPhone from './validator-phone';
 import ValidatorName from './validator-name';
 import ValidatorGender from './validator-gender';
+import Place from '../services/place';
+import ValidatorSkip from './validator-skip';
+import ParentComparator from './parent-comparator';
 
 
 export interface IValidator {
@@ -22,42 +24,47 @@ const TypeValidatorMap: ValidatorMap = {
   string: new ValidatorString(),
   name: new ValidatorName(),
   phone: new ValidatorPhone(),
+  none: new ValidatorSkip(),
   gender: new ValidatorGender(),
 };
 
 export class Validation {
-  public static getInvalidProperties(contactType: ContactType, place: place, contact: person) : string[] {
+  public static getInvalidProperties(place: Place) : string[] {
     return [
-      ...Validation.validateObject(place.properties, contactType.place_properties),
-      ...Validation.validateObject(contact.properties, contactType.contact_properties)
+      ...Validation.validateParent(place),
+      ...Validation.validateProperties(place.properties, place.type.place_properties, 'place_'),
+      ...Validation.validateProperties(place.contact.properties, place.type.contact_properties, 'contact_')
     ]
   }
 
-  public static format(contactType: ContactType, place: place, contact: person) 
-    : { place: place, contact: person }
+  public static cleanup(place: Place): Place
   {
-    const clonedPlace = _.cloneDeep(place);
-    const clonedContact = _.cloneDeep(contact);
-
     const formatAllProperties = (propertiesToFormat: ContactProperty[], objectToFormat: any) => {
       for (const property of propertiesToFormat) {
         this.formatProperty(property, objectToFormat);
       }
     }
 
-    formatAllProperties(contactType.contact_properties, clonedContact.properties);
-    formatAllProperties(contactType.place_properties, clonedPlace.properties);
-    return { place: clonedPlace, contact: clonedContact };
+    formatAllProperties(place.type.contact_properties, place.contact.properties);
+    formatAllProperties(place.type.place_properties, place.properties);
+    return place;
   }
 
-  private static validateObject(obj : any, properties : ContactProperty[]) : string[] {
+  private static validateParent(place: Place): string[] {
+    const expectParent = !!place.type.parent_type;
+    const hasLinkedParent = !!place.parentDetails?.id;
+    const parentLinkIsValid = !expectParent || ParentComparator.isParentIdValid(place.parentDetails?.id);
+    const isValid = expectParent === hasLinkedParent && parentLinkIsValid;
+    return isValid ? [] : ['place_PARENT'];
+  }
+
+  private static validateProperties(obj : any, properties : ContactProperty[], prefix: string) : string[] {
     const invalid = [];
 
     const expectedProperties = properties.filter(p => p.required).map(p => p.doc_name);
     const actualProperties = Object.keys(obj);
     const hasAll = expectedProperties.filter(p => !actualProperties.includes(p));
     if (!hasAll) {
-      console.log('validation: missing properties');
       invalid.push('missing required properties');
     }
 
@@ -67,11 +74,7 @@ export class Validation {
       if (value || property.required) {
         const valid = Validation.isValid(property, value);
         if (!valid) {
-          console.log(`validation: ${property.csv_name} is invalid "${value}"`);
-        }
-
-        if (!valid) {
-          invalid.push(property.csv_name);
+          invalid.push(`${prefix}${property.doc_name}`);
         }
       }
     }
@@ -92,8 +95,10 @@ export class Validation {
 
   private static formatProperty(property : ContactProperty, obj: any) {
     const value = obj[property.doc_name];
-    const formatted = this.getValidator(property).format(value, property);
-    obj[property.doc_name] = formatted;
+    if (value) {
+      const formatted = this.getValidator(property).format(value, property);
+      obj[property.doc_name] = formatted;
+    }
   }
 
   private static getValidator(property: ContactProperty) : IValidator {

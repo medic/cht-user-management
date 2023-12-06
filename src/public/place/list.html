@@ -19,21 +19,33 @@
             {% for place in contactType.places %}
             <tr>
                 {% for property in contactType.place_properties %}
-                <th id="place_{{place.place.id}}">{{place.place.properties[property.doc_name]}}</th>
+                {% capture propertyName %}place_{{property.doc_name}}{% endcapture %}
+                <td
+                    id="{{ propertyName }}"
+                    {% if place.invalidProperties contains propertyName %} class="is-danger" {% endif %}
+                >
+                    {{place.properties[property.doc_name]}}
+                </th>
                 {% endfor %}
                 {% for contact_property in contactType.contact_properties %}
-                <th id="contact_{{place.contact.id}}">{{place.contact.properties[contact_property.doc_name]}}</th>
+                {% capture propertyName %}contact_{{contact_property.doc_name}}{% endcapture %}
+                <td
+                    id="{{propertyName}}"
+                    {% if place.invalidProperties contains propertyName %} class="is-danger" {% endif %}
+                >
+                    {{place.contact.properties[contact_property.doc_name]}}
+                </th>
                 {% endfor %}
-                {%if place.valid%}
-                <td><span class="tag is-info is-light">{{place.state.status}}</span></td>
-                {%else%}
+                {% if place.invalidProperties.length == 0 %}
+                <td><span class="tag is-info is-light">{{place.state}}</span></td>
+                {% else %}
                 <td><span class="tag is-danger is-light">INVALID</span></td>
-                {%endif%}
+                {% endif %}
                 <td>
-                    {%if place.place.remoteId%}
-                    {%else%}
+                    {% if place.creationDetails.password %}
+                    {% else %}
                     <a hx-target="#workflow-content" hx-swap="innerHTML"
-                        hx-get="/place/edit/{{place.place.id}}">Edit</a>
+                        hx-get="/place/edit/{{place.id}}">Edit</a>
                     {%endif%}
                 </td>
             </tr>

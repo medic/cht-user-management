@@ -1,36 +1,28 @@
 import axios, { AxiosHeaders } from "axios";
+import { UserPayload } from "../services/user-payload";
 
 export type ChtSession = {
   domain: string;
   sessionToken: string;
 };
 
-export type PersonPayload = {
-  name: string;
-  type: string;
-  contact_type: string;
-  [key: string]: any;
-};
-
 export type PlacePayload = {
   name: string;
   type: string;
   contact_type: string;
-  contact: PersonPayload;
+  contact: {
+    name: string;
+    type: string;
+    contact_type: string;
+    [key: string]: any;
+  };
   parent?: string;
   [key: string]: any;
 };
 
-export type UserPayload = {
-  password: string;
-  username: string;
-  type: string;
-  place: string;
-  contact: string;
-};
-
-export type PlaceSearchResult = {
+export type ParentDetails = {
   id: string;
+  type: string;
   name: string;
 };
 
@@ -59,50 +51,27 @@ export class ChtApi {
     };
   };
 
-  getPlaceContactId = async (id: string): Promise<string> => {
-    const doc: any = await this.getDoc(id);
+  getPlaceContactId = async (placeId: string): Promise<string> => {
+    const doc: any = await this.getDoc(placeId);
     return doc.contact._id;
   };
 
-  updateContactParent = async (id: string, place: string): Promise<void> => {
-    const doc: any = await this.getDoc(id);
+  updateContactParent = async (contactId: string, placeId: string): Promise<void> => {
+    const doc: any = await this.getDoc(contactId);
     doc.parent = {
-      _id: place,
+      _id: placeId,
     };
     delete doc["_id"];
-    const url = `https://${this.session.domain}/medic/${id}`;
+    const url = `https://${this.session.domain}/medic/${contactId}`;
     const resp = await axios.put(url, doc, this.authorizationOptions());
     if (resp.status !== 201) {
       throw new Error(resp.data);
     }
   };
 
-  updatePlaceContact = async (
-    place: string,
-    contact: string
-  ): Promise<void> => {
-    const doc: any = await this.getDoc(place);
-    doc.contact = {
-      _id: contact,
-    };
-    delete doc["_id"];
-    const url = `https://${this.session.domain}/medic/${place}`;
-    const resp = await axios.put(url, doc, this.authorizationOptions());
-    if (resp.status !== 201) {
-      throw new Error(resp.data);
-    }
-  };
-
-  // we only get the place id back
   createPlace = async (place: PlacePayload): Promise<string> => {
     const url = `https://${this.session.domain}/api/v1/places`;
     const resp = await axios.post(url, place, this.authorizationOptions());
-    return resp.data.id;
-  };
-
-  createContact = async (person: PersonPayload): Promise<string> => {
-    const url = `https://${this.session.domain}/api/v1/people`;
-    const resp = await axios.post(url, person, this.authorizationOptions());
     return resp.data.id;
   };
 
@@ -111,12 +80,11 @@ export class ChtApi {
     await axios.post(url, user, this.authorizationOptions());
   };
 
-  searchPlace = async (
-    placeType: string,
-    searchStr: string | string[]
-  ): Promise<PlaceSearchResult[]> => {
+  searchPlace = async (placeType: string, searchStr: string | string[])
+    : Promise<ParentDetails[]> => 
+  {
     const url = `https://${this.session.domain}/medic/\_find`;
-    const nameSelector: { [key: string]: any } = {};
+    const nameSelector: any = {};
     if (typeof searchStr === "string") {
       nameSelector["$regex"] = `^(?i)${searchStr}`;
     } else {
@@ -131,18 +99,14 @@ export class ChtApi {
     const resp = await axios.post(url, payload, this.authorizationOptions());
     const { docs } = resp.data;
     return docs.map((doc: any) => {
-      return { id: doc._id, name: doc.name };
+      return { id: doc._id, type: placeType, name: doc.name };
     });
   };
 
   private getDoc = async (id: string): Promise<any> => {
-    const url = `https://${this.session.domain}/medic/\_find`;
-    const resp = await axios.post(url, {
-      selector: {
-        _id: id,
-      },
-    }, this.authorizationOptions());
-    return resp.data.docs[0];
+    const url = `https://${this.session.domain}/medic/${id}`;
+    const resp = await axios.get(url, this.authorizationOptions());
+    return resp.data;
   };
 
   private authorizationOptions(): any {

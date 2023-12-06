@@ -1,194 +1,101 @@
 import EventEmitter from "events";
-import { ChtApi, ChtSession, UserPayload } from "../lib/cht";
-import { MemCache } from "./cache";
-import {
-  workBookState,
-  uploadState,
-  place,
-  workbookuploadState,
-  userCredentials,
-} from "./models";
-import { Payloads } from "./payloads";
+import { ChtApi } from "../lib/cht-api";
 
-import { Config } from "../lib/config";
+import Place, { PlaceUploadState, UserCreationDetails } from "./place";
+import { UserPayload } from "./user-payload";
+import SessionCache, { SessionCacheUploadState } from "./session-cache";
 
-type batch = {
-  workbookId: string;
-  placeType: string;
-  placeIds: string[];
-};
-
-export type jobState = {
-  workbookId: string;
+export type JobState = {
   placeId: string;
-  state: uploadState;
+  state: PlaceUploadState;
 };
 
 export class UploadManager extends EventEmitter {
-  private cache: MemCache;
+  doUpload = async (places: Place[], chtApi: ChtApi) => {
+    const placesNeedingUpload = places.filter(p => !p.isCreated && p.invalidProperties?.length === 0);
+    this.eventedPlaceStateChange(placesNeedingUpload, PlaceUploadState.SCHEDULED);
 
-  constructor(cache: MemCache) {
-    super();
-    this.cache = cache;
-  }
+    for (const place of placesNeedingUpload) {
+      this.eventedPlaceStateChange(place, PlaceUploadState.IN_PROGESS);
 
-  doUpload = (workbookId: string, chtSession: ChtSession) => {
-    const batches = this.prepareUpload(this.cache.getWorkbook(workbookId));
-    const chtApi = new ChtApi(chtSession);
-    this.upload(batches, chtApi);
-  };
-
-  private prepareUpload = (workbook: workBookState): batch[] => {
-    const batches: batch[] = [];
-    const placeTypes = Config.contactTypes();
-    for (const placeType of placeTypes) {
-      const batch: batch = {
-        workbookId: workbook.id,
-        placeType: placeType.name,
-        placeIds:
-          workbook.places.get(placeType.name)?.filter((placeId: string) => {
-            const state = this.cache.getJobState(placeId);
-            return state && state.status === uploadState.SCHEDULED;
-          }) ?? [],
-      };
-      batches.push(batch);
-    }
-    return batches;
-  };
-
-  private upload = async (batches: batch[], chtApi: ChtApi) => {
-    let state: workbookuploadState = {
-      id: batches[0].workbookId,
-      state: "in_progress",
-    };
-    this.cache.setWorkbookUploadState(state.id, state);
-    this.emitWorkbookStateChange(state);
-
-    for (const batch of batches) {
-      await this.uploadBatch(batch, chtApi);
-    }
-
-    state.state = "done";
-    this.cache.setWorkbookUploadState(state.id, state);
-    this.emitWorkbookStateChange(state);
-  };
-
-  private uploadBatch = async (job: batch, chtApi: ChtApi) => {
-    for (const placeId of job.placeIds) {
-      this.cache.setJobState(placeId, uploadState.IN_PROGESS);
-      this.emitJobStateChange(job.workbookId, placeId, uploadState.IN_PROGESS);
-      const place = this.cache.getPlace(placeId);
-      if (!place) {
-        throw Error(`Upload Failure: Could not find place "${placeId}"`);
-      }
       try {
-        const creds = await this.uploadPlace(place, chtApi);
-        this.cache.setUserCredentials(placeId, creds);
-        this.cache.setJobState(placeId, uploadState.SUCCESS);
-        this.emitJobStateChange(job.workbookId, place.id, uploadState.SUCCESS);
+        await this.uploadPlace(place, chtApi);
+        this.eventedPlaceStateChange(place, PlaceUploadState.SUCCESS);
       } catch (err) {
-        console.error(err);
-        this.cache.setJobState(placeId, uploadState.FAILURE);
-        this.emitJobStateChange(job.workbookId, place.id, uploadState.FAILURE);
+        this.eventedPlaceStateChange(place, PlaceUploadState.FAILURE);
       }
     }
   };
 
-  private uploadPlace = async (
-    placeData: place,
-    chtApi: ChtApi
-  ): Promise<userCredentials> => {
-    const contact = this.cache.getPerson(placeData.contact);
-    if (!contact) {
-      throw Error(
-        `Upload Failure: Could not find parent contact "${placeData.contact}"`
-      );
-    }
-    let placeId = this.cache.getRemoteId(placeData.id);
+  private uploadPlace = async (place: Place, chtApi: ChtApi): Promise<UserCreationDetails> => {
+    let placeId = place.creationDetails?.placeId;
     if (!placeId) {
-      const place = Config.getContactType(placeData.type);
-      const contactState = Payloads.buildContactPayload(
-        contact,
-        place.contact_type
-      );
-      const parentRemoteId =
-        placeData?.parent?.id ?? this.cache.getRemoteId(placeData.id);
-      const placePayload = Payloads.buildPlacePayload(
-        placeData,
-        contactState,
-        parentRemoteId
-      );
+      const placePayload = place.asChtPayload();
       placeId = await chtApi.createPlace(placePayload);
-      this.cache.setRemoteId(placeData.id, placeId);
+      place.creationDetails.placeId = placeId;
     }
 
     // why...we don't get a contact id when we create a place with a contact defined.
     // then the created contact doesn't get a parent assigned so we can't create a user for it
-    const contactId: string = await chtApi.getPlaceContactId(placeId);
-    this.cache.setRemoteId(contact.id, contactId);
-    await chtApi.updateContactParent(contactId, placeId);
+    let contactId = place.creationDetails.contactId; 
+    if (!contactId) {
+      contactId = await chtApi.getPlaceContactId(placeId);
+      await chtApi.updateContactParent(contactId, placeId);
+      place.creationDetails.contactId = contactId;
+    }
 
-    const userPayload: UserPayload = Payloads.buildUserPayload(
-      placeId,
-      contactId,
-      contact.properties.name,
-      contact.properties.role
-    );
-    const { username, pass } = await this.tryCreateUser(userPayload, chtApi);
-    return {
-      place: placeId,
-      contact: contactId,
-      user: username,
-      pass: pass,
-    };
+    if (!place.creationDetails.username) {
+      const userPayload = new UserPayload(place, placeId, contactId);
+      const { username, password } = await this.tryCreateUser(userPayload, chtApi);
+      place.creationDetails.username = username;
+      place.creationDetails.password = password;
+    }
+    
+    return place.creationDetails;
   };
 
-  private tryCreateUser = async (
-    userPayload: UserPayload,
-    chtApi: ChtApi
-  ): Promise<{ username: string; pass: string }> => {
-    let retryCount = 0;
-    let username = userPayload.username;
-    do {
+  private tryCreateUser = async (userPayload: UserPayload, chtApi: ChtApi): Promise<{ username: string; password: string }> => {    
+    for (let retryCount = 0; retryCount < 5; ++retryCount) {
       try {
         await chtApi.createUser(userPayload);
-        return { username: userPayload.username, pass: userPayload.password };
+        return userPayload;
       } catch (err: any) {
-        retryCount++;
-        console.error("upload manager", err.response.data);
-        if (err?.response?.status === 400) {
-          const msg = err.response.data;
-          if (msg.includes("already taken")) {
-            const randomNumber = Math.floor(
-              Math.random() * (10 ^ (retryCount + 1))
-            );
-            username = username.concat(randomNumber.toString());
-            userPayload.username = username;
-          } else {
-            throw err;
-          }
-        } else {
+        console.error("createUser retry because", err.response?.data);
+        
+        if (err?.response?.status !== 400) {
           throw err;
         }
+
+        const msg = err.response?.data?.error?.message;
+        if (msg.includes('already taken')) {
+          userPayload.makeUsernameMoreComplex();
+          continue;
+        }
+        
+        if (msg.includes('password')) { // password too easy to guess
+          userPayload.regeneratePassword();
+          continue;
+        }
+        
+          throw err;
       }
-    } while (retryCount < 5);
+    }
+
     throw new Error("could not create user " + userPayload.contact);
   };
 
-  private emitJobStateChange = (
-    workbookId: string,
-    placeId: string,
-    state: uploadState
-  ) => {
-    const event: jobState = {
-      workbookId: workbookId,
-      placeId: placeId,
-      state: state,
-    };
-    this.emit("state", event);
-  };
+  public eventedSessionStateChange(sessionCache: SessionCache, state: SessionCacheUploadState) {
+    sessionCache.state = state; 
+    this.emit('session_state_change', state);     
+  }
 
-  private emitWorkbookStateChange = (state: workbookuploadState) => {
-    this.emit("workbook_state", state);
+  private eventedPlaceStateChange = (subject: Place | Place[], state: PlaceUploadState) => {
+    if (Array.isArray(subject)) {
+      subject.forEach(place => place.state = state);
+    } else {
+      subject.state = state;
+    }
+
+    this.emit('places_state_change', state);
   };
 }

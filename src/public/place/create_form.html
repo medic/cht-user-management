@@ -1,25 +1,39 @@
-<form id="form_place_create" autocomplete="off" {% if backend %} hx-post="{{backend}}" {%else%}
-    hx-post="/place?workbook={{workbookId}}&op=new" {%endif%} hx-target="this" hx-swap="outerHTML">
-    <input name="place_type" value="{{pagePlaceType}}" hidden />
-    {% for prop in placeProperties %}
+<form
+    id="form_place_create" autocomplete="off"
+    {% if backend %} hx-post="{{backend}}" {%else%} hx-post="/place?op=new&type={{contactType.name}}" {%endif%}
+    hx-target="this" hx-swap="outerHTML">
+    <input name="place_type" value="{{contactType.name}}" hidden />
+    {% for prop in contactType.place_properties %}
+    {% capture prop_name %}place_{{prop.doc_name}}{% endcapture %}
     <div class="field">
         <label class="label">{{prop.csv_name}}*</label>
         <div class="control">
-            {% if prop.type == "parent" %}
+            {% if prop.doc_name == "PARENT" %}
             {% include "place/parent_search_input.html" %}
             {%else%}
-            <input name="{{prop.doc_name}}" type="text" class="input" {% if prop.required %} required{% endif %} {% if
-                data[prop.doc_name] %}value="{{data[prop.doc_name]}}" {% endif %} />
+            <input 
+                name="{{ prop_name }}"
+                type="text"
+                class="input" 
+                {% if prop.required %} required {% endif %}
+                {% if data[prop_name] %} value="{{ data[prop_name] }}"{% endif %}
+            />
             {%endif%}
         </div>
     </div>
     {% endfor %}
-    {% for prop in contactProperties %}
+    {% for prop in contactType.contact_properties %}
+    {% capture prop_name %}contact_{{prop.doc_name}}{% endcapture %}
     <div class="field">
         <label class="label">{{prop.csv_name}}*</label>
         <div class="control">
-            <input name="{{prop.doc_name}}" type="text" class="input" {% if prop.required %} required{% endif %} {% if
-                data[prop.doc_name] %}value="{{data[prop.doc_name]}}" {% endif %} />
+            <input
+                name="{{ prop_name }}"
+                type="text"
+                class="input" 
+                {% if prop.required %} required {% endif %}
+                {% if data[prop_name] %} value="{{ data[prop_name] }}" {% endif %}
+            />
         </div>
     </div>
     {% endfor %}

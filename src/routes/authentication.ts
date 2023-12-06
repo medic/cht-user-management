@@ -1,7 +1,7 @@
 import { FastifyInstance, FastifyRequest } from 'fastify';
 
 import Auth from '../lib/authentication';
-import { ChtApi } from '../lib/cht';
+import { ChtApi } from '../lib/cht-api';
 import { Config } from '../lib/config';
 
 export default async function authentication(fastify: FastifyInstance) {

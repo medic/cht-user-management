@@ -9,6 +9,7 @@ import { FastifySSEPlugin } from "fastify-sse-v2";
 import path from "path";
 
 import Auth from './lib/authentication';
+import SessionCache from "./services/session-cache";
 
 const build = (opts: FastifyServerOptions): FastifyInstance => {
   const fastify = Fastify(opts);
@@ -44,6 +45,7 @@ const build = (opts: FastifyServerOptions): FastifyInstance => {
     try {
       const chtSession = Auth.decodeToken(cookieToken);
       req.chtSession = chtSession;
+      req.sessionCache = SessionCache.getForSession(chtSession);
     } catch (e) {
       reply.redirect('/login');
       throw e;

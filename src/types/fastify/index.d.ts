@@ -1,15 +1,16 @@
 import { FastifyInstance } from "fastify";
-import { ChtSession } from "../../lib/cht";
+import { ChtSession } from "../../lib/cht-api";
+import SessionCache from "../../services/session-cache";
 
 declare module "fastify" {
   interface FastifyInstance {
-    cache: MemCache;
     uploadManager: UploadManager;
   }
 
   interface FastifyRequest {
     unauthenticated: boolean;
     chtSession: ChtSession;
+    sessionCache: SessionCache;
   }
 }
 

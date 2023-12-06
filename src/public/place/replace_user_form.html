@@ -1,14 +1,14 @@
-<form id="form_place_create" autocomplete="off" hx-post="/place?workbook={{workbookId}}&op=replace" hx-target="this"
+<form id="form_place_create" autocomplete="off" hx-post="/place?op=replace" hx-target="this"
     hx-swap="outerHTML">
-    <input name="place_type" value="{{pagePlaceType}}" hidden />
+    <input name="place_type" value="{{contactType.name}}" hidden />
     <div class="field">
         <label class="label">Place</label>
         <div class="control">
-            <input id="place_search" name="place_search" type="search" class="input"
-                hx-post="/search/replace?workbook={{workbookId}}&type={{pagePlaceType}}"
+            <input id="place_PARENT" name="place_PARENT" type="search" class="input"
+                hx-post="/search/replace?type={{contactType.name}}"
                 placeholder="Start typing to see suggestions" hx-trigger="keyup changed delay:250ms, search"
-                hx-target="#search_results" hx-swap="innerHTML" required {% if data.place_search
-                %}value="{{data.place_search}}" {% endif %} />
+                hx-target="#search_results" hx-swap="innerHTML" required {% if data.place_PARENT
+                %}value="{{data.place_PARENT}}" {% endif %} />
         </div>
         <div id="search_results" class="control">
         </div>
@@ -17,7 +17,7 @@
         {% endif %}
         {% if data.place_id %}
         <select name="place_id" hidden>
-            <option value="{{ data.place_id }}" selected>{{ data.place_search }}</option>
+            <option value="{{ data.place_id }}" selected>{{ data.place_PARENT }}</option>
         </select>
         {% endif %}
     </div>
@@ -62,8 +62,8 @@
         </div>
     </div>
     <!-- <div class="field">
-        <label class="label">Would you like to rename the {{pagePlaceType}}?</label>
-        <div class="control" hx-post="/place?workbook={{workbookId}}&op=replace" hx-vals='{"layout": true}'
+        <label class="label">Would you like to rename the {{contactType.name}}?</label>
+        <div class="control" hx-post="/place?op=replace" hx-vals='{"layout": true}'
             hx-target="#form_place_create" hx-trigger='change from:input[name="rename"]'>
             <label class="radio">
                 <input type="radio" id="yes" name="rename" value="yes" {% if data.rename=="yes" %}checked {% endif %}>

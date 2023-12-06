@@ -2,17 +2,17 @@
     <div class="field is-grouped">
         <div class="control">
             <div class="select">
-                <select name="type" hx-post="/place/form/update?workbook={{workbookId}}" hx-trigger="change"
+                <select name="type" hx-post="/place/form/update" hx-trigger="change"
                     hx-target="#place_form_parent" hx-swap="outerHTML">
-                    {%- for place in hierarchy %}
-                    <option value="{{place}}" {% if pagePlaceType==place %}selected{%endif%}>{{place}}</option>
+                    {%- for place in uniquePlaceNames %}
+                    <option value="{{place}}" {% if contactType.name==place %}selected{%endif%}>{{place}}</option>
                     {%- endfor%}
                 </select>
             </div>
         </div>
         <div class="control">
             <div class="select">
-                <select name="op" hx-post="/place/form/update?workbook={{workbookId}}" hx-trigger="change"
+                <select name="op" hx-post="/place/form/update" hx-trigger="change"
                     hx-target="#place_form_parent" hx-swap="outerHTML">
                     <option value="new" {% if op=="new" %}selected{%endif%}>New</option>
                     <option value="bulk" {% if op=="bulk" %}selected{%endif%}>Bulk Load</option>
