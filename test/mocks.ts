@@ -12,7 +12,6 @@ export const mockPlace = (type: ContactType, prop: any) : Place => {
   };
   result.parentDetails = {
     id: 'known',
-    type: type.parent_type,
     name: 'parent',
   };
   return result;
@@ -25,7 +24,8 @@ export const mockSimpleContactType = (propertyType = 'string', propertyValidator
   contact_type: 'contact-type',
   contact_role: 'role',
   place_properties: [
-    mockProperty(propertyType, propertyValidator)
+    mockProperty('name', undefined, 'name'),
+    mockProperty(propertyType, propertyValidator),
   ],
   contact_properties: [],
 });
@@ -38,13 +38,19 @@ export const mockValidContactType = (propertyType = 'string', propertyValidator:
   contact_role: 'role',
   place_properties: [
     mockProperty('string', undefined, 'PARENT'),
-    mockProperty('string', undefined, 'name'),
+    mockProperty('name', undefined, 'name'),
     mockProperty(propertyType, propertyValidator)
   ],
   contact_properties: [
     mockProperty('string', undefined, 'name'),
   ],
 });
+
+export const mockParentPlace = (parentPlaceType: ContactType, parentName: string) => {
+  const place = new Place(parentPlaceType);
+  place.properties.name = parentName;
+  return place;
+};
 
 export const mockProperty = (type = 'string', validator: string | string[] | undefined, doc_name: string = 'prop') => ({
   csv_name: 'csv',

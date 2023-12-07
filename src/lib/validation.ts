@@ -1,14 +1,15 @@
 import _ from 'lodash';
 
-import { ContactProperty } from './config';
+import { ContactProperty, ContactType } from './config';
 
 import ValidatorString from './validator-string';
 import ValidatorPhone from './validator-phone';
+import ValidatorRegex from './validator-regex';
 import ValidatorName from './validator-name';
 import ValidatorGender from './validator-gender';
 import Place from '../services/place';
 import ValidatorSkip from './validator-skip';
-import ParentComparator from './parent-comparator';
+import PlaceResolver from './place-resolver';
 
 
 export interface IValidator {
@@ -23,6 +24,7 @@ type ValidatorMap = {
 const TypeValidatorMap: ValidatorMap = {
   string: new ValidatorString(),
   name: new ValidatorName(),
+  regex: new ValidatorRegex(),
   phone: new ValidatorPhone(),
   none: new ValidatorSkip(),
   gender: new ValidatorGender(),
@@ -30,43 +32,72 @@ const TypeValidatorMap: ValidatorMap = {
 
 export class Validation {
   public static getInvalidProperties(place: Place) : string[] {
-    return [
-      ...Validation.validateParent(place),
+    const result = [
+      ...Validation.validatePlaceLinks(place),
       ...Validation.validateProperties(place.properties, place.type.place_properties, 'place_'),
       ...Validation.validateProperties(place.contact.properties, place.type.contact_properties, 'contact_')
-    ]
+    ];
+
+    return result;
   }
 
-  public static cleanup(place: Place): Place
+  public static format(place: Place): Place
   {
-    const formatAllProperties = (propertiesToFormat: ContactProperty[], objectToFormat: any) => {
-      for (const property of propertiesToFormat) {
-        this.formatProperty(property, objectToFormat);
+    const alterAllProperties = (propertiesToAlter: ContactProperty[], objectToAlter: any) => {
+      for (const property of propertiesToAlter) {
+        this.alterProperty(property, objectToAlter);
       }
     }
 
-    formatAllProperties(place.type.contact_properties, place.contact.properties);
-    formatAllProperties(place.type.place_properties, place.properties);
+    alterAllProperties(place.type.contact_properties, place.contact.properties);
+    alterAllProperties(place.type.place_properties, place.properties);
+
+    const replacementProperty = _.cloneDeep(place.type.place_properties.find(p => p.doc_name === 'name'));
+    if (!replacementProperty) {
+      throw Error('Validation.format failed to find name property');
+    }
+    replacementProperty.doc_name = 'replacement';
+    this.alterProperty(replacementProperty, place.properties);
+
     return place;
   }
 
-  private static validateParent(place: Place): string[] {
+  public static formatSingle(docName: string, val: string, contactType: ContactType): string {
+    const propertyMatch = contactType.place_properties.find(p => p.doc_name === docName);
+    if (!propertyMatch) {
+      throw Error(`Cannot validate single property with name: "${docName}"`);
+    }
+    
+    const object = { [docName]: val };
+    Validation.alterProperty(propertyMatch, object);
+    return object[docName];
+  }
+
+  private static validatePlaceLinks(place: Place): string[] {
+    const result = [];
+    if (place.replacementName) {
+      const expectReplacement = !!place.replacementName;
+      const hasLinkedReplacement = !!place.replacement?.id;
+      const replacementLinkIsValid = !expectReplacement || PlaceResolver.isParentIdValid(place.replacement?.id);
+      const isReplacementValid = expectReplacement === hasLinkedReplacement && replacementLinkIsValid;
+      if (!isReplacementValid) {
+        result.push('place_replacement');
+      }
+    }
+
     const expectParent = !!place.type.parent_type;
     const hasLinkedParent = !!place.parentDetails?.id;
-    const parentLinkIsValid = !expectParent || ParentComparator.isParentIdValid(place.parentDetails?.id);
-    const isValid = expectParent === hasLinkedParent && parentLinkIsValid;
-    return isValid ? [] : ['place_PARENT'];
+    const parentLinkIsValid = !expectParent || PlaceResolver.isParentIdValid(place.parentDetails?.id);
+    const isParentValid = expectParent === hasLinkedParent && parentLinkIsValid;
+    if (!isParentValid) {
+      result.push('place_PARENT');
+    }
+
+    return result;
   }
 
   private static validateProperties(obj : any, properties : ContactProperty[], prefix: string) : string[] {
     const invalid = [];
-
-    const expectedProperties = properties.filter(p => p.required).map(p => p.doc_name);
-    const actualProperties = Object.keys(obj);
-    const hasAll = expectedProperties.filter(p => !actualProperties.includes(p));
-    if (!hasAll) {
-      invalid.push('missing required properties');
-    }
 
     for (const property of properties) {
       const value = obj[property.doc_name];
@@ -93,11 +124,11 @@ export class Validation {
     }
   }
 
-  private static formatProperty(property : ContactProperty, obj: any) {
+  private static alterProperty(property : ContactProperty, obj: any) {
     const value = obj[property.doc_name];
     if (value) {
-      const formatted = this.getValidator(property).format(value, property);
-      obj[property.doc_name] = formatted;
+      const altered = this.getValidator(property).format(value, property);
+      obj[property.doc_name] = altered;
     }
   }
 

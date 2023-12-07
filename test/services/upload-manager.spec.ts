@@ -2,13 +2,13 @@ import { expect } from 'chai';
 import sinon from 'sinon';
 
 import { UploadManager } from '../../src/services/upload-manager';
-import { mockValidContactType } from '../mocks';
+import { mockValidContactType, mockParentPlace } from '../mocks';
 import PlaceFactory from '../../src/services/place-factory';
 import SessionCache from '../../src/services/session-cache';
 import { ParentDetails } from '../../src/lib/cht-api';
 
 describe('upload-manager.ts', () => {
-  it('mock data is properly sent to chtApi (no sessionCache cache)', async () => {
+  it('mock data is properly sent to chtApi (no local cache)', async () => {
     const { fakeFormData, contactType, chtApi, sessionCache, parentDetails } = await createMocks();
     const place = await PlaceFactory.createOne(fakeFormData, contactType, sessionCache, chtApi);
 
@@ -21,7 +21,7 @@ describe('upload-manager.ts', () => {
       'contact.contact_type': contactType.contact_type,
       'contact.name': 'contact',
       prop: 'foo',
-      name: 'place',
+      name: 'Place Community Health Unit',
       parent: parentDetails.id,
       contact_type: contactType.name,
     });
@@ -43,12 +43,18 @@ describe('upload-manager.ts', () => {
 
   it('mock data is properly sent to chtApi (sessionCache cache)', async () => {
     const { fakeFormData, contactType, sessionCache, chtApi, parentDetails } = await createMocks();
-    sessionCache.saveKnownParents(parentDetails);
+    
+    const parentContactType = mockValidContactType('string', undefined);
+    parentContactType.name = parentDetails.type;
+    
+    const parentPlace = mockParentPlace(parentContactType, parentDetails.name);
+    sessionCache.savePlaces(parentPlace);
     const place = await PlaceFactory.createOne(fakeFormData, contactType, sessionCache, chtApi);
     const uploadManager = new UploadManager();
     await uploadManager.doUpload([place], chtApi);
 
-    expect(chtApi.searchPlace.called).to.be.false;
+    expect(chtApi.getPlacesWithType.calledTwice).to.be.true;
+    expect(chtApi.getPlacesWithType.args[0]).to.deep.eq(['parent', undefined]);
   });
 });
 
@@ -56,12 +62,11 @@ async function createMocks() {
   const contactType = mockValidContactType('string', undefined);
   const parentDetails: ParentDetails = {
     id: 'parent-id',
-    type: contactType.parent_type,
     name: 'parent-name',
   };
   const sessionCache = new SessionCache();
   const chtApi = {
-    searchPlace: sinon.stub().resolves([parentDetails]),
+    getPlacesWithType: sinon.stub().resolves([parentDetails]),
     createPlace: sinon.stub().resolves('created-place-id'),
     getPlaceContactId: sinon.stub().resolves('created-contact-id'),
     updateContactParent: sinon.stub().resolves(),

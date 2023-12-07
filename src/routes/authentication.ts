@@ -19,11 +19,17 @@ export default async function authentication(fastify: FastifyInstance) {
     return resp.view('src/public/auth/view.html', tmplData);
   });
 
+  fastify.get('/logout', unauthenticatedOptions, async (req, resp) => {
+    resp.clearCookie(Auth.AUTH_COOKIE_NAME);
+    return resp.redirect('/login');
+  });
+
   fastify.post('/authenticate', unauthenticatedOptions, async (req, resp) => {
     const data: any = req.body;
     const { username, password, domain } = data;
 
-    const session = await ChtApi.createSession(domain, username, password);
+    const authInfo = Config.getAuthenticationInfo(domain);
+    const session = await ChtApi.createSession(authInfo, username, password);
     if (!session.sessionToken) {
       return resp.view("src/public/auth/form.html", {
         domains: Config.domains,
@@ -40,6 +46,7 @@ export default async function authentication(fastify: FastifyInstance) {
       secure: true
     });
 
+    resp.header("HX-Redirect", `/`);
     return resp.redirect('/');
   });
 };

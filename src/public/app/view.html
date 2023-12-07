@@ -12,12 +12,10 @@
 <body>
     <div id="app" class="tile is-ancestor" style="min-height: 100vh">
         <div id="workflow-content" class="tile is-parent">
-            {%if view=="add"%}
-            {% include "app/fragment_form.html" %}
-            {%elsif view=="edit"%}
-            {% include "app/fragment_edit_form.html" %}
+            {%if view=="add" or view=="edit" %}
+            {% include "app/fragment_create.html" %}
             {%else%}
-            {% include "app/fragment_places.html" %}
+            {% include "app/fragment_home.html" %}
             {%endif%}
         </div>
     </div>

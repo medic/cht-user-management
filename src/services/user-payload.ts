@@ -7,6 +7,8 @@ export class UserPayload {
   public type: string;
   public place: string;
   public contact: string;
+  public fullname: string;
+  public phone: string;
 
   constructor(place: Place, placeId: string, contactId: string) {
     this.username = this.generateUsername(place.contact.name);
@@ -14,6 +16,8 @@ export class UserPayload {
     this.type = place.type.contact_role;
     this.place = placeId;
     this.contact = contactId;
+    this.fullname = place.contact.name;
+    this.phone = place.contact.properties.phone; // best guess
   }
 
   public regeneratePassword(): void {

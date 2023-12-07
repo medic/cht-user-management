@@ -1,5 +1,7 @@
 import _ from "lodash";
-import config from "../config.json";
+import config from "../echis-ke/config.json";
+import eCHISMutate from "../echis-ke/gross";
+import { ChtApi, PlacePayload } from "./cht-api";
 
 export type ContactType = {
   name: string;
@@ -19,9 +21,10 @@ export type ContactProperty = {
   required: boolean;
 };
 
-export type AuthenticationDomains = {
+export type AuthenticationInfo = {
   friendly: string;
   domain: string;
+  useHttp?: boolean;
 };
 
 export class Config {
@@ -39,7 +42,19 @@ export class Config {
     return contactMatch;
   }
 
-  public static domains() : AuthenticationDomains[] {
+  public static eCHISMutate(payload: PlacePayload, chtApi: ChtApi, isReplacement: boolean): Promise<PlacePayload> {
+    return eCHISMutate(payload, chtApi, isReplacement);
+  }
+
+  public static getAuthenticationInfo(domain: string) : AuthenticationInfo {
+    const domainMatch = config.domains.find(c => c.domain === domain);
+    if (!domainMatch) {
+      throw new Error(`unrecognized domain: "${domain}"`);
+    }
+    return domainMatch;
+  }
+
+  public static domains() : AuthenticationInfo[] {
     return _.sortBy(config.domains, 'friendly');
   }
 }

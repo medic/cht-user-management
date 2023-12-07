@@ -28,40 +28,30 @@ export default async function sessionCache(fastify: FastifyInstance) {
     const tmplData = {
       contactType,
       contactTypes: placeData,
-      uniquePlaceNames: contactTypes.map((t) => t.name),
       sessionState: sessionCache.state,
       hasFailedJobs: failed.length > 0,
       failedJobCount: failed.length,
       scheduledJobCount: scheduledJobs.length,
+      domain: req.chtSession.domain,
       op,
     };
-
-    const isHxReq = req.headers["hx-request"];
-    if (isHxReq) {
-      const content = await fastify.view("src/public/app/content.html", tmplData);
-      const header = await fastify.view("src/public/app/view_header.html", tmplData);
-      return content + header;
-    }
 
     return resp.view("src/public/app/view.html", tmplData);
   });
 
   fastify.get("/app/add-place", async (req, resp) => {
-    const params: any = req.params;
-    const id = params.id;
     const queryParams: any = req.query;
 
     const contactTypes = Config.contactTypes();
     const contactType = queryParams.type
       ? Config.getContactType(queryParams.type)
-      : contactTypes[0];
+      : contactTypes[contactTypes.length - 1];
     const op = queryParams.op || "new";
     const tmplData = {
-      view: "add",
-      title: id,
-      uniquePlaceNames: contactTypes.map((type) => type.name),
+      view: "add",  
       op,
       contactType,
+      contactTypes,
     };
 
     return resp.view("src/public/app/view.html", tmplData);

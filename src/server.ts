@@ -19,7 +19,7 @@ const build = (opts: FastifyServerOptions): FastifyInstance => {
   fastify.register(cookie);
   fastify.register(view, {
     engine: {
-      liquid: new Liquid({ extname: ".html", root: "src/public" }),
+      liquid: new Liquid({ extname: ".html", root: "src/public", jekyllInclude: true, dynamicPartials: true }),
     },
   });
   fastify.register(autoload, {

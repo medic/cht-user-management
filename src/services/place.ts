@@ -10,6 +10,7 @@ export type UserCreationDetails = {
   password?: string;
   placeId?: string;
   contactId?: string;
+  disabledUsers?: string[];
 };
 
 export enum PlaceUploadState {
@@ -30,9 +31,13 @@ export default class Place {
   public readonly creationDetails : UserCreationDetails = {};
   
   public properties: {
+    name?: string;
+    PARENT?: string;
+    replacement?: string;
     [key: string]: any;
   };
   public parentDetails?: ParentDetails;
+  public replacement?: ParentDetails;
   public invalidProperties?: string[];
   public state : PlaceUploadState;
 
@@ -66,6 +71,11 @@ export default class Place {
       ...this.contact.properties,
       ...getPropertySetWithPrefix(this.type.contact_properties, CONTACT_PREFIX),
     };
+
+    delete this.properties.replacement;
+    if (formData.place_replacement) {
+      this.properties.replacement = formData.place_replacement;
+    }
   }
 
   /**
@@ -93,7 +103,7 @@ export default class Place {
   public asChtPayload(): PlacePayload {
     return {
       ...this.properties,
-      _id: this.id,
+      _id: this.replacementName ? this.replacement?.id : this.id,
       name: this.name,
       type: "contact",
       contact_type: this.type.name,
@@ -110,14 +120,13 @@ export default class Place {
   public asParentDetails() : ParentDetails {
     return {
       id: this.id,
-      type: this.type.name,
       name: this.name,
     };
   }
 
   public validate(): void {
     this.invalidProperties = Validation.getInvalidProperties(this);
-    Validation.cleanup(this);
+    Validation.format(this);
   }
 
   public get name() : string {
@@ -129,13 +138,17 @@ export default class Place {
     return this.properties[nameProperty.doc_name];
   }
 
-  public get parentName(): string {
+  public get parentName(): string | undefined {
     const parentProperty = this.type.place_properties.find(p => p.doc_name === "PARENT");
     if (!parentProperty) {
       throw Error(`Place ${this.type.name} has no PARENT property`);
     }
 
     return this.properties[parentProperty.doc_name];
+  }
+
+  public get replacementName(): string | undefined {
+    return this.properties.replacement;
   }
 
   public get isCreated(): boolean {

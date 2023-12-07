@@ -1,6 +1,6 @@
 import { IValidator } from './validation';
 
-export default class ValidatorSkip implements IValidator {
+export default class ValidatorGender implements IValidator {
   isValid(input: string) : boolean {
     return this.parseGenders(input).isValid;
   }

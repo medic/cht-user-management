@@ -1,6 +1,11 @@
 {
   "domains": [
     {
+      "friendly": "$localhost",
+      "domain": "localhost:5988",
+      "useHttp": true
+    },
+    {
       "friendly": "Migori",
       "domain": "migori-echis.health.go.ke"
     },
@@ -192,7 +197,7 @@
   "contact_types": [
     {
       "name": "c_community_health_unit",
-      "friendly": "CHU",
+      "friendly": "Community Health Unit",
       "parent_type": "b_sub_county",
       "contact_type": "person",
       "contact_role": "community_health_assistant",
@@ -201,7 +206,7 @@
           "csv_name": "CHU Name",
           "doc_name": "name",
           "type": "name",
-          "validator": ["\\sCommunity Health Unit", "\\sCommunity Unit", "\\sUnit"],
+          "validator": ["\\sCommunity Health Unit", "\\sCommunity Unit", "\\sUnit", "\\sCU"],
           "required": true
         },
         {
@@ -212,21 +217,21 @@
         },
         {
           "csv_name": "CHU Code",
-          "doc_name": "chu_code",
-          "type": "string",
+          "doc_name": "code",
+          "type": "regex",
           "validator": "^\\d{6}$",
           "required": true
         },
         {
           "csv_name": "Link Facility Name",
-          "doc_name": "facility_name",
+          "doc_name": "link_facility_name",
           "type": "name",
           "required": true
         },
         {
           "csv_name": "Link Facility MFL Code",
-          "doc_name": "facility_code",
-          "type": "string",
+          "doc_name": "link_facility_code",
+          "type": "regex",
           "validator": "^\\d{5}$",
           "required": true
         }
@@ -249,42 +254,38 @@
     },
     {
       "name": "d_community_health_volunteer_area",
-      "friendly": "CHP Area",
+      "friendly": "Community Health Promoter",
       "parent_type": "c_community_health_unit",
       "contact_type": "person",
       "contact_role": "community_health_volunteer",
       "place_properties": [
         {
-          "csv_name": "CHV Area Name",
-          "doc_name": "name",
-          "type": "name",
-          "required": true
-        },
-        {
           "csv_name": "CHU",
           "doc_name": "PARENT",
           "type": "name",
+          "validator": ["\\sCommunity Health Unit", "\\sCommunity Unit", "\\sUnit", "\\sCU"],
+          "required": true
+        },
+        {
+          "csv_name": "CHP Area Name",
+          "doc_name": "name",
+          "type": "name",
+          "validator": ["\\sArea"],
           "required": true
         }
       ],
       "contact_properties": [
         {
-          "csv_name": "CHV Name",
+          "csv_name": "CHP Name",
           "doc_name": "name",
           "type": "name",
           "required": true
         },
         {
-          "csv_name": "CHV Phone",
+          "csv_name": "CHP Phone",
           "doc_name": "phone",
           "validator": "KE",
           "type": "phone",
-          "required": true
-        },
-        {
-          "csv_name": "CHV Sex",
-          "doc_name": "sex",
-          "type": "gender",
           "required": true
         }
       ]

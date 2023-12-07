@@ -3,7 +3,7 @@ import { CountryCode, parsePhoneNumber, isValidNumberForRegion } from "libphonen
 import { ContactProperty } from './config';
 import { IValidator } from './validation';
 
-export default class ValidatorSkip implements IValidator {
+export default class ValidatorPhone implements IValidator {
   isValid(input: string, property : ContactProperty) : boolean {
     if (!property.validator) {
       throw Error(`property of type phone on ${property.csv_name} missing validator with locale`);

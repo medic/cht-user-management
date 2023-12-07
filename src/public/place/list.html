@@ -1,56 +1,78 @@
 {% for contactType in contactTypes %}
 <div id="{{contactType.name}}" class="mb-6">
-    <h2 class="title is-4">{{contactType.friendly}}</h2>
-    <br>
+  <h2 class="title is-4">{{contactType.friendly}}</h2>
+  {% if contactType.places.length > 0 %}
     <table id="table_places" {% if oob %} hx-swap-oob="true" {%endif%} class="table is-fullwidth">
-        <thead>
-            <tr>
-                {% for property in contactType.place_properties %}
-                <th id="place_{{property.doc_name}}">{{property.csv_name}}</th>
-                {% endfor %}
-                {% for contact_property in contactType.contact_properties %}
-                <th id="contact_{{contact_property.doc_name}}">{{contact_property.csv_name}}</th>
-                {% endfor %}
-                <th>-</th>
-                <th></th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for place in contactType.places %}
-            <tr>
-                {% for property in contactType.place_properties %}
-                {% capture propertyName %}place_{{property.doc_name}}{% endcapture %}
-                <td
-                    id="{{ propertyName }}"
-                    {% if place.invalidProperties contains propertyName %} class="is-danger" {% endif %}
-                >
-                    {{place.properties[property.doc_name]}}
-                </th>
-                {% endfor %}
-                {% for contact_property in contactType.contact_properties %}
-                {% capture propertyName %}contact_{{contact_property.doc_name}}{% endcapture %}
-                <td
-                    id="{{propertyName}}"
-                    {% if place.invalidProperties contains propertyName %} class="is-danger" {% endif %}
-                >
-                    {{place.contact.properties[contact_property.doc_name]}}
-                </th>
-                {% endfor %}
-                {% if place.invalidProperties.length == 0 %}
-                <td><span class="tag is-info is-light">{{place.state}}</span></td>
-                {% else %}
-                <td><span class="tag is-danger is-light">INVALID</span></td>
-                {% endif %}
-                <td>
-                    {% if place.creationDetails.password %}
-                    {% else %}
-                    <a hx-target="#workflow-content" hx-swap="innerHTML"
-                        hx-get="/place/edit/{{place.id}}">Edit</a>
-                    {%endif%}
-                </td>
-            </tr>
-            {% endfor%}
-        </tbody>
+      <thead>
+        <tr>
+          <th>Replacing</th>
+          {% for property in contactType.place_properties %}
+          <th id="place_{{property.doc_name}}">{{property.csv_name}}</th>
+          {% endfor %}
+          {% for contact_property in contactType.contact_properties %}
+          <th id="contact_{{contact_property.doc_name}}">{{contact_property.csv_name}}</th>
+          {% endfor %}
+          <th>-</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for place in contactType.places %}
+        <tr>
+          <td
+           id="replacement"
+           {% if place.invalidProperties contains 'place_replacement' %} class="is-danger" {% endif %}
+          >
+            {% if place.properties.replacement %}
+              {% if place.invalidProperties contains 'place_replacement' %}
+                {{ place.properties.replacement }}
+              {% else %}
+                <a href="{{ domain }}/#/contacts/{{ place.replacement.id }}" target="_blank">{{ place.properties.replacement }}</a>
+              {% endif %}
+            {% else %}
+              <i>New</i>
+            {% endif %}
+          </td>
+          {% for property in contactType.place_properties %}
+          {% capture propertyName %}place_{{property.doc_name}}{% endcapture %}
+          <td
+            id="{{ propertyName }}"
+            {% if place.invalidProperties contains propertyName %} class="is-danger" {% endif %}
+          >
+            {% if property.doc_name == 'PARENT' and place.parentDetails.id %}
+              <a href="{{ domain }}/#/contacts/{{ place.parentDetails.id }}" target="_blank">{{place.properties[property.doc_name]}}</a>
+            {% else %}
+            {{place.properties[property.doc_name]}}
+            {% endif %}
+          </th>
+          {% endfor %}
+          
+          {% for contact_property in contactType.contact_properties %}
+          {% capture propertyName %}contact_{{contact_property.doc_name}}{% endcapture %}
+          <td
+            id="{{propertyName}}"
+            {% if place.invalidProperties contains propertyName %} class="is-danger" {% endif %}
+          >
+            {{place.contact.properties[contact_property.doc_name]}}
+          </th>
+          {% endfor %}
+          {% if place.invalidProperties.length == 0 %}
+          <td><span class="tag is-info is-light">{{ place.state }}</span></td>
+          {% else %}
+          <td><span class="tag is-danger is-light">INVALID</span></td>
+          {% endif %}
+          <td>
+            {% if place.creationDetails.password %}
+            {% else %}
+            <a href="/place/edit/{{place.id}}">Edit</a>
+            {%endif%}
+          </td>
+        </tr>
+        {% endfor%}
+      </tbody>
     </table>
+  {% else %}
+    <a href="/app/add-place?type={{contactType.name}}">+ Add {{contactType.friendly}}</a>
+  {% endif %}
 </div>
 {% endfor %}

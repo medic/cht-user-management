@@ -1,45 +1,66 @@
 <form
-    id="form_place_create" autocomplete="off"
-    {% if backend %} hx-post="{{backend}}" {%else%} hx-post="/place?op=new&type={{contactType.name}}" {%endif%}
-    hx-target="this" hx-swap="outerHTML">
-    <input name="place_type" value="{{contactType.name}}" hidden />
-    {% for prop in contactType.place_properties %}
+  id="form_place_create" autocomplete="off"
+  {% if backend %} hx-post="{{backend}}" {%else%} hx-post="/place?op=new&type={{contactType.name}}" {%endif%}
+  hx-target="this" hx-swap="outerHTML">
+  <input name="place_type" value="{{contactType.name}}" hidden />
+  {% if data.place_replacement or op == "replace" %}
+    <div class="field">
+      <label class="label">Existing Place To Replace:</label>
+      <div class="control">
+        {% capture search_contact_type %}{{ contactType.name }}{% endcapture %}
+        {% capture search_value %}{{ data.place_replacement }}{% endcapture %}
+        {% include "place/search_input.html"
+          name="place_replacement"
+          type=search_contact_type
+          value=search_value
+        %}
+      </div>
+    </div>  
+  {%endif%}
+
+  {% for prop in contactType.place_properties %}
     {% capture prop_name %}place_{{prop.doc_name}}{% endcapture %}
     <div class="field">
-        <label class="label">{{prop.csv_name}}*</label>
-        <div class="control">
-            {% if prop.doc_name == "PARENT" %}
-            {% include "place/parent_search_input.html" %}
-            {%else%}
-            <input 
-                name="{{ prop_name }}"
-                type="text"
-                class="input" 
-                {% if prop.required %} required {% endif %}
-                {% if data[prop_name] %} value="{{ data[prop_name] }}"{% endif %}
-            />
-            {%endif%}
-        </div>
+      <label class="label">{{prop.csv_name}}*</label>
+      <div class="control">
+        {% if prop.doc_name == "PARENT" %}
+          {% capture search_contact_type %}{{ contactType.parent_type }}{% endcapture %}
+          {% capture search_value %}{{ data.place_PARENT }}{% endcapture %}
+          {% include "place/search_input.html"
+            name="place_PARENT"
+            type=search_contact_type
+            value=search_value
+          %}
+        {%else%}
+        <input 
+          name="{{ prop_name }}"
+          type="text"
+          class="input" 
+          {% if prop.required %} required {% endif %}
+          {% if data[prop_name] %} value="{{ data[prop_name] }}"{% endif %}
+        />
+        {%endif%}
+      </div>
     </div>
-    {% endfor %}
-    {% for prop in contactType.contact_properties %}
+  {% endfor %}
+  {% for prop in contactType.contact_properties %}
     {% capture prop_name %}contact_{{prop.doc_name}}{% endcapture %}
     <div class="field">
-        <label class="label">{{prop.csv_name}}*</label>
-        <div class="control">
-            <input
-                name="{{ prop_name }}"
-                type="text"
-                class="input" 
-                {% if prop.required %} required {% endif %}
-                {% if data[prop_name] %} value="{{ data[prop_name] }}" {% endif %}
-            />
-        </div>
+      <label class="label">{{prop.csv_name}}*</label>
+      <div class="control">
+        <input
+          name="{{ prop_name }}"
+          type="text"
+          class="input" 
+          {% if prop.required %} required {% endif %}
+          {% if data[prop_name] %} value="{{ data[prop_name] }}" {% endif %}
+        />
+      </div>
     </div>
-    {% endfor %}
-    <div class=" field is-grouped is-grouped-right">
-        <div class="control">
-            <button id="place_create_submit" class="button is-link">Save</button>
-        </div>
+  {% endfor %}
+  <div class=" field is-grouped is-grouped-right">
+    <div class="control">
+      <button id="place_create_submit" class="button is-link">Save</button>
     </div>
+  </div>
 </form>

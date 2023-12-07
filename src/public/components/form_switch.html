@@ -1,0 +1,16 @@
+<div id="place_form_parent">
+  {% capture header_caption %}
+    {% if op == "bulk" %} Bulk Load from CSV
+    {% elsif op == "replace"%} Replace
+    {% elsif op == "edit" %} Edit 
+    {% else %} New
+    {% endif %}
+  {% endcapture %}
+  <h5 id="form_place_create_header" class="title is-5">{{header_caption}} {{contactType.friendly}}</h5>
+
+  {% if op == "bulk" %}
+    {% include "place/bulk_create_form.html" %}
+  {% else %}
+    {% include "place/create_form.html" %}
+  {% endif %}
+</div>

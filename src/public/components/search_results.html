@@ -1,12 +1,16 @@
 <div class="dropdown is-active">
-    <div class="dropdown-menu" id="dropdown-menu" role="menu">
-        <div class="dropdown-content">
-            {% for result in results %}
-            <a hx-post="/search/select?place_id={{place.id}}&parent_id={{result.id}}&op={{op}}"
-                class="dropdown-item" hx-target="#place_form_parent" hx-encoding="application/x-www-form-urlencoded">
-                {{result.name}}
-            </a>
-            {% endfor %}
-        </div>
+  <div class="dropdown-menu" id="dropdown-menu" role="menu">
+    <div class="dropdown-content">
+      {% for searchResult in searchResults %}
+        <a 
+          class="dropdown-item" 
+          hx-post="/search/select?place_id={{place.id}}&result_name={{searchResult}}&scenario={{scenario}}&op={{op}}"
+          hx-target="#place_form_parent" 
+          hx-encoding="application/x-www-form-urlencoded"
+        >
+          {{searchResult}}
+        </a>
+      {% endfor %}
     </div>
+  </div>
 </div>
