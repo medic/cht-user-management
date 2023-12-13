@@ -47,7 +47,6 @@ export default async function authentication(fastify: FastifyInstance) {
     });
 
     resp.header("HX-Redirect", `/`);
-    return resp.redirect('/');
   });
 };
 
