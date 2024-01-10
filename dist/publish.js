@@ -63,7 +63,7 @@ const dockerCommand = (args) => {
 (async () => {
     try {
         const tags = getImageTags();
-        const dockerfilePath = path.join(__dirname, '..', '..', 'Dockerfile');
+        const dockerfilePath = path.join(__dirname, '..', 'Dockerfile');
         const tagFlags = tags.map(tag => ['-t', tag]).flat();
         const dockerBuildParams = [
             'build',
