@@ -2,8 +2,7 @@ version: '3.7'
 
 services:
   cht-user-management:
-    build:
-      context: .
+    image: public.ecr.aws/medic/cht-user-management:latest
     environment:
       - EXTERNAL_PORT=${EXTERNAL_PORT:-3000}
       - COOKIE_PRIVATE_KEY=${COOKIE_PRIVATE_KEY}
