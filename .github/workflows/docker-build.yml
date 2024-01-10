@@ -3,7 +3,7 @@ name: Docker build and publish
 on: [push, pull_request]
 
 env:
-  ECR_REPO: 'public.ecr.aws/medic'
+  ECR_REPO: 'public.ecr.aws/s5s3h4s7'
 
 jobs:
   publish:
