@@ -1,0 +1,43 @@
+name: Docker build and publish
+
+on: [push, pull_request]
+
+env:
+  ECR_REPO: 'public.ecr.aws/s5s3h4s7'
+
+jobs:
+
+
+  publish:
+    needs: e2e-tests
+    name: Publish Docker image
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name != 'pull_request' }}
+
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.ECR_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.ECR_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+        with:
+          registry-type: public
+
+      - name: Get branch name
+        uses: nelonoel/branch-name@1ea5c86cb559a8c4e623da7f188496208232e49f
+      - name: Set ENV
+        run: |
+          echo "BUILD_NUMBER=$GITHUB_RUN_ID" >> $GITHUB_ENV
+          echo "BRANCH=$BRANCH_NAME" >> $GITHUB_ENV   
+
+      - uses: actions/checkout@v2
+      - name: Use Node.js 20.x
+        uses: actions/setup-node@v1
+        with:
+          node-version: 20.x
+      - run: npm run publish

@@ -1,0 +1,19 @@
+{
+  "name": "cht-user-management",
+  "version": "1.0.0",
+  "main": "dist/index.js",
+  "scripts": {
+    "start": "node dist/index.js",
+    "publish": "node dist/publish.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/medic/cht-user-management.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/medic/cht-user-management/issues"
+  },
+  "homepage": "https://github.com/medic/cht-user-management"
+}
