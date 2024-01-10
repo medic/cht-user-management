@@ -6,8 +6,6 @@ env:
   ECR_REPO: 'public.ecr.aws/s5s3h4s7'
 
 jobs:
-
-
   publish:
     needs: e2e-tests
     name: Publish Docker image
