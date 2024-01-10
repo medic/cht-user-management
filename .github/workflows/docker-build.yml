@@ -7,7 +7,6 @@ env:
 
 jobs:
   publish:
-    needs: e2e-tests
     name: Publish Docker image
     runs-on: ubuntu-latest
     if: ${{ github.event_name != 'pull_request' }}
