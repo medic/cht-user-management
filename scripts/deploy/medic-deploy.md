@@ -1,5 +1,10 @@
 ## Medic Deployment
 
+This readme talks about how to use `helm` and `kubect`  running locally on your workstation to create, update and delete instances of the CHT User Management tool.  These will be running in Medic's [EKS](https://docs.aws.amazon.com/eks/latest/userguide/what-is-eks.html) and these instructions are meant to be followed by Medic teammates who have access to EKS.
+
+General public is welcome to look at these instructions for who they might use them in their own infrastructure. 
+
+### Key/Value pairs used 
 | Key       | Value                                                   |
 |-----------|---------------------------------------------------------|
 | context   | arn:aws:eks:eu-west-2:720541322708:cluster/prod-cht-eks |
