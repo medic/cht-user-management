@@ -1,24 +1,36 @@
 <html>
 
 <head>
-    <title>cht-usr</title>
-    <script src="https://unpkg.com/htmx.org@1.9.6"
-        integrity="sha384-FhXw7b6AlE/jyjlZH5iHa/tTe9EpJ1Y55RjcgPbjeWMskSxZt1v9qkxLJWNJaGni"
-        crossorigin="anonymous"></script>
-    <script src="https://unpkg.com/htmx.org/dist/ext/sse.js"></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+  <title>CHT User Management Tool</title>
+  <script src="https://unpkg.com/htmx.org@1.9.6"
+    integrity="sha384-FhXw7b6AlE/jyjlZH5iHa/tTe9EpJ1Y55RjcgPbjeWMskSxZt1v9qkxLJWNJaGni"
+    crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/htmx.org/dist/ext/sse.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+  <link href="https://cdn.jsdelivr.net/npm/@creativebulma/bulma-tooltip@1.2.0/dist/bulma-tooltip.min.css"
+    rel="stylesheet">
+  <link rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+
+  <style>
+    .material-symbols-outlined {
+      margin-right: 5px;
+    };
+  </style>
 </head>
 
 <body>
-    <div id="app" class="container" style="min-height: 100vh">
-        <div id="workflow-content" class="tile is-parent">
-            {%if view=="add" or view=="edit" %}
-            {% include "app/fragment_create.html" %}
-            {%else%}
-            {% include "app/fragment_home.html" %}
-            {%endif%}
-        </div>
+  {% include "app/nav.html" %}
+
+  <div id="app" class="" style="min-height: 100vh">
+    <div id="workflow-content" class="container tile is-parent">
+      {% if view == "list" %}
+        {% include "app/fragment_home.html" %}
+      {% else %}
+        {% include "app/form_switch.html" %}
+      {% endif %}
     </div>
+  </div>
 </body>
 
 </html>

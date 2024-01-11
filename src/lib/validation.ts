@@ -1,6 +1,6 @@
 import _ from 'lodash';
 
-import { ContactProperty, ContactType } from './config';
+import { Config, ContactProperty } from '../config';
 
 import ValidatorString from './validator-string';
 import ValidatorPhone from './validator-phone';
@@ -9,13 +9,20 @@ import ValidatorName from './validator-name';
 import ValidatorGender from './validator-gender';
 import Place from '../services/place';
 import ValidatorSkip from './validator-skip';
-import PlaceResolver from './place-resolver';
+import RemotePlaceResolver from './remote-place-resolver';
+import { RemotePlace } from './cht-api';
 
+
+export type ValidationError = {
+  property_name: string;
+  description: string;
+};
 
 export interface IValidator {
-  isValid(input: string, property? : ContactProperty) : boolean,
-  format(input : string, property? : ContactProperty) : string,
-}
+  isValid(input: string, property? : ContactProperty) : boolean | string;
+  format(input : string, property? : ContactProperty) : string;
+  get defaultError(): string;
+};
 
 type ValidatorMap = {
   [key: string]: IValidator,
@@ -31,11 +38,12 @@ const TypeValidatorMap: ValidatorMap = {
 };
 
 export class Validation {
-  public static getInvalidProperties(place: Place) : string[] {
+  public static getValidationErrors(place: Place) : ValidationError[] {
+    const requiredColumns = Config.getRequiredColumns(place.type, place.isReplacement);
     const result = [
-      ...Validation.validatePlaceLinks(place),
-      ...Validation.validateProperties(place.properties, place.type.place_properties, 'place_'),
-      ...Validation.validateProperties(place.contact.properties, place.type.contact_properties, 'contact_')
+      ...Validation.validateHierarchy(place),
+      ...Validation.validateProperties(place.properties, place.type.place_properties, requiredColumns, 'place_'),
+      ...Validation.validateProperties(place.contact.properties, place.type.contact_properties, requiredColumns, 'contact_')
     ];
 
     return result;
@@ -51,61 +59,61 @@ export class Validation {
 
     alterAllProperties(place.type.contact_properties, place.contact.properties);
     alterAllProperties(place.type.place_properties, place.properties);
-
-    const replacementProperty = _.cloneDeep(place.type.place_properties.find(p => p.doc_name === 'name'));
-    if (!replacementProperty) {
-      throw Error('Validation.format failed to find name property');
+    for (let hierarchy of Config.getHierarchyWithReplacement(place.type)) {
+      this.alterProperty(hierarchy, place.hierarchyProperties);
     }
-    replacementProperty.doc_name = 'replacement';
-    this.alterProperty(replacementProperty, place.properties);
 
     return place;
   }
 
-  public static formatSingle(docName: string, val: string, contactType: ContactType): string {
-    const propertyMatch = contactType.place_properties.find(p => p.doc_name === docName);
-    if (!propertyMatch) {
-      throw Error(`Cannot validate single property with name: "${docName}"`);
-    }
-    
-    const object = { [docName]: val };
+  public static formatSingle(propertyMatch: ContactProperty, val: string): string {
+    const object = { [propertyMatch.property_name]: val };
     Validation.alterProperty(propertyMatch, object);
-    return object[docName];
+    return object[propertyMatch.property_name];
   }
 
-  private static validatePlaceLinks(place: Place): string[] {
-    const result = [];
-    if (place.replacementName) {
-      const expectReplacement = !!place.replacementName;
-      const hasLinkedReplacement = !!place.replacement?.id;
-      const replacementLinkIsValid = !expectReplacement || PlaceResolver.isParentIdValid(place.replacement?.id);
-      const isReplacementValid = expectReplacement === hasLinkedReplacement && replacementLinkIsValid;
-      if (!isReplacementValid) {
-        result.push('place_replacement');
+  private static validateHierarchy(place: Place): ValidationError[] {
+    const result: ValidationError[] = [];
+
+    const hierarchy = Config.getHierarchyWithReplacement(place.type);
+    hierarchy.forEach((hierarchyLevel, index) => {
+      const data = place.hierarchyProperties[hierarchyLevel.property_name];
+
+      if (hierarchyLevel.level !== 0 || data) {
+        const isExpected = hierarchyLevel.required;
+        const resolution = place.resolvedHierarchy[hierarchyLevel.level];
+        const isValid = !isExpected || resolution?.type === 'remote' || resolution?.type === 'local';
+        if (!isValid) {
+          const levelUp = hierarchy[index + 1]?.property_name;
+          result.push({
+            property_name: `hierarchy_${hierarchyLevel.property_name}`,
+            description: this.describeInvalidRemotePlace(
+              resolution,
+              hierarchyLevel.contact_type,
+              data,
+              place.hierarchyProperties[levelUp]),
+          });
+        }
       }
-    }
-
-    const expectParent = !!place.type.parent_type;
-    const hasLinkedParent = !!place.parentDetails?.id;
-    const parentLinkIsValid = !expectParent || PlaceResolver.isParentIdValid(place.parentDetails?.id);
-    const isParentValid = expectParent === hasLinkedParent && parentLinkIsValid;
-    if (!isParentValid) {
-      result.push('place_PARENT');
-    }
-
+    });
+    
     return result;
   }
 
-  private static validateProperties(obj : any, properties : ContactProperty[], prefix: string) : string[] {
-    const invalid = [];
+  private static validateProperties(obj : any, properties : ContactProperty[], requiredProperties: ContactProperty[], prefix: string) : ValidationError[] {
+    const invalid: ValidationError[] = [];
 
     for (const property of properties) {
-      const value = obj[property.doc_name];
+      const value = obj[property.property_name];
 
-      if (value || property.required) {
-        const valid = Validation.isValid(property, value);
-        if (!valid) {
-          invalid.push(`${prefix}${property.doc_name}`);
+      const isRequired = requiredProperties.includes(property);
+      if (value || isRequired) {
+        let isValid = Validation.isValid(property, value);
+        if (isValid === false || typeof isValid === 'string') {
+          invalid.push({
+            property_name: `${prefix}${property.property_name}`,
+            description: isValid === false ? 'Value is invalid' : isValid as string,
+          });
         }
       }
     }
@@ -113,31 +121,47 @@ export class Validation {
     return invalid;
   }
 
-  private static isValid(property : ContactProperty, value: string) : boolean {
+  private static isValid(property : ContactProperty, value: string) : boolean | string {
     const validator = this.getValidator(property);
     try {
-      return validator.isValid(value, property);
+      const isValid = validator.isValid(value, property);
+      return isValid === false ? property.errorDescription || validator.defaultError : isValid;
     }
     catch (e) {
-      console.log(`Error in isValid for "${property.type}": ${e}`);
-      return false;
+      const error = `Error in isValid for '${property.type}': ${e}`;
+      console.log(error);
+      return error;
     }
   }
 
   private static alterProperty(property : ContactProperty, obj: any) {
-    const value = obj[property.doc_name];
+    const value = obj[property.property_name];
     if (value) {
       const altered = this.getValidator(property).format(value, property);
-      obj[property.doc_name] = altered;
+      obj[property.property_name] = altered;
     }
   }
 
   private static getValidator(property: ContactProperty) : IValidator {
     const validator = TypeValidatorMap[property.type];
     if (!validator) {
-      throw Error(`unvalidatable type: "${property.csv_name}" has type "${property.type}"`);
+      throw Error(`unvalidatable type: '${property.friendly_name}' has type '${property.type}'`);
     }
 
     return validator;
+  }
+
+  private static describeInvalidRemotePlace(remotePlace: RemotePlace | undefined, friendlyType: string, searchStr?: string, requiredParent?: string): string {
+    if (!searchStr) {
+      return `Cannot find ${friendlyType} because the search string is empty`;
+    }
+
+    const requiredParentSuffix = requiredParent ? ` under '${requiredParent}'` : '';
+    if (RemotePlaceResolver.Multiple.id === remotePlace?.id) {
+      const ambiguityDetails = JSON.stringify(remotePlace.ambiguities?.map(a => a.id));
+      return `Found multiple ${friendlyType}s matching '${searchStr}'${requiredParentSuffix} ${ambiguityDetails}`;
+    }
+
+    return `Cannot find '${friendlyType}' matching '${searchStr}'${requiredParentSuffix}`;
   }
 };

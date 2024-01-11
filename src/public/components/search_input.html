@@ -1,0 +1,25 @@
+{% capture property_name %}{{ include.prefix | default: 'place_' }}{{ include.hierarchy.property_name }}{% endcapture %}
+<div class="field">
+  <label class="label">
+    {{ include.hierarchy.friendly_name }}
+    {% if include.hierarchy.required %}*{% endif %}
+  </label>
+  <div class="control">
+    <input
+      id="{{ property_name }}"
+      name="{{ property_name }}"
+      type="search"
+      class="input"
+      hx-post="/search?place_id={{place.id}}&type={{ include.type }}&op={{op}}&level={{ include.hierarchy.level }}&prefix={{ include.prefix }}"
+      hx-vals=""
+      placeholder="start typing to see suggestions"
+      hx-trigger="keyup changed delay:200ms, search"
+      hx-target="#search_results_{{ property_name }}" hx-swap="innerHTML"
+      {% if include.required %} required {% endif %}
+      {% if include.data[property_name] %}value="{{ include.data[property_name] }}" {% endif %}
+      {% if oob %} hx-swap-oob="true" {%endif%}
+      hx-encoding="application/x-www-form-urlencoded"
+    />
+    <div id="search_results_{{ property_name }}" class="control"></div>
+  </div>
+</div>

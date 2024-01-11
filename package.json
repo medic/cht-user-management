@@ -1,5 +1,5 @@
 {
-  "name": "cht-usr",
+  "name": "cht-user-management",
   "version": "1.0.0",
   "main": "dist/index.js",
   "dependencies": {
@@ -12,6 +12,7 @@
     "@types/jsonwebtoken": "^9.0.5",
     "@types/lodash": "^4.14.201",
     "@types/node": "^20.8.8",
+    "@types/uuid": "^9.0.6",
     "axios": "^1.5.1",
     "csv": "^6.3.5",
     "dotenv": "^16.3.1",
@@ -30,8 +31,8 @@
     "@types/mocha": "^10.0.6",
     "@types/rewire": "^2.5.30",
     "@types/sinon": "^17.0.2",
-    "@types/uuid": "^9.0.6",
     "chai": "^4.3.10",
+    "chai-as-promised": "^7.1.1",
     "mocha": "^10.2.0",
     "rewire": "^7.0.0",
     "sinon": "^17.0.1",
@@ -39,19 +40,20 @@
     "tsc-watch": "^6.0.4"
   },
   "scripts": {
+    "cp-package-json": "cp package.json ./src",
     "test": "npx ts-mocha test/{,**}/*.spec.ts",
-    "build": "tsc",
+    "build": "npm run cp-package-json && npx tsc",
     "start": "node dist/index.js",
     "dev": "tsc-watch --onSuccess \"node dist/index.js\""
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/freddieptf/cht-usr.git"
+    "url": "git+https://github.com/medic/cht-user-management.git"
   },
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/freddieptf/cht-usr/issues"
+    "url": "https://github.com/medic/cht-user-management/issues"
   },
-  "homepage": "https://github.com/freddieptf/cht-usr#readme"
+  "homepage": "https://github.com/medic/cht-user-management#readme"
 }

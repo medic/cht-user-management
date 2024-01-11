@@ -1,11 +1,8 @@
 <div class="tile is-child" hx-ext="sse" sse-connect="/events/connection">
-    <div hx-trigger="sse:session_state_change" hx-get="/events/places_controls" hx-target="this" hx-swap="innerHTML">
-        {% include "place/controls.html" %}
+  <div id="places_parent" class="tile is-child" hx-get="/events/places_list" hx-target="#place_tables"
+    hx-swap="innerHTML" hx-trigger="sse:places_state_change">
+    <div id="place_tables">
+        {% include "place/list.html" %}
     </div>
-    <div id="places_parent" class="tile is-child" hx-get="/events/places_list" hx-target="#place_tables"
-        hx-swap="innerHTML" hx-trigger="sse:places_state_change">
-        <div id="place_tables">
-            {% include "place/list.html" %}
-        </div>
-    </div>
+  </div>
 </div>

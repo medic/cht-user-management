@@ -10,7 +10,7 @@ export default class SessionCache {
 
   public state: SessionCacheUploadState = 'pending';
   private places: { [key: string]: Place } = {};
-  
+
   private constructor() {}
 
   public static getForSession = (session: ChtSession): SessionCache => {
@@ -32,15 +32,15 @@ export default class SessionCache {
 
   public getPlace = (id: string): Place | undefined => this.places[id];
 
-  public getPlaces = (options?: { 
-    type?: string, 
-    state?: PlaceUploadState, 
-    created?: boolean, 
+  public getPlaces = (options?: {
+    type?: string,
+    state?: PlaceUploadState,
+    created?: boolean,
     id?: string,
     nameExact?: string,
     nameIncludes?: string,
   }) : Place[] => {
-      return Object.values(this.places)
+    return Object.values(this.places)
       .filter(p => !options?.type || p.type.name === options.type)
       .filter(p => !options?.state || p.state === options.state)
       .filter(p => !options?.id || p.id === options.id)
@@ -49,4 +49,16 @@ export default class SessionCache {
       .filter(p => options?.created === undefined || !!p.isCreated === options.created)
       ;
   };
+
+  public removePlace = (placeId: string): void => {
+    if (!this.places[placeId]) {
+      throw Error(`cannot find placeId "${placeId}"`);
+    }
+
+    delete this.places[placeId];
+  }
+
+  public removeAll = (): void => {
+    this.places = {};
+  }
 }

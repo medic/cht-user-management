@@ -1,14 +1,18 @@
 /*
- * This is a bunch logic required for Kenya eCHIS which doesn't generalize while. This handles the 
+ * This is a bunch logic required for Kenya eCHIS which doesn't generalize while. This handles the
  * stuff that eCHIS needs that others probably "shouldn't do" or are unlikely to do
  */
 
-import { ChtApi, PlacePayload } from "../lib/cht-api";
-import { Config } from "../lib/config";
+import { ChtApi, PlacePayload } from "../../lib/cht-api";
+import { Config } from "..";
 
 export default async function mutate(payload: PlacePayload, chtApi: ChtApi, isReplacement: boolean): Promise<PlacePayload> {
   if (payload.contact_type !== 'd_community_health_volunteer_area') {
-    payload.name += ' Community Health Unit';  
+    // during replacement, the name is optional
+    if (payload.name) {
+      payload.name += ' Community Health Unit';
+    }
+
     return payload;
   }
 
@@ -30,6 +34,10 @@ export default async function mutate(payload: PlacePayload, chtApi: ChtApi, isRe
 
   const contactType = Config.getContactType(payload.contact_type);
   const { parent: chu, sibling } = await chtApi.getParentAndSibling(payload.parent, contactType);
+  if (!chu && !sibling) {
+    throw Error(`CHU does not exist`);
+  }
+
   scapeToPayload('link_facility_code');
   scapeToPayload('link_facility_name');
   scapeToPayload('chu_name', 'name');

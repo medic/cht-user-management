@@ -2,7 +2,7 @@ import { FastifyInstance, FastifyRequest } from 'fastify';
 
 import Auth from '../lib/authentication';
 import { ChtApi } from '../lib/cht-api';
-import { Config } from '../lib/config';
+import { Config } from "../config";
 
 export default async function authentication(fastify: FastifyInstance) {
   const unauthenticatedOptions = {
@@ -10,10 +10,11 @@ export default async function authentication(fastify: FastifyInstance) {
       req.unauthenticated = true;
     },
   };
-  
+
   fastify.get('/login', unauthenticatedOptions, async (req, resp) => {
     const tmplData = {
-      domains: Config.domains,
+      logo: Config.getLogoBase64(),
+      domains: Config.getDomains,
     };
 
     return resp.view('src/public/auth/view.html', tmplData);
@@ -29,14 +30,19 @@ export default async function authentication(fastify: FastifyInstance) {
     const { username, password, domain } = data;
 
     const authInfo = Config.getAuthenticationInfo(domain);
-    const session = await ChtApi.createSession(authInfo, username, password);
-    if (!session.sessionToken) {
-      return resp.view("src/public/auth/form.html", {
-        domains: Config.domains,
+    let session;
+    try {
+      session = await ChtApi.createSession(authInfo, username, password);
+      if (!session.sessionToken) {
+        throw 'login fail';`` 
+      }
+    } catch (e: any) {
+      return resp.view("src/public/auth/authentication_form.html", {
+        domains: Config.getDomains,
         errors: true,
       });
     }
-    
+
     const tokenizedSession = Auth.encodeToken(session);
     const expires = Auth.cookieExpiry();
     resp.setCookie(Auth.AUTH_COOKIE_NAME, tokenizedSession, {
@@ -47,6 +53,10 @@ export default async function authentication(fastify: FastifyInstance) {
     });
 
     resp.header("HX-Redirect", `/`);
+  });
+
+  fastify.get('/_healthz', unauthenticatedOptions, () => {
+    return 'OK';
   });
 };
 

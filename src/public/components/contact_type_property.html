@@ -1,0 +1,15 @@
+{% capture prop_name %}{{ include.prefix }}{{include.prop.property_name}}{% endcapture %}
+<div class="field">
+  <label class="label">
+    {{include.prop.friendly_name}}
+  </label>
+  <div class="control">
+    <input
+      name="{{ prop_name }}"
+      type="text"
+      class="input"
+      {% if false and include.prop.type == 'regex' %} pattern="{{ include.prop.parameter }}" {% endif %}
+      {% if data[prop_name] %} value="{{ data[prop_name] }}" {% endif %}
+    />
+  </div>
+</div>

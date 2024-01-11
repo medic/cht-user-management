@@ -1,8 +1,9 @@
 import { IValidator } from './validation';
 
 export default class ValidatorGender implements IValidator {
-  isValid(input: string) : boolean {
-    return this.parseGenders(input).isValid;
+  isValid(input: string) : boolean | string {
+    const isValid = this.parseGenders(input).isValid;
+    return isValid;
   }
 
   format(input : string) : string {
@@ -10,8 +11,12 @@ export default class ValidatorGender implements IValidator {
     if (isValid) {
       return gender;
     }
-    
+
     return input;
+  }
+
+  get defaultError(): string {
+    return `Must be either 'Male' or 'Female'`;
   }
 
   private parseGenders(input: string): { gender: string, isValid: boolean } {

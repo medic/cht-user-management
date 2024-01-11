@@ -11,9 +11,9 @@ export class UserPayload {
   public phone: string;
 
   constructor(place: Place, placeId: string, contactId: string) {
-    this.username = this.generateUsername(place.contact.name);
+    this.username = place.generateUsername();
     this.password = this.generatePassword();
-    this.type = place.type.contact_role;
+    this.type = place.type.user_role;
     this.place = placeId;
     this.contact = contactId;
     this.fullname = place.contact.name;
@@ -27,10 +27,6 @@ export class UserPayload {
   public makeUsernameMoreComplex(): void {
     const randomNumber = crypto.randomInt(0, 100);
     this.username =  `${this.username}${randomNumber.toString()}`;
-  }
-
-  private generateUsername(contactName: string) {
-    return contactName.toLowerCase().split(" ").join("_")
   }
 
   private generatePassword(): string {

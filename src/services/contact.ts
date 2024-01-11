@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from "uuid";
-import { ContactType } from "../lib/config";
+import { Config, ContactType } from "../config";
 
 export default class Contact {
   public id: string;
@@ -15,11 +15,7 @@ export default class Contact {
   }
 
   public get name() : string {
-    const nameProperty = this.type.contact_properties.find(p => p.doc_name === 'name');
-    if (!nameProperty) {
-      throw Error(`Place ${this.type.name} has no name property on contact`);
-    }
-
-    return this.properties[nameProperty.doc_name];
+    const nameProperty = Config.getPropertyWithName(this.type.contact_properties, 'name');
+    return this.properties[nameProperty.property_name];
   }
 };

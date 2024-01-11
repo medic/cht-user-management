@@ -1,7 +1,7 @@
 <html>
 
 <head>
-    <title>cht-usr</title>
+    <title>CHT User Management Tool</title>
     <script src="https://unpkg.com/htmx.org@1.9.6"
         integrity="sha384-FhXw7b6AlE/jyjlZH5iHa/tTe9EpJ1Y55RjcgPbjeWMskSxZt1v9qkxLJWNJaGni"
         crossorigin="anonymous"></script>
@@ -9,11 +9,18 @@
 </head>
 
 <body>
-    <div class="content container">
-        <div class="column is-half">
-            {% include "auth/form.html" %}
-        </div>
-    </div>
+  <div class="container is-fluid">
+    
+    <section class="hero">
+      <div class="hero-body">
+        <p class="title">
+          <img src="{{ logo }}" />
+          User Management Tool
+        </p>
+      </div>
+    </section>
+    {% include "auth/authentication_form.html" %}
+  </div>
 </body>
 
 </html>

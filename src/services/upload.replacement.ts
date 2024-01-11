@@ -15,7 +15,7 @@ export class UploadReplacementPlace implements Uploader {
 
   handlePlacePayload = async (place: Place, payload: PlacePayload): Promise<string> => {
     const contactId = place.creationDetails?.contactId;
-    const placeId = place.replacement?.id;
+    const placeId = place.resolvedHierarchy[0]?.id;
 
     if (!contactId || !placeId) {
       throw Error('contactId and placeId are required');
@@ -24,16 +24,13 @@ export class UploadReplacementPlace implements Uploader {
     const updatedPlaceId = await this.chtApi.updatePlace(payload, contactId);
     const disabledUsers = await this.chtApi.disableUsersWithPlace(placeId);
     place.creationDetails.disabledUsers = disabledUsers;
-    
+
     // (optional) mute and rename contacts associated to the disabled users
     return updatedPlaceId;
   };
 
   linkContactAndPlace = async (place: Place, placeId: string): Promise<void> => {
-    if (!place.creationDetails?.contactId) {
-      throw Error('place.creationDetails?.contactId is expected');
-    }
-
-    return await this.chtApi.updateContactParent(place.creationDetails?.contactId, placeId);
+    const contactId = await this.chtApi.updateContactParent(placeId);
+    place.creationDetails.contactId = contactId;
   };
 };

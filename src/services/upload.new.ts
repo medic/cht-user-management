@@ -18,14 +18,13 @@ export class UploadNewPlace implements Uploader {
   };
 
   //  we don't get a contact id when we create a place with a contact defined
-  // 
+  //  https://github.com/medic/cht-core/issues/8674
   linkContactAndPlace = async (place: Place, placeId: string): Promise<void> => {
     if (place.creationDetails?.contactId) {
       return;
     }
 
-    const contactId = await this.chtApi.getPlaceContactId(placeId);
-    await this.chtApi.updateContactParent(contactId, placeId);
+    const contactId = await this.chtApi.updateContactParent(placeId);
     place.creationDetails.contactId = contactId;
   };
 };

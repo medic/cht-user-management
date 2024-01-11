@@ -28,7 +28,7 @@ export default class Auth {
     }
 
     const session = jwt.verify(token, COOKIE_PRIVATE_KEY) as ChtSession;
-    if (!session.sessionToken || !session.domain) {
+    if (!session.sessionToken || !session.authInfo.domain) {
       throw new Error('invalid authentication token');
     }
 
