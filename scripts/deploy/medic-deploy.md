@@ -11,13 +11,9 @@ General public is welcome to look at these instructions for who they might use t
 | namespace | users-chis-prod                                         |
 
 ### Requirements:
-1. Applications:
-  - [Helm](https://helm.sh/)
-  - [Kubectl](https://kubernetes.io/docs/reference/kubectl/kubectl/)
-
-2. [Add medic helm chart repository](https://github.com/medic/helm-charts/tree/main#usage)
-
-3. [Authenticate to Medic kubernetes cluster (EKS)](https://github.com/medic/medic-infrastructure/blob/master/terraform/aws/dev/eks/access/README.md)
+-  Have both [Helm](https://helm.sh/) and  [Kubectl](https://kubernetes.io/docs/reference/kubectl/kubectl/) installed on your local workstation
+- Check out [helm chart repository](https://github.com/medic/helm-charts/tree/main#usage) so you can reference it locally
+- Be able to [authenticate to Medic kubernetes cluster (EKS)](https://github.com/medic/medic-infrastructure/blob/master/terraform/aws/dev/eks/access/README.md)
 
 
 ### Deploy new version
