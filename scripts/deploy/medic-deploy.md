@@ -18,6 +18,8 @@ General public is welcome to look at these instructions for who they might use t
 
 ### Deploy new version
 
+These commands should be run in the `./scripts/deploy` directory in this repo. Also note you may need to replace `medic/cht-user-management` with the full path to the helm chart repository you checked out above.
+
 #### KE
 ```shell
 # Edit tag in users-chis-ke.yaml and then run:
