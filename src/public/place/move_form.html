@@ -1,0 +1,48 @@
+<form
+  id="form_place_move" 
+  autocomplete="off"
+  {% if backend %} hx-post="{{backend}}" {%else%} hx-post="/move" {%endif%}
+  hx-target="this" 
+  hx-swap="outerHTML"
+>
+  {% if error %}
+    <div class="notification is-danger" style="margin: 0;">
+      {{ error }}
+    </div>
+  {% endif %}
+
+  <input name="place_type" value="{{contactType.name}}" hidden />
+
+  <section class="section is-small">
+    <h1 class="subtitle">From</h1>
+    {% for hierarchy in fromHierarchy %}
+      {%
+        include "components/search_input.html"
+          type=contactType.name
+          hierarchy=hierarchy
+          data=data
+          required=hierarchy.required
+          prefix="from_"
+      %}
+    {% endfor %}
+  </section>
+  <section class="section is-small">
+    <h1 class="subtitle">To</h1>
+    {% for hierarchy in toHierarchy %}
+      {%
+        include "components/search_input.html"
+          type=contactType.name
+          hierarchy=hierarchy
+          data=data
+          required=hierarchy.required
+          prefix="to_"
+      %}
+    {% endfor %}
+  </section>
+  <div class="field is-grouped is-grouped-right">
+    <div class="control">
+      <button id="place_create_submit" class="button is-link">Move</button>
+      <a href="/" class="button">Cancel</a>
+    </div>
+  </div>
+</form>

@@ -1,0 +1,27 @@
+
+<td
+  id="{{ include.propertyName }}"
+  {% if place.validationErrors[include.propertyName] %} 
+    class="is-danger has-tooltip-arrow has-tooltipl-multiline"    
+    data-tooltip="{{ place.validationErrors[include.propertyName] | escape }}"
+  {% endif %}
+>
+  {% if include.values[include.property.property_name] != empty %}
+    {% if include.linkTo and include.linkTo != empty and include.linkTo.type == 'remote' %}
+      <a href="https://{{ session.authInfo.domain }}/#/contacts/{{ include.linkTo.id }}" target="_blank">
+        {{ include.values[include.property.property_name] }}
+      </a>
+    {% else %}
+      {{ include.values[include.property.property_name] }}
+    {% endif %}
+
+    {% if include.linkTo.type == 'local' %}
+      <span class="material-symbols-outlined">cloud_off</span>
+    {% endif %}
+  {% else %}
+    {% if include.values.replacement %}
+      <i><small>Inherit</small></i>
+    {% endif %}
+  {% endif %}
+
+</td>

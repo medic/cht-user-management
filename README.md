@@ -57,7 +57,6 @@ none | None | None | None
 gender | A binary gender (eg. `Male`, `Woman`, `M`) | Formats to either `Male` or `Female` | None
 
 ### Deployment
-
 This tool is available via Docker by running `docker compose up`. Set the [Environment Variables](#environment-variables).
 
 ## Development

@@ -1,0 +1,39 @@
+<form id="form_authenticate" hx-post="/authenticate" hx-target="this" hx-swap="outerHTML">
+  <!-- want to use tiles, they are super weird with forms in them -->
+  <div class="box" style="margin: 20px; padding: 50px;">
+    {% if errors %}
+      <span class='tag is-warning is-overlay'>Login Failed. Please Try Again</span>
+    {% endif %}
+
+    <div class="field">
+      <label class="label">Instance</label>
+      <div class="control">
+        <div class="select is-fullwidth">
+          <select name="domain">
+              {% for domain in domains %}
+                  <option value="{{ domain.domain }}">{{ domain.friendly }}</option>
+              {% endfor %}
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="field">
+      <label class="label">Credentials</label>
+      <div class="control">
+          <input name="username" class="input" type="text" placeholder="username">
+      </div>
+    </div>
+    <div class="field">
+        <div class="control">
+            <input name="password" class="input" type="password" placeholder="password">
+        </div>
+    </div>
+    <div class="field is-grouped is-grouped-right">
+      <p class="control">
+        <button class="button is-primary">
+          Sign In
+        </button>
+      </p>
+    </div>
+  </div>
+</form>
