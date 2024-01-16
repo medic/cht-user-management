@@ -11,14 +11,14 @@ General public is welcome to look at these instructions for who they might use t
 | namespace | users-chis-prod                                         |
 
 ### Requirements:
--  Have both [Helm](https://helm.sh/) and  [Kubectl](https://kubernetes.io/docs/reference/kubectl/kubectl/) installed on your local workstation
+- Have both [Helm](https://helm.sh/) and  [Kubectl](https://kubernetes.io/docs/reference/kubectl/kubectl/) installed on your local workstation
 - Check out [helm chart repository](https://github.com/medic/helm-charts/tree/main#usage) so you can reference it locally
 - Be able to [authenticate to Medic kubernetes cluster (EKS)](https://github.com/medic/medic-infrastructure/blob/master/terraform/aws/dev/eks/access/README.md)
 
 
 ### Deploy new version
 
-These commands should be run in the `./scripts/deploy` directory in this repo. Also note you may need to replace `medic/cht-user-management` with the full path to the helm chart repository you checked out above.
+These commands should be run in the `./scripts/deploy` directory in this repo. Also note you may need to replace `medic/cht-user-management` with the full path to the helm chart repository you checked out above. Ensure the image has [been published](https://github.com/medic/cht-user-management/tree/main#publishing-new-docker-images) first [to ECR](https://gallery.ecr.aws/medic/cht-user-management) and also that the `values.yaml` file ([KE](https://github.com/medic/cht-user-management/blob/4bbb7cfba7b479a61c4e312fd2ac7848aedc02a4/scripts/deploy/values/users-chis-ke.yaml#L3C5-L3C8) or [UG](https://github.com/medic/cht-user-management/blob/4bbb7cfba7b479a61c4e312fd2ac7848aedc02a4/scripts/deploy/values/users-chis-ug.yaml#L3)) has the same version in the `tag:` as the new image.
 
 #### KE
 ```shell
