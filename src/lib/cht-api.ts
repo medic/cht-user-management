@@ -56,8 +56,8 @@ export class ChtApi {
       password,
     }, {
       auth: {
-        username:username,
-        password: password 
+        username,
+        password 
       }
     });
     const setCookieHeader = (resp.headers as AxiosHeaders).get('set-cookie') as AxiosHeaders;
