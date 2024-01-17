@@ -50,10 +50,15 @@ export class ChtApi {
   public static async createSession(authInfo: AuthenticationInfo, username : string, password: string): Promise<ChtSession> {
     const COUCH_AUTH_COOKIE_NAME = 'AuthSession=';
     const protocol = authInfo.useHttp ? 'http' : 'https';
-    const sessionUrl = `${protocol}://${username}:${password}@${authInfo.domain}/_session`;
+    const sessionUrl = `${protocol}://${authInfo.domain}/_session`;
     const resp = await axios.post(sessionUrl, {
       name: username,
       password,
+    }, {
+      auth: {
+        username:username,
+        password: password 
+      }
     });
     const setCookieHeader = (resp.headers as AxiosHeaders).get('set-cookie') as AxiosHeaders;
     const sessionToken = setCookieHeader?.[0].split(';')
