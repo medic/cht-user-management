@@ -51,10 +51,10 @@ export default class PlaceFactory {
   private static async loadPlacesFromCsv(csvBuffer: Buffer, contactType: ContactType) : Promise<Place[]> {
     const csvColumns: string[] = [];
     const places: Place[] = [];
-
-    const parser = parse(csvBuffer, { delimiter: ",", from_line: 1 });
-    parser.on('data', function (row: string[]) {
-      if (csvColumns.length === 0) {
+    const parser = parse(csvBuffer, { delimiter: ",", trim: true, skip_empty_lines: true });
+    let count = 0;
+    for await (const row of parser) {
+      if (count === 0) {
         const missingColumns = Config.getRequiredColumns(contactType, true).map(p => p.friendly_name)
           .filter((csvName) => !row.includes(csvName));
         if (missingColumns.length > 0) {
@@ -75,13 +75,10 @@ export default class PlaceFactory {
           const columnIndex = csvColumns.indexOf(hierarchyConstraint.friendly_name);
           place.hierarchyProperties[hierarchyConstraint.property_name] = row[columnIndex];
         }
-
         places.push(place);
       }
-    });
-
-    // wait till dones
-    await once(parser, "finish");
+      count++
+    }
     return places;
   }
 }
