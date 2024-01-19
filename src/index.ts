@@ -20,11 +20,9 @@ const port: number = env.PORT ? parseInt(env.PORT) : 3000;
     if (err) throw err;
     console.log(`server is listening on ${address}`);
     if (NODE_ENV !== 'production') {
-      console.log("" );
-      console.log("==============  DEV MODE   ==================" );
-      console.log("Point your browser at http://127.0.0.1:" + port );
-      console.log("=============================================" );
-      console.log("" );
+      console.log("\n==============  DEV MODE   ==================\n" +
+        "Point your browser at http://127.0.0.1:" + port +
+        "\n=============================================\n" );
     }
   });
 })();
