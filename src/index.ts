@@ -13,7 +13,7 @@ const port: number = env.PORT ? parseInt(env.PORT) : 3000;
   const server = build({
     logger: loggerConfig,
   });
-  server.listen({ host: '0.0.0.0', port }, (err, address) => {
+  server.listen({ host: '127.0.0.1', port }, (err, address) => {
     if (err) throw err;
     console.log(`server is listening on ${address}`);
   });
