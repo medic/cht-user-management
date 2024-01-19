@@ -1,6 +1,9 @@
 require('dotenv').config();
 import build from "./server";
 import { env } from 'process';
+const {
+  NODE_ENV
+} = process.env;
 
 const port: number = env.PORT ? parseInt(env.PORT) : 3000;
 
@@ -13,8 +16,15 @@ const port: number = env.PORT ? parseInt(env.PORT) : 3000;
   const server = build({
     logger: loggerConfig,
   });
-  server.listen({ host: '127.0.0.1', port }, (err, address) => {
+  server.listen({ host: '0.0.0.0', port }, (err, address) => {
     if (err) throw err;
     console.log(`server is listening on ${address}`);
+    if (NODE_ENV !== 'production') {
+      console.log("" );
+      console.log("==============  DEV MODE   ==================" );
+      console.log("Point your browser at http://127.0.0.1:" + port );
+      console.log("=============================================" );
+      console.log("" );
+    }
   });
 })();
