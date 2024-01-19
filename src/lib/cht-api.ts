@@ -70,9 +70,9 @@ export class ChtApi {
 
     if (NODE_ENV !== 'production') {
       if (!sessionToken) {
-        console.log("failed to login to sever " + sessionUrl);
+        console.log("failed to login to " + sessionUrl);
       } else {
-        console.log("successfully logged in to sever " + sessionUrl);
+        console.log("successfully logged in to " + sessionUrl);
       }
     }
     return {
