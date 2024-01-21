@@ -1,8 +1,8 @@
-import { expect } from "chai";
-import { ChtApi, ChtSession, RemotePlace } from "../src/lib/cht-api";
-import { ContactProperty, ContactType } from "../src/lib/config";
-import Place from "../src/services/place";
-import Sinon from "sinon";
+import { expect } from 'chai';
+import { ChtApi, ChtSession, RemotePlace } from '../src/lib/cht-api';
+import { ContactProperty, ContactType } from '../src/lib/config';
+import Place from '../src/services/place';
+import Sinon from 'sinon';
 
 export const mockPlace = (type: ContactType, prop: any) : Place => {
   const result = new Place(type);
@@ -118,4 +118,4 @@ export function expectInvalidProperties(validationErrors: { [key: string]: strin
   if (expectedError) {
     expect(Object.values(validationErrors as any)?.[0]).to.include(expectedError);
   }
-};
+}

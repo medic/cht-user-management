@@ -1,11 +1,11 @@
-import _ from "lodash";
-import { ChtApi, PlacePayload } from "../lib/cht-api";
-import getConfigByKey from "./config-factory";
+import _ from 'lodash';
+import { ChtApi, PlacePayload } from '../lib/cht-api';
+import getConfigByKey from './config-factory';
 
 export type ConfigSystem = {
   domains: AuthenticationInfo[];
   contact_types: ContactType[];
-  logoBase64: string,
+  logoBase64: string;
 };
 
 export type PartnerConfig = {

@@ -1,6 +1,6 @@
-import { ChtApi, PlacePayload } from "../lib/cht-api";
-import Place from "./place";
-import { Uploader } from "./upload-manager";
+import { ChtApi, PlacePayload } from '../lib/cht-api';
+import Place from './place';
+import { Uploader } from './upload-manager';
 
 export class UploadNewPlace implements Uploader {
   private readonly chtApi: ChtApi;
@@ -11,7 +11,7 @@ export class UploadNewPlace implements Uploader {
 
   handleContact = async function (payload: PlacePayload): Promise<string | undefined> {
     return;
-  }
+  };
 
   handlePlacePayload = async (place: Place, payload: PlacePayload): Promise<string> => {
     return await this.chtApi.createPlace(payload);
@@ -27,4 +27,4 @@ export class UploadNewPlace implements Uploader {
     const contactId = await this.chtApi.updateContactParent(placeId);
     place.creationDetails.contactId = contactId;
   };
-};
+}

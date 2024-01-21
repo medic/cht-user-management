@@ -22,10 +22,10 @@ export interface IValidator {
   isValid(input: string, property? : ContactProperty) : boolean | string;
   format(input : string, property? : ContactProperty) : string;
   get defaultError(): string;
-};
+}
 
 type ValidatorMap = {
-  [key: string]: IValidator,
+  [key: string]: IValidator;
 };
 
 const TypeValidatorMap: ValidatorMap = {
@@ -49,17 +49,16 @@ export class Validation {
     return result;
   }
 
-  public static format(place: Place): Place
-  {
+  public static format(place: Place): Place {
     const alterAllProperties = (propertiesToAlter: ContactProperty[], objectToAlter: any) => {
       for (const property of propertiesToAlter) {
         this.alterProperty(property, objectToAlter);
       }
-    }
+    };
 
     alterAllProperties(place.type.contact_properties, place.contact.properties);
     alterAllProperties(place.type.place_properties, place.properties);
-    for (let hierarchy of Config.getHierarchyWithReplacement(place.type)) {
+    for (const hierarchy of Config.getHierarchyWithReplacement(place.type)) {
       this.alterProperty(hierarchy, place.hierarchyProperties);
     }
 
@@ -91,7 +90,8 @@ export class Validation {
               resolution,
               hierarchyLevel.contact_type,
               data,
-              place.hierarchyProperties[levelUp]),
+              place.hierarchyProperties[levelUp]
+            ),
           });
         }
       }
@@ -108,7 +108,7 @@ export class Validation {
 
       const isRequired = requiredProperties.includes(property);
       if (value || isRequired) {
-        let isValid = Validation.isValid(property, value);
+        const isValid = Validation.isValid(property, value);
         if (isValid === false || typeof isValid === 'string') {
           invalid.push({
             property_name: `${prefix}${property.property_name}`,
@@ -126,8 +126,7 @@ export class Validation {
     try {
       const isValid = validator.isValid(value, property);
       return isValid === false ? property.errorDescription || validator.defaultError : isValid;
-    }
-    catch (e) {
+    } catch (e) {
       const error = `Error in isValid for '${property.type}': ${e}`;
       console.log(error);
       return error;
@@ -164,4 +163,4 @@ export class Validation {
 
     return `Cannot find '${friendlyType}' matching '${searchStr}'${requiredParentSuffix}`;
   }
-};
+}

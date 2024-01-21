@@ -1,9 +1,9 @@
-import _ from "lodash";
+import _ from 'lodash';
 
-import Place, { PlaceUploadState } from "./place";
-import { ChtSession } from "../lib/cht-api";
+import Place, { PlaceUploadState } from './place';
+import { ChtSession } from '../lib/cht-api';
 
-export type SessionCacheUploadState = "in_progress" | "done" | "pending";
+export type SessionCacheUploadState = 'in_progress' | 'done' | 'pending';
 
 export default class SessionCache {
   private static caches: Map<string, SessionCache> = new Map();
@@ -33,12 +33,12 @@ export default class SessionCache {
   public getPlace = (id: string): Place | undefined => this.places[id];
 
   public getPlaces = (options?: {
-    type?: string,
-    state?: PlaceUploadState,
-    created?: boolean,
-    id?: string,
-    nameExact?: string,
-    nameIncludes?: string,
+    type?: string;
+    state?: PlaceUploadState;
+    created?: boolean;
+    id?: string;
+    nameExact?: string;
+    nameIncludes?: string;
   }) : Place[] => {
     return Object.values(this.places)
       .filter(p => !options?.type || p.type.name === options.type)
@@ -46,8 +46,7 @@ export default class SessionCache {
       .filter(p => !options?.id || p.id === options.id)
       .filter(p => !options?.nameExact || p.name === options.nameExact)
       .filter(p => !options?.nameIncludes || p.name.toLowerCase().includes(options.nameIncludes.toLowerCase()))
-      .filter(p => options?.created === undefined || !!p.isCreated === options.created)
-      ;
+      .filter(p => options?.created === undefined || !!p.isCreated === options.created);
   };
 
   public removePlace = (placeId: string): void => {
@@ -56,9 +55,9 @@ export default class SessionCache {
     }
 
     delete this.places[placeId];
-  }
+  };
 
   public removeAll = (): void => {
     this.places = {};
-  }
+  };
 }

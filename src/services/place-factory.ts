@@ -1,17 +1,16 @@
-import _ from "lodash";
-import { once } from "events";
-import { parse } from "csv";
+import _ from 'lodash';
+import { once } from 'events';
+import { parse } from 'csv';
 
-import { ChtApi } from "../lib/cht-api";
-import { Config, ContactType } from "../config";
-import Place from "./place";
-import SessionCache from "./session-cache";
-import RemotePlaceResolver from "../lib/remote-place-resolver";
+import { ChtApi } from '../lib/cht-api';
+import { Config, ContactType } from '../config';
+import Place from './place';
+import SessionCache from './session-cache';
+import RemotePlaceResolver from '../lib/remote-place-resolver';
 
 export default class PlaceFactory {
   public static async createBulk(csvBuffer: Buffer, contactType: ContactType, sessionCache: SessionCache, chtApi: ChtApi)
-    : Promise<Place[]>
-  {
+    : Promise<Place[]> {
     const places = await PlaceFactory.loadPlacesFromCsv(csvBuffer, contactType);
     const validateAll = () => places.forEach(p => p.validate());
 
@@ -19,11 +18,10 @@ export default class PlaceFactory {
     validateAll();
     sessionCache.savePlaces(...places);
     return places;
-  };
+  }
 
   public static createOne = async (formData: any, contactType: ContactType, sessionCache: SessionCache, chtApi: ChtApi)
-    : Promise<Place> =>
-  {
+    : Promise<Place> => {
     const place = new Place(contactType);
     place.setPropertiesFromFormData(formData, 'hierarchy_');
 
@@ -34,11 +32,10 @@ export default class PlaceFactory {
   };
 
   public static editOne = async (placeId: string, formData: any, sessionCache: SessionCache, chtApi: ChtApi)
-    : Promise<Place> =>
-  {
+    : Promise<Place> => {
     const place = sessionCache.getPlace(placeId);
     if (!place || place.isCreated) {
-      throw new Error("unknown place or place has already been created");
+      throw new Error('unknown place or place has already been created');
     }
 
     place.setPropertiesFromFormData(formData, 'hierarchy_');
@@ -51,14 +48,14 @@ export default class PlaceFactory {
   private static async loadPlacesFromCsv(csvBuffer: Buffer, contactType: ContactType) : Promise<Place[]> {
     const csvColumns: string[] = [];
     const places: Place[] = [];
-    const parser = parse(csvBuffer, { delimiter: ",", trim: true, skip_empty_lines: true });
+    const parser = parse(csvBuffer, { delimiter: ',', trim: true, skip_empty_lines: true });
     let count = 0;
     for await (const row of parser) {
       if (count === 0) {
         const missingColumns = Config.getRequiredColumns(contactType, true).map(p => p.friendly_name)
           .filter((csvName) => !row.includes(csvName));
         if (missingColumns.length > 0) {
-          throw new Error(`Missing columns: ${missingColumns.join(", ")}`);
+          throw new Error(`Missing columns: ${missingColumns.join(', ')}`);
         }
         csvColumns.push(...row);
       } else {
@@ -77,7 +74,7 @@ export default class PlaceFactory {
         }
         places.push(place);
       }
-      count++
+      count++;
     }
     return places;
   }

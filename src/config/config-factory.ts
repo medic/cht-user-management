@@ -1,6 +1,6 @@
-import { PartnerConfig } from ".";
-import ugandaConfig from "./chis-ug";
-import kenyaConfig from "./chis-ke";
+import { PartnerConfig } from '.';
+import ugandaConfig from './chis-ug';
+import kenyaConfig from './chis-ke';
 
 const CONFIG_MAP: { [key: string]: PartnerConfig } = {
   'CHIS-KE': kenyaConfig,
@@ -17,4 +17,4 @@ export default function getConfigByKey(key: string = 'CHIS-KE'): PartnerConfig {
   }
 
   return result;
-};
+}

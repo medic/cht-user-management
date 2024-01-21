@@ -190,7 +190,7 @@ describe('services/place-factory.ts', () => {
       level: 3,
       contact_type: 'greatgrandparent',
       required: false,
-    };;
+    };
     fakeFormData.hierarchy_GREATGRANDPARENT = greatParent.name;
     remotePlace.lineage[1] = greatParent.id;
 
@@ -250,7 +250,7 @@ describe('services/place-factory.ts', () => {
       level: 3,
       contact_type: 'greatgrandparent',
       required: false,
-    };;
+    };
     fakeFormData.hierarchy_GREATGRANDPARENT = greatParent.name;
     
     const ambiguous = {

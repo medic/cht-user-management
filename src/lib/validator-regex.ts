@@ -1,4 +1,4 @@
-import { ContactProperty } from "../config";
+import { ContactProperty } from '../config';
 import { IValidator } from './validation';
 
 import ValidatorString from './validator-string';
@@ -28,4 +28,4 @@ export default class ValidatorRegex implements IValidator {
   get defaultError(): string {
     throw Error(`property of type regex - 'errorDescription' is required`);
   }
-};
+}

@@ -1,6 +1,6 @@
-import { CountryCode, parsePhoneNumber, isValidNumberForRegion } from "libphonenumber-js";
+import { CountryCode, parsePhoneNumber, isValidNumberForRegion } from 'libphonenumber-js';
 
-import { ContactProperty } from "../config";
+import { ContactProperty } from '../config';
 import { IValidator } from './validation';
 
 export default class ValidatorPhone implements IValidator {
@@ -37,4 +37,4 @@ export default class ValidatorPhone implements IValidator {
   get defaultError(): string {
     return 'Not a valid regional phone number';
   }
-};
+}

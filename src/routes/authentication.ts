@@ -2,7 +2,7 @@ import { FastifyInstance, FastifyRequest } from 'fastify';
 
 import Auth from '../lib/authentication';
 import { ChtApi } from '../lib/cht-api';
-import { Config } from "../config";
+import { Config } from '../config';
 
 export default async function authentication(fastify: FastifyInstance) {
   const unauthenticatedOptions = {
@@ -34,10 +34,10 @@ export default async function authentication(fastify: FastifyInstance) {
     try {
       session = await ChtApi.createSession(authInfo, username, password);
       if (!session.sessionToken) {
-        throw 'login fail';`` 
+        throw 'login fail'; ``; 
       }
     } catch (e: any) {
-      return resp.view("src/public/auth/authentication_form.html", {
+      return resp.view('src/public/auth/authentication_form.html', {
         domains: Config.getDomains,
         errors: true,
       });
@@ -52,11 +52,11 @@ export default async function authentication(fastify: FastifyInstance) {
       secure: true
     });
 
-    resp.header("HX-Redirect", `/`);
+    resp.header('HX-Redirect', `/`);
   });
 
   fastify.get('/_healthz', unauthenticatedOptions, () => {
     return 'OK';
   });
-};
+}
 

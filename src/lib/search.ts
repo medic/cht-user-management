@@ -1,10 +1,10 @@
-import _ from "lodash";
-import SessionCache from "../services/session-cache";
-import { ChtApi, RemotePlace } from "./cht-api";
-import RemotePlaceCache from "./remote-place-cache";
-import RemotePlaceResolver from "./remote-place-resolver";
-import { Config, ContactType, HierarchyConstraint } from "../config";
-import Place from "../services/place";
+import _ from 'lodash';
+import SessionCache from '../services/session-cache';
+import { ChtApi, RemotePlace } from './cht-api';
+import RemotePlaceCache from './remote-place-cache';
+import RemotePlaceResolver from './remote-place-resolver';
+import { Config, ContactType, HierarchyConstraint } from '../config';
+import Place from '../services/place';
 
 export default class SearchLib {
   public static search = async (contactType: ContactType, formData: any, dataPrefix: string, hierarchyLevel: HierarchyConstraint, chtApi: ChtApi, sessionCache: SessionCache | undefined)
@@ -24,8 +24,8 @@ export default class SearchLib {
     }
 
     return searchResults;
-  }
-};
+  };
+}
 
 async function getLocalResults(hierarchyLevel: HierarchyConstraint, sessionCache: SessionCache, searchString: string)
   : Promise<Place[]> {

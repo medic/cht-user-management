@@ -1,12 +1,12 @@
-import _ from "lodash";
-import { FastifyInstance } from "fastify";
+import _ from 'lodash';
+import { FastifyInstance } from 'fastify';
 
-import { Config } from "../config";
-import { ChtApi, RemotePlace } from "../lib/cht-api";
-import SessionCache from "../services/session-cache";
-import SearchLib from "../lib/search";
+import { Config } from '../config';
+import { ChtApi, RemotePlace } from '../lib/cht-api';
+import SessionCache from '../services/session-cache';
+import SearchLib from '../lib/search';
 
-import { moveViewModel } from "./move";
+import { moveViewModel } from './move';
 
 export default async function place(fastify: FastifyInstance) {
   // returns search results dropdown
@@ -36,7 +36,7 @@ export default async function place(fastify: FastifyInstance) {
     }
     const searchResults: RemotePlace[] = await SearchLib.search(contactType, data, dataPrefix, hierarchyLevel, chtApi, sessionCache);
 
-    return resp.view("src/public/components/search_results.html", {
+    return resp.view('src/public/components/search_results.html', {
       op,
       place,
       prefix: dataPrefix,
@@ -46,7 +46,7 @@ export default async function place(fastify: FastifyInstance) {
   });
 
   // when we select a place from search results
-  fastify.post("/search/select", async (req, resp) => {
+  fastify.post('/search/select', async (req, resp) => {
     const data: any = req.body;
     const params: any = req.query;
     const {
@@ -90,6 +90,6 @@ export default async function place(fastify: FastifyInstance) {
       tmplData.backend = `/move`;
     }
 
-    return resp.view("src/public/app/form_switch.html", tmplData);
+    return resp.view('src/public/app/form_switch.html', tmplData);
   });
 }

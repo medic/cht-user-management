@@ -12,4 +12,4 @@ export default class ValidatorSkip implements IValidator {
   get defaultError(): string {
     throw 'never';
   }
-};
+}
