@@ -173,7 +173,7 @@ describe('upload-manager.ts', () => {
     await RemotePlaceResolver.resolveOne(chp, sessionCache, chtApi, { fuzz: true });
     chp.validate();
     expect(chp.validationErrors).to.be.empty;
-    ``;
+
     // upload succeeds
     chtApi.getParentAndSibling = sinon.stub().resolves({ parent: chu.asChtPayload('user'), sibling: undefined });
     const uploadManager = new UploadManager();
