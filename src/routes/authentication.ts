@@ -33,9 +33,6 @@ export default async function authentication(fastify: FastifyInstance) {
     let session;
     try {
       session = await ChtApi.createSession(authInfo, username, password);
-      if (!session.sessionToken) {
-        throw 'login fail'; ``; 
-      }
     } catch (e: any) {
       return resp.view('src/public/auth/authentication_form.html', {
         domains: Config.getDomains,

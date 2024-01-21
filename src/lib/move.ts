@@ -1,5 +1,3 @@
-import _ from 'lodash';
-
 import { ContactType } from '../config';
 import SessionCache from '../services/session-cache';
 import { ChtApi } from '../lib/cht-api';

@@ -1,5 +1,8 @@
 {
   "extends": "@medic",
+  "env": {
+    "node": true
+  },
   "parserOptions": {
     "ecmaVersion": 6
   },
@@ -19,7 +22,6 @@
     "dot-location": ["error", "property"],
     "dot-notation": ["error", { "allowKeywords": true }],
     "func-call-spacing": ["error", "never"],
-    "func-style": ["error", "expression"],
     "function-call-argument-newline": ["error", "consistent"],
     "function-paren-newline": ["error", "consistent"],
     "implicit-arrow-linebreak": ["error", "beside"],
@@ -37,6 +39,7 @@
     "no-useless-rename": "error",
     "no-whitespace-before-property": "error",
     "node/no-exports-assign": "error",
+    "max-len": ["error", { "code": 150 }],
     "rest-spread-spacing": ["error", "never"],
     "semi-spacing": ["error", { "before": false, "after": true }],
     "semi-style": ["error", "last"],

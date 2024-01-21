@@ -156,9 +156,18 @@ export class ChtApi {
   };
 
   getParentAndSibling = async (parentId: string, contactType: ContactType): Promise<{ parent: any; sibling: any }> => {
-    const url = `${this.protocolAndHost}/medic/_design/medic/_view/contacts_by_depth?keys=[[%22${parentId}%22,0],[%22${parentId}%22,1]]&include_docs=true`;
+    const url = `${this.protocolAndHost}/medic/_design/medic/_view/contacts_by_depth`;
     console.log('axios.get', url);
-    const resp = await axios.get(url, this.authorizationOptions());
+    const resp = await axios.get(url, {
+      ...this.authorizationOptions(),
+      params: {
+        keys: JSON.stringify([
+          [parentId, 0],
+          [parentId, 1]
+        ]),
+        include_docs: true,
+      },
+    });
     const docs = resp.data?.rows?.map((row: any) => row.doc) || [];
     const parentType = Config.getParentProperty(contactType).contact_type;
     const parent = docs.find((d: any) => d.contact_type === parentType);

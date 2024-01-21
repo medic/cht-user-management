@@ -1,10 +1,10 @@
 import { expect } from 'chai';
 import sinon from 'sinon';
 
-import { ChtApi, RemotePlace } from '../../src/lib/cht-api';
+import { RemotePlace } from '../../src/lib/cht-api';
 import RemotePlaceCache from '../../src/lib/remote-place-cache';
 import SearchLib from '../../src/lib/search';
-import { mockPlace, mockSimpleContactType, mockValidContactType } from '../mocks';
+import { mockValidContactType } from '../mocks';
 import SessionCache from '../../src/services/session-cache';
 import { Config } from '../../src/config';
 

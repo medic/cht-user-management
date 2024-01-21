@@ -4,7 +4,6 @@ import { Config } from '../config';
 import { ChtApi } from '../lib/cht-api';
 import PlaceFactory from '../services/place-factory';
 import SessionCache from '../services/session-cache';
-import { PlaceUploadState } from '../services/place';
 import RemotePlaceResolver from '../lib/remote-place-resolver';
 import { UploadManager } from '../services/upload-manager';
 import RemotePlaceCache from '../lib/remote-place-cache';
@@ -109,7 +108,7 @@ export default async function addPlace(fastify: FastifyInstance) {
     resp.header('HX-Redirect', `/`);
   });
 
-  fastify.post('/place/refresh/:id', async (req, resp) => {
+  fastify.post('/place/refresh/:id', async (req) => {
     const { id } = req.params as any;
     const sessionCache: SessionCache = req.sessionCache;
     const place = sessionCache.getPlace(id);
@@ -122,10 +121,10 @@ export default async function addPlace(fastify: FastifyInstance) {
     await RemotePlaceResolver.resolveOne(place, sessionCache, chtApi, { fuzz: true });
     place.validate();
 
-    fastify.uploadManager.refresh(req.sessionCache, PlaceUploadState.PENDING);
+    fastify.uploadManager.refresh(req.sessionCache);
   });
 
-  fastify.post('/place/upload/:id', async (req, resp) => {
+  fastify.post('/place/upload/:id', async (req) => {
     const { id } = req.params as any;
     const sessionCache: SessionCache = req.sessionCache;
     const place = sessionCache.getPlace(id);
@@ -136,13 +135,13 @@ export default async function addPlace(fastify: FastifyInstance) {
     const chtApi = new ChtApi(req.chtSession);
     const uploadManager: UploadManager = fastify.uploadManager;
     await uploadManager.doUpload([place], chtApi);
-    fastify.uploadManager.refresh(req.sessionCache, PlaceUploadState.PENDING);
+    fastify.uploadManager.refresh(req.sessionCache);
   });
 
-  fastify.post('/place/remove/:id', async (req, resp) => {
+  fastify.post('/place/remove/:id', async (req) => {
     const { id } = req.params as any;
     const sessionCache: SessionCache = req.sessionCache;
     sessionCache.removePlace(id);
-    fastify.uploadManager.refresh(req.sessionCache, PlaceUploadState.PENDING);
+    fastify.uploadManager.refresh(req.sessionCache);
   });
 }

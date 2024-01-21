@@ -9,7 +9,7 @@ export class UploadNewPlace implements Uploader {
     this.chtApi = chtApi;
   }
 
-  handleContact = async function (payload: PlacePayload): Promise<string | undefined> {
+  handleContact = async function (): Promise<string | undefined> {
     return;
   };
 

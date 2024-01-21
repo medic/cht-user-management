@@ -6,7 +6,7 @@ import SessionCache from '../services/session-cache';
 import Place from '../services/place';
 
 export default async function files(fastify: FastifyInstance) {
-  fastify.get('/files/template/:placeType', async (req, resp) => {
+  fastify.get('/files/template/:placeType', async (req) => {
     const params: any = req.params;
     const placeType = params.placeType;
     const placeTypeConfig = Config.getContactType(placeType);
@@ -20,7 +20,7 @@ export default async function files(fastify: FastifyInstance) {
     return stringify([columns]);
   });
 
-  fastify.get('/files/credentials', async (req, resp) => {
+  fastify.get('/files/credentials', async (req) => {
     const sessionCache: SessionCache = req.sessionCache;
     const places = sessionCache.getPlaces();
     const refinedRecords = transform(places, (place: Place) => {

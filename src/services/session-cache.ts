@@ -1,5 +1,3 @@
-import _ from 'lodash';
-
 import Place, { PlaceUploadState } from './place';
 import { ChtSession } from '../lib/cht-api';
 

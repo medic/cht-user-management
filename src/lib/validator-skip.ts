@@ -1,7 +1,7 @@
 import { IValidator } from './validation';
 
 export default class ValidatorSkip implements IValidator {
-  isValid(input: string) : boolean | string {
+  isValid() : boolean | string {
     return true;
   }
 

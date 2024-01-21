@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 
 import { Validation } from '../../src/lib/validation';
-import { mockSimpleContactType, mockPlace, expectInvalidProperties } from '../mocks';
+import { mockSimpleContactType, mockPlace } from '../mocks';
 
 type Scenario = {
   type: string;

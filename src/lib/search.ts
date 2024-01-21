@@ -7,8 +7,14 @@ import { Config, ContactType, HierarchyConstraint } from '../config';
 import Place from '../services/place';
 
 export default class SearchLib {
-  public static search = async (contactType: ContactType, formData: any, dataPrefix: string, hierarchyLevel: HierarchyConstraint, chtApi: ChtApi, sessionCache: SessionCache | undefined)
-    : Promise<RemotePlace[]> => {
+  public static search = async (
+    contactType: ContactType,
+    formData: any,
+    dataPrefix: string,
+    hierarchyLevel: HierarchyConstraint,
+    chtApi: ChtApi,
+    sessionCache: SessionCache | undefined
+  ) : Promise<RemotePlace[]> => {
     const searchString: string = formData[`${dataPrefix}${hierarchyLevel?.property_name}`]?.toLowerCase();
     
     const localResults: Place[] = sessionCache ? await getLocalResults(hierarchyLevel, sessionCache, searchString) : [];
@@ -29,7 +35,7 @@ export default class SearchLib {
 
 async function getLocalResults(hierarchyLevel: HierarchyConstraint, sessionCache: SessionCache, searchString: string)
   : Promise<Place[]> {
-  if (hierarchyLevel.level == 0) {
+  if (hierarchyLevel.level === 0) {
     return [];
   }
 
@@ -42,8 +48,14 @@ async function getLocalResults(hierarchyLevel: HierarchyConstraint, sessionCache
   return _.sortBy(result, 'name');
 }
 
-async function getRemoteResults(searchString: string, hierarchyLevel: HierarchyConstraint, contactType: ContactType, formData: any, chtApi: ChtApi, dataPrefix: string)
-  : Promise<RemotePlace[]> {
+async function getRemoteResults(
+  searchString: string,
+  hierarchyLevel: HierarchyConstraint,
+  contactType: ContactType,
+  formData: any,
+  chtApi: ChtApi,
+  dataPrefix: string
+) : Promise<RemotePlace[]> {
   const topDownHierarchy = Config.getHierarchyWithReplacement(contactType, 'desc');
   const allResults = await RemotePlaceCache.getPlacesWithType(chtApi, hierarchyLevel.contact_type);
   let remoteResults = allResults.filter(place => place.name.includes(searchString));

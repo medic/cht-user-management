@@ -1,5 +1,3 @@
-import _ from 'lodash';
-
 import { Config, ContactProperty } from '../config';
 
 import ValidatorString from './validator-string';
@@ -100,7 +98,12 @@ export class Validation {
     return result;
   }
 
-  private static validateProperties(obj : any, properties : ContactProperty[], requiredProperties: ContactProperty[], prefix: string) : ValidationError[] {
+  private static validateProperties(
+    obj : any,
+    properties : ContactProperty[],
+    requiredProperties: ContactProperty[],
+    prefix: string
+  ) : ValidationError[] {
     const invalid: ValidationError[] = [];
 
     for (const property of properties) {
@@ -150,7 +153,12 @@ export class Validation {
     return validator;
   }
 
-  private static describeInvalidRemotePlace(remotePlace: RemotePlace | undefined, friendlyType: string, searchStr?: string, requiredParent?: string): string {
+  private static describeInvalidRemotePlace(
+    remotePlace: RemotePlace | undefined,
+    friendlyType: string,
+    searchStr?: string,
+    requiredParent?: string
+  ): string {
     if (!searchStr) {
       return `Cannot find ${friendlyType} because the search string is empty`;
     }

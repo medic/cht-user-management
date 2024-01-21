@@ -179,7 +179,13 @@ function pickFromMapOptimistic(map: RemotePlaceMap, placeName: string, fuzzFunct
   return optimisticResult || result || fuzzyResult;
 }
 
-function findLocalPlaces(name: string, type: string, sessionCache: SessionCache, options: PlaceResolverOptions | undefined, fuzzFunction: (key: string) => string): RemotePlace | undefined {
+function findLocalPlaces(
+  name: string,
+  type: string,
+  sessionCache: SessionCache,
+  options: PlaceResolverOptions | undefined,
+  fuzzFunction: (key: string) => string
+): RemotePlace | undefined {
   let places = sessionCache.getPlaces({ type, nameExact: name });
 
   if (options?.fuzz && !places.length) {

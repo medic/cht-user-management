@@ -135,7 +135,7 @@ describe('upload-manager.ts', () => {
   });
 
   it('place with validation error is not uploaded', async () => {
-    const { remotePlace, sessionCache, contactType, fakeFormData, chtApi } = await createMocks();
+    const { sessionCache, contactType, fakeFormData, chtApi } = await createMocks();
     delete fakeFormData.place_name;
     const place = await PlaceFactory.createOne(fakeFormData, contactType, sessionCache, chtApi);
     expect(place.validationErrors).to.not.be.empty;

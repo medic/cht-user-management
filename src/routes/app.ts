@@ -44,13 +44,13 @@ export default async function sessionCache(fastify: FastifyInstance) {
     return resp.view('src/public/app/view.html', tmplData);
   });
 
-  fastify.post('/app/remove-all', async (req, resp) => {
+  fastify.post('/app/remove-all', async (req) => {
     const sessionCache: SessionCache = req.sessionCache;
     sessionCache.removeAll();
-    fastify.uploadManager.refresh(req.sessionCache, PlaceUploadState.PENDING);
+    fastify.uploadManager.refresh(req.sessionCache);
   });
 
-  fastify.post('/app/refresh-all', async (req, resp) => {
+  fastify.post('/app/refresh-all', async (req) => {
     const sessionCache: SessionCache = req.sessionCache;
     const chtApi = new ChtApi(req.chtSession);
 
