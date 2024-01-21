@@ -8,9 +8,9 @@ jobs:
     timeout-minutes: 15
 
     steps:
-    - uses: actions/checkout@v2
-    - name: actions/setup-node@v1
-      with:
-        node-version: 20.x
-    - run: npm ci
-    - run: npm test
+      - uses: actions/checkout@v2
+      - name: actions/setup-node@v1
+        with:
+          node-version: 20.x
+      - run: npm ci
+      - run: npm test
