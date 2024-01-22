@@ -22,7 +22,7 @@ const port: number = env.PORT ? parseInt(env.PORT) : 3000;
   // backwards compatible to when it was undeclared and hard coded to
   // be 0.0.0.0
   let calculated_interface = "0.0.0.0";
-  if(INTERFACE){
+  if (INTERFACE) {
     calculated_interface = INTERFACE;
   }
   server.listen({ host: calculated_interface, port }, (err, address) => {
