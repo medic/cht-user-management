@@ -150,7 +150,7 @@ export class Config {
 
     if (NODE_ENV !== 'production') {
       domains.push({
-        friendly: 'Development Instance (' + CHT_DEV_URL_PORT + ')',
+        friendly: '$Development Instance (' + CHT_DEV_URL_PORT + ')',
         domain: CHT_DEV_URL_PORT as string,
         useHttp: TMP_USE_HTTP,
       });
