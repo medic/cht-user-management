@@ -43,7 +43,7 @@
     "cp-package-json": "cp package.json ./src",
     "test": "npx ts-mocha test/{,**}/*.spec.ts",
     "build": "npm run cp-package-json && npx tsc",
-    "start": "node src/index.ts",
+    "start": "node dist/index.js",
     "dev": "tsc-watch --onSuccess \"node dist/index.js\"",
     "publish": "node scripts/publish.js"
   },
