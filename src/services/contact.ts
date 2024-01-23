@@ -1,5 +1,5 @@
-import { v4 as uuidv4 } from "uuid";
-import { Config, ContactType } from "../config";
+import { v4 as uuidv4 } from 'uuid';
+import { Config, ContactType } from '../config';
 
 export default class Contact {
   public id: string;
@@ -18,4 +18,4 @@ export default class Contact {
     const nameProperty = Config.getPropertyWithName(this.type.contact_properties, 'name');
     return this.properties[nameProperty.property_name];
   }
-};
+}

@@ -1,15 +1,15 @@
-import Fastify, { FastifyInstance, FastifyReply, FastifyRequest, FastifyServerOptions } from "fastify";
-import autoload from "@fastify/autoload";
-import cookie from "@fastify/cookie";
-import formbody from "@fastify/formbody";
-import multipart from "@fastify/multipart";
-import view from "@fastify/view";
-import { Liquid } from "liquidjs";
-import { FastifySSEPlugin } from "fastify-sse-v2";
-import path from "path";
+import Fastify, { FastifyInstance, FastifyReply, FastifyRequest, FastifyServerOptions } from 'fastify';
+import autoload from '@fastify/autoload';
+import cookie from '@fastify/cookie';
+import formbody from '@fastify/formbody';
+import multipart from '@fastify/multipart';
+import view from '@fastify/view';
+import { Liquid } from 'liquidjs';
+import { FastifySSEPlugin } from 'fastify-sse-v2';
+import path from 'path';
 
 import Auth from './lib/authentication';
-import SessionCache from "./services/session-cache";
+import SessionCache from './services/session-cache';
 
 const build = (opts: FastifyServerOptions): FastifyInstance => {
   const fastify = Fastify(opts);
@@ -19,14 +19,14 @@ const build = (opts: FastifyServerOptions): FastifyInstance => {
   fastify.register(cookie);
   fastify.register(view, {
     engine: {
-      liquid: new Liquid({ extname: ".html", root: "src/public", jekyllInclude: true, dynamicPartials: true }),
+      liquid: new Liquid({ extname: '.html', root: 'src/public', jekyllInclude: true, dynamicPartials: true }),
     },
   });
   fastify.register(autoload, {
-    dir: path.join(__dirname, "plugins"),
+    dir: path.join(__dirname, 'plugins'),
   });
   fastify.register(autoload, {
-    dir: path.join(__dirname, "routes"),
+    dir: path.join(__dirname, 'routes'),
   });
 
   Auth.assertEnvironmentSetup();

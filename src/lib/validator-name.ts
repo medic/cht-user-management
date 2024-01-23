@@ -1,6 +1,6 @@
-import { ContactProperty } from "../config";
+import { ContactProperty } from '../config';
 import { IValidator } from './validation';
-import ValidatorString from "./validator-string";
+import ValidatorString from './validator-string';
 
 export default class ValidatorName implements IValidator {
   isValid(input: string) : boolean | string {
@@ -31,6 +31,6 @@ export default class ValidatorName implements IValidator {
   private titleCase(value: string): string {
     const words = value.toLowerCase().split(' ');
     const titleCased = words.map(word => word[0].toUpperCase() + word.slice(1)).join(' ');
-    return titleCased.replace(/ '/g, "'");
+    return titleCased.replace(/ '/g, '\'');
   }
-};
+}

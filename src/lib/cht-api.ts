@@ -1,7 +1,7 @@
-import _ from "lodash";
-import axios, { AxiosHeaders } from "axios";
-import { UserPayload } from "../services/user-payload";
-import { AuthenticationInfo, Config, ContactType } from "../config";
+import _ from 'lodash';
+import axios, { AxiosHeaders } from 'axios';
+import { UserPayload } from '../services/user-payload';
+import { AuthenticationInfo, Config, ContactType } from '../config';
 
 export type ChtSession = {
   authInfo: AuthenticationInfo;
@@ -69,7 +69,7 @@ export class ChtApi {
       username,
       sessionToken,
     };
-  };
+  }
 
   // workaround https://github.com/medic/cht-core/issues/8674
   updateContactParent = async (parentId: string): Promise<string> => {
@@ -155,20 +155,28 @@ export class ChtApi {
     await axios.post(url, user, this.authorizationOptions());
   };
 
-  getParentAndSibling = async (parentId: string, contactType: ContactType): Promise<{ parent: any, sibling: any }> => {
-    const url = `${this.protocolAndHost}/medic/_design/medic/_view/contacts_by_depth?keys=[[%22${parentId}%22,0],[%22${parentId}%22,1]]&include_docs=true`;
+  getParentAndSibling = async (parentId: string, contactType: ContactType): Promise<{ parent: any; sibling: any }> => {
+    const url = `${this.protocolAndHost}/medic/_design/medic/_view/contacts_by_depth`;
     console.log('axios.get', url);
-    const resp = await axios.get(url, this.authorizationOptions());
+    const resp = await axios.get(url, {
+      ...this.authorizationOptions(),
+      params: {
+        keys: JSON.stringify([
+          [parentId, 0],
+          [parentId, 1]
+        ]),
+        include_docs: true,
+      },
+    });
     const docs = resp.data?.rows?.map((row: any) => row.doc) || [];
     const parentType = Config.getParentProperty(contactType).contact_type;
     const parent = docs.find((d: any) => d.contact_type === parentType);
     const sibling = docs.find((d: any) => d.contact_type === contactType.name);
     return { parent, sibling };
-  }
+  };
 
   getPlacesWithType = async (placeType: string)
-    : Promise<RemotePlace[]> =>
-  {
+    : Promise<RemotePlace[]> => {
     const url = `${this.protocolAndHost}/medic/_design/medic-client/_view/contacts_by_type_freetext`;
     const params = {
       startkey: JSON.stringify([ placeType, 'name:']),
@@ -216,7 +224,7 @@ function minify(doc: any): any {
     _id: doc._id,
     parent: minify(doc.parent),
   };
-};
+}
 
 function extractLineage(doc: any): string[] {
   if (doc?.parent?._id) {
@@ -224,4 +232,4 @@ function extractLineage(doc: any): string[] {
   }
 
   return [];
-};
+}

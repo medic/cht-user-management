@@ -1,6 +1,6 @@
 {
   "name": "cht-user-management",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "main": "dist/index.js",
   "dependencies": {
     "@fastify/autoload": "^5.8.0",
@@ -27,12 +27,18 @@
     "uuid": "^9.0.1"
   },
   "devDependencies": {
+    "@medic/eslint-config": "^1.1.0",
     "@types/chai": "^4.3.11",
     "@types/mocha": "^10.0.6",
     "@types/rewire": "^2.5.30",
     "@types/sinon": "^17.0.2",
+    "@typescript-eslint/eslint-plugin": "^6.19.0",
+    "@typescript-eslint/parser": "^6.19.0",
     "chai": "^4.3.10",
     "chai-as-promised": "^7.1.1",
+    "eslint": "^8.56.0",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-promise": "^6.1.1",
     "mocha": "^10.2.0",
     "rewire": "^7.0.0",
     "sinon": "^17.0.1",
@@ -43,6 +49,7 @@
     "cp-package-json": "cp package.json ./src",
     "test": "npx ts-mocha test/{,**}/*.spec.ts",
     "build": "npm run cp-package-json && npx tsc",
+    "lint": "npx eslint --color --cache .",
     "start": "node dist/index.js",
     "dev": "tsc-watch --onSuccess \"node dist/index.js\"",
     "publish": "node dist/publish.js"

@@ -1,14 +1,14 @@
-import { FastifyInstance } from "fastify";
-import { Config } from "../config";
-import SessionCache from "../services/session-cache";
+import { FastifyInstance } from 'fastify';
+import { Config } from '../config';
+import SessionCache from '../services/session-cache';
 import { UploadManager } from '../services/upload-manager';
-import { PlaceUploadState } from "../services/place";
-import { ChtApi } from "../lib/cht-api";
-import RemotePlaceResolver from "../lib/remote-place-resolver";
-import RemotePlaceCache from "../lib/remote-place-cache";
+import { PlaceUploadState } from '../services/place';
+import { ChtApi } from '../lib/cht-api';
+import RemotePlaceResolver from '../lib/remote-place-resolver';
+import RemotePlaceCache from '../lib/remote-place-cache';
 
 export default async function sessionCache(fastify: FastifyInstance) {
-  fastify.get("/", async (req, resp) => {
+  fastify.get('/', async (req, resp) => {
     const contactTypes = Config.contactTypes();
     const {
       op = 'table',
@@ -29,7 +29,7 @@ export default async function sessionCache(fastify: FastifyInstance) {
     });
 
     const tmplData = {
-      view: "list",
+      view: 'list',
       logo: Config.getLogoBase64(),
       contactType,
       contactTypes: placeData,
@@ -41,16 +41,16 @@ export default async function sessionCache(fastify: FastifyInstance) {
       op,
     };
 
-    return resp.view("src/public/app/view.html", tmplData);
+    return resp.view('src/public/app/view.html', tmplData);
   });
 
-  fastify.post("/app/remove-all", async (req, resp) => {
+  fastify.post('/app/remove-all', async (req) => {
     const sessionCache: SessionCache = req.sessionCache;
     sessionCache.removeAll();
-    fastify.uploadManager.refresh(req.sessionCache, PlaceUploadState.PENDING);
+    fastify.uploadManager.refresh(req.sessionCache);
   });
 
-  fastify.post("/app/refresh-all", async (req, resp) => {
+  fastify.post('/app/refresh-all', async (req) => {
     const sessionCache: SessionCache = req.sessionCache;
     const chtApi = new ChtApi(req.chtSession);
 
@@ -64,7 +64,7 @@ export default async function sessionCache(fastify: FastifyInstance) {
   });
 
   // initiates place creation via the job manager
-  fastify.post("/app/apply-changes", async (req) => {
+  fastify.post('/app/apply-changes', async (req) => {
     const uploadManager: UploadManager = fastify.uploadManager;
     const sessionCache: SessionCache = req.sessionCache;
 

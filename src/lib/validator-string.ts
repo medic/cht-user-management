@@ -16,4 +16,4 @@ export default class ValidatorString implements IValidator {
   get defaultError(): string {
     return 'Is Required';
   }
-};
+}

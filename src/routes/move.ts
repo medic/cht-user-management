@@ -1,21 +1,21 @@
-import _ from "lodash";
+import _ from 'lodash';
 
-import { Config, ContactType } from "../config";
-import { ChtApi } from "../lib/cht-api";
-import { FastifyInstance } from "fastify";
-import MoveLib from "../lib/move";
-import SessionCache from "../services/session-cache";
+import { Config, ContactType } from '../config';
+import { ChtApi } from '../lib/cht-api';
+import { FastifyInstance } from 'fastify';
+import MoveLib from '../lib/move';
+import SessionCache from '../services/session-cache';
 
 export default async function sessionCache(fastify: FastifyInstance) {
-  fastify.get("/move/:placeType", async (req, resp) => {
+  fastify.get('/move/:placeType', async (req, resp) => {
     const params: any = req.params;
     const placeType = params.placeType;
     const contactTypes = Config.contactTypes();
     
     const contactType = Config.getContactType(placeType);
     const tmplData = {
-      view: "move",
-      op: "move",
+      view: 'move',
+      op: 'move',
       logo: Config.getLogoBase64(),
       contactTypes,
       contactType,
@@ -23,10 +23,10 @@ export default async function sessionCache(fastify: FastifyInstance) {
       ...moveViewModel(contactType),
     };
 
-    return resp.view("src/public/app/view.html", tmplData);
+    return resp.view('src/public/app/view.html', tmplData);
   });
 
-  fastify.post("/move", async (req, resp) => {
+  fastify.post('/move', async (req, resp) => {
     const formData:any = req.body;
 
     const sessionCache: SessionCache = req.sessionCache;
@@ -35,11 +35,11 @@ export default async function sessionCache(fastify: FastifyInstance) {
     
     try {
       const tmplData = await MoveLib.move(formData, contactType, sessionCache, chtApi);
-      return resp.view("src/public/components/move_result.html", tmplData);
+      return resp.view('src/public/components/move_result.html', tmplData);
     } catch (e: any) {
       const tmplData = {
-        view: "move",
-        op: "move",
+        view: 'move',
+        op: 'move',
         contactTypes: Config.contactTypes(),
         session: req.chtSession,
         data: formData,
@@ -48,7 +48,7 @@ export default async function sessionCache(fastify: FastifyInstance) {
         error: e.toString(),
       };
   
-      return resp.view("src/public/place/move_form.html", tmplData);
+      return resp.view('src/public/place/move_form.html', tmplData);
     }
   });
 }
@@ -67,4 +67,4 @@ export function moveViewModel(contactType: ContactType) {
     fromHierarchy,
     toHierarchy,
   };
-};
+}

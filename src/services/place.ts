@@ -1,13 +1,13 @@
-import _ from "lodash";
-import Contact from "./contact";
-import { v4 as uuidv4 } from "uuid";
+import _ from 'lodash';
+import Contact from './contact';
+import { v4 as uuidv4 } from 'uuid';
 
-import { Config, ContactProperty, ContactType } from "../config";
-import { PlacePayload, RemotePlace } from "../lib/cht-api";
-import { Validation } from "../lib/validation";
+import { Config, ContactProperty, ContactType } from '../config';
+import { PlacePayload, RemotePlace } from '../lib/cht-api';
+import { Validation } from '../lib/validation';
 // can't use package.json because of rootDir in ts
 import { version as appVersion } from '../package.json';
-import RemotePlaceResolver from "../lib/remote-place-resolver";
+import RemotePlaceResolver from '../lib/remote-place-resolver';
 
 export type UserCreationDetails = {
   username?: string;
@@ -18,12 +18,12 @@ export type UserCreationDetails = {
 };
 
 export enum PlaceUploadState {
-  SUCCESS = "success",
-  FAILURE = "failure",
-  PENDING = "pending",
-  SCHEDULED = "scheduled",
-  IN_PROGESS = "in_progress",
-};
+  SUCCESS = 'success',
+  FAILURE = 'failure',
+  PENDING = 'pending',
+  SCHEDULED = 'scheduled',
+  IN_PROGESS = 'in_progress',
+}
 
 const PLACE_PREFIX = 'place_';
 const CONTACT_PREFIX = 'contact_';
@@ -141,19 +141,19 @@ export default class Place {
     return {
       ...filteredProperties(this.properties),
       _id: this.isReplacement ? this.resolvedHierarchy[0]?.id : this.id,
-      type: "contact",
+      type: 'contact',
       contact_type: this.type.name,
       parent: this.resolvedHierarchy[1]?.id,
       user_attribution,
       contact: {
         ...filteredProperties(this.contact.properties),
         name: this.contact.name,
-        type: "contact",
+        type: 'contact',
         contact_type: this.contact.type.contact_type,
         user_attribution,
       }
     };
-  };
+  }
 
   public asRemotePlace() : RemotePlace {
     const isHierarchyValid = !this.resolvedHierarchy.find(h => h?.type === 'invalid');
@@ -187,7 +187,7 @@ export default class Place {
   public validate(): void {
     const errors = Validation.getValidationErrors(this);
     this.validationErrors = {};
-    for (let error of errors) {
+    for (const error of errors) {
       this.validationErrors[error.property_name] = error.description;
     }
     
@@ -226,4 +226,4 @@ export default class Place {
   public get isCreated(): boolean {
     return !!this.creationDetails.password;
   }
-};
+}
