@@ -1,6 +1,6 @@
 {
   "name": "cht-user-management",
-  "version": "1.0.2",
+  "version": "1.0.4",
   "main": "dist/index.js",
   "dependencies": {
     "@fastify/autoload": "^5.8.0",
@@ -45,7 +45,7 @@
     "build": "npm run cp-package-json && npx tsc",
     "start": "node dist/index.js",
     "dev": "tsc-watch --onSuccess \"node dist/index.js\"",
-    "publish": "node dist/publish.js"
+    "publish": "node scripts/publish.js"
   },
   "repository": {
     "type": "git",
