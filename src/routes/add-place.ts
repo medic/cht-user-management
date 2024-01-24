@@ -86,6 +86,7 @@ export default async function addPlace(fastify: FastifyInstance) {
       logo: Config.getLogoBase64(),
       hierarchy: Config.getHierarchyWithReplacement(place.type, 'desc'),
       place,
+      session: req.chtSession,
       contactType: place.type,
       contactTypes: Config.contactTypes(),
       backend: `/place/edit/${id}`,
