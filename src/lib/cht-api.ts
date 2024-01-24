@@ -3,6 +3,10 @@ import axios, { AxiosHeaders } from "axios";
 import { UserPayload } from "../services/user-payload";
 import { AuthenticationInfo, Config, ContactType } from "../config";
 
+const {
+  NODE_ENV
+} = process.env;
+
 export type ChtSession = {
   authInfo: AuthenticationInfo;
   sessionToken: string;
@@ -64,6 +68,13 @@ export class ChtApi {
     const sessionToken = setCookieHeader?.[0].split(';')
       .find((header : string) => header.startsWith(COUCH_AUTH_COOKIE_NAME));
 
+    if (NODE_ENV !== 'production') {
+      if (!sessionToken) {
+        console.log("failed to login to " + sessionUrl);
+      } else {
+        console.log("successfully logged in to " + sessionUrl);
+      }
+    }
     return {
       authInfo,
       username,
