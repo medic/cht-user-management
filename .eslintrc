@@ -1,10 +1,11 @@
 {
   "extends": "@medic",
   "env": {
-    "node": true
+    "node": true,
+    "es6": true
   },
   "parserOptions": {
-    "ecmaVersion": 6
+    "ecmaVersion": 8
   },
   "ignorePatterns": [
     "**/node_modules/**",
@@ -31,6 +32,7 @@
     "lines-between-class-members": ["error", "always", { "exceptAfterSingleLine": true }],
     "new-parens": "error",
     "no-alert": "error",
+    "no-console": "off",
     "no-else-return": "error",
     "no-extra-bind": "error",
     "no-lone-blocks": "error",
