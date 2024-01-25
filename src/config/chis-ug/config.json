@@ -2,16 +2,17 @@
 {
   "domains": [
     {
-      "friendly": "UG VHT",
+      "friendly": "eCHIS Uganda",
       "domain": "echis.health.go.ug"
     }
   ],
+
   "contact_types": [
     {
       "name": "health_center",
       "friendly": "VHT Area",
       "contact_type": "person",
-      "user_role": "district_admin",
+      "user_role": "vht",
       "username_from_place": true,
       "hierarchy": [
         {
@@ -34,9 +35,10 @@
           "friendly_name": "VHT Area Name",
           "property_name": "name",
           "type": "name",
-          "parameter": [],
+          "parameter": ["\\sArea", "\\s(village)"],
           "required": true
         },
+
         {
           "friendly_name": "District",
           "property_name": "district",
@@ -82,7 +84,7 @@
           "required": true
         },
         {
-          "friendly_name": "VHT Phone",
+          "friendly_name": "Phone Number",
           "property_name": "phone",
           "type": "phone",
           "parameter": "UG",
