@@ -3,6 +3,7 @@ import { FastifyInstance, FastifyRequest } from 'fastify';
 import Auth from '../lib/authentication';
 import { ChtApi } from '../lib/cht-api';
 import { Config } from '../config';
+import { version as appVersion } from '../package.json';
 
 export default async function authentication(fastify: FastifyInstance) {
   const unauthenticatedOptions = {
@@ -54,6 +55,10 @@ export default async function authentication(fastify: FastifyInstance) {
 
   fastify.get('/_healthz', unauthenticatedOptions, () => {
     return 'OK';
+  });
+
+  fastify.get('/version', unauthenticatedOptions, () => {
+    return appVersion;
   });
 }
 
