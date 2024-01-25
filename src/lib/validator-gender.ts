@@ -19,11 +19,11 @@ export default class ValidatorGender implements IValidator {
     return `Must be either 'Male' or 'Female'`;
   }
 
-  private parseGenders(input: string): { gender: string, isValid: boolean } {
+  private parseGenders(input: string): { gender: string; isValid: boolean } {
     const isFemale = input?.match(/[fw]/i);
     const isMale = input?.match(/m(?<!fem|wom)/i);
     const isValid = (!!isFemale || !!isMale) && !(isFemale && isMale);
     const gender = isMale ? 'Male' : 'Female';
     return { isValid, gender };
   }
-};
+}

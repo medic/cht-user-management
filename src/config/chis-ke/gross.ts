@@ -3,8 +3,8 @@
  * stuff that eCHIS needs that others probably "shouldn't do" or are unlikely to do
  */
 
-import { ChtApi, PlacePayload } from "../../lib/cht-api";
-import { Config } from "..";
+import { ChtApi, PlacePayload } from '../../lib/cht-api';
+import { Config } from '..';
 
 export default async function mutate(payload: PlacePayload, chtApi: ChtApi, isReplacement: boolean): Promise<PlacePayload> {
   if (payload.contact_type !== 'd_community_health_volunteer_area') {
@@ -43,4 +43,4 @@ export default async function mutate(payload: PlacePayload, chtApi: ChtApi, isRe
   scapeToPayload('chu_name', 'name');
   scapeToPayload('chu_code', 'code');
   return payload;
-};
+}

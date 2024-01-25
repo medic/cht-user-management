@@ -4,7 +4,7 @@ import { Config } from '../../src/config';
 import SessionCache from '../../src/services/session-cache';
 import { mockChtApi } from '../mocks';
 
-import chaiAsPromised from "chai-as-promised";
+import chaiAsPromised from 'chai-as-promised';
 Chai.use(chaiAsPromised);
 
 const { expect } = Chai;
@@ -71,7 +71,7 @@ describe('lib/move', () => {
     const sessionCache = new SessionCache();
 
     const actual = MoveLib.move(formData, contactType, sessionCache, chtApi());
-    await expect(actual).to.eventually.be.rejectedWith("Cannot find 'b_sub_county' matching 'invalid sub'");
+    await expect(actual).to.eventually.be.rejectedWith('Cannot find \'b_sub_county\' matching \'invalid sub\'');
   });
 });
 

@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 
 import { Validation } from '../../src/lib/validation';
-import { mockSimpleContactType, mockPlace, expectInvalidProperties } from '../mocks';
+import { mockSimpleContactType, mockPlace } from '../mocks';
 
 type Scenario = {
   type: string;
@@ -32,7 +32,7 @@ const scenarios: Scenario[] = [
   { type: 'name', prop: 'abc', isValid: true, altered: 'Abc' },
   { type: 'name', prop: 'a b c', isValid: true, altered: 'A B C' },
   { type: 'name', prop: 'WELDON KO(E)CH \n', isValid: true, altered: 'Weldon Ko(e)ch' },
-  { type: 'name', prop: "S 'am 's", isValid: true, altered: "S'am's" },
+  { type: 'name', prop: 'S \'am \'s', isValid: true, altered: 'S\'am\'s' },
   { type: 'name', prop: 'KYAMBOO/KALILUNI', isValid: true, altered: 'Kyamboo / Kaliluni' },
   { type: 'name', prop: 'NZATANI / ILALAMBYU', isValid: true, altered: 'Nzatani / Ilalambyu' },
   { type: 'name', prop: 'Sam\'s CHU', propertyParameter: ['CHU', 'Comm Unit'], isValid: true, altered: 'Sam\'s' },

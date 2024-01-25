@@ -1,8 +1,8 @@
-import { expect } from "chai";
+import { expect } from 'chai';
 
-import Place from "../../src/services/place";
-import { mockSimpleContactType } from "../mocks";
-import RemotePlaceResolver from "../../src/lib/remote-place-resolver";
+import Place from '../../src/services/place';
+import { mockSimpleContactType } from '../mocks';
+import RemotePlaceResolver from '../../src/lib/remote-place-resolver';
 
 describe('service place.ts', () => {
   it('setPropertiesFromFormData', () => {

@@ -1,10 +1,8 @@
-import _ from "lodash";
-
-import { ContactType } from "../config";
-import SessionCache from "../services/session-cache";
-import { ChtApi } from "../lib/cht-api";
-import RemotePlaceResolver from "../lib/remote-place-resolver";
-import Place from "../services/place";
+import { ContactType } from '../config';
+import SessionCache from '../services/session-cache';
+import { ChtApi } from '../lib/cht-api';
+import RemotePlaceResolver from '../lib/remote-place-resolver';
+import Place from '../services/place';
 
 export default class MoveLib {
   constructor() {}
@@ -24,7 +22,7 @@ export default class MoveLib {
     }
     
     const { authInfo } = chtApi.chtSession;
-    const url = `http${authInfo.useHttp ? '' : 's'}://${chtApi.chtSession.username}:password@${authInfo.domain}`
+    const url = `http${authInfo.useHttp ? '' : 's'}://${chtApi.chtSession.username}:password@${authInfo.domain}`;
     return {
       command: `npx cht --url=${url} move-contacts upload-docs -- --contacts=${fromId} --parent=${toId}`,
       fromLineage,

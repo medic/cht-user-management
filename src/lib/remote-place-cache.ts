@@ -1,5 +1,5 @@
-import Place from "../services/place";
-import { ChtApi, RemotePlace } from "./cht-api";
+import Place from '../services/place';
+import { ChtApi, RemotePlace } from './cht-api';
 
 type RemotePlacesByType = {
   [key: string]: RemotePlace[];
@@ -13,8 +13,7 @@ export default class RemotePlaceCache {
   private static cache: RemotePlaceDatastore = {};
 
   public static async getPlacesWithType(chtApi: ChtApi, placeType: string)
-    : Promise<RemotePlace[]>
-  {
+    : Promise<RemotePlace[]> {
     const domainStore = await RemotePlaceCache.getDomainStore(chtApi, placeType);
     return domainStore;
   }
@@ -36,8 +35,7 @@ export default class RemotePlaceCache {
   }
 
   private static async getDomainStore(chtApi: ChtApi, placeType: string)
-    : Promise<RemotePlace[]>
-  {
+    : Promise<RemotePlace[]> {
     const { domain } = chtApi.chtSession.authInfo;
     const { cache: domainCache } = RemotePlaceCache;
 

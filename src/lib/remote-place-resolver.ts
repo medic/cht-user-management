@@ -1,10 +1,10 @@
-import _ from "lodash";
-import Place from "../services/place";
-import SessionCache from "../services/session-cache";
-import { RemotePlace, ChtApi } from "./cht-api";
-import { Config, ContactType, HierarchyConstraint } from "../config";
-import { Validation } from "./validation";
-import RemotePlaceCache from "./remote-place-cache";
+import _ from 'lodash';
+import Place from '../services/place';
+import SessionCache from '../services/session-cache';
+import { RemotePlace, ChtApi } from './cht-api';
+import { Config, ContactType, HierarchyConstraint } from '../config';
+import { Validation } from './validation';
+import RemotePlaceCache from './remote-place-cache';
 
 type RemotePlaceMap = { [key: string]: RemotePlace };
 
@@ -13,7 +13,7 @@ export type PlaceResolverOptions = {
 };
 
 export default class RemotePlaceResolver {
-  public static readonly NoResult: RemotePlace = { id: "na", name: "Place Not Found", type: 'invalid', lineage: [] };
+  public static readonly NoResult: RemotePlace = { id: 'na', name: 'Place Not Found', type: 'invalid', lineage: [] };
   public static readonly Multiple: RemotePlace = { id: 'multiple', name: 'multiple places', type: 'invalid', lineage: [] };
 
   public static resolve = async (
@@ -25,15 +25,14 @@ export default class RemotePlaceResolver {
     for (const place of places) {
       await this.resolveOne(place, sessionCache, chtApi, options);
     }
-  }
+  };
 
   public static resolveOne = async (
     place: Place,
     sessionCache: SessionCache,
     chtApi: ChtApi,
     options?: PlaceResolverOptions
-  ) : Promise<void> =>
-  {
+  ) : Promise<void> => {
     const topDownHierarchy = Config.getHierarchyWithReplacement(place.type, 'desc');
     for (const hierarchyLevel of topDownHierarchy) {
       if (!place.hierarchyProperties[hierarchyLevel.property_name]) {
@@ -69,11 +68,10 @@ export default class RemotePlaceResolver {
     }
     
     await RemotePlaceResolver.resolveAmbiguousParent(place);
-  }
+  };
 
   private static resolveAmbiguousParent = async (place: Place)
-    : Promise<void> =>
-  {
+    : Promise<void> => {
     const topDownHierarchy = Config.getHierarchyWithReplacement(place.type, 'desc');
     const ambiguousHierarchies = place.resolvedHierarchy
       .map((remotePlace, index) => ({
@@ -105,7 +103,7 @@ export default class RemotePlaceResolver {
         }
       }
     }
-  }
+  };
 }
 
 function getFuzzFunction(hierarchyLevel: HierarchyConstraint, contactType: ContactType) {
@@ -121,8 +119,7 @@ async function findRemotePlacesInHierarchy(
   place: Place,
   hierarchyLevel: HierarchyConstraint,
   chtApi: ChtApi
-) : Promise<RemotePlace[]>
-{
+) : Promise<RemotePlace[]> {
   let searchPool = await RemotePlaceCache.getPlacesWithType(chtApi, hierarchyLevel.contact_type);
   const topDownHierarchy = Config.getHierarchyWithReplacement(place.type, 'desc');
   for (const { level } of topDownHierarchy) {
@@ -148,7 +145,7 @@ async function findRemotePlacesInHierarchy(
   }
   
   return searchPool;
-};
+}
 
 function getSearchKeys(place: Place, searchPropertyName: string, fuzzFunction: (key: string) => string, fuzz: boolean)
   : string[] {
@@ -165,7 +162,7 @@ function getSearchKeys(place: Place, searchPropertyName: string, fuzzFunction: (
   return _.uniq(keys);
 }
 
-function pickFromMapOptimistic(map: RemotePlaceMap, placeName: string, fuzzFunction: (key: string) => string,fuzz: boolean)
+function pickFromMapOptimistic(map: RemotePlaceMap, placeName: string, fuzzFunction: (key: string) => string, fuzz: boolean)
   : RemotePlace | undefined {
   if (!placeName) {
     return;
@@ -182,7 +179,13 @@ function pickFromMapOptimistic(map: RemotePlaceMap, placeName: string, fuzzFunct
   return optimisticResult || result || fuzzyResult;
 }
 
-function findLocalPlaces(name: string, type: string, sessionCache: SessionCache, options: PlaceResolverOptions | undefined, fuzzFunction: (key: string) => string): RemotePlace | undefined {
+function findLocalPlaces(
+  name: string,
+  type: string,
+  sessionCache: SessionCache,
+  options: PlaceResolverOptions | undefined,
+  fuzzFunction: (key: string) => string
+): RemotePlace | undefined {
   let places = sessionCache.getPlaces({ type, nameExact: name });
 
   if (options?.fuzz && !places.length) {
@@ -222,4 +225,4 @@ function addKeyToMap(map: RemotePlaceMap, key: string, value: RemotePlace) {
   }
 
   map[lowercaseKey] = value;
-};
+}
