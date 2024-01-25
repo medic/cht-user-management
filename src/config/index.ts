@@ -144,7 +144,7 @@ export class Config {
     // because all .env vars imported as strings, let's get the AuthenticationInfo object a boolean
     let TMP_USE_HTTP = true;
     if (CHT_DEV_HTTP === 'false') {
-      TMP_USE_HTTP = false
+      TMP_USE_HTTP = false;
     }
 
     if (NODE_ENV !== 'production') {

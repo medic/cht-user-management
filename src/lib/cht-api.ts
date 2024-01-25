@@ -70,11 +70,12 @@ export class ChtApi {
 
     if (NODE_ENV !== 'production') {
       if (!sessionToken) {
-        console.log("failed to login to " + sessionUrl);
+        console.log(`failed to login to ${sessionUrl}`);
       } else {
-        console.log("successfully logged in to " + sessionUrl);
+        console.log(`successfully logged in to ${sessionUrl}`);
       }
     }
+    
     return {
       authInfo,
       username,
@@ -243,4 +244,4 @@ function extractLineage(doc: any): string[] {
   }
 
   return [];
-};
+}
