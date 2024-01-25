@@ -2,7 +2,7 @@ import { FastifyInstance, FastifyRequest } from 'fastify';
 
 import Auth from '../lib/authentication';
 import { ChtApi } from '../lib/cht-api';
-import { Config } from "../config";
+import { Config } from '../config';
 import { version as appVersion } from '../package.json';
 
 export default async function authentication(fastify: FastifyInstance) {
@@ -60,5 +60,5 @@ export default async function authentication(fastify: FastifyInstance) {
   fastify.get('/version', unauthenticatedOptions, () => {
     return appVersion;
   });
-};
+}
 
