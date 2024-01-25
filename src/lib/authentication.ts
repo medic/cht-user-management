@@ -1,6 +1,6 @@
-import { env } from "process";
-import jwt from "jsonwebtoken";
-import { ChtSession } from "./cht-api";
+import { env } from 'process';
+import jwt from 'jsonwebtoken';
+import { ChtSession } from './cht-api';
 
 const LOGIN_EXPIRES_AFTER_MS = 2 * 24 * 60 * 60 * 1000;
 const { COOKIE_PRIVATE_KEY } = env;
@@ -34,4 +34,4 @@ export default class Auth {
 
     return session;
   }
-};
+}

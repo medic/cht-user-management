@@ -1,12 +1,11 @@
-import _ from "lodash";
-import { ChtApi, PlacePayload } from "../lib/cht-api";
-import getConfigByKey from "./config-factory";
-import {env} from "process";
+import _ from 'lodash';
+import { ChtApi, PlacePayload } from '../lib/cht-api';
+import getConfigByKey from './config-factory';
 
 export type ConfigSystem = {
   domains: AuthenticationInfo[];
   contact_types: ContactType[];
-  logoBase64: string,
+  logoBase64: string;
 };
 
 export type PartnerConfig = {
@@ -145,7 +144,7 @@ export class Config {
     // because all .env vars imported as strings, let's get the AuthenticationInfo object a boolean
     let TMP_USE_HTTP = true;
     if (CHT_DEV_HTTP === 'false') {
-      TMP_USE_HTTP = false
+      TMP_USE_HTTP = false;
     }
 
     if (NODE_ENV !== 'production') {

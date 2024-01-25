@@ -1,8 +1,8 @@
-import { expect } from "chai";
-import { ChtApi, ChtSession, RemotePlace } from "../src/lib/cht-api";
-import { ContactProperty, ContactType } from "../src/lib/config";
-import Place from "../src/services/place";
-import Sinon from "sinon";
+import { expect } from 'chai';
+import { ChtApi, ChtSession, RemotePlace } from '../src/lib/cht-api';
+import { ContactProperty, ContactType } from '../src/lib/config';
+import Place from '../src/services/place';
+import Sinon from 'sinon';
 
 export const mockPlace = (type: ContactType, prop: any) : Place => {
   const result = new Place(type);
@@ -34,7 +34,11 @@ export const mockChtApi: ChtApi = (first: RemotePlace[] = [], second: RemotePlac
   getPlacesWithType: Sinon.stub().resolves(first).onSecondCall().resolves(second),
 });
 
-export const mockSimpleContactType = (propertyType = 'string', propertyValidator: string | string[] | undefined, errorDescription?: string) : ContactType => {
+export const mockSimpleContactType = (
+  propertyType,
+  propertyValidator: string | string[] | undefined,
+  errorDescription?: string
+) : ContactType => {
   const mockedProperty = mockProperty(propertyType, propertyValidator);
   mockedProperty.errorDescription = errorDescription;
   return {
@@ -59,7 +63,7 @@ export const mockSimpleContactType = (propertyType = 'string', propertyValidator
   };
 };
 
-export const mockValidContactType = (propertyType = 'string', propertyValidator: string | string[] | undefined) : ContactType => ({
+export const mockValidContactType = (propertyType, propertyValidator: string | string[] | undefined) : ContactType => ({
   name: 'contacttype-name',
   friendly: 'friendly',
   contact_type: 'contact-type',
@@ -94,7 +98,7 @@ export const mockParentPlace = (parentPlaceType: ContactType, parentName: string
   return place;
 };
 
-export const mockProperty = (type = 'string', parameter: string | string[] | undefined, property_name: string = 'prop'): ContactProperty => ({
+export const mockProperty = (type, parameter: string | string[] | undefined, property_name: string = 'prop'): ContactProperty => ({
   friendly_name: 'csv',
   property_name,
   type,
@@ -112,10 +116,14 @@ export const mockChtSession = () : ChtSession => ({
   username: 'username',
 });
 
-export function expectInvalidProperties(validationErrors: { [key: string]: string } | undefined, expectedProperties: string[], expectedError?: string): void {
+export function expectInvalidProperties(
+  validationErrors: { [key: string]: string } | undefined,
+  expectedProperties: string[],
+  expectedError?: string
+): void {
   expect(Object.keys(validationErrors as any)).to.deep.eq(expectedProperties);
 
   if (expectedError) {
     expect(Object.values(validationErrors as any)?.[0]).to.include(expectedError);
   }
-};
+}

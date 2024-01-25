@@ -130,12 +130,12 @@ describe('upload-manager.ts', () => {
     await uploadManager.doUpload([place], chtApi);
     expect(chtApi.createUser.args[0][0]).to.deep.include({
       username: 'replacement_based_username',
-    })
+    });
     expect(place.isCreated).to.be.true;
   });
 
   it('place with validation error is not uploaded', async () => {
-    const { remotePlace, sessionCache, contactType, fakeFormData, chtApi } = await createMocks();
+    const { sessionCache, contactType, fakeFormData, chtApi } = await createMocks();
     delete fakeFormData.place_name;
     const place = await PlaceFactory.createOne(fakeFormData, contactType, sessionCache, chtApi);
     expect(place.validationErrors).to.not.be.empty;
@@ -173,7 +173,7 @@ describe('upload-manager.ts', () => {
     await RemotePlaceResolver.resolveOne(chp, sessionCache, chtApi, { fuzz: true });
     chp.validate();
     expect(chp.validationErrors).to.be.empty;
-``
+
     // upload succeeds
     chtApi.getParentAndSibling = sinon.stub().resolves({ parent: chu.asChtPayload('user'), sibling: undefined });
     const uploadManager = new UploadManager();

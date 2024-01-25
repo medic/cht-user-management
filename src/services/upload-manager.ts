@@ -1,13 +1,13 @@
-import EventEmitter from "events";
-import { ChtApi, PlacePayload } from "../lib/cht-api";
+import EventEmitter from 'events';
+import { ChtApi, PlacePayload } from '../lib/cht-api';
 
-import Place, { PlaceUploadState } from "./place";
-import { UserPayload } from "./user-payload";
-import SessionCache, { SessionCacheUploadState } from "./session-cache";
-import { UploadReplacementPlace } from "./upload.replacement";
-import { UploadNewPlace } from "./upload.new";
-import { Config } from "../config";
-import RemotePlaceCache from "../lib/remote-place-cache";
+import Place, { PlaceUploadState } from './place';
+import { UserPayload } from './user-payload';
+import SessionCache, { SessionCacheUploadState } from './session-cache';
+import { UploadReplacementPlace } from './upload.replacement';
+import { UploadNewPlace } from './upload.new';
+import { Config } from '../config';
+import RemotePlaceCache from '../lib/remote-place-cache';
 
 const UPLOAD_BATCH_SIZE = 10;
 
@@ -78,7 +78,7 @@ export class UploadManager extends EventEmitter {
       place.uploadError = errorDetails;
       this.eventedPlaceStateChange(place, PlaceUploadState.FAILURE);
     }
-  };
+  }
 
   public refresh(sessionCache: SessionCache) {
     this.emit('session_state_change', sessionCache.state);
@@ -99,7 +99,7 @@ export class UploadManager extends EventEmitter {
 
     this.emit('places_state_change', state);
   };
-};
+}
 
 async function tryCreateUser (userPayload: UserPayload, chtApi: ChtApi): Promise<{ username: string; password: string }> {
   for (let retryCount = 0; retryCount < 5; ++retryCount) {
@@ -112,7 +112,7 @@ async function tryCreateUser (userPayload: UserPayload, chtApi: ChtApi): Promise
       }
       
       const msg = err.response?.data?.error?.message || err.response?.data;
-      console.error("createUser retry because", msg);
+      console.error('createUser retry because', msg);
       if (msg?.includes('already taken')) {
         userPayload.makeUsernameMoreComplex();
         continue;
@@ -127,5 +127,5 @@ async function tryCreateUser (userPayload: UserPayload, chtApi: ChtApi): Promise
     }
   }
 
-  throw new Error("could not create user " + userPayload.contact);
-};
+  throw new Error('could not create user ' + userPayload.contact);
+}
