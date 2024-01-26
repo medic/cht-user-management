@@ -44,6 +44,12 @@ const scenarios: Scenario[] = [
   { type: 'gender', prop: 'Female', isValid: true, altered: 'Female' },
   { type: 'gender', prop: 'Woman', isValid: true, altered: 'Female' },
   { type: 'gender', prop: 'X', isValid: false, error: 'Male' },
+
+  { type: 'dob', prop: '', isValid: false },
+  { type: 'dob', prop: '2016/05/25', isValid: false },
+  { type: 'dob', prop: 'May 25, 2016', isValid: false },
+  { type: 'dob', prop: '2016-05-25', isValid: true, altered: '2016-05-25' },
+  { type: 'dob', prop: ' 20 16- 05- 25 ', isValid: true, altered: '2016-05-25' },
 ];
 
 describe('lib/validation', () => {

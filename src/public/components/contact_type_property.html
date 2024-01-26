@@ -6,7 +6,7 @@
   <div class="control">
     <input
       name="{{ prop_name }}"
-      type="text"
+      type="{% if include.prop.type == 'dob' %}date{% else %}text{% endif %}"
       class="input"
       {% if false and include.prop.type == 'regex' %} pattern="{{ include.prop.parameter }}" {% endif %}
       {% if data[prop_name] %} value="{{ data[prop_name] }}" {% endif %}

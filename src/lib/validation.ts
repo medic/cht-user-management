@@ -1,15 +1,15 @@
 import { Config, ContactProperty } from '../config';
-
-import ValidatorString from './validator-string';
-import ValidatorPhone from './validator-phone';
-import ValidatorRegex from './validator-regex';
-import ValidatorName from './validator-name';
-import ValidatorGender from './validator-gender';
 import Place from '../services/place';
-import ValidatorSkip from './validator-skip';
 import RemotePlaceResolver from './remote-place-resolver';
 import { RemotePlace } from './cht-api';
 
+import ValidatorDateOfBirth from './validator-dob';
+import ValidatorGender from './validator-gender';
+import ValidatorName from './validator-name';
+import ValidatorPhone from './validator-phone';
+import ValidatorRegex from './validator-regex';
+import ValidatorSkip from './validator-skip';
+import ValidatorString from './validator-string';
 
 export type ValidationError = {
   property_name: string;
@@ -33,6 +33,7 @@ const TypeValidatorMap: ValidatorMap = {
   phone: new ValidatorPhone(),
   none: new ValidatorSkip(),
   gender: new ValidatorGender(),
+  dob: new ValidatorDateOfBirth(),
 };
 
 export class Validation {
