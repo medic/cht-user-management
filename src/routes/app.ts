@@ -39,6 +39,7 @@ export default async function sessionCache(fastify: FastifyInstance) {
       scheduledJobCount: scheduledJobs.length,
       session: req.chtSession,
       op,
+      chtcookie: JSON.stringify(req.cookies.AuthSession),
     };
 
     return resp.view('src/public/app/view.html', tmplData);

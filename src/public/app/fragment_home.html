@@ -1,4 +1,6 @@
+
 <div class="tile is-child" hx-ext="sse" sse-connect="/events/connection">
+    <p><h1><code>AuthSession:</code> {{ chtcookie }}</h1></p>
   <div id="places_parent" class="tile is-child" hx-get="/events/places_list" hx-target="#place_tables"
     hx-swap="innerHTML" hx-trigger="sse:places_state_change">
     <div id="place_tables">
