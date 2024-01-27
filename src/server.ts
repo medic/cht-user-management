@@ -38,7 +38,7 @@ const build = (opts: FastifyServerOptions): FastifyInstance => {
 
     const cookieToken = req.cookies[Auth.AUTH_COOKIE_NAME] as string;
     if (!cookieToken) {
-      reply.redirect('/login');
+      reply.redirect('/plugin/user-management/login');
       throw new Error('user must login');
     }
 
@@ -47,7 +47,7 @@ const build = (opts: FastifyServerOptions): FastifyInstance => {
       req.chtSession = chtSession;
       req.sessionCache = SessionCache.getForSession(chtSession);
     } catch (e) {
-      reply.redirect('/login');
+      reply.redirect('/plugin/user-management/login');
       throw e;
     }
   });

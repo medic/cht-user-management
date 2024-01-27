@@ -12,7 +12,7 @@ export default async function authentication(fastify: FastifyInstance) {
     },
   };
 
-  fastify.get('/login', unauthenticatedOptions, async (req, resp) => {
+  fastify.get('/plugin/user-management/login', unauthenticatedOptions, async (req, resp) => {
     const tmplData = {
       logo: Config.getLogoBase64(),
       domains: Config.getDomains,
@@ -21,12 +21,12 @@ export default async function authentication(fastify: FastifyInstance) {
     return resp.view('src/public/auth/view.html', tmplData);
   });
 
-  fastify.get('/logout', unauthenticatedOptions, async (req, resp) => {
+  fastify.get('/plugin/user-management/logout', unauthenticatedOptions, async (req, resp) => {
     resp.clearCookie(Auth.AUTH_COOKIE_NAME);
     return resp.redirect('/login');
   });
 
-  fastify.post('/authenticate', unauthenticatedOptions, async (req, resp) => {
+  fastify.post('/plugin/user-management/authenticate', unauthenticatedOptions, async (req, resp) => {
     const data: any = req.body;
     const { username, password, domain } = data;
 
@@ -50,14 +50,14 @@ export default async function authentication(fastify: FastifyInstance) {
       secure: true
     });
 
-    resp.header('HX-Redirect', `/`);
+    resp.header('HX-Redirect', `/plugin/user-management/`);
   });
 
-  fastify.get('/_healthz', unauthenticatedOptions, () => {
+  fastify.get('/plugin/user-management/_healthz', unauthenticatedOptions, () => {
     return 'OK';
   });
 
-  fastify.get('/version', unauthenticatedOptions, () => {
+  fastify.get('/plugin/user-management/version', unauthenticatedOptions, () => {
     return appVersion;
   });
 }

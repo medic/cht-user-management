@@ -1,0 +1,9 @@
+services:
+  cht-user-management:
+    image: mrjones-user-man:dev
+    networks:
+      - cht-net
+
+networks:
+  cht-net:
+    name: ${CHT_NETWORK:-cht-net}
