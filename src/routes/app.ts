@@ -8,7 +8,7 @@ import RemotePlaceResolver from '../lib/remote-place-resolver';
 import RemotePlaceCache from '../lib/remote-place-cache';
 
 export default async function sessionCache(fastify: FastifyInstance) {
-  fastify.get('/', async (req, resp) => {
+  fastify.get('/plugin/user-management/', async (req, resp) => {
     const contactTypes = Config.contactTypes();
     const {
       op = 'table',
@@ -44,13 +44,13 @@ export default async function sessionCache(fastify: FastifyInstance) {
     return resp.view('src/public/app/view.html', tmplData);
   });
 
-  fastify.post('/app/remove-all', async (req) => {
+  fastify.post('/plugin/user-management/app/remove-all', async (req) => {
     const sessionCache: SessionCache = req.sessionCache;
     sessionCache.removeAll();
     fastify.uploadManager.refresh(req.sessionCache);
   });
 
-  fastify.post('/app/refresh-all', async (req) => {
+  fastify.post('/plugin/user-management/app/refresh-all', async (req) => {
     const sessionCache: SessionCache = req.sessionCache;
     const chtApi = new ChtApi(req.chtSession);
 
@@ -64,7 +64,7 @@ export default async function sessionCache(fastify: FastifyInstance) {
   });
 
   // initiates place creation via the job manager
-  fastify.post('/app/apply-changes', async (req) => {
+  fastify.post('/plugin/user-management/app/apply-changes', async (req) => {
     const uploadManager: UploadManager = fastify.uploadManager;
     const sessionCache: SessionCache = req.sessionCache;
 

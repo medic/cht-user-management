@@ -5,7 +5,7 @@ import { PlaceUploadState } from '../services/place';
 import SessionCache, { SessionCacheUploadState } from '../services/session-cache';
 
 export default async function events(fastify: FastifyInstance) {
-  fastify.get('/events/places_list', async (req, resp) => {
+  fastify.get('/plugin/user-management/events/places_list', async (req, resp) => {
     const sessionCache: SessionCache = req.sessionCache;
     const contactTypes = Config.contactTypes();
     const placeData = contactTypes.map((item) => {
@@ -21,7 +21,7 @@ export default async function events(fastify: FastifyInstance) {
     });
   });
 
-  fastify.get('/events/connection', async (req, resp) => {
+  fastify.get('/plugin/user-management/events/connection', async (req, resp) => {
     const { uploadManager } = fastify;
 
     resp.hijack();

@@ -22,9 +22,9 @@
             <div class="navbar-item">
               <b>{{placeType.friendly}}</b>
             </div>
-            <a class="navbar-item" href="/add-place?type={{ placeType.name }}&op=new">Create New</a>
-            <a class="navbar-item" href="/add-place?type={{ placeType.name }}&op=replace">Replace Existing</a>
-            <a class="navbar-item" href="/add-place?type={{ placeType.name }}&op=bulk">Upload from CSV</a>  
+            <a class="navbar-item" href="/plugin/user-management/add-place?type={{ placeType.name }}&op=new">Create New</a>
+            <a class="navbar-item" href="/plugin/user-management/add-place?type={{ placeType.name }}&op=replace">Replace Existing</a>
+            <a class="navbar-item" href="/plugin/user-management/add-place?type={{ placeType.name }}&op=bulk">Upload from CSV</a>
           {% endfor%}
         </div>
       </div>
@@ -35,7 +35,7 @@
         </a>
         <div class="navbar-dropdown">
           {% for placeType in contactTypes %}
-            <a class="navbar-item" href="/move/{{ placeType.name }}">Move {{placeType.friendly}}</a>
+            <a class="navbar-item" href="/plugin/user-management/move/{{ placeType.name }}">Move {{placeType.friendly}}</a>
           {% endfor%}
         </div>
       </div>
@@ -47,14 +47,14 @@
       
         <div class="navbar-dropdown">
           {% if op == 'table' %}
-            <a class="navbar-item" hx-post="/app/refresh-all" hx-swap="none">
+            <a class="navbar-item" hx-post="/plugin/user-management/app/refresh-all" hx-swap="none">
               <span class="material-symbols-outlined">refresh</span> Refresh
             </a>
-            <a class="navbar-item" hx-post="/app/remove-all" hx-swap="none">
+            <a class="navbar-item" hx-post="/plugin/user-management/app/remove-all" hx-swap="none">
               <span class="material-symbols-outlined">delete</span> Clear
             </a>
           {% else %}
-            <a class="navbar-item" href="/">
+            <a class="navbar-item" href="/plugin/user-management/">
               <span class="material-symbols-outlined">table_rows</span>
               View
             </a>
@@ -70,15 +70,15 @@
         </a>
       
         <div class="navbar-dropdown is-right">
-          <a class="navbar-item" hx-post="/app/apply-changes" hx-swap="none">
+          <a class="navbar-item" hx-post="/plugin/user-management/app/apply-changes" hx-swap="none">
             <span class="material-symbols-outlined">group_add</span> Upload
           </a>
 
-          <a class="navbar-item" href="/files/credentials" download="{{ session.authInfo.domain }}.users.csv">
+          <a class="navbar-item" href="/plugin/user-management/files/credentials" download="{{ session.authInfo.domain }}.users.csv">
             <span class="material-symbols-outlined">save_as</span> Save Credentials
           </a>
     
-          <a class="navbar-item" href="/logout">
+          <a class="navbar-item" href="/plugin/user-management/logout">
             <span class="material-symbols-outlined">logout</span> Logout
           </a>
         </div>

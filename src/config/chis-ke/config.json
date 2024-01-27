@@ -5,6 +5,10 @@
       "domain": "migori-echis.health.go.ke"
     },
     {
+      "friendly": "$localhost (192-168-68-26.local-ip.medicmobile.org:10463)",
+      "domain": "192-168-68-26.local-ip.medicmobile.org:10463"
+    },
+    {
       "friendly": "Kisumu",
       "domain": "kisumu-echis.health.go.ke"
     },

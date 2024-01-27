@@ -7,7 +7,7 @@ import MoveLib from '../lib/move';
 import SessionCache from '../services/session-cache';
 
 export default async function sessionCache(fastify: FastifyInstance) {
-  fastify.get('/move/:placeType', async (req, resp) => {
+  fastify.get('/plugin/user-management/move/:placeType', async (req, resp) => {
     const params: any = req.params;
     const placeType = params.placeType;
     const contactTypes = Config.contactTypes();
@@ -26,7 +26,7 @@ export default async function sessionCache(fastify: FastifyInstance) {
     return resp.view('src/public/app/view.html', tmplData);
   });
 
-  fastify.post('/move', async (req, resp) => {
+  fastify.post('/plugin/user-management/move', async (req, resp) => {
     const formData:any = req.body;
 
     const sessionCache: SessionCache = req.sessionCache;

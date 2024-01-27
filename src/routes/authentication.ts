@@ -23,7 +23,7 @@ export default async function authentication(fastify: FastifyInstance) {
 
   fastify.get('/plugin/user-management/logout', unauthenticatedOptions, async (req, resp) => {
     resp.clearCookie(Auth.AUTH_COOKIE_NAME);
-    return resp.redirect('/login');
+    return resp.redirect('/plugin/user-management/login');
   });
 
   fastify.post('/plugin/user-management/authenticate', unauthenticatedOptions, async (req, resp) => {

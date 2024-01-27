@@ -9,7 +9,7 @@ import { UploadManager } from '../services/upload-manager';
 import RemotePlaceCache from '../lib/remote-place-cache';
 
 export default async function addPlace(fastify: FastifyInstance) {
-  fastify.get('/add-place', async (req, resp) => {
+  fastify.get('/plugin/user-management/add-place', async (req, resp) => {
     const queryParams: any = req.query;
 
     const contactTypes = Config.contactTypes();
@@ -31,7 +31,7 @@ export default async function addPlace(fastify: FastifyInstance) {
   });
 
   // you want to create a place? replace a contact? you'll have to go through me first
-  fastify.post('/place', async (req, resp) => {
+  fastify.post('/plugin/user-management/place', async (req, resp) => {
     const { op, type: placeType } = req.query as any;
 
     const contactType = Config.getContactType(placeType);
@@ -39,7 +39,7 @@ export default async function addPlace(fastify: FastifyInstance) {
     const chtApi = new ChtApi(req.chtSession);
     if (op === 'new' || op === 'replace') {
       await PlaceFactory.createOne(req.body, contactType, sessionCache, chtApi);
-      resp.header('HX-Redirect', `/`);
+      resp.header('HX-Redirect', `/plugin/user-management`);
       return;
     }
 
@@ -62,14 +62,14 @@ export default async function addPlace(fastify: FastifyInstance) {
       }
 
       // back to places list
-      resp.header('HX-Redirect', `/`);
+      resp.header('HX-Redirect', `/plugin/user-management`);
       return;
     }
 
     throw new Error('unknown op');
   });
 
-  fastify.get('/place/edit/:id', async (req, resp) => {
+  fastify.get('/plugin/user-management/place/edit/:id', async (req, resp) => {
     const params: any = req.params;
     const { id } = params;
 
@@ -89,7 +89,7 @@ export default async function addPlace(fastify: FastifyInstance) {
       session: req.chtSession,
       contactType: place.type,
       contactTypes: Config.contactTypes(),
-      backend: `/place/edit/${id}`,
+      backend: `/plugin/user-management/place/edit/${id}`,
       data,
     };
 
@@ -97,7 +97,7 @@ export default async function addPlace(fastify: FastifyInstance) {
     return resp.view('src/public/app/view.html', tmplData);
   });
 
-  fastify.post('/place/edit/:id', async (req, resp) => {
+  fastify.post('/plugin/user-management/place/edit/:id', async (req, resp) => {
     const { id } = req.params as any;
     const data: any = req.body;
     const sessionCache: SessionCache = req.sessionCache;
@@ -106,10 +106,10 @@ export default async function addPlace(fastify: FastifyInstance) {
     await PlaceFactory.editOne(id, data, sessionCache, chtApi);
 
     // back to places list
-    resp.header('HX-Redirect', `/`);
+    resp.header('HX-Redirect', `/plugin/user-management/`);
   });
 
-  fastify.post('/place/refresh/:id', async (req) => {
+  fastify.post('/plugin/user-management/place/refresh/:id', async (req) => {
     const { id } = req.params as any;
     const sessionCache: SessionCache = req.sessionCache;
     const place = sessionCache.getPlace(id);
@@ -125,7 +125,7 @@ export default async function addPlace(fastify: FastifyInstance) {
     fastify.uploadManager.refresh(req.sessionCache);
   });
 
-  fastify.post('/place/upload/:id', async (req) => {
+  fastify.post('/plugin/user-management/place/upload/:id', async (req) => {
     const { id } = req.params as any;
     const sessionCache: SessionCache = req.sessionCache;
     const place = sessionCache.getPlace(id);
@@ -139,7 +139,7 @@ export default async function addPlace(fastify: FastifyInstance) {
     fastify.uploadManager.refresh(req.sessionCache);
   });
 
-  fastify.post('/place/remove/:id', async (req) => {
+  fastify.post('/plugin/user-management/place/remove/:id', async (req) => {
     const { id } = req.params as any;
     const sessionCache: SessionCache = req.sessionCache;
     sessionCache.removePlace(id);
