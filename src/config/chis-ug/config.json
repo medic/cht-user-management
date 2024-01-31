@@ -4,6 +4,10 @@
     {
       "friendly": "eCHIS Uganda",
       "domain": "echis.health.go.ug"
+    },
+    {
+      "friendly": "eCHIS Uganda Staging",
+      "domain": "vhtapp.dev.medicmobile.org"
     }
   ],
 
