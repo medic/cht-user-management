@@ -4,7 +4,7 @@ export default async function mutate(payload: PlacePayload): Promise<PlacePayloa
   if (payload.contact_type === 'health_center') {
     // during replacement, the name is optional
     if (payload.name) {
-      payload.name += ' Area (village)';
+      payload.name += ` Area (${payload.village})`;
     }
   }
 

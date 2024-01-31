@@ -16,14 +16,14 @@ export default class ValidatorGender implements IValidator {
   }
 
   get defaultError(): string {
-    return `Must be either 'Male' or 'Female'`;
+    return `Must be either 'male' or 'female'`;
   }
 
   private parseGenders(input: string): { gender: string; isValid: boolean } {
     const isFemale = input?.match(/[fw]/i);
     const isMale = input?.match(/m(?<!fem|wom)/i);
     const isValid = (!!isFemale || !!isMale) && !(isFemale && isMale);
-    const gender = isMale ? 'Male' : 'Female';
+    const gender = isMale ? 'male' : 'female';
     return { isValid, gender };
   }
 }

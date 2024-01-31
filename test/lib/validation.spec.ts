@@ -38,19 +38,19 @@ const scenarios: Scenario[] = [
   { type: 'name', prop: 'Sam\'s CHU', propertyParameter: ['CHU', 'Comm Unit'], isValid: true, altered: 'Sam\'s' },
   { type: 'name', prop: 'Jonathan M.Barasa', isValid: true, altered: 'Jonathan M Barasa' },
 
-  { type: 'gender', prop: 'Man', isValid: true, altered: 'Male' },
-  { type: 'gender', prop: 'male', isValid: true, altered: 'Male' },
-  { type: 'gender', prop: 'F', isValid: true, altered: 'Female' },
-  { type: 'gender', prop: 'Female', isValid: true, altered: 'Female' },
-  { type: 'gender', prop: 'Woman', isValid: true, altered: 'Female' },
-  { type: 'gender', prop: 'X', isValid: false, error: 'Male' },
-
   { type: 'dob', prop: '', isValid: false },
   { type: 'dob', prop: '2016/05/25', isValid: false },
   { type: 'dob', prop: 'May 25, 2016', isValid: false },
   { type: 'dob', prop: '2030-05-25', isValid: false },
   { type: 'dob', prop: '2016-05-25', isValid: true, altered: '2016-05-25' },
   { type: 'dob', prop: ' 20 16- 05- 25 ', isValid: true, altered: '2016-05-25' },
+
+  { type: 'gender', prop: 'Man', isValid: true, altered: 'male' },
+  { type: 'gender', prop: 'male', isValid: true, altered: 'male' },
+  { type: 'gender', prop: 'F', isValid: true, altered: 'female' },
+  { type: 'gender', prop: 'Female', isValid: true, altered: 'female' },
+  { type: 'gender', prop: 'Woman', isValid: true, altered: 'female' },
+  { type: 'gender', prop: 'X', isValid: false, error: 'male' },
 ];
 
 describe('lib/validation', () => {
