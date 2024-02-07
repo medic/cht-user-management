@@ -22,7 +22,7 @@ export enum PlaceUploadState {
   FAILURE = 'failure',
   PENDING = 'pending',
   SCHEDULED = 'scheduled',
-  IN_PROGESS = 'in_progress',
+  IN_PROGRESS = 'in_progress',
 }
 
 const PLACE_PREFIX = 'place_';
@@ -208,6 +208,10 @@ export default class Place {
     }
 
     return username;
+  }
+
+  public get hasValidationErrors() : boolean {
+    return Object.keys(this.validationErrors as any).length > 0;
   }
 
   public get isDependant() : boolean {

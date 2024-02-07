@@ -1,4 +1,6 @@
 import { FastifyInstance, FastifyRequest } from 'fastify';
+import fs from 'fs';
+import path from 'path';
 
 import Auth from '../lib/authentication';
 import { ChtApi } from '../lib/cht-api';
@@ -24,6 +26,15 @@ export default async function authentication(fastify: FastifyInstance) {
   fastify.get('/logout', unauthenticatedOptions, async (req, resp) => {
     resp.clearCookie(Auth.AUTH_COOKIE_NAME);
     return resp.redirect('/login');
+  });
+
+  fastify.get('/static/:filename', unauthenticatedOptions, async req => {
+    const params: any = req.params;
+    const filename = params.filename;
+
+    const fullPath = path.resolve(`./src/public/static/${filename}`);
+    const content = fs.readFileSync(fullPath);
+    return content;
   });
 
   fastify.post('/authenticate', unauthenticatedOptions, async (req, resp) => {
