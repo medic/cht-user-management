@@ -8,12 +8,14 @@ export default class ProgressModel {
   public successCount: number;
   public remainingCount: number;
   public failureCount: number;
+  public inProgressCount: number;
 
   constructor(sessionCache: SessionCache) {
     this.successCount = sessionCache.getPlaces({ state: PlaceUploadState.SUCCESS }).length;
     this.failureCount = sessionCache.getPlaces({ state: PlaceUploadState.FAILURE }).length;
     this.completeCount = this.successCount + this.failureCount;
     this.pendingCount = sessionCache.getPlaces().filter(r => !r.hasValidationErrors).length;
+    this.inProgressCount = sessionCache.getPlaces().filter(r => r.state === PlaceUploadState.IN_PROGRESS || r.state === PlaceUploadState.SCHEDULED).length;
     const percentage = this.pendingCount > 0 ? this.completeCount / this.pendingCount : 0;
     this.remainingCount = this.pendingCount - this.completeCount;
     this.percent = Math.round(percentage * 100.0) + '%'

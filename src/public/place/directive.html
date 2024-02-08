@@ -1,0 +1,13 @@
+<section class="hero box is-small is-light" id="directive" hx-swap-oob="true">
+  <div class="hero-body">
+    {% if progress.inProgressCount > 0 %}
+      {% include "place/directive_3_in_progress.html" %}
+    {% elsif progress.successCount > 0 %}
+      {% include "place/directive_4_prompt_save.html" %}
+    {% elsif progress.pendingCount > 0 %}
+      {% include "place/directive_2_prompt_upload.html" %}
+    {% else %}
+      {% include "place/directive_1_get_started.html" %}
+    {% endif %}
+  </div>
+</section>

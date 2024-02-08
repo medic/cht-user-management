@@ -1,11 +1,10 @@
-<div id="place_list" hx-swap-oob="true">  
+<div id="place_list" hx-swap-oob="true">
   {% for contactType in contactTypes %}
   <div id="{{contactType.name}}" class="mb-6">
-    <h2 class="title is-4">{{contactType.friendly}}</h2>
     {% if contactType.places.length > 0 %}
+      <h2 class="title is-4">{{contactType.friendly}}</h2>
       <table
         id="table_places"
-        {% if oob %} hx-swap-oob="true" {%endif%}
         class="table is-fullwidth is-striped is-hoverable"
       >
         <thead>
@@ -104,20 +103,5 @@
         </tbody>
       </table>
     {% endif %}
-
-    <div class="navbar-menu">
-      <div class="navbar-item has-dropdown is-hoverable">
-        <a class="navbar-link is-arrowless button" href="/add-place?type={{ contactType.name }}&op=new">
-          <span class="material-symbols-outlined">add</span> Add {{contactType.friendly}}
-        </a>
-        <div class="navbar-dropdown">
-          <a class="navbar-item" href="/add-place?type={{ contactType.name }}&op=new">Create New</a>
-          <a class="navbar-item" href="/add-place?type={{ contactType.name }}&op=replace">Replace Existing</a>
-          <a class="navbar-item" href="/add-place?type={{ contactType.name }}&op=bulk">Upload from CSV</a>
-          <a class="navbar-item" href="/move/{{ contactType.name }}">Move</a>
-        </div>
-      </div>
-    </div>
-  </div>
   {% endfor %}
 </div>
