@@ -20,7 +20,7 @@ export type UserCreationDetails = {
 export enum PlaceUploadState {
   SUCCESS = 'success',
   FAILURE = 'failure',
-  PENDING = 'pending',
+  STAGED = 'staged',
   SCHEDULED = 'scheduled',
   IN_PROGRESS = 'in_progress',
 }
@@ -57,7 +57,7 @@ export default class Place {
     this.contact = new Contact(type);
     this.properties = {};
     this.hierarchyProperties = {};
-    this.state = PlaceUploadState.PENDING;
+    this.state = PlaceUploadState.STAGED;
     this.resolvedHierarchy = [];
   }
 

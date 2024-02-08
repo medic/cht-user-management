@@ -8,7 +8,7 @@ import { UploadNewPlace } from './upload.new';
 import { Config } from '../config';
 import RemotePlaceCache from '../lib/remote-place-cache';
 
-const UPLOAD_BATCH_SIZE = 10;
+const UPLOAD_BATCH_SIZE = 1;
 
 export interface Uploader {
    handleContact (payload: PlacePayload): Promise<string | undefined>;

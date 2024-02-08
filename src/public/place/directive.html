@@ -1,13 +1,29 @@
-<section class="hero box is-small is-light" id="directive" hx-swap-oob="true">
-  <div class="hero-body">
-    {% if progress.inProgressCount > 0 %}
-      {% include "place/directive_3_in_progress.html" %}
-    {% elsif progress.successCount > 0 %}
-      {% include "place/directive_4_prompt_save.html" %}
-    {% elsif progress.pendingCount > 0 %}
-      {% include "place/directive_2_prompt_upload.html" %}
-    {% else %}
-      {% include "place/directive_1_get_started.html" %}
-    {% endif %}
+<div class="columns" id="directive" hx-swap-oob="true">
+  <div class="column is-10">
+    <section class="hero box is-small is-light">
+      <div class="hero-body">
+        {% if progress.inProgressCount > 0 %}
+          {% include "place/directive_3_in_progress.html" %}
+        {% elsif progress.successCount > 0 %}
+          {% include "place/directive_4_prompt_save.html" %}
+        {% elsif progress.stagedCount > 0 %}
+          {% include "place/directive_2_prompt_upload.html" %}
+        {% else %}
+          {% include "place/directive_1_get_started.html" %}
+        {% endif %}
+      </div>
+    </section>    
   </div>
-</section>
+
+  <div class="column is-2">
+    <div class="box">
+      Summary:
+      <ul>
+        <li><span class="tag">{{ progress.stagedCount }} staged</span></li>
+        <li><span class="tag is-warning">{{ progress.validationErrorCount }} validation errors</span> </li>
+        <li><span class="tag is-success">{{ progress.completeCount }} uploaded</span> </li>
+        <li><span class="tag is-danger">{{ progress.failureCount }} failures</span> </li>
+      </ul>
+    </div>
+  </div>
+</div>

@@ -10,20 +10,22 @@ describe('services/progress-model.ts', () => {
     sessionCache.savePlaces(
       { id: 'fail', state: PlaceUploadState.FAILURE },
       { id: 'in-progress', state: PlaceUploadState.IN_PROGRESS },
-      { id: 'pending', state: PlaceUploadState.PENDING },
+      { id: 'staged', state: PlaceUploadState.STAGED },
       { id: 'scheduled', state: PlaceUploadState.SCHEDULED },
       { id: 'success', state: PlaceUploadState.SUCCESS },
-      { id: 'validation-error', state: PlaceUploadState.PENDING, hasValidationErrors: true },
+      { id: 'validation-error', state: PlaceUploadState.STAGED, hasValidationErrors: true },
     );
 
     const progressModel = new ProgressModel(sessionCache);
     expect(progressModel).to.deep.eq({
       failureCount: 1,
       successCount: 1,
-      remainingCount: 3,
+      validationErrorCount: 1,
       completeCount: 2,
-      pendingCount: 5,
-      percent: '40%',
+      inProgressCount: 2,
+      stagedCount: 3,
+      totalCount: 6,
+      percent: '33%',
     });
   }); 
 
@@ -33,9 +35,11 @@ describe('services/progress-model.ts', () => {
     expect(progressModel).to.deep.eq({
       failureCount: 0,
       successCount: 0,
+      validationErrorCount: 0,
       completeCount: 0,
-      remainingCount: 0,
-      pendingCount: 0,
+      inProgressCount: 0,
+      stagedCount: 0,
+      totalCount: 0,
       percent: '0%',
     });
   }); 

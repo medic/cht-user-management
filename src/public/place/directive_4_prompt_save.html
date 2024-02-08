@@ -1,16 +1,13 @@
 <p class="title">
   Download Resulting User Credentials
 </p>
+
 <p>
-  Some users have been successfully uploaded to the <i>{{ session.authInfo.friendly }}</i> instance.
-  Usernames and passwords are now available for download by clicking the button below.
+  Usernames and passwords are now available for download. Click the button below to download the credentials as a file.
 </p>
 
 <div class="columns is-centered">
   <div class="column is-4 has-text-centered">
-    <a class="button is-primary modal-action" href="/files/credentials" download="{{ session.authInfo.domain }}.users.csv">
-      <span class="material-symbols-outlined">save_as</span>
-      Save Credentials
-    </a>
+    {% include "components/button_save_credentials.html" %}
   </div>
 </div>

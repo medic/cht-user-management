@@ -2,16 +2,4 @@
   Upload In Progress...
 </p>
 
-<progress class="progress is-medium is-dark" value="{{ progress.completeCount }}" max="{{ progress.pendingCount }}">{{ progress.percent }}</progress>
-
-<div class="columns is-centered">
-  <div class="column is-fifth has-text-centered">
-    <span class="tag is-success">{{ progress.completeCount }} successes</span> 
-  </div>
-  <div class="column is-fifth has-text-centered">
-    <span class="tag is-danger">{{ progress.failureCount }} failures</span> 
-  </div>
-  <div class="column is-fifth has-text-centered">
-    <span class="tag is-light">{{ progress.remainingCount }} remaining</span>
-  </div>
-</div>
+<progress class="progress is-medium is-dark" value="{{ progress.completeCount }}" max="{{ progress.totalCount }}">{{ progress.percent }}</progress>
