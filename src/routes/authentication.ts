@@ -28,15 +28,6 @@ export default async function authentication(fastify: FastifyInstance) {
     return resp.redirect('/login');
   });
 
-  fastify.get('/static/:filename', unauthenticatedOptions, async req => {
-    const params: any = req.params;
-    const filename = params.filename;
-
-    const fullPath = path.resolve(`./src/public/static/${filename}`);
-    const content = fs.readFileSync(fullPath);
-    return content;
-  });
-
   fastify.post('/authenticate', unauthenticatedOptions, async (req, resp) => {
     const data: any = req.body;
     const { username, password, domain } = data;
