@@ -80,7 +80,7 @@ npm start
 The `env.example` file has example values.  Here's what they mean:
 
 Variable | Description | Sample
--- | --
+-- | -- | --
 `CONFIG_NAME` | Name of the configuration to use | `chis-ke`
 `EXTERNAL_PORT` | Port to use in docker compose when starting the web server | `3000`
 `PORT` | For localhost development environment | `3000`

@@ -122,7 +122,7 @@ export default async function addPlace(fastify: FastifyInstance) {
     await RemotePlaceResolver.resolveOne(place, sessionCache, chtApi, { fuzz: true });
     place.validate();
 
-    fastify.uploadManager.refresh(req.sessionCache);
+    fastify.uploadManager.triggerRefresh(place.id);
   });
 
   fastify.post('/place/upload/:id', async (req) => {
@@ -135,14 +135,13 @@ export default async function addPlace(fastify: FastifyInstance) {
 
     const chtApi = new ChtApi(req.chtSession);
     const uploadManager: UploadManager = fastify.uploadManager;
-    await uploadManager.doUpload([place], chtApi);
-    fastify.uploadManager.refresh(req.sessionCache);
+    uploadManager.doUpload([place], chtApi);
   });
 
   fastify.post('/place/remove/:id', async (req) => {
     const { id } = req.params as any;
     const sessionCache: SessionCache = req.sessionCache;
     sessionCache.removePlace(id);
-    fastify.uploadManager.refresh(req.sessionCache);
+    fastify.uploadManager.triggerRefresh(id);
   });
 }

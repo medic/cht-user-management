@@ -1,6 +1,6 @@
 cht-user-management:
   image:
-    tag: 1.0.0
+    tag: 1.0.8
   env:
     CONFIG_NAME: chis-ug
 

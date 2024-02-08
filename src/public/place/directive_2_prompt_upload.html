@@ -1,0 +1,15 @@
+<p class="title">
+  Upload When Ready
+</p>
+<p>
+  You now have some <i>staged users</i> below which are ready for upload. 
+  When everything looks right, upload them to <i>{{ session.authInfo.friendly }}</i>.
+</p>
+
+<div class="columns is-centered">
+  <div class="column is-4 has-text-centered">
+    <a class="button is-primary" data-target="progress-modal" hx-post="/app/apply-changes" hx-swap="none">
+      <span class="material-symbols-outlined">group_add</span> Upload
+    </a>
+  </div>
+</div>

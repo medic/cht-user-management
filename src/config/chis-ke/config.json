@@ -187,6 +187,23 @@
     {
       "friendly": "West Pokot",
       "domain": "westpokot.echis.go.ke"
+    },
+
+    {
+      "friendly": "Staging (chis-staging.health.go.ke)",
+      "domain": "chis-staging.health.go.ke"
+    },
+    {
+      "friendly": "Training 1",
+      "domain": "chis-training.health.go.ke"
+    },
+    {
+      "friendly": "Training 2",
+      "domain": "chis-training-2.health.go.ke"
+    },
+    {
+      "friendly": "Training 3",
+      "domain": "chis-training-3.health.go.ke"
     }
   ],
   "contact_types": [

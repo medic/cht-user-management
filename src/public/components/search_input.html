@@ -17,7 +17,6 @@
       hx-target="#search_results_{{ property_name }}" hx-swap="innerHTML"
       {% if include.required %} required {% endif %}
       {% if include.data[property_name] %}value="{{ include.data[property_name] }}" {% endif %}
-      {% if oob %} hx-swap-oob="true" {%endif%}
       hx-encoding="application/x-www-form-urlencoded"
     />
     <div id="search_results_{{ property_name }}" class="control"></div>
