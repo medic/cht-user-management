@@ -4,6 +4,14 @@
     {
       "friendly": "eCHIS Uganda",
       "domain": "echis.health.go.ug"
+    },
+    {
+      "friendly": "eCHIS Uganda Dev",
+      "domain": "vhtapp-4x.dev.medicmobile.org"
+    },
+    {
+      "friendly": "eCHIS Uganda Training",
+      "domain": "moh-ug-test.dev.medicmobile.org"
     }
   ],
 

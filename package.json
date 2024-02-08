@@ -1,6 +1,6 @@
 {
   "name": "cht-user-management",
-  "version": "1.0.7",
+  "version": "1.0.10",
   "main": "dist/index.js",
   "dependencies": {
     "@fastify/autoload": "^5.8.0",
