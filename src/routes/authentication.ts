@@ -1,6 +1,4 @@
 import { FastifyInstance, FastifyRequest } from 'fastify';
-import fs from 'fs';
-import path from 'path';
 
 import Auth from '../lib/authentication';
 import { ChtApi } from '../lib/cht-api';
