@@ -38,12 +38,12 @@ const scenarios: Scenario[] = [
   { type: 'name', prop: 'Sam\'s CHU', propertyParameter: ['CHU', 'Comm Unit'], isValid: true, altered: 'Sam\'s' },
   { type: 'name', prop: 'Jonathan M.Barasa', isValid: true, altered: 'Jonathan M Barasa' },
 
-  { type: 'gender', prop: 'Man', isValid: true, altered: 'Male' },
-  { type: 'gender', prop: 'male', isValid: true, altered: 'Male' },
-  { type: 'gender', prop: 'F', isValid: true, altered: 'Female' },
-  { type: 'gender', prop: 'Female', isValid: true, altered: 'Female' },
-  { type: 'gender', prop: 'Woman', isValid: true, altered: 'Female' },
-  { type: 'gender', prop: 'X', isValid: false, error: 'Male' },
+  { type: 'gender', prop: 'Man', isValid: true, altered: 'male' },
+  { type: 'gender', prop: 'male', isValid: true, altered: 'male' },
+  { type: 'gender', prop: 'F', isValid: true, altered: 'female' },
+  { type: 'gender', prop: 'Female', isValid: true, altered: 'female' },
+  { type: 'gender', prop: 'Woman', isValid: true, altered: 'female' },
+  { type: 'gender', prop: 'X', isValid: false, error: 'male' },
 ];
 
 describe('lib/validation', () => {

@@ -72,7 +72,7 @@ export class UploadManager extends EventEmitter {
       console.log(`successfully created ${JSON.stringify(place.creationDetails)}`);
       this.eventedPlaceStateChange(place, PlaceUploadState.SUCCESS);
     } catch (err: any) {
-      const errorDetails = err.response?.data.toString() || err.toString();
+      const errorDetails = err.response?.data.error || err.toString();
       console.log('error when creating user', errorDetails);
       place.uploadError = errorDetails;
       this.eventedPlaceStateChange(place, PlaceUploadState.FAILURE);
