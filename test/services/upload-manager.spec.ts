@@ -195,7 +195,7 @@ describe('upload-manager.ts', () => {
     const { remotePlace, sessionCache, chtApi } = await createMocks();
 
     chtApi.createUser
-      .throws('timeout')
+      .throws({ code: 'CERT_REJECTED', toString: () => 'upload-error' })
       .onSecondCall().resolves();
 
     const chu_name = 'new chu';
@@ -204,7 +204,7 @@ describe('upload-manager.ts', () => {
     const uploadManager = new UploadManager();
     await uploadManager.doUpload(sessionCache.getPlaces(), chtApi);
     expect(chu.isCreated).to.be.false;
-    expect(chu.uploadError).to.include('timeout');
+    expect(chu.uploadError).to.include('upload-error');
     expect(chu.creationDetails).to.deep.eq({
       contactId: 'created-contact-id',
       placeId: 'created-place-id',

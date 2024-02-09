@@ -1,13 +1,14 @@
 import EventEmitter from 'events';
-import { ChtApi, PlacePayload } from '../lib/cht-api';
 
-import Place, { PlaceUploadState } from './place';
-import { UserPayload } from './user-payload';
-import SessionCache, { SessionCacheUploadState } from './session-cache';
-import { UploadReplacementPlace } from './upload.replacement';
-import { UploadNewPlace } from './upload.new';
+import axiosRetryConfig from '../lib/axios-retry-config';
+import { ChtApi, PlacePayload } from '../lib/cht-api';
 import { Config } from '../config';
+import Place, { PlaceUploadState } from './place';
 import RemotePlaceCache from '../lib/remote-place-cache';
+import SessionCache, { SessionCacheUploadState } from './session-cache';
+import { UploadNewPlace } from './upload.new';
+import { UploadReplacementPlace } from './upload.replacement';
+import { UserPayload } from './user-payload';
 
 const UPLOAD_BATCH_SIZE = 10;
 
@@ -108,7 +109,11 @@ async function tryCreateUser (userPayload: UserPayload, chtApi: ChtApi): Promise
       return userPayload;
     } catch (err: any) {      
       if (err?.response?.status !== 400) {
-        throw err;
+        if (axiosRetryConfig.retryCondition(err)) {
+          continue;
+        } else {
+          throw err;
+        }
       }
       
       const msg = err.response?.data?.error?.message || err.response?.data;
