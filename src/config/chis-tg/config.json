@@ -25,7 +25,7 @@
       ],
       "replacement_property": {
         "friendly_name": "Affected CHW site",
-        "property_name": "replacement",
+        "property_name": "REPLACEMENT",
         "type": "name",
         "required": true
       },
@@ -40,15 +40,8 @@
       ],
       "contact_properties": [
         {
-          "friendly_name": "CHW last name",
-          "property_name": "last_name",
-          "type": "name",
-          "parameter": [],
-          "required": true
-        },
-        {
-          "friendly_name": "CHW fist name",
-          "property_name": "first_name",
+          "friendly_name": "CHW  name",
+          "property_name": "name",
           "type": "name",
           "parameter": [],
           "required": true
