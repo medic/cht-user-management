@@ -38,7 +38,12 @@ export const UploadManagerRetryScenarios = [
       code: 'ERR_BAD_REQUEST', 
       response: {
         status: 400,
-        data: { error: { message: 'The password is too easy to guess. Include a range of types of characters to increase the score.', translationKey: 'password.weak' } },
+        data: {
+          error: {
+            message: 'The password is too easy to guess. Include a range of types of characters to increase the score.',
+            translationKey: 'password.weak'
+          }
+        },
       } 
     },
   },
