@@ -11,6 +11,7 @@ import { UploadReplacementPlace } from './upload.replacement';
 import { UserPayload } from './user-payload';
 
 const UPLOAD_BATCH_SIZE = 10;
+const RETRY_COUNT = 5;
 
 export interface Uploader {
    handleContact (payload: PlacePayload): Promise<string | undefined>;
@@ -74,7 +75,7 @@ export class UploadManager extends EventEmitter {
       console.log(`successfully created ${JSON.stringify(place.creationDetails)}`);
       this.eventedPlaceStateChange(place, PlaceUploadState.SUCCESS);
     } catch (err: any) {
-      const errorDetails = err.response?.data.toString() || err.toString();
+      const errorDetails = err.response?.data ? JSON.stringify(err.response?.data) : err.toString();
       console.log('error when creating user', errorDetails);
       place.uploadError = errorDetails;
       this.eventedPlaceStateChange(place, PlaceUploadState.FAILURE);
@@ -103,27 +104,28 @@ export class UploadManager extends EventEmitter {
 }
 
 async function tryCreateUser (userPayload: UserPayload, chtApi: ChtApi): Promise<{ username: string; password: string }> {
-  for (let retryCount = 0; retryCount < 5; ++retryCount) {
+  for (let retryCount = 0; retryCount < RETRY_COUNT; ++retryCount) {
     try {
       await chtApi.createUser(userPayload);
       return userPayload;
     } catch (err: any) {      
-      if (err?.response?.status !== 400) {
-        if (axiosRetryConfig.retryCondition(err)) {
-          continue;
-        } else {
-          throw err;
-        }
+      if (axiosRetryConfig.retryCondition(err)) {
+        continue;
       }
       
-      const msg = err.response?.data?.error?.message || err.response?.data;
-      console.error('createUser retry because', msg);
-      if (msg?.includes('already taken')) {
+      if (err.response?.status !== 400) {
+        throw err;
+      }
+
+      const translationKey = err.response?.data?.error?.translationKey;
+      console.error('createUser retry because', translationKey);
+      if (translationKey === 'username.taken') {
         userPayload.makeUsernameMoreComplex();
         continue;
       }
 
-      if (msg?.includes('password')) { // password too easy to guess
+      const RETRY_PASSWORD_TRANSLATIONS = ['password.length.minimum', 'password.weak'];
+      if (RETRY_PASSWORD_TRANSLATIONS.includes(translationKey)) {
         userPayload.regeneratePassword();
         continue;
       }
