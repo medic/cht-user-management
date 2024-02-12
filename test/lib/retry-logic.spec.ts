@@ -42,7 +42,7 @@ const RetryScenarios = [
     retry: 'upload-manager'
   },
   {
-    desc: 'password too weak', 
+    desc: 'password too weak (json)', 
     axiosError: { 
       code: 'ERR_BAD_REQUEST', 
       response: {
@@ -53,6 +53,17 @@ const RetryScenarios = [
             translationKey: 'password.weak'
           }
         },
+      } 
+    },
+    retry: 'upload-manager'
+  },
+  {
+    desc: 'password too weak (string)', 
+    axiosError: { 
+      code: 'ERR_BAD_REQUEST', 
+      response: {
+        status: 400,
+        data: 'The password is too easy to guess. Include a range of types of characters to increase the score.',
       } 
     },
     retry: 'upload-manager'
