@@ -10,44 +10,7 @@ import { ChtApi, RemotePlace } from '../../src/lib/cht-api';
 import RemotePlaceCache from '../../src/lib/remote-place-cache';
 import { Config } from '../../src/config';
 import RemotePlaceResolver from '../../src/lib/remote-place-resolver';
-
-export const UploadManagerRetryScenarios = [
-  {
-    desc: 'username taken is not retried', 
-    axiosError: { 
-      code: 'ERR_BAD_REQUEST', 
-      response: {
-        status: 400,
-        data: { error: { message: 'Username "chu" already taken.', translationKey: 'username.taken' } },
-      } 
-    },
-  },
-  {
-    desc: 'password too short', 
-    axiosError: { 
-      code: 'ERR_BAD_REQUEST', 
-      response: {
-        status: 400,
-        data: { error: { message: 'The password must be at least 8 characters long.', translationKey: 'password.length.minimum' } },
-      } 
-    },
-  },
-  {
-    desc: 'password too weak', 
-    axiosError: { 
-      code: 'ERR_BAD_REQUEST', 
-      response: {
-        status: 400,
-        data: {
-          error: {
-            message: 'The password is too easy to guess. Include a range of types of characters to increase the score.',
-            translationKey: 'password.weak'
-          }
-        },
-      } 
-    },
-  },
-];
+import { UploadManagerRetryScenario } from '../lib/retry-logic.spec';
 
 describe('upload-manager.ts', () => {
   beforeEach(() => {
@@ -268,22 +231,20 @@ describe('upload-manager.ts', () => {
     expect(chtApi.disableUsersWithPlace.called).to.be.false;
   });
 
-  for (const scenario of UploadManagerRetryScenarios) {
-    it(`retry: ${scenario.desc}`, async() => {
-      const { remotePlace, sessionCache, chtApi } = await createMocks();
+  it(`createUser is retried`, async() => {
+    const { remotePlace, sessionCache, chtApi } = await createMocks();
 
-      chtApi.createUser.throws(scenario.axiosError);
-  
-      const chu_name = 'new chu';
-      const chu = await createChu(remotePlace, chu_name, sessionCache, chtApi);
-  
-      const uploadManager = new UploadManager();
-      await uploadManager.doUpload(sessionCache.getPlaces(), chtApi);
-      expect(chu.isCreated).to.be.false;
-      expect(chtApi.createUser.callCount).to.be.gt(2); // retried
-      expect(chu.uploadError).to.include('could not create user');  
-    });
-  }
+    chtApi.createUser.throws(UploadManagerRetryScenario.axiosError);
+
+    const chu_name = 'new chu';
+    const chu = await createChu(remotePlace, chu_name, sessionCache, chtApi);
+
+    const uploadManager = new UploadManager();
+    await uploadManager.doUpload(sessionCache.getPlaces(), chtApi);
+    expect(chu.isCreated).to.be.false;
+    expect(chtApi.createUser.callCount).to.be.gt(2); // retried
+    expect(chu.uploadError).to.include('could not create user');  
+  });
 });
 
 async function createChu(remotePlace: RemotePlace, chu_name: string, sessionCache: any, chtApi: ChtApi) {

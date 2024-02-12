@@ -1,6 +1,6 @@
 import EventEmitter from 'events';
 
-import axiosRetryConfig from '../lib/axios-retry-config';
+import * as RetryLogic from '../lib/retry-logic';
 import { ChtApi, PlacePayload } from '../lib/cht-api';
 import { Config } from '../config';
 import Place, { PlaceUploadState } from './place';
@@ -11,7 +11,6 @@ import { UploadReplacementPlace } from './upload.replacement';
 import { UserPayload } from './user-payload';
 
 const UPLOAD_BATCH_SIZE = 10;
-const RETRY_COUNT = 5;
 
 export interface Uploader {
    handleContact (payload: PlacePayload): Promise<string | undefined>;
@@ -56,7 +55,8 @@ export class UploadManager extends EventEmitter {
         place.creationDetails.placeId = placeId;
       }
 
-      await uploader.linkContactAndPlace(place, place.creationDetails?.placeId);
+      const createdPlaceId = place.creationDetails.placeId; // closure required for typescript
+      await RetryLogic.retryOnUpdateConflict<void>(() => uploader.linkContactAndPlace(place, createdPlaceId));
 
       if (!place.creationDetails.contactId) {
         throw Error('creationDetails.contactId not set');
@@ -64,7 +64,7 @@ export class UploadManager extends EventEmitter {
 
       if (!place.creationDetails.username) {
         const userPayload = new UserPayload(place, place.creationDetails.placeId, place.creationDetails.contactId);
-        const { username, password } = await tryCreateUser(userPayload, chtApi);
+        const { username, password } = await RetryLogic.createUserWithRetries(userPayload, chtApi);
         place.creationDetails.username = username;
         place.creationDetails.password = password;
       }
@@ -101,38 +101,4 @@ export class UploadManager extends EventEmitter {
 
     this.emit('places_state_change', state);
   };
-}
-
-async function tryCreateUser (userPayload: UserPayload, chtApi: ChtApi): Promise<{ username: string; password: string }> {
-  for (let retryCount = 0; retryCount < RETRY_COUNT; ++retryCount) {
-    try {
-      await chtApi.createUser(userPayload);
-      return userPayload;
-    } catch (err: any) {      
-      if (axiosRetryConfig.retryCondition(err)) {
-        continue;
-      }
-      
-      if (err.response?.status !== 400) {
-        throw err;
-      }
-
-      const translationKey = err.response?.data?.error?.translationKey;
-      console.error('createUser retry because', translationKey);
-      if (translationKey === 'username.taken') {
-        userPayload.makeUsernameMoreComplex();
-        continue;
-      }
-
-      const RETRY_PASSWORD_TRANSLATIONS = ['password.length.minimum', 'password.weak'];
-      if (RETRY_PASSWORD_TRANSLATIONS.includes(translationKey)) {
-        userPayload.regeneratePassword();
-        continue;
-      }
-
-      throw err;
-    }
-  }
-
-  throw new Error('could not create user ' + userPayload.contact);
 }

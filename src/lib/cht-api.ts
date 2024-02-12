@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import axios, { AxiosHeaders } from 'axios';
 import axiosRetry from 'axios-retry';
-import axiosRetryConfig from './axios-retry-config';
+import { axiosRetryConfig } from './retry-logic';
 import { UserPayload } from '../services/user-payload';
 import { AuthenticationInfo, Config, ContactType } from '../config';
 
