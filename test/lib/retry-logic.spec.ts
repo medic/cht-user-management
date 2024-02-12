@@ -7,6 +7,7 @@ import { ChtApi } from '../../src/lib/cht-api';
 import { mockSimpleContactType } from '../mocks';
 
 import chaiAsPromised from 'chai-as-promised';
+import Place from '../../src/services/place';
 Chai.use(chaiAsPromised);
 
 const { expect } = Chai;
@@ -89,7 +90,7 @@ describe('lib/retry-logic', () => {
       });
     }
 
-    it ('throws after persistent conflict', async () => {
+    it('throws after persistent conflict', async () => {
       const testFunction = sinon.stub().rejects(UpdateConflictScenario?.axiosError);
       const execute = RetryLogic.retryOnUpdateConflict<string>(testFunction);
       await expect(execute).to.eventually.be.rejectedWith('persisted');
