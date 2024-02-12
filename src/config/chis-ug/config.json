@@ -101,7 +101,7 @@
         {
           "friendly_name": "Date of Birth",
           "property_name": "date_of_birth",
-          "type": "name",
+          "type": "dob",
           "required": true
         },
         {
