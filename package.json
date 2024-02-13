@@ -54,7 +54,10 @@
     "lint": "npx eslint --color --cache .",
     "start": "node dist/index.js",
     "dev": "tsc-watch --onSuccess \"node dist/index.js\"",
-    "publish": "node scripts/publish.js"
+    "publish": "node scripts/publish.js",
+    "deploy-ke": "cd scripts/deploy && helm upgrade --kube-context arn:aws:eks:eu-west-2:720541322708:cluster/prod-cht-eks --namespace users-chis-prod --values values/users-chis-ke.yaml users-chis-ke medic/cht-user-management",
+    "deploy-ug": "cd scripts/deploy && helm upgrade --kube-context arn:aws:eks:eu-west-2:720541322708:cluster/prod-cht-eks --namespace users-chis-prod --values values/users-chis-ug.yaml users-chis-ug medic/cht-user-management",
+    "deploy": "npm run deploy-ke && npm run deploy-ug"
   },
   "repository": {
     "type": "git",
