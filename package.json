@@ -20,6 +20,7 @@
     "fastify": "^4.23.2",
     "fastify-sse-v2": "^3.1.2",
     "jsonwebtoken": "^9.0.2",
+    "jszip": "^3.10.1",
     "libphonenumber-js": "^1.10.48",
     "liquidjs": "^10.9.2",
     "lodash": "^4.17.21",

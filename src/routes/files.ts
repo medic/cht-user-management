@@ -1,9 +1,9 @@
 import _ from 'lodash';
 import { FastifyInstance } from 'fastify';
 import { transform, stringify } from 'csv/sync';
-import { Config } from '../config';
+import { Config, ContactType } from '../config';
 import SessionCache from '../services/session-cache';
-import Place from '../services/place';
+import JSZip from 'jszip';
 
 export default async function files(fastify: FastifyInstance) {
   fastify.get('/files/template/:placeType', async (req) => {
@@ -20,19 +20,43 @@ export default async function files(fastify: FastifyInstance) {
     return stringify([columns]);
   });
 
-  fastify.get('/files/credentials', async (req) => {
+  fastify.get("/files/credentials", async (req) => {
     const sessionCache: SessionCache = req.sessionCache;
+    const results = new Map<ContactType, String[][]>();
     const places = sessionCache.getPlaces();
-    const refinedRecords = transform(places, (place: Place) => {
-      return [
-        place.type.friendly,
+    places.forEach(place => {
+      const parent = Config.getParentProperty(place.type);
+      const record = [
+        place.hierarchyProperties[parent.property_name],
         place.name,
         place.creationDetails.username,
         place.creationDetails.password,
         place.creationDetails.disabledUsers,
       ];
+      const result = results.get(place.type) || [];
+      result.push(record);
+      results.set(place.type, result);
     });
 
-    return stringify(refinedRecords);
+    var zip = new JSZip();
+    results.forEach((places, contactType) => {
+      const parent = Config.getParentProperty(contactType);
+      const columns = [
+        parent.friendly_name,
+        contactType.friendly,
+        "username",
+        "password",
+        "disabledUsers",
+      ];
+      zip.file(
+        `${contactType.name}.csv`,
+        stringify(places, {
+          columns: columns,
+          header: true,
+        })
+      );
+    });
+    
+    return zip.generateNodeStream();
   });
 }
