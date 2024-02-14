@@ -1,6 +1,6 @@
 import _ from 'lodash';
 import { FastifyInstance } from 'fastify';
-import { transform, stringify } from 'csv/sync';
+import { stringify } from 'csv/sync';
 import { Config, ContactType } from '../config';
 import SessionCache from '../services/session-cache';
 import JSZip from 'jszip';
@@ -20,7 +20,7 @@ export default async function files(fastify: FastifyInstance) {
     return stringify([columns]);
   });
 
-  fastify.get("/files/credentials", async (req) => {
+  fastify.get('/files/credentials', async (req) => {
     const sessionCache: SessionCache = req.sessionCache;
     const results = new Map<ContactType, String[][]>();
     const places = sessionCache.getPlaces();
@@ -38,15 +38,15 @@ export default async function files(fastify: FastifyInstance) {
       results.set(place.type, result);
     });
 
-    var zip = new JSZip();
+    const zip = new JSZip();
     results.forEach((places, contactType) => {
       const parent = Config.getParentProperty(contactType);
       const columns = [
         parent.friendly_name,
         contactType.friendly,
-        "username",
-        "password",
-        "disabledUsers",
+        'username',
+        'password',
+        'disabledUsers',
       ];
       zip.file(
         `${contactType.name}.csv`,
@@ -56,7 +56,7 @@ export default async function files(fastify: FastifyInstance) {
         })
       );
     });
-    
+
     return zip.generateNodeStream();
   });
 }
