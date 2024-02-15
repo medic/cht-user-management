@@ -11,7 +11,7 @@ import RemotePlaceCache from '../../src/lib/remote-place-cache';
 import { Config } from '../../src/config';
 import RemotePlaceResolver from '../../src/lib/remote-place-resolver';
 
-describe('upload-manager.ts', () => {
+describe('services/upload-manager.ts', () => {
   beforeEach(() => {
     RemotePlaceCache.clear({});
   });

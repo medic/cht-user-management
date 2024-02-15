@@ -1,5 +1,5 @@
+import ChtSession from '../lib/cht-session';
 import Place, { PlaceUploadState } from './place';
-import { ChtSession } from '../lib/cht-api';
 
 export type SessionCacheUploadState = 'in_progress' | 'done' | 'pending';
 
