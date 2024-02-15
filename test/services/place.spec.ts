@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 
 import Place from '../../src/services/place';
-import { mockSimpleContactType } from '../mocks';
+import { mockSimpleContactType, mockValidContactType } from '../mocks';
 import RemotePlaceResolver from '../../src/lib/remote-place-resolver';
 
 describe('services/place.ts', () => {
@@ -108,5 +108,31 @@ describe('services/place.ts', () => {
 
     const actual = place.generateUsername();
     expect(actual).to.eq('migwani_itoloni');
+  });
+
+  it('asChtPayload uses contact_type by default', () => {
+    const contactType = mockValidContactType('string', undefined);
+    Object.freeze(contactType);
+
+    const place = new Place(contactType);
+    const actual = place.asChtPayload('usr');
+    expect(actual.type).to.eq('contact');
+    expect(actual.contact.type).to.eq('contact');
+    expect(actual.contact_type).to.eq(contactType.name);
+  });
+
+  it('#46 - asChtPayload should use type:health_center instead of contact_type:health_center', () => {
+    const contactType = mockValidContactType('string', undefined);
+    contactType.name = 'health_center';
+    contactType.contact_type = 'person';
+    Object.freeze(contactType);
+
+    const place = new Place(contactType);
+    const actual = place.asChtPayload('usr');
+    expect(actual.type).to.eq(contactType.name);
+    expect(actual.contact_type).to.be.undefined;
+
+    expect(actual.contact.type).to.eq(contactType.contact_type);
+    expect(actual.contact.contact_type).to.be.undefined;
   });
 });
