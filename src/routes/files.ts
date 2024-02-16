@@ -20,7 +20,7 @@ export default async function files(fastify: FastifyInstance) {
     return stringify([columns]);
   });
 
-  fastify.get('/files/credentials', async (req) => {
+  fastify.get('/files/credentials', async (req, reply) => {
     const sessionCache: SessionCache = req.sessionCache;
     const results = new Map<ContactType, String[][]>();
     const places = sessionCache.getPlaces();
@@ -37,7 +37,6 @@ export default async function files(fastify: FastifyInstance) {
       result.push(record);
       results.set(place.type, result);
     });
-
     const zip = new JSZip();
     results.forEach((places, contactType) => {
       const parent = Config.getParentProperty(contactType);
@@ -56,7 +55,7 @@ export default async function files(fastify: FastifyInstance) {
         })
       );
     });
-
+    reply.header('Content-Disposition', `attachment; filename="${Date.now()}_${req.chtSession.authInfo.friendly}_users.zip"`)
     return zip.generateNodeStream();
   });
 }
