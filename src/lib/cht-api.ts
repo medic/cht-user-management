@@ -138,10 +138,15 @@ export class ChtApi {
   };
 
   disableUsersWithPlace = async (placeId: string): Promise<string[]> => {
-    const url = `${this.protocolAndHost}/_users/_find`;
+    const url = `${this.protocolAndHost}/medic/_find`;
     const payload = {
       selector: {
+        type: 'user-settings',
         facility_id: placeId,
+        "$or": [
+          { inactive: false },
+          { inactive: { "$exists": false } }
+        ]
       },
     };
 
