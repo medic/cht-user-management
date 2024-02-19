@@ -138,6 +138,7 @@ export class ChtApi {
   };
 
   disableUsersWithPlace = async (placeId: string): Promise<string[]> => {
+    // #76 mm-online users cant query _users db after core4.4
     const url = `${this.protocolAndHost}/medic/_find`;
     const payload = {
       selector: {
