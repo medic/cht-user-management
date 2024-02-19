@@ -29,9 +29,10 @@ export default async function files(fastify: FastifyInstance) {
       const record = [
         place.hierarchyProperties[parent.property_name],
         place.name,
+        place.contact.properties['name'],
+        place.contact.properties['phone'],
         place.creationDetails.username,
         place.creationDetails.password,
-        place.creationDetails.disabledUsers,
       ];
       const result = results.get(place.type) || [];
       result.push(record);
@@ -43,9 +44,10 @@ export default async function files(fastify: FastifyInstance) {
       const columns = [
         parent.friendly_name,
         contactType.friendly,
+        'name',
+        'phone',
         'username',
-        'password',
-        'disabledUsers',
+        'password'
       ];
       zip.file(
         `${contactType.name}.csv`,
