@@ -29,8 +29,8 @@ export default async function files(fastify: FastifyInstance) {
       const record = [
         place.hierarchyProperties[parent.property_name],
         place.name,
-        place.contact.properties['name'],
-        place.contact.properties['phone'],
+        place.contact.properties.name,
+        place.contact.properties.phone,
         place.creationDetails.username,
         place.creationDetails.password,
       ];
