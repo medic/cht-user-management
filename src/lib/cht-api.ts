@@ -144,9 +144,9 @@ export class ChtApi {
       selector: {
         type: 'user-settings',
         facility_id: placeId,
-        "$or": [
+        $or: [
           { inactive: false },
-          { inactive: { "$exists": false } }
+          { inactive: { $exists: false } }
         ]
       },
     };
