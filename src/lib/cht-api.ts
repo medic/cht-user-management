@@ -1,21 +1,12 @@
 import _ from 'lodash';
-import axios, { AxiosHeaders } from 'axios';
+import axios from 'axios';
 import axiosRetry from 'axios-retry';
 import { axiosRetryConfig } from './retry-logic';
+import ChtSession from './cht-session';
+import { Config, ContactType } from '../config';
 import { UserPayload } from '../services/user-payload';
-import { AuthenticationInfo, Config, ContactType } from '../config';
 
 axiosRetry(axios, axiosRetryConfig);
-
-const {
-  NODE_ENV
-} = process.env;
-
-export type ChtSession = {
-  authInfo: AuthenticationInfo;
-  sessionToken: string;
-  username: string;
-};
 
 export type PlacePayload = {
   name: string;
@@ -52,39 +43,7 @@ export class ChtApi {
   }
 
   public get chtSession(): ChtSession {
-    return { ...this.session };
-  }
-
-  public static async createSession(authInfo: AuthenticationInfo, username : string, password: string): Promise<ChtSession> {
-    const COUCH_AUTH_COOKIE_NAME = 'AuthSession=';
-    const protocol = authInfo.useHttp ? 'http' : 'https';
-    const sessionUrl = `${protocol}://${authInfo.domain}/_session`;
-    const resp = await axios.post(sessionUrl, {
-      name: username,
-      password,
-    }, {
-      auth: {
-        username,
-        password 
-      }
-    });
-    const setCookieHeader = (resp.headers as AxiosHeaders).get('set-cookie') as AxiosHeaders;
-    const sessionToken = setCookieHeader?.[0].split(';')
-      .find((header : string) => header.startsWith(COUCH_AUTH_COOKIE_NAME));
-
-    if (NODE_ENV !== 'production') {
-      if (!sessionToken) {
-        console.log(`failed to login to ${sessionUrl}`);
-      } else {
-        console.log(`successfully logged in to ${sessionUrl}`);
-      }
-    }
-    
-    return {
-      authInfo,
-      username,
-      sessionToken,
-    };
+    return this.session.clone();
   }
 
   // workaround https://github.com/medic/cht-core/issues/8674
