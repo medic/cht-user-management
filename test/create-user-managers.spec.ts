@@ -10,7 +10,10 @@ Chai.use(chaiAsPromised);
 
 const { expect } = Chai;
 
-const StandardArgv = ['npx', 'ts-node', 'scripts/create-user-managers/index.ts', '--hostname', 'localhost:5988', '--adminUsername', 'medic', '--adminPassword', 'password'];
+const StandardArgv = [
+  'npx', 'ts-node', 'scripts/create-user-managers/index.ts',
+  '--hostname', 'localhost:5988', '--adminUsername', 'medic', '--adminPassword', 'password'
+];
 
 let fakeGetPlacesWithType;
 describe('scripts/create-user-managers.ts', () => {
@@ -60,7 +63,7 @@ describe('scripts/create-user-managers.ts', () => {
       '--names', 'Stan Lee', 'Frank Sinatra',
       '--passwords', 'S3cret_abc',
     ];
-    await expect(createUserManagers.default(argv)).to.eventually.be.rejectedWith('2 users but 1 passwords')
+    await expect(createUserManagers.default(argv)).to.eventually.be.rejectedWith('2 users but 1 passwords');
   });
 
   it('throw on multiple counties ', async () => {
@@ -84,7 +87,7 @@ describe('scripts/create-user-managers.ts', () => {
       }
     ]);
 
-    await expect(createUserManagers.default(argv)).to.eventually.be.rejectedWith('multiple counties')
+    await expect(createUserManagers.default(argv)).to.eventually.be.rejectedWith('multiple counties');
   });
 
   it('--county flag resolves ambiguous county', async () => {

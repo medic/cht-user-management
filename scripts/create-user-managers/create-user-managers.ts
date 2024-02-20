@@ -87,8 +87,8 @@ function parseCommandlineArguments(argv: string[]): CommandLineArgs {
     .parse(argv);
 
   const cmdArgs = program.opts();
-  if (cmdArgs.passwords?.length > 0 && cmdArgs.names.length != cmdArgs.passwords.length) {
-    throw Error(`Provided ${cmdArgs.names.length} users but ${cmdArgs.passwords.length} passwords. There should be an equal amount if passwords are specified.`);
+  if (cmdArgs.passwords?.length > 0 && cmdArgs.names.length !== cmdArgs.passwords.length) {
+    throw Error(`Provided ${cmdArgs.names.length} users but ${cmdArgs.passwords.length} passwords. There should be an equal count.`);
   }
 
   return cmdArgs as CommandLineArgs;
