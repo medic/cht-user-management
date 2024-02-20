@@ -53,7 +53,7 @@ const scenarios: Scenario[] = [
   { type: 'gender', prop: 'X', isValid: false, error: 'male' },
 ];
 
-describe('lib/validation', () => {
+describe('lib/validation.ts', () => {
   for (const scenario of scenarios) {
     it(`scenario: ${JSON.stringify(scenario)}`, () => {
       const contactType = mockSimpleContactType(scenario.type, scenario.propertyParameter, scenario.propertyErrorDescription);

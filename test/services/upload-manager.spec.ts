@@ -12,7 +12,7 @@ import { Config } from '../../src/config';
 import RemotePlaceResolver from '../../src/lib/remote-place-resolver';
 import { UploadManagerRetryScenario } from '../lib/retry-logic.spec';
 
-describe('upload-manager.ts', () => {
+describe('services/upload-manager.ts', () => {
   beforeEach(() => {
     RemotePlaceCache.clear({});
   });

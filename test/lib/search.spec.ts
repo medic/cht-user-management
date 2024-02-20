@@ -1,10 +1,9 @@
 import { expect } from 'chai';
-import sinon from 'sinon';
 
 import { RemotePlace } from '../../src/lib/cht-api';
 import RemotePlaceCache from '../../src/lib/remote-place-cache';
 import SearchLib from '../../src/lib/search';
-import { mockValidContactType } from '../mocks';
+import { mockChtApi, mockValidContactType } from '../mocks';
 import SessionCache from '../../src/services/session-cache';
 import { Config } from '../../src/config';
 
@@ -26,15 +25,6 @@ describe('lib/remote-place-cache.ts', () => {
     type: 'remote',
     lineage: [parentPlace.id],
   };
-
-  const mockChtApi = () => ({
-    chtSession: {
-      authInfo: {
-        domain: 'domain',
-      }
-    },
-    getPlacesWithType: sinon.stub().resolves([parentPlace]),
-  });
 
   it('simple search', async () => {
     const sessionCache = new SessionCache();
