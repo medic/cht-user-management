@@ -4,23 +4,24 @@ import { UserPayload } from '../services/user-payload';
 import { ChtApi } from './cht-api';
 
 const RETRY_COUNT = 4;
+const RETRYABLE_STATUS_CODES = [500, 502, 503, 504, 511];
 
 export const axiosRetryConfig = {
   retries: RETRY_COUNT,
   retryDelay: () => 1000,
   retryCondition: (err: AxiosError) => {
     const status = err.response?.status;
-    return (!status || status >= 500) && isRetryAllowed(err);
+    return (!status || RETRYABLE_STATUS_CODES.includes(status)) && isRetryAllowed(err);
   },
   onRetry: (retryCount: number, error: AxiosError, requestConfig: AxiosRequestConfig) => {
     console.log(`${requestConfig.url} failure. Retrying (${retryCount})`);
   },
 };
 
-export async function retryOnUpdateConflict<T>(funcWithPut: () => Promise<T>): Promise<T> {
+export async function retryOnUpdateConflict<T>(funcWithGetAndPut: () => Promise<T>): Promise<T> {
   for (let retryCount = 0; retryCount < RETRY_COUNT; retryCount++) {
     try {
-      return await funcWithPut();
+      return await funcWithGetAndPut();
     } catch (err : any) {
       const statusCode = err.response?.status;
       if (statusCode === 409) {
