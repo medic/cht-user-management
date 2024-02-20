@@ -1,14 +1,13 @@
 import { Command } from 'commander';
 
 import { AuthenticationInfo, ContactType } from '../../src/config';
-
-const { ChtApi } = require('../../src/lib/cht-api'); // require is needed for rewire
-const ChtSession = require('../../src/lib/cht-session'); // require is needed for rewire
-
 import { createUserWithRetries } from '../../src/lib/retry-logic';
 import Place from '../../src/services/place';
 import { UserPayload } from '../../src/services/user-payload';
 import UserManager from './ke_user_manager.json';
+
+const { ChtApi } = require('../../src/lib/cht-api'); // require is needed for rewire
+const ChtSession = require('../../src/lib/cht-session').default; // require is needed for rewire
 
 const UserManagerContactType: ContactType = UserManager;
 
@@ -29,7 +28,7 @@ export default async function createUserManagers(argv: string[]) {
   for (let i = 0; i < cmdArgs.names.length; i++) {
     const username = cmdArgs.names[i];
     const passwordOverride = cmdArgs.passwords?.[i];
-    const userPayload = await createUser(username, placeDocId, chtApi, cmdArgs.adminUsername, passwordOverride);
+    const userPayload = await createUserManager(username, placeDocId, chtApi, cmdArgs.adminUsername, passwordOverride);
     console.log(`username: ${userPayload.username}  password: ${userPayload.password}`);  
     results.push(userPayload);
   }
@@ -43,7 +42,7 @@ export default async function createUserManagers(argv: string[]) {
   return results;
 }
 
-async function createUser(username: string, placeDocId: string, chtApi: ChtApi, adminUsername: string, passwordOverride?: string) {
+async function createUserManager(username: string, placeDocId: string, chtApi: typeof ChtApi, adminUsername: string, passwordOverride?: string) {
   const place = new Place(UserManagerContactType);
   place.contact.properties.name = username;
 
@@ -88,16 +87,16 @@ function parseCommandlineArguments(argv: string[]): CommandLineArgs {
     .parse(argv);
 
   const cmdArgs = program.opts();
-  if (cmdArgs.passwords.length > 0 && cmdArgs.names.length != cmdArgs.passwords.length) {
-    throw Error('Provided ${names.length} users but ${passwords.length} passwords. There should be an equal amount if passwords are specified.');
+  if (cmdArgs.passwords?.length > 0 && cmdArgs.names.length != cmdArgs.passwords.length) {
+    throw Error(`Provided ${cmdArgs.names.length} users but ${cmdArgs.passwords.length} passwords. There should be an equal amount if passwords are specified.`);
   }
 
   return cmdArgs as CommandLineArgs;
 }
 
-async function getPlaceDocId(county: string | undefined, chtApi: ChtApi) {
+async function getPlaceDocId(county: string | undefined, chtApi: typeof ChtApi) {
   const counties = await chtApi.getPlacesWithType('a_county');
-  const countyMatches = counties.filter(c => !county || c.name === county.toLowerCase());
+  const countyMatches = counties.filter((c: any) => !county || c.name === county.toLowerCase());
   if (countyMatches.length < 1) {
     throw Error(`Could not find county "${county}"`);
   }
