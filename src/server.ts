@@ -3,6 +3,7 @@ import autoload from '@fastify/autoload';
 import cookie from '@fastify/cookie';
 import formbody from '@fastify/formbody';
 import multipart from '@fastify/multipart';
+import fastifyStatic from '@fastify/static';
 import view from '@fastify/view';
 import { Liquid } from 'liquidjs';
 import { FastifySSEPlugin } from 'fastify-sse-v2';
@@ -19,7 +20,7 @@ const build = (opts: FastifyServerOptions): FastifyInstance => {
   fastify.register(cookie);
   fastify.register(view, {
     engine: {
-      liquid: new Liquid({ extname: '.html', root: 'src/public', jekyllInclude: true, dynamicPartials: true }),
+      liquid: new Liquid({ extname: '.html', root: 'src/liquid', jekyllInclude: true, dynamicPartials: true }),
     },
   });
   fastify.register(autoload, {
@@ -28,11 +29,15 @@ const build = (opts: FastifyServerOptions): FastifyInstance => {
   fastify.register(autoload, {
     dir: path.join(__dirname, 'routes'),
   });
+  fastify.register(fastifyStatic, {
+    root: path.join(__dirname, 'src/public'),
+    prefix: '/public/',
+  });
 
   Auth.assertEnvironmentSetup();
 
   fastify.addHook('preValidation', async (req: FastifyRequest, reply: FastifyReply) => {
-    if (req.unauthenticated) {
+    if (req.unauthenticated || req.routerPath === '/public/*') {
       return;
     }
 

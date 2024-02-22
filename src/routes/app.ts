@@ -41,7 +41,7 @@ export default async function sessionCache(fastify: FastifyInstance) {
       op,
     };
 
-    return resp.view('src/public/app/view.html', tmplData);
+    return resp.view('src/liquid/app/view.html', tmplData);
   });
 
   fastify.post('/app/remove-all', async (req) => {

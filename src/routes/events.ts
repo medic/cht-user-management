@@ -15,7 +15,7 @@ export default async function events(fastify: FastifyInstance) {
         hierarchy: Config.getHierarchyWithReplacement(item, 'desc'),
       };
     });
-    return resp.view('src/public/place/list.html', {
+    return resp.view('src/liquid/place/list.html', {
       contactTypes: placeData,
       session: req.chtSession,
     });
