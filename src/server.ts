@@ -30,8 +30,9 @@ const build = (opts: FastifyServerOptions): FastifyInstance => {
     dir: path.join(__dirname, 'routes'),
   });
   fastify.register(fastifyStatic, {
-    root: path.join(__dirname, 'src/public'),
+    root: path.join(__dirname, '../src/public'),
     prefix: '/public/',
+    serve: true,
   });
 
   Auth.assertEnvironmentSetup();
