@@ -4,23 +4,24 @@ import { UserPayload } from '../services/user-payload';
 import { ChtApi } from './cht-api';
 
 const RETRY_COUNT = 4;
+const RETRYABLE_STATUS_CODES = [500, 502, 503, 504, 511];
 
 export const axiosRetryConfig = {
   retries: RETRY_COUNT,
   retryDelay: () => 1000,
   retryCondition: (err: AxiosError) => {
     const status = err.response?.status;
-    return (!status || status >= 500) && isRetryAllowed(err);
+    return (!status || RETRYABLE_STATUS_CODES.includes(status)) && isRetryAllowed(err);
   },
   onRetry: (retryCount: number, error: AxiosError, requestConfig: AxiosRequestConfig) => {
     console.log(`${requestConfig.url} failure. Retrying (${retryCount})`);
   },
 };
 
-export async function retryOnUpdateConflict<T>(funcWithPut: () => Promise<T>): Promise<T> {
+export async function retryOnUpdateConflict<T>(funcWithGetAndPut: () => Promise<T>): Promise<T> {
   for (let retryCount = 0; retryCount < RETRY_COUNT; retryCount++) {
     try {
-      return await funcWithPut();
+      return await funcWithGetAndPut();
     } catch (err : any) {
       const statusCode = err.response?.status;
       if (statusCode === 409) {
@@ -49,15 +50,16 @@ export async function createUserWithRetries(userPayload: UserPayload, chtApi: Ch
         throw err;
       }
 
-      const translationKey = err.response?.data?.error?.translationKey;
-      console.error('createUser retry because', translationKey);
-      if (translationKey === 'username.taken') {
+      // no idea when/why some instances yield "response.data" as JSON vs some as string
+      const errorMessage = err.response?.data?.error?.message || err.response?.data;
+      console.error('createUser retry because', errorMessage);
+      if (errorMessage.includes('already taken.')) {
         userPayload.makeUsernameMoreComplex();
         continue;
       }
 
-      const RETRY_PASSWORD_TRANSLATIONS = ['password.length.minimum', 'password.weak'];
-      if (RETRY_PASSWORD_TRANSLATIONS.includes(translationKey)) {
+      const RETRY_PASSWORD_STRINGS = ['The password must be at least', 'The password is too easy to guess.'];
+      if (RETRY_PASSWORD_STRINGS.find(str => errorMessage.includes(str))) {
         userPayload.regeneratePassword();
         continue;
       }

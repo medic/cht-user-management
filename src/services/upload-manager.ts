@@ -5,6 +5,7 @@ import { ChtApi, PlacePayload } from '../lib/cht-api';
 import { Config } from '../config';
 import Place, { PlaceUploadState } from './place';
 import RemotePlaceCache from '../lib/remote-place-cache';
+import SessionCache, { SessionCacheUploadState } from './session-cache';
 import { UploadNewPlace } from './upload.new';
 import { UploadReplacementPlace } from './upload.replacement';
 import { UserPayload } from './user-payload';

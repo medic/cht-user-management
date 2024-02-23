@@ -138,18 +138,28 @@ export default class Place {
       }, {});
     };
 
+    const contactAttributes = (contactType: string) => {
+      const RESERVED_CONTACT_TYPES = ['district_hospital', 'health_center', 'clinic', 'person'];
+
+      if (RESERVED_CONTACT_TYPES.includes(contactType)) {
+        return { type: contactType };
+      }
+
+      return {
+        type: 'contact',
+        contact_type: contactType,
+      };
+    };
     return {
       ...filteredProperties(this.properties),
+      ...contactAttributes(this.type.name),
       _id: this.isReplacement ? this.resolvedHierarchy[0]?.id : this.id,
-      type: 'contact',
-      contact_type: this.type.name,
       parent: this.resolvedHierarchy[1]?.id,
       user_attribution,
       contact: {
         ...filteredProperties(this.contact.properties),
+        ...contactAttributes(this.contact.type.contact_type),
         name: this.contact.name,
-        type: 'contact',
-        contact_type: this.contact.type.contact_type,
         user_attribution,
       }
     };
