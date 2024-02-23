@@ -41,7 +41,7 @@ export async function createUserWithRetries(userPayload: UserPayload, chtApi: Ch
     try {
       await chtApi.createUser(userPayload);
       return userPayload;
-    } catch (err: any) {
+    } catch (err: any) {      
       if (axiosRetryConfig.retryCondition(err)) {
         continue;
       }
