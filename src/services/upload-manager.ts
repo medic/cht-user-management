@@ -1,13 +1,14 @@
 import EventEmitter from 'events';
-import { ChtApi, PlacePayload } from '../lib/cht-api';
 
-import Place, { PlaceUploadState } from './place';
-import { UserPayload } from './user-payload';
-import SessionCache, { SessionCacheUploadState } from './session-cache';
-import { UploadReplacementPlace } from './upload.replacement';
-import { UploadNewPlace } from './upload.new';
+import * as RetryLogic from '../lib/retry-logic';
+import { ChtApi, PlacePayload } from '../lib/cht-api';
 import { Config } from '../config';
+import Place, { PlaceUploadState } from './place';
 import RemotePlaceCache from '../lib/remote-place-cache';
+import SessionCache, { SessionCacheUploadState } from './session-cache';
+import { UploadNewPlace } from './upload.new';
+import { UploadReplacementPlace } from './upload.replacement';
+import { UserPayload } from './user-payload';
 
 const UPLOAD_BATCH_SIZE = 10;
 
@@ -54,7 +55,8 @@ export class UploadManager extends EventEmitter {
         place.creationDetails.placeId = placeId;
       }
 
-      await uploader.linkContactAndPlace(place, place.creationDetails?.placeId);
+      const createdPlaceId = place.creationDetails.placeId; // closure required for typescript
+      await RetryLogic.retryOnUpdateConflict<void>(() => uploader.linkContactAndPlace(place, createdPlaceId));
 
       if (!place.creationDetails.contactId) {
         throw Error('creationDetails.contactId not set');
@@ -62,7 +64,7 @@ export class UploadManager extends EventEmitter {
 
       if (!place.creationDetails.username) {
         const userPayload = new UserPayload(place, place.creationDetails.placeId, place.creationDetails.contactId);
-        const { username, password } = await tryCreateUser(userPayload, chtApi);
+        const { username, password } = await RetryLogic.createUserWithRetries(userPayload, chtApi);
         place.creationDetails.username = username;
         place.creationDetails.password = password;
       }
@@ -73,7 +75,7 @@ export class UploadManager extends EventEmitter {
       console.log(`successfully created ${JSON.stringify(place.creationDetails)}`);
       this.eventedPlaceStateChange(place, PlaceUploadState.SUCCESS);
     } catch (err: any) {
-      const errorDetails = err.response?.data.error || err.toString();
+      const errorDetails = err.response?.data?.error ? JSON.stringify(err.response.data.error) : err.toString();
       console.log('error when creating user', errorDetails);
       place.uploadError = errorDetails;
       this.eventedPlaceStateChange(place, PlaceUploadState.FAILURE);
@@ -99,33 +101,4 @@ export class UploadManager extends EventEmitter {
 
     this.emit('places_state_change', state);
   };
-}
-
-async function tryCreateUser (userPayload: UserPayload, chtApi: ChtApi): Promise<{ username: string; password: string }> {
-  for (let retryCount = 0; retryCount < 5; ++retryCount) {
-    try {
-      await chtApi.createUser(userPayload);
-      return userPayload;
-    } catch (err: any) {      
-      if (err?.response?.status !== 400) {
-        throw err;
-      }
-      
-      const msg = err.response?.data?.error?.message || err.response?.data;
-      console.error('createUser retry because', msg);
-      if (msg?.includes('already taken')) {
-        userPayload.makeUsernameMoreComplex();
-        continue;
-      }
-
-      if (msg?.includes('password')) { // password too easy to guess
-        userPayload.regeneratePassword();
-        continue;
-      }
-
-      throw err;
-    }
-  }
-
-  throw new Error('could not create user ' + userPayload.contact);
 }
