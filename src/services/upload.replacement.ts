@@ -1,5 +1,6 @@
 import { ChtApi, PlacePayload } from '../lib/cht-api';
 import Place from './place';
+import { retryOnUpdateConflict } from '../lib/retry-logic';
 import { Uploader } from './upload-manager';
 
 export class UploadReplacementPlace implements Uploader {
@@ -21,7 +22,7 @@ export class UploadReplacementPlace implements Uploader {
       throw Error('contactId and placeId are required');
     }
 
-    const updatedPlaceId = await this.chtApi.updatePlace(payload, contactId);
+    const updatedPlaceId = await retryOnUpdateConflict<string>(() => this.chtApi.updatePlace(payload, contactId));
     const disabledUsers = await this.chtApi.disableUsersWithPlace(placeId);
     place.creationDetails.disabledUsers = disabledUsers;
 

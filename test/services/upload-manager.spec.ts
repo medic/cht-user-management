@@ -10,6 +10,7 @@ import { ChtApi, RemotePlace } from '../../src/lib/cht-api';
 import RemotePlaceCache from '../../src/lib/remote-place-cache';
 import { Config } from '../../src/config';
 import RemotePlaceResolver from '../../src/lib/remote-place-resolver';
+import { UploadManagerRetryScenario } from '../lib/retry-logic.spec';
 
 describe('upload-manager.ts', () => {
   beforeEach(() => {
@@ -195,7 +196,7 @@ describe('upload-manager.ts', () => {
     const { remotePlace, sessionCache, chtApi } = await createMocks();
 
     chtApi.createUser
-      .throws('timeout')
+      .throws({ response: { status: 404 }, toString: () => 'upload-error' })
       .onSecondCall().resolves();
 
     const chu_name = 'new chu';
@@ -204,7 +205,8 @@ describe('upload-manager.ts', () => {
     const uploadManager = new UploadManager();
     await uploadManager.doUpload(sessionCache.getPlaces(), chtApi);
     expect(chu.isCreated).to.be.false;
-    expect(chu.uploadError).to.include('timeout');
+    expect(chtApi.createUser.calledOnce).to.be.true;
+    expect(chu.uploadError).to.include('upload-error');
     expect(chu.creationDetails).to.deep.eq({
       contactId: 'created-contact-id',
       placeId: 'created-place-id',
@@ -227,6 +229,21 @@ describe('upload-manager.ts', () => {
     expect(chtApi.createContact.called).to.be.false;
     expect(chtApi.updatePlace.called).to.be.false;
     expect(chtApi.disableUsersWithPlace.called).to.be.false;
+  });
+
+  it(`createUser is retried`, async() => {
+    const { remotePlace, sessionCache, chtApi } = await createMocks();
+
+    chtApi.createUser.throws(UploadManagerRetryScenario.axiosError);
+
+    const chu_name = 'new chu';
+    const chu = await createChu(remotePlace, chu_name, sessionCache, chtApi);
+
+    const uploadManager = new UploadManager();
+    await uploadManager.doUpload(sessionCache.getPlaces(), chtApi);
+    expect(chu.isCreated).to.be.false;
+    expect(chtApi.createUser.callCount).to.be.gt(2); // retried
+    expect(chu.uploadError).to.include('could not create user');  
   });
 });
 
@@ -277,4 +294,3 @@ async function createMocks() {
 
   return { fakeFormData, contactType, sessionCache, chtApi, remotePlace };
 }
-

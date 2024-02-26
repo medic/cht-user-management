@@ -1,15 +1,15 @@
 import EventEmitter from 'events';
+
+import * as RetryLogic from '../lib/retry-logic';
 import { ChtApi, PlacePayload } from '../lib/cht-api';
-
-import Place, { PlaceUploadState } from './place';
-import { UserPayload } from './user-payload';
-import SessionCache, { SessionCacheUploadState } from './session-cache';
-import { UploadReplacementPlace } from './upload.replacement';
-import { UploadNewPlace } from './upload.new';
 import { Config } from '../config';
+import Place, { PlaceUploadState } from './place';
 import RemotePlaceCache from '../lib/remote-place-cache';
+import { UploadNewPlace } from './upload.new';
+import { UploadReplacementPlace } from './upload.replacement';
+import { UserPayload } from './user-payload';
 
-const UPLOAD_BATCH_SIZE = 10;
+const UPLOAD_BATCH_SIZE = 1;
 
 export interface Uploader {
    handleContact (payload: PlacePayload): Promise<string | undefined>;
@@ -19,7 +19,7 @@ export interface Uploader {
 
 export class UploadManager extends EventEmitter {
   doUpload = async (places: Place[], chtApi: ChtApi) => {
-    const placesNeedingUpload = places.filter(p => !p.isCreated && Object.keys(p.validationErrors as any).length === 0);
+    const placesNeedingUpload = places.filter(p => !p.isCreated && !p.hasValidationErrors);
     this.eventedPlaceStateChange(placesNeedingUpload, PlaceUploadState.SCHEDULED);
 
     const independants = placesNeedingUpload.filter(p => !p.isDependant);
@@ -37,7 +37,7 @@ export class UploadManager extends EventEmitter {
   }
 
   private async uploadSinglePlace(place: Place, chtApi: ChtApi) {
-    this.eventedPlaceStateChange(place, PlaceUploadState.IN_PROGESS);
+    this.eventedPlaceStateChange(place, PlaceUploadState.IN_PROGRESS);
 
     try {
       const uploader: Uploader = place.hierarchyProperties.replacement ? new UploadReplacementPlace(chtApi) : new UploadNewPlace(chtApi);
@@ -54,7 +54,8 @@ export class UploadManager extends EventEmitter {
         place.creationDetails.placeId = placeId;
       }
 
-      await uploader.linkContactAndPlace(place, place.creationDetails?.placeId);
+      const createdPlaceId = place.creationDetails.placeId; // closure required for typescript
+      await RetryLogic.retryOnUpdateConflict<void>(() => uploader.linkContactAndPlace(place, createdPlaceId));
 
       if (!place.creationDetails.contactId) {
         throw Error('creationDetails.contactId not set');
@@ -62,7 +63,7 @@ export class UploadManager extends EventEmitter {
 
       if (!place.creationDetails.username) {
         const userPayload = new UserPayload(place, place.creationDetails.placeId, place.creationDetails.contactId);
-        const { username, password } = await tryCreateUser(userPayload, chtApi);
+        const { username, password } = await RetryLogic.createUserWithRetries(userPayload, chtApi);
         place.creationDetails.username = username;
         place.creationDetails.password = password;
       }
@@ -73,59 +74,34 @@ export class UploadManager extends EventEmitter {
       console.log(`successfully created ${JSON.stringify(place.creationDetails)}`);
       this.eventedPlaceStateChange(place, PlaceUploadState.SUCCESS);
     } catch (err: any) {
-      const errorDetails = err.response?.data.error || err.toString();
+      const errorDetails = err.response?.data?.error ? JSON.stringify(err.response.data.error) : err.toString();
       console.log('error when creating user', errorDetails);
       place.uploadError = errorDetails;
       this.eventedPlaceStateChange(place, PlaceUploadState.FAILURE);
     }
   }
 
-  public refresh(sessionCache: SessionCache) {
-    this.emit('session_state_change', sessionCache.state);
-    this.emit('places_state_change', PlaceUploadState.PENDING);
-  }
-
-  public eventedSessionStateChange(sessionCache: SessionCache, state: SessionCacheUploadState) {
-    sessionCache.state = state;
-    this.emit('session_state_change', state);
+  public triggerRefresh(place_id: string | undefined) {
+    if (place_id) {
+      this.emit('refresh_table_row', place_id);
+    } else {
+      this.emit('refresh_table');
+    }
   }
 
   private eventedPlaceStateChange = (subject: Place | Place[], state: PlaceUploadState) => {
-    if (Array.isArray(subject)) {
-      subject.forEach(place => place.state = state);
-    } else {
-      subject.state = state;
+    if (!Array.isArray(subject)) {
+      subject = [subject];
+    }
+    
+    if (subject.length > 1) {
+      this.triggerRefresh(undefined);
+      return;
     }
 
-    this.emit('places_state_change', state);
+    subject.forEach(place => {
+      place.state = state;
+      this.triggerRefresh(place.id);
+    });
   };
-}
-
-async function tryCreateUser (userPayload: UserPayload, chtApi: ChtApi): Promise<{ username: string; password: string }> {
-  for (let retryCount = 0; retryCount < 5; ++retryCount) {
-    try {
-      await chtApi.createUser(userPayload);
-      return userPayload;
-    } catch (err: any) {      
-      if (err?.response?.status !== 400) {
-        throw err;
-      }
-      
-      const msg = err.response?.data?.error?.message || err.response?.data;
-      console.error('createUser retry because', msg);
-      if (msg?.includes('already taken')) {
-        userPayload.makeUsernameMoreComplex();
-        continue;
-      }
-
-      if (msg?.includes('password')) { // password too easy to guess
-        userPayload.regeneratePassword();
-        continue;
-      }
-
-      throw err;
-    }
-  }
-
-  throw new Error('could not create user ' + userPayload.contact);
 }
