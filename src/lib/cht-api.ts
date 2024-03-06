@@ -1,7 +1,11 @@
 import _ from 'lodash';
 import axios, { AxiosHeaders } from 'axios';
+import axiosRetry from 'axios-retry';
+import { axiosRetryConfig } from './retry-logic';
 import { UserPayload } from '../services/user-payload';
 import { AuthenticationInfo, Config, ContactType } from '../config';
+
+axiosRetry(axios, axiosRetryConfig);
 
 const {
   NODE_ENV
@@ -170,7 +174,11 @@ export class ChtApi {
   createUser = async (user: UserPayload): Promise<void> => {
     const url = `${this.protocolAndHost}/api/v1/users`;
     console.log('axios.post', url);
-    await axios.post(url, user, this.authorizationOptions());
+    const axiosRequestionConfig = {
+      ...this.authorizationOptions(),
+      'axios-retry': { retries: 0 }, // upload-manager handles retries for this
+    };
+    await axios.post(url, user, axiosRequestionConfig);
   };
 
   getParentAndSibling = async (parentId: string, contactType: ContactType): Promise<{ parent: any; sibling: any }> => {
