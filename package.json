@@ -1,6 +1,6 @@
 {
   "name": "cht-user-management",
-  "version": "1.0.13",
+  "version": "1.0.15",
   "main": "dist/index.js",
   "dependencies": {
     "@fastify/autoload": "^5.8.0",
@@ -15,6 +15,7 @@
     "@types/node": "^20.8.8",
     "@types/uuid": "^9.0.6",
     "axios": "^1.5.1",
+    "axios-retry": "^4.0.0",
     "csv": "^6.3.5",
     "dotenv": "^16.3.1",
     "fastify": "^4.23.2",
