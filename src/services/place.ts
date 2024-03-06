@@ -20,9 +20,9 @@ export type UserCreationDetails = {
 export enum PlaceUploadState {
   SUCCESS = 'success',
   FAILURE = 'failure',
-  PENDING = 'pending',
+  STAGED = 'staged',
   SCHEDULED = 'scheduled',
-  IN_PROGESS = 'in_progress',
+  IN_PROGRESS = 'in_progress',
 }
 
 const PLACE_PREFIX = 'place_';
@@ -57,7 +57,7 @@ export default class Place {
     this.contact = new Contact(type);
     this.properties = {};
     this.hierarchyProperties = {};
-    this.state = PlaceUploadState.PENDING;
+    this.state = PlaceUploadState.STAGED;
     this.resolvedHierarchy = [];
   }
 
@@ -138,18 +138,28 @@ export default class Place {
       }, {});
     };
 
+    const contactAttributes = (contactType: string) => {
+      const RESERVED_CONTACT_TYPES = ['district_hospital', 'health_center', 'clinic', 'person'];
+
+      if (RESERVED_CONTACT_TYPES.includes(contactType)) {
+        return { type: contactType };
+      }
+
+      return {
+        type: 'contact',
+        contact_type: contactType,
+      };
+    };
     return {
       ...filteredProperties(this.properties),
+      ...contactAttributes(this.type.name),
       _id: this.isReplacement ? this.resolvedHierarchy[0]?.id : this.id,
-      type: 'contact',
-      contact_type: this.type.name,
       parent: this.resolvedHierarchy[1]?.id,
       user_attribution,
       contact: {
         ...filteredProperties(this.contact.properties),
+        ...contactAttributes(this.contact.type.contact_type),
         name: this.contact.name,
-        type: 'contact',
-        contact_type: this.contact.type.contact_type,
         user_attribution,
       }
     };
@@ -208,6 +218,10 @@ export default class Place {
     }
 
     return username;
+  }
+
+  public get hasValidationErrors() : boolean {
+    return Object.keys(this.validationErrors as any).length > 0;
   }
 
   public get isDependant() : boolean {

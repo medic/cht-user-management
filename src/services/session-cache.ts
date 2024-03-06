@@ -1,12 +1,10 @@
 import ChtSession from '../lib/cht-session';
 import Place, { PlaceUploadState } from './place';
 
-export type SessionCacheUploadState = 'in_progress' | 'done' | 'pending';
+export type SessionCacheUploadState = 'in_progress' | 'done' | 'staged';
 
 export default class SessionCache {
   private static caches: Map<string, SessionCache> = new Map();
-
-  public state: SessionCacheUploadState = 'pending';
   private places: { [key: string]: Place } = {};
 
   private constructor() {}
