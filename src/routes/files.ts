@@ -23,11 +23,11 @@ export default async function files(fastify: FastifyInstance) {
   fastify.get('/files/credentials', async (req, reply) => {
     const sessionCache: SessionCache = req.sessionCache;
     const results = new Map<ContactType, String[][]>();
+    const hierarchyProps = new Map<ContactType, string[]>();
     const places = sessionCache.getPlaces();
     places.forEach(place => {
-      const parent = Config.getParentProperty(place.type);
       const record = [
-        place.hierarchyProperties[parent.property_name],
+        ...Object.values(place.hierarchyProperties),
         place.name,
         place.contact.properties.name,
         place.contact.properties.phone,
@@ -37,12 +37,15 @@ export default async function files(fastify: FastifyInstance) {
       const result = results.get(place.type) || [];
       result.push(record);
       results.set(place.type, result);
+      if (!hierarchyProps.has(place.type)) {
+        hierarchyProps.set(place.type, Object.keys(place.hierarchyProperties))
+      }
     });
     const zip = new JSZip();
     results.forEach((places, contactType) => {
       const parent = Config.getParentProperty(contactType);
       const columns = [
-        parent.friendly_name,
+        ...hierarchyProps.get(contactType)!!,
         contactType.friendly,
         'name',
         'phone',

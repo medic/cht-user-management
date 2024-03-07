@@ -86,10 +86,7 @@ export default class Place {
 
     for (const hierarchyLevel of Config.getHierarchyWithReplacement(this.type)) {
       const propertyName = hierarchyLevel.property_name;
-      delete this.hierarchyProperties[propertyName];
-      if (formData[`${hierarchyPrefix}${propertyName}`]) {
-        this.hierarchyProperties[propertyName] = formData[`${hierarchyPrefix}${propertyName}`];
-      }
+      this.hierarchyProperties[propertyName] = formData[`${hierarchyPrefix}${propertyName}`] ?? '';
     }
   }
 
