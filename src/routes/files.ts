@@ -38,12 +38,11 @@ export default async function files(fastify: FastifyInstance) {
       result.push(record);
       results.set(place.type, result);
       if (!hierarchyProps.has(place.type)) {
-        hierarchyProps.set(place.type, Object.keys(place.hierarchyProperties))
+        hierarchyProps.set(place.type, Object.keys(place.hierarchyProperties));
       }
     });
     const zip = new JSZip();
     results.forEach((places, contactType) => {
-      const parent = Config.getParentProperty(contactType);
       const columns = [
         ...hierarchyProps.get(contactType)!!,
         contactType.friendly,
