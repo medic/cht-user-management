@@ -13,7 +13,7 @@ type Scenario = {
   error?: string;
 };
 
-const EMAIL_REGEX = '^[a-zA-Z0-9._+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$';
+const EMAIL_REGEX = '^[a-zA-Z0-9._+-]+@[a-zA-Z0-9.-]+.[a-zA-Z]{2,}$';
 
 const scenarios: Scenario[] = [
   { type: 'string', prop: 'abc', isValid: true },
