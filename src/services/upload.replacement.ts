@@ -22,12 +22,16 @@ export class UploadReplacementPlace implements Uploader {
       throw Error('contactId and placeId are required');
     }
 
-    const updatedPlaceId = await retryOnUpdateConflict<string>(() => this.chtApi.updatePlace(payload, contactId));
+    const updatedPlaceDoc = await retryOnUpdateConflict<any>(() => this.chtApi.updatePlace(payload, contactId));
+    const toDelete = updatedPlaceDoc.previousPrimaryContacts?.pop();
+    if (toDelete) {
+      await retryOnUpdateConflict<any>(() => this.chtApi.deleteDoc(toDelete));
+    }
+
     const disabledUsers = await this.chtApi.disableUsersWithPlace(placeId);
     place.creationDetails.disabledUsers = disabledUsers;
 
-    // (optional) mute and rename contacts associated to the disabled users
-    return updatedPlaceId;
+    return updatedPlaceDoc._id;
   };
 
   linkContactAndPlace = async (place: Place, placeId: string): Promise<void> => {

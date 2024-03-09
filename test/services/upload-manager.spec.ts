@@ -45,6 +45,7 @@ describe('upload-manager.ts', () => {
       type: 'role',
       username: 'contact',
     });
+    expect(chtApi.deleteDoc.called).to.be.false;
     expect(place.isCreated).to.be.true;
   });
 
@@ -62,6 +63,7 @@ describe('upload-manager.ts', () => {
 
     expect(chtApi.getPlacesWithType.calledTwice).to.be.true;
     expect(chtApi.getPlacesWithType.args[0]).to.deep.eq(['parent']);
+    expect(chtApi.deleteDoc.called).to.be.false;
     expect(place.isCreated).to.be.true;
   });
 
@@ -102,6 +104,7 @@ describe('upload-manager.ts', () => {
     expect(chtApi.updatePlace.calledOnce).to.be.true;
     expect(chtApi.updatePlace.args[0][0]).to.not.have.property('prop');
     expect(chtApi.updatePlace.args[0][0]).to.not.have.property('name');
+    expect(chtApi.deleteDoc.calledOnce).to.be.true;
     expect(place.isCreated).to.be.true;
   });
 
@@ -228,6 +231,7 @@ describe('upload-manager.ts', () => {
     expect(chtApi.getParentAndSibling.called).to.be.false;
     expect(chtApi.createContact.called).to.be.false;
     expect(chtApi.updatePlace.called).to.be.false;
+    expect(chtApi.deleteDoc.called).to.be.false;
     expect(chtApi.disableUsersWithPlace.called).to.be.false;
   });
 
@@ -278,10 +282,14 @@ async function createMocks() {
     createPlace: sinon.stub().resolves('created-place-id'),
     updateContactParent: sinon.stub().resolves('created-contact-id'),
     createUser: sinon.stub().resolves(),
-
+    
     getParentAndSibling: sinon.stub().resolves({ parent: {}, sibling: {} }),
     createContact: sinon.stub().resolves('replacement-contact-id'),
-    updatePlace: sinon.stub().resolves('updated-place-id'),
+    updatePlace: sinon.stub().resolves({
+      _id: 'updated-place-id',
+      previousPrimaryContacts: ['prev_contact_id'],
+    }),
+    deleteDoc: sinon.stub().resolves(),
     disableUsersWithPlace: sinon.stub().resolves(['org.couchdb.user:disabled']),
   };
   
