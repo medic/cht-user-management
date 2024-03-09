@@ -26,7 +26,6 @@ export default async function events(fastify: FastifyInstance) {
 
     resp.hijack();
     const placesChangeListener = (arg: string = '*') => {
-      console.log('place_state_change', arguments);
       resp.sse({ event: 'place_state_change', data: arg });
     };
     
