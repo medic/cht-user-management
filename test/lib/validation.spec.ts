@@ -13,10 +13,12 @@ type Scenario = {
   error?: string;
 };
 
+const EMAIL_REGEX = '^[a-zA-Z0-9._+-]+@[a-zA-Z0-9.-]+.[a-zA-Z]{2,}$';
+
 const scenarios: Scenario[] = [
   { type: 'string', prop: 'abc', isValid: true },
   { type: 'string', prop: ' ab\nc', isValid: true, altered: 'abc' },
-  { type: 'string', prop: 'Mr.  Sand(m-a-n)', isValid: true, altered: 'Mr Sand(m-a-n)' },
+  { type: 'string', prop: 'Mr.  Sand(m-a-n)', isValid: true, altered: 'Mr. Sand(m-a-n)' },
   { type: 'string', prop: '', isValid: false, altered: '', error: 'Required' },
   
   { type: 'phone', prop: '+254712345678', isValid: true, altered: '0712 345678', propertyParameter: 'KE' },
@@ -27,10 +29,13 @@ const scenarios: Scenario[] = [
   { type: 'regex', propertyParameter: '^\\d{6}$', prop: '123456', isValid: true },
   { type: 'regex', propertyParameter: '^\\d{6}$', prop: ' 123456 *&%', isValid: true, altered: '123456' },
   { type: 'regex', propertyParameter: '^\\d{6}$', prop: '1234567', isValid: false, error: 'six digit', propertyErrorDescription: 'six digit number' },
+  { type: 'regex', propertyParameter: EMAIL_REGEX, prop: 'email@address.com', isValid: true, altered: 'email@address.com' },
+  { type: 'regex', propertyParameter: EMAIL_REGEX, prop: '.com', isValid: false, propertyErrorDescription: 'valid email address', error: 'email' },
   { type: 'regex', propertyParameter: undefined, prop: 'abc', isValid: false, error: 'missing parameter' },
   
   { type: 'name', prop: 'abc', isValid: true, altered: 'Abc' },
   { type: 'name', prop: 'a b c', isValid: true, altered: 'A B C' },
+  { type: 'name', prop: 'Mr.  Sand(m-a-n)', isValid: true, altered: 'Mr Sand(m-a-n)' },
   { type: 'name', prop: 'WELDON KO(E)CH \n', isValid: true, altered: 'Weldon Ko(e)ch' },
   { type: 'name', prop: 'S \'am \'s', isValid: true, altered: 'S\'am\'s' },
   { type: 'name', prop: 'KYAMBOO/KALILUNI', isValid: true, altered: 'Kyamboo / Kaliluni' },
