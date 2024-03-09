@@ -37,6 +37,7 @@ const scenarios: Scenario[] = [
   { type: 'name', prop: 'NZATANI / ILALAMBYU', isValid: true, altered: 'Nzatani / Ilalambyu' },
   { type: 'name', prop: 'Sam\'s CHU', propertyParameter: ['CHU', 'Comm Unit'], isValid: true, altered: 'Sam\'s' },
   { type: 'name', prop: 'Jonathan M.Barasa', isValid: true, altered: 'Jonathan M Barasa' },
+  { type: 'name', prop: ' ', isValid: true, altered: '' },
 
   { type: 'dob', prop: '', isValid: false },
   { type: 'dob', prop: '2016/05/25', isValid: false },
@@ -67,7 +68,7 @@ describe('lib/validation', () => {
       }
 
       const actualAltered = Validation.format(place);
-      expect(actualAltered.properties.prop).to.eq(scenario.altered || scenario.prop);
+      expect(actualAltered.properties.prop).to.eq(scenario.altered ?? scenario.prop);
     });
   }
 
