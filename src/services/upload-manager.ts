@@ -6,7 +6,8 @@ import { Config } from '../config';
 import Place, { PlaceUploadState } from './place';
 import RemotePlaceCache from '../lib/remote-place-cache';
 import { UploadNewPlace } from './upload.new';
-import { UploadReplacementPlace } from './upload.replacement';
+import { UploadReplacementWithDeletion } from './upload.replacement';
+import { UploadReplacementWithDeactivation } from './upload.deactivate';
 import { UserPayload } from './user-payload';
 
 const UPLOAD_BATCH_SIZE = 1;
@@ -40,7 +41,7 @@ export class UploadManager extends EventEmitter {
     this.eventedPlaceStateChange(place, PlaceUploadState.IN_PROGRESS);
 
     try {
-      const uploader: Uploader = place.hierarchyProperties.replacement ? new UploadReplacementPlace(chtApi) : new UploadNewPlace(chtApi);
+      const uploader: Uploader = pickUploader(place, chtApi);
       const payload = place.asChtPayload(chtApi.chtSession.username);
       await Config.mutate(payload, chtApi, !!place.properties.replacement);
 
@@ -105,3 +106,15 @@ export class UploadManager extends EventEmitter {
     });
   };
 }
+
+function pickUploader(place: Place, chtApi: ChtApi): Uploader {
+  if (place.hierarchyProperties.replacement) {
+    const useDeactivation = place.type.deactivate_users_on_replace;
+    return useDeactivation ? 
+      new UploadReplacementWithDeactivation(chtApi) :
+      new UploadReplacementWithDeletion(chtApi);
+  } 
+
+  return new UploadNewPlace(chtApi);
+}
+

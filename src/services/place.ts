@@ -14,7 +14,6 @@ export type UserCreationDetails = {
   password?: string;
   placeId?: string;
   contactId?: string;
-  disabledUsers?: string[];
 };
 
 export enum PlaceUploadState {

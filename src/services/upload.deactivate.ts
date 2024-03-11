@@ -3,7 +3,7 @@ import Place from './place';
 import { retryOnUpdateConflict } from '../lib/retry-logic';
 import { Uploader } from './upload-manager';
 
-export class UploadReplacementWithDeletion implements Uploader {
+export class UploadReplacementWithDeactivation implements Uploader {
   private readonly chtApi: ChtApi;
 
   constructor(chtApi: ChtApi) {
@@ -23,12 +23,7 @@ export class UploadReplacementWithDeletion implements Uploader {
     }
 
     const updatedPlaceDoc = await retryOnUpdateConflict<any>(() => this.chtApi.updatePlace(payload, contactId));
-    const toDelete = updatedPlaceDoc.previousPrimaryContacts?.pop();
-    if (toDelete) {
-      await retryOnUpdateConflict<any>(() => this.chtApi.deleteDoc(toDelete));
-    }
-
-    await this.chtApi.disableUsersWithPlace(placeId);
+    await this.chtApi.deactivateUsersWithPlace(placeId);
     return updatedPlaceDoc._id;
   };
 
