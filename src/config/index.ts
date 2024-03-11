@@ -23,6 +23,7 @@ export type ContactType = {
   replacement_property: ContactProperty;
   place_properties: ContactProperty[];
   contact_properties: ContactProperty[];
+  user_roles_property?: ContactProperty;
 };
 
 export type HierarchyConstraint = {

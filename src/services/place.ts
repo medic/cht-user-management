@@ -27,6 +27,7 @@ export enum PlaceUploadState {
 
 const PLACE_PREFIX = 'place_';
 const CONTACT_PREFIX = 'contact_';
+const USER_ROLES_PREFIX = 'user_roles_';
 
 export default class Place {
   public readonly id: string;
@@ -46,6 +47,10 @@ export default class Place {
     [key: string]: any;
   };
 
+  public userRolesProperty: {
+    [key: string]: any;
+  };
+
   public state : PlaceUploadState;
 
   public validationErrors?: { [key: string]: string };
@@ -59,6 +64,7 @@ export default class Place {
     this.hierarchyProperties = {};
     this.state = PlaceUploadState.STAGED;
     this.resolvedHierarchy = [];
+    this.userRolesProperty = {};
   }
 
   /*
@@ -91,6 +97,11 @@ export default class Place {
         this.hierarchyProperties[propertyName] = formData[`${hierarchyPrefix}${propertyName}`];
       }
     }
+
+    if (this.type.user_roles_property) {
+      const propertyName = this.type.user_roles_property.property_name;
+      this.userRolesProperty[propertyName] = formData[`${USER_ROLES_PREFIX}${propertyName}`];
+    }
   }
 
   /**
@@ -113,6 +124,7 @@ export default class Place {
       ...addPrefixToPropertySet(this.hierarchyProperties, hierarchyPrefix),
       ...addPrefixToPropertySet(this.properties, PLACE_PREFIX),
       ...addPrefixToPropertySet(this.contact.properties, CONTACT_PREFIX),
+      ...addPrefixToPropertySet(this.userRolesProperty, USER_ROLES_PREFIX),
     };
   }
 
@@ -218,6 +230,15 @@ export default class Place {
     }
 
     return username;
+  }
+
+  public extractUserRoles(): string[] {
+    const ROLES_SEPARATOR = '+';
+  
+    const userRolesProperty = this.type.user_roles_property;
+    const roles = userRolesProperty ? this.userRolesProperty[userRolesProperty.property_name] : undefined;
+  
+    return roles ? roles.split(ROLES_SEPARATOR).map((role: string) => role.trim()).filter(Boolean) : [];
   }
 
   public get hasValidationErrors() : boolean {

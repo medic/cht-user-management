@@ -29,6 +29,13 @@ hx-target="this" hx-swap="outerHTML">
       %}
     {% endfor %}
   </section>
+  <section class="section is-small">
+    {% if contactType.user_roles_property != null %}
+      {%
+        include "components/contact_type_property.html" prefix="user_roles_" prop=contactType.user_roles_property
+      %}
+    {% endif %}
+  </section>
 
   <div class=" field is-grouped is-grouped-right">
     <div class="control">
