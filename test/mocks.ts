@@ -127,3 +127,12 @@ export function expectInvalidProperties(
     expect(Object.values(validationErrors as any)?.[0]).to.include(expectedError);
   }
 }
+
+export const mockValidMultipleRolesContactType = (propertyType, propertyValidator: string | string[] | undefined): ContactType => {
+  const baseMock = mockValidContactType(propertyType, propertyValidator);
+
+  return {
+    ...baseMock,
+    user_roles_property: mockProperty('string', undefined, 'roles'),
+  };
+};

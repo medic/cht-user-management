@@ -3,7 +3,7 @@ import { expect } from 'chai';
 import sinon from 'sinon';
 
 import { UploadManager } from '../../src/services/upload-manager';
-import { mockValidContactType, mockParentPlace, mockChtSession, expectInvalidProperties } from '../mocks';
+import { mockValidContactType, mockParentPlace, mockChtSession, expectInvalidProperties, mockValidMultipleRolesContactType } from '../mocks';
 import PlaceFactory from '../../src/services/place-factory';
 import SessionCache from '../../src/services/session-cache';
 import { ChtApi, RemotePlace } from '../../src/lib/cht-api';
@@ -245,6 +245,38 @@ describe('upload-manager.ts', () => {
     expect(chtApi.createUser.callCount).to.be.gt(2); // retried
     expect(chu.uploadError).to.include('could not create user');  
   });
+
+  it('mock data is properly sent to chtApi (multiple roles)', async () => {
+    const { fakeFormData, contactType, chtApi, sessionCache, remotePlace } = await createMocks({ supportMultipleRoles: true });
+    const place = await PlaceFactory.createOne(fakeFormData, contactType, sessionCache, chtApi);
+
+    const uploadManager = new UploadManager();
+    await uploadManager.doUpload([place], chtApi);
+
+    expect(chtApi.createPlace.calledOnce).to.be.true;
+    const placePayload = chtApi.createPlace.args[0][0];
+    expect(placePayload).to.nested.include({
+      'contact.contact_type': contactType.contact_type,
+      'contact.name': 'contact',
+      prop: 'foo',
+      name: 'Place Community Health Unit',
+      parent: remotePlace.id,
+      contact_type: contactType.name,
+    });
+    expect(chtApi.updateContactParent.calledOnce).to.be.true;
+    expect(chtApi.updateContactParent.args[0]).to.deep.eq(['created-place-id']);
+
+    expect(chtApi.createUser.calledOnce).to.be.true;
+    const userPayload = chtApi.createUser.args[0][0];
+    expect(userPayload).to.deep.include({
+      contact: 'created-contact-id',
+      place: 'created-place-id',
+      type: '',
+      roles: ['role1', 'role2'],
+      username: 'contact',
+    });
+    expect(place.isCreated).to.be.true;
+  });
 });
 
 async function createChu(remotePlace: RemotePlace, chu_name: string, sessionCache: any, chtApi: ChtApi) {
@@ -263,8 +295,12 @@ async function createChu(remotePlace: RemotePlace, chu_name: string, sessionCach
   return chu;
 }
 
-async function createMocks() {
-  const contactType = mockValidContactType('string', undefined);
+async function createMocks(options: {
+  supportMultipleRoles?: boolean;
+} = {}) {
+  const contactType = options.supportMultipleRoles 
+    ? mockValidMultipleRolesContactType('string', undefined) 
+    : mockValidContactType('string', undefined);
   const remotePlace: RemotePlace = {
     id: 'parent-id',
     name: 'parent-name',
@@ -290,6 +326,7 @@ async function createMocks() {
     place_prop: 'foo',
     hierarchy_PARENT: remotePlace.name,
     contact_name: 'contact',
+    ...(options.supportMultipleRoles ? { user_roles_roles: 'role1+role2' } : {}),
   };
 
   return { fakeFormData, contactType, sessionCache, chtApi, remotePlace };
