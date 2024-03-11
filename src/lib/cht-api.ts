@@ -158,7 +158,7 @@ export class ChtApi {
     if (!resp.data.ok) {
       throw Error('response from chtApi.deleteDoc was not OK');
     }
-  }
+  };
 
   disableUsersWithPlace = async (placeId: string): Promise<string[]> => {
     const url = `${this.protocolAndHost}/_users/_find`;
