@@ -20,7 +20,7 @@ const scenarios: Scenario[] = [
   { type: 'string', prop: ' ab\nc', isValid: true, altered: 'abc' },
   { type: 'string', prop: 'Mr.  Sand(m-a-n)', isValid: true, altered: 'Mr. Sand(m-a-n)' },
   { type: 'string', prop: 'Université ', isValid: true, altered: 'Université' },
-  { type: 'string', prop: 'Infirmière d\'Etat', isValid: true, altered: 'Infirmière d\'Etat' },
+  { type: 'string', prop: `Infirmière d'Etat`, isValid: true, altered: `Infirmière d'Etat` },
   { type: 'string', prop: '', isValid: false, altered: '', error: 'Required' },
   
   { type: 'phone', prop: '+254712345678', isValid: true, altered: '0712 345678', propertyParameter: 'KE' },
