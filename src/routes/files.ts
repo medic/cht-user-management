@@ -43,8 +43,10 @@ export default async function files(fastify: FastifyInstance) {
     });
     const zip = new JSZip();
     results.forEach((places, contactType) => {
+      const constraints = Config.getHierarchyWithReplacement(contactType);
+      const props = hierarchyProps.get(contactType)!.map(prop => constraints.find(c => c.property_name === prop)!.friendly_name);
       const columns = [
-        ...hierarchyProps.get(contactType)!!,
+        ...props,
         contactType.friendly,
         'name',
         'phone',
