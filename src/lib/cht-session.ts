@@ -50,7 +50,12 @@ export default class ChtSession {
   }
 
   isPlaceAuthorized(remotePlace: RemotePlace): boolean {
-    return this.facilityId === ADMIN_FACILITY_ID || remotePlace?.lineage?.includes(this.facilityId);
+    return !!this.facilityId &&
+      (
+        this.facilityId === ADMIN_FACILITY_ID 
+        || remotePlace?.lineage?.includes(this.facilityId)
+        || remotePlace?.id === this.facilityId
+      );
   }
 }
 
