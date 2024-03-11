@@ -108,13 +108,12 @@ export class UploadManager extends EventEmitter {
 }
 
 function pickUploader(place: Place, chtApi: ChtApi): Uploader {
-  if (place.hierarchyProperties.replacement) {
-    const useDeactivation = place.type.deactivate_users_on_replace;
-    return useDeactivation ? 
+  if (!place.hierarchyProperties.replacement) {
+    return new UploadNewPlace(chtApi);
+  }
+  
+  return place.type.deactivate_users_on_replace ? 
       new UploadReplacementWithDeactivation(chtApi) :
       new UploadReplacementWithDeletion(chtApi);
-  } 
-
-  return new UploadNewPlace(chtApi);
 }
 
