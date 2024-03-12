@@ -98,7 +98,7 @@ describe('lib/validation', () => {
     expect(Validation.getValidationErrors(place)).to.be.empty;
   });
 
-  it('#91 - parent is invalid when required:false has no result', () => {
+  it('#91 - parent is invalid when required:false but resolution is NoResult', () => {
     const contactType = mockSimpleContactType('string', undefined);
     contactType.hierarchy[0].required = false;
 

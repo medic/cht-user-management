@@ -35,7 +35,7 @@ export default class RemotePlaceResolver {
   ) : Promise<void> => {
     const topDownHierarchy = Config.getHierarchyWithReplacement(place.type, 'desc');
     for (const hierarchyLevel of topDownHierarchy) {
-      // #91 - when editing, forget previous conclusions
+      // #91 - for editing: forget previous resolution
       delete place.resolvedHierarchy[hierarchyLevel.level];
 
       if (!place.hierarchyProperties[hierarchyLevel.property_name]) {
