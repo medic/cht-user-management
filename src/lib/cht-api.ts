@@ -162,22 +162,7 @@ export class ChtApi {
   };
 
   disableUsersWithPlace = async (placeId: string): Promise<string[]> => {
-    // #76 mm-online users cant query _users db after core4.4
-    const url = `${this.protocolAndHost}/medic/_find`;
-    const payload = {
-      selector: {
-        type: 'user-settings',
-        facility_id: placeId,
-        $or: [
-          { inactive: false },
-          { inactive: { $exists: false } }
-        ]
-      },
-    };
-
-    console.log('axios.post', url);
-    const resp = await axios.post(url, payload, this.authorizationOptions());
-    const usersToDisable: string[] = resp.data?.docs?.map((d: any) => d._id);
+    const usersToDisable: string[] = await this.getUsersAtPlace(placeId);
     for (const userDocId of usersToDisable) {
       await this.disableUser(userDocId);
     }
@@ -189,6 +174,22 @@ export class ChtApi {
     const url = `${this.protocolAndHost}/api/v1/users/${username}`;
     console.log('axios.delete', url);
     return axios.delete(url, this.authorizationOptions());
+  };
+
+  deactivateUsersWithPlace = async (placeId: string): Promise<string[]> => {
+    const usersToDeactivate: string[] = await this.getUsersAtPlace(placeId);
+    for (const userDocId of usersToDeactivate) {
+      await this.deactivateUser(userDocId);
+    }
+    return usersToDeactivate;
+  };
+
+  deactivateUser = async (docId: string): Promise<void> => {
+    const username = docId.substring('org.couchdb.user:'.length);
+    const url = `${this.protocolAndHost}/api/v1/users/${username}`;
+    console.log('axios.post', url);
+    const deactivationPayload = { roles: ['deactivated' ]};
+    return axios.post(url, deactivationPayload, this.authorizationOptions());
   };
 
   createUser = async (user: UserPayload): Promise<void> => {
@@ -253,6 +254,25 @@ export class ChtApi {
     const resp = await axios.get(url, this.authorizationOptions());
     return resp.data;
   };
+
+  private async getUsersAtPlace(placeId: string): Promise<string[]> {
+    // #76 mm-online users cant query _users db after core4.4
+    const url = `${this.protocolAndHost}/medic/_find`;
+    const payload = {
+      selector: {
+        type: 'user-settings',
+        facility_id: placeId,
+        $or: [
+          { inactive: false },
+          { inactive: { $exists: false } }
+        ]
+      },
+    };
+
+    console.log('axios.post', url);
+    const resp = await axios.post(url, payload, this.authorizationOptions());
+    return resp.data?.docs?.map((d: any) => d._id);
+  }
 
   private authorizationOptions(): any {
     return {
