@@ -15,7 +15,7 @@ export default async function authentication(fastify: FastifyInstance) {
   fastify.get('/login', unauthenticatedOptions, async (req, resp) => {
     const tmplData = {
       logo: Config.getLogoBase64(),
-      domains: Config.getDomains,
+      domains: Config.getDomains(),
     };
 
     return resp.view('src/liquid/auth/view.html', tmplData);
@@ -36,7 +36,7 @@ export default async function authentication(fastify: FastifyInstance) {
       chtSession = await ChtSession.create(authInfo, username, password);
     } catch (e: any) {
       return resp.view('src/liquid/auth/authentication_form.html', {
-        domains: Config.getDomains,
+        domains: Config.getDomains(),
         errors: true,
       });
     }
