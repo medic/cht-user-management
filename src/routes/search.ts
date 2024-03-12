@@ -35,7 +35,7 @@ export default async function place(fastify: FastifyInstance) {
     }
     const searchResults: RemotePlace[] = await SearchLib.search(contactType, data, dataPrefix, hierarchyLevel, chtApi, sessionCache);
 
-    return resp.view('src/public/components/search_results.html', {
+    return resp.view('src/liquid/components/search_results.html', {
       op,
       place,
       prefix: dataPrefix,
@@ -89,6 +89,6 @@ export default async function place(fastify: FastifyInstance) {
       tmplData.backend = `/move`;
     }
 
-    return resp.view('src/public/app/form_switch.html', tmplData);
+    return resp.view('src/liquid/app/form_switch.html', tmplData);
   });
 }

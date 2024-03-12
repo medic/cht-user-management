@@ -18,7 +18,7 @@ export default async function authentication(fastify: FastifyInstance) {
       domains: Config.getDomains,
     };
 
-    return resp.view('src/public/auth/view.html', tmplData);
+    return resp.view('src/liquid/auth/view.html', tmplData);
   });
 
   fastify.get('/logout', unauthenticatedOptions, async (req, resp) => {
@@ -35,7 +35,7 @@ export default async function authentication(fastify: FastifyInstance) {
     try {
       session = await ChtApi.createSession(authInfo, username, password);
     } catch (e: any) {
-      return resp.view('src/public/auth/authentication_form.html', {
+      return resp.view('src/liquid/auth/authentication_form.html', {
         domains: Config.getDomains,
         errors: true,
       });

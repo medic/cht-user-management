@@ -133,11 +133,12 @@ export class ChtApi {
     const payloadClone:any = _.cloneDeep(payload);
     delete payloadClone.contact;
     delete payloadClone.parent;
-    doc.previousPrimaryContacts = [
-      ...(doc.previousPrimaryContacts || []), 
-      doc.contact._id,
-    ];
+
+    const previousPrimaryContact = doc.contact._id;
     Object.assign(doc, payloadClone, { contact: { _id: contactId }});
+    doc.user_attribution ||= {};
+    doc.user_attribution.previousPrimaryContacts ||= [];
+    doc.user_attribution.previousPrimaryContacts.push(previousPrimaryContact);
 
     const putUrl = `${this.protocolAndHost}/medic/${payload._id}`;
     console.log('axios.put', putUrl);

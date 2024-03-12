@@ -319,7 +319,9 @@ async function createMocks() {
     createContact: sinon.stub().resolves('replacement-contact-id'),
     updatePlace: sinon.stub().resolves({
       _id: 'updated-place-id',
-      previousPrimaryContacts: ['prev_contact_id'],
+      user_attribution: {
+        previousPrimaryContacts: ['prev_contact_id'],
+      },
     }),
     deleteDoc: sinon.stub().resolves(),
     disableUsersWithPlace: sinon.stub().resolves(['org.couchdb.user:disabled']),
