@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 
 import Place from '../../src/services/place';
-import { mockSimpleContactType, mockValidContactType } from '../mocks';
+import { mockSimpleContactType, mockValidContactType, mockSimpleMultipleRolesContactType } from '../mocks';
 import RemotePlaceResolver from '../../src/lib/remote-place-resolver';
 
 describe('service place.ts', () => {
@@ -134,5 +134,35 @@ describe('service place.ts', () => {
 
     expect(actual.contact.type).to.eq(contactType.contact_type);
     expect(actual.contact.contact_type).to.be.undefined;
+  });
+
+  it('setPropertiesFromFormData (support multiple roles)', () => {
+    const contactType = mockSimpleMultipleRolesContactType('string', undefined);
+    contactType.contact_properties = contactType.place_properties;
+    const place = new Place(contactType);
+    place.properties.existing = 'existing';
+
+    const formData = {
+      place_prop: 'abc',
+      contact_prop: 'efg',
+      garbage: 'ghj',
+      user_role: 'role1+role2',
+    };
+    place.setPropertiesFromFormData(formData);
+
+    expect(place.properties).to.deep.eq({
+      existing: 'existing',
+      prop: 'abc',
+    });
+    expect(place.contact.properties).to.deep.eq({
+      prop: 'efg',
+    });
+    expect(place.userRoleProperty).to.deep.eq({
+      role: 'role1+role2',
+    });
+    expect(place.extractUserRoles()).to.deep.eq([
+      'role1',
+      'role2',
+    ]);
   });
 });

@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 
 import { Validation } from '../../src/lib/validation';
-import { mockSimpleContactType, mockPlace } from '../mocks';
+import { mockSimpleContactType, mockPlace, mockSimpleMultipleRolesContactType } from '../mocks';
 
 type Scenario = {
   type: string;
@@ -130,6 +130,24 @@ describe('lib/validation', () => {
     expect(validationErrors).to.deep.eq([{
       property_name: 'hierarchy_replacement',
       description: `Cannot find 'contacttype-name' matching 'Sin Bad' under 'Parent'`,
+    }]);
+  });
+
+  it('user role is invalid when not allowed', () => {
+    const contactType = mockSimpleMultipleRolesContactType('string', undefined, undefined, ['supervisor', 'stock_manager']);
+    const place = mockPlace(contactType, 'prop');
+
+    const formData = {
+      place_prop: 'abc',
+      contact_prop: 'efg',
+      garbage: 'ghj',
+      user_role: 'supervisor+stock manager',
+    };
+    place.setPropertiesFromFormData(formData);
+
+    expect(Validation.getValidationErrors(place)).to.deep.eq([{
+      property_name: 'user_role',
+      description: `Role 'stock manager' is not allowed`, 
     }]);
   });
 });

@@ -80,11 +80,11 @@
             </tr>
             {% endfor %}
 
-            {% if contactType.user_roles_property != null %}
+            {% if contactType.user_role.parameter != null %}
             <tr>
-              <td>{{ contactType.user_roles_property.friendly_name }}</td>
-              <td>{{ contactType.user_roles_property.required }}</td>
-              <td>{{ contactType.user_roles_property.description | default: 'Role(s) of the user, use when there are multiple roles available at this level of your hierarchy. <br> <i>eg: rcom or supervisor+stock_manager </i> <br> (separate multiple roles with <b>+</b> or leave blank to use the default role of this level.)' | newline_to_br }}
+              <td>{{ contactType.user_role.friendly_name }}</td>
+              <td>{{ contactType.user_role.required }}</td>
+              <td>Role(s) of the user, use when there are multiple roles available at this level of your hierarchy. <br> <i>eg: rcom or supervisor+stock_manager </i> <br> (separate multiple roles with <b>+</b> or leave blank to use the default role of this level.)
               </td>
             </tr>
             {% endif %}

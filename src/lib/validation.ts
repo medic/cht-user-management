@@ -42,7 +42,8 @@ export class Validation {
     const result = [
       ...Validation.validateHierarchy(place),
       ...Validation.validateProperties(place.properties, place.type.place_properties, requiredColumns, 'place_'),
-      ...Validation.validateProperties(place.contact.properties, place.type.contact_properties, requiredColumns, 'contact_')
+      ...Validation.validateProperties(place.contact.properties, place.type.contact_properties, requiredColumns, 'contact_'),
+      ...Validation.validateUserRole(place, 'user_')
     ];
 
     return result;
@@ -119,6 +120,30 @@ export class Validation {
             description: isValid === false ? 'Value is invalid' : isValid as string,
           });
         }
+      }
+    }
+
+    return invalid;
+  }
+
+  private static validateUserRole(
+    place: Place,
+    prefix: string
+  ) : ValidationError[] {
+    const invalid: ValidationError[] = [];
+
+    const userRoleConfig = Config.getUserRoleConfig(place.type);
+    if (!userRoleConfig || !Array.isArray(userRoleConfig.parameter)) {
+      return invalid;
+    }
+
+    const extractedRoles = place.extractUserRoles();
+    for (const role of extractedRoles) {
+      if (!userRoleConfig.parameter.includes(role)) {
+        invalid.push({
+          property_name: `${prefix}${userRoleConfig.property_name}`,
+          description: `Role '${role}' is not allowed`,
+        });
       }
     }
 

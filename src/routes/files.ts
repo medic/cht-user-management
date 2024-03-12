@@ -11,10 +11,12 @@ export default async function files(fastify: FastifyInstance) {
     const placeType = params.placeType;
     const placeTypeConfig = Config.getContactType(placeType);
     const hierarchy = Config.getHierarchyWithReplacement(placeTypeConfig);
+    const userRoleConfig = Config.getUserRoleConfig(placeTypeConfig);
     const columns = _.uniq([
       ...hierarchy.map(p => p.friendly_name),
       ...placeTypeConfig.place_properties.map(p => p.friendly_name),
       ...placeTypeConfig.contact_properties.map(p => p.friendly_name),
+      ...(userRoleConfig ? [userRoleConfig.friendly_name] : []),
     ]);
 
     return stringify([columns]);

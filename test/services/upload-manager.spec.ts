@@ -42,7 +42,7 @@ describe('upload-manager.ts', () => {
     expect(userPayload).to.deep.include({
       contact: 'created-contact-id',
       place: 'created-place-id',
-      type: 'role',
+      roles: ['role'],
       username: 'contact',
     });
     expect(place.isCreated).to.be.true;
@@ -183,8 +183,8 @@ describe('upload-manager.ts', () => {
     expect(chp.isCreated).to.be.true;
 
     // chu is created first
-    expect(chtApi.createUser.args[0][0].type).to.eq('community_health_assistant');
-    expect(chtApi.createUser.args[1][0].type).to.eq('community_health_volunteer');
+    expect(chtApi.createUser.args[0][0].roles).to.deep.eq(['community_health_assistant']);
+    expect(chtApi.createUser.args[1][0].roles).to.deep.eq(['community_health_volunteer']);
 
     const cachedChus = await RemotePlaceCache.getPlacesWithType(chtApi, chu.type.name);
     expect(cachedChus).to.have.property('length', 1);
@@ -271,7 +271,6 @@ describe('upload-manager.ts', () => {
     expect(userPayload).to.deep.include({
       contact: 'created-contact-id',
       place: 'created-place-id',
-      type: '',
       roles: ['role1', 'role2'],
       username: 'contact',
     });
@@ -326,7 +325,7 @@ async function createMocks(options: {
     place_prop: 'foo',
     hierarchy_PARENT: remotePlace.name,
     contact_name: 'contact',
-    ...(options.supportMultipleRoles ? { user_roles_roles: 'role1+role2' } : {}),
+    ...(options.supportMultipleRoles ? { user_role: 'role1+role2' } : {}),
   };
 
   return { fakeFormData, contactType, sessionCache, chtApi, remotePlace };

@@ -71,10 +71,10 @@ export default class PlaceFactory {
           place.hierarchyProperties[hierarchyConstraint.property_name] = row[columnIndex];
         }
 
-        if (contactType.user_roles_property) {
-          const userRolesProperty = contactType.user_roles_property;
-          place.userRolesProperty[userRolesProperty.property_name] = row[
-            csvColumns.indexOf(userRolesProperty.friendly_name)
+        if (typeof contactType.user_role !== 'string') {
+          const userRoleProperty = contactType.user_role;
+          place.userRoleProperty[userRoleProperty.property_name] = row[
+            csvColumns.indexOf(userRoleProperty.friendly_name)
           ];
         }
         

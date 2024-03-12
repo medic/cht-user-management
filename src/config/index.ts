@@ -17,13 +17,12 @@ export type ContactType = {
   name: string;
   friendly: string;
   contact_type: string;
-  user_role: string;
+  user_role: string | ContactProperty;
   username_from_place: boolean;
   hierarchy: HierarchyConstraint[];
   replacement_property: ContactProperty;
   place_properties: ContactProperty[];
   contact_properties: ContactProperty[];
-  user_roles_property?: ContactProperty;
 };
 
 export type HierarchyConstraint = {
@@ -100,6 +99,13 @@ export class Config {
       ...contactType.hierarchy,
       replacementAsHierarchy,
     ], 'level', sortBy);
+  }
+
+  public static getUserRoleConfig(contactType: ContactType): ContactProperty | undefined {
+    if (typeof contactType.user_role === 'string') {
+      return;
+    }
+    return contactType.user_role;
   }
 
   public static async mutate(payload: PlacePayload, chtApi: ChtApi, isReplacement: boolean): Promise<PlacePayload | undefined> {
