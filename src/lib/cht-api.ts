@@ -133,10 +133,11 @@ export class ChtApi {
     const payloadClone:any = _.cloneDeep(payload);
     delete payloadClone.contact;
     delete payloadClone.parent;
-    doc.previousPrimaryContacts = [
-      ...(doc.previousPrimaryContacts || []), 
-      doc.contact._id,
-    ];
+
+    if (!doc.user_attribution) {
+      doc.user_attribution = {};
+    }
+    (doc.user_attribution.previousPrimaryContacts ||= []).push(doc.contact._id);
     Object.assign(doc, payloadClone, { contact: { _id: contactId }});
 
     const putUrl = `${this.protocolAndHost}/medic/${payload._id}`;
