@@ -25,13 +25,13 @@ export default class ChtSession {
   }
 
   public static async create(authInfo: AuthenticationInfo, username : string, password: string): Promise<ChtSession> {
-    const sessionToken = await createSessionToken(authInfo, username, password);
+    const sessionToken = await ChtSession.createSessionToken(authInfo, username, password);
 
     if (!sessionToken) {
       throw new Error(`failed to obtain token for ${username} at ${authInfo.domain}`);
     }
     
-    const userDetails = await fetchUserDetails(authInfo, username, sessionToken);
+    const userDetails = await ChtSession.fetchUserDetails(authInfo, username, sessionToken);
     const facilityId = userDetails.isAdmin ? ADMIN_FACILITY_ID : userDetails.facilityId;
     if (!facilityId) {
       throw Error(`User ${username} does not have a facility_id connected to their user doc`);
@@ -57,46 +57,46 @@ export default class ChtSession {
         || remotePlace?.id === this.facilityId
       );
   }
-}
 
-async function createSessionToken(authInfo: AuthenticationInfo, username: string, password: string): Promise<string> {
-  const sessionUrl = createUrl(authInfo, '_session');
-  const resp = await axios.post(
-    sessionUrl,
-    {
-      name: username,
-      password,
-    },
-    {
-      auth: {
-        username,
-        password
+  private static async createSessionToken(authInfo: AuthenticationInfo, username: string, password: string): Promise<string> {
+    const sessionUrl = ChtSession.createUrl(authInfo, '_session');
+    const resp = await axios.post(
+      sessionUrl,
+      {
+        name: username,
+        password,
+      },
+      {
+        auth: {
+          username,
+          password
+        }
       }
-    }
-  );
-  const setCookieHeader = (resp.headers as AxiosHeaders).get('set-cookie') as AxiosHeaders;
-  return setCookieHeader?.[0]?.split(';')
-    .find((header: string) => header.startsWith(COUCH_AUTH_COOKIE_NAME));
-}
-
-async function fetchUserDetails(authInfo: AuthenticationInfo, username: string, sessionToken: string) {
-  // would prefer to use the _users/org.couchdb.user:username doc
-  // only admins have access + GET api/v2/users returns all users and cant return just one
-  const sessionUrl = createUrl(authInfo, `medic/org.couchdb.user:${username}`);
-  const resp = await axios.get(
-    sessionUrl,
-    {
-      headers: { Cookie: sessionToken },
-    },
-  );
-
-  return {
-    isAdmin: !!resp.data?.roles?.includes('admin'),
-    facilityId: resp.data?.facility_id,
-  };
-}
-
-function createUrl(authInfo: AuthenticationInfo, path: string) {
-  const protocol = authInfo.useHttp ? 'http' : 'https';
-  return `${protocol}://${authInfo.domain}/${path}`;
+    );
+    const setCookieHeader = (resp.headers as AxiosHeaders).get('set-cookie') as AxiosHeaders;
+    return setCookieHeader?.[0]?.split(';')
+      .find((header: string) => header.startsWith(COUCH_AUTH_COOKIE_NAME));
+  }
+  
+  private static async fetchUserDetails(authInfo: AuthenticationInfo, username: string, sessionToken: string) {
+    // would prefer to use the _users/org.couchdb.user:username doc
+    // only admins have access + GET api/v2/users returns all users and cant return just one
+    const sessionUrl = ChtSession.createUrl(authInfo, `medic/org.couchdb.user:${username}`);
+    const resp = await axios.get(
+      sessionUrl,
+      {
+        headers: { Cookie: sessionToken },
+      },
+    );
+  
+    return {
+      isAdmin: !!resp.data?.roles?.includes('admin'),
+      facilityId: resp.data?.facility_id,
+    };
+  }
+  
+  private static async createUrl(authInfo: AuthenticationInfo, path: string) {
+    const protocol = authInfo.useHttp ? 'http' : 'https';
+    return `${protocol}://${authInfo.domain}/${path}`;
+  }
 }
