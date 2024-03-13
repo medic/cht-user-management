@@ -3,7 +3,7 @@ import Sinon from 'sinon';
 
 import { ChtApi, RemotePlace } from '../src/lib/cht-api';
 import ChtSession from '../src/lib/cht-session';
-import { ContactProperty, ContactType } from '../src/lib/config';
+import { ContactProperty, ContactType } from '../src/config';
 import Place from '../src/services/place';
 
 export const mockPlace = (type: ContactType, prop: any) : Place => {
@@ -32,7 +32,7 @@ export const mockChtApi: ChtApi = (first: RemotePlace[] = [], second: RemotePlac
 });
 
 export const mockSimpleContactType = (
-  propertyType,
+  propertyType: string,
   propertyValidator: string | string[] | undefined,
   errorDescription?: string
 ) : ContactType => {
@@ -44,6 +44,7 @@ export const mockSimpleContactType = (
     contact_type: 'contact-type',
     user_role: 'role',
     username_from_place: false,
+    deactivate_users_on_replace: false,
     hierarchy: [
       {
         ...mockProperty('name', undefined, 'PARENT'),
@@ -60,12 +61,13 @@ export const mockSimpleContactType = (
   };
 };
 
-export const mockValidContactType = (propertyType, propertyValidator: string | string[] | undefined) : ContactType => ({
+export const mockValidContactType = (propertyType: string, propertyValidator: string | string[] | undefined) : ContactType => ({
   name: 'contacttype-name',
   friendly: 'friendly',
   contact_type: 'contact-type',
   user_role: 'role',
   username_from_place: false,
+  deactivate_users_on_replace: false,
   hierarchy: [
     {
       ...mockProperty('name', undefined, 'PARENT'),
@@ -95,7 +97,7 @@ export const mockParentPlace = (parentPlaceType: ContactType, parentName: string
   return place;
 };
 
-export const mockProperty = (type, parameter: string | string[] | undefined, property_name: string = 'prop'): ContactProperty => ({
+export const mockProperty = (type: string, parameter: string | string[] | undefined | object, property_name: string = 'prop'): ContactProperty => ({
   friendly_name: 'csv',
   property_name,
   type,
@@ -103,6 +105,7 @@ export const mockProperty = (type, parameter: string | string[] | undefined, pro
   required: true
 });
 
+//  Constructor of class ChtSession is private and only accessible within the class declaration.
 export const mockChtSession = (userFacilityId: string = '*') : ChtSession => new ChtSession(
   {
     friendly: 'domain',

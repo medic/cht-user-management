@@ -4,12 +4,13 @@ import RemotePlaceResolver from './remote-place-resolver';
 import { RemotePlace } from './cht-api';
 
 import ValidatorDateOfBirth from './validator-dob';
-import ValidatorGender from './validator-gender';
 import ValidatorName from './validator-name';
 import ValidatorPhone from './validator-phone';
 import ValidatorRegex from './validator-regex';
 import ValidatorSkip from './validator-skip';
 import ValidatorString from './validator-string';
+import ValidatorSelectMultiple from './validator-select_multiple';
+import ValidatorSelectOne from './validator-select_one';
 
 export type ValidationError = {
   property_name: string;
@@ -32,7 +33,8 @@ const TypeValidatorMap: ValidatorMap = {
   regex: new ValidatorRegex(),
   phone: new ValidatorPhone(),
   none: new ValidatorSkip(),
-  gender: new ValidatorGender(),
+  select_one: new ValidatorSelectOne(),
+  select_multiple: new ValidatorSelectMultiple(),
   dob: new ValidatorDateOfBirth(),
 };
 

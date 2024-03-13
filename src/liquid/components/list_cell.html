@@ -11,6 +11,13 @@
       <a href="https://{{ session.authInfo.domain }}/#/contacts/{{ include.linkTo.id }}" target="_blank">
         {{ include.values[include.property.property_name] }}
       </a>
+    {% elsif include.property.type == 'select_one' %}
+      <span class="tag is-light">{{ include.property.parameter[include.values[include.property.property_name]] }}</span>
+    {% elsif include.property.type == 'select_multiple' %}
+      {% assign values = include.values[include.property.property_name] | split: " " %}
+      {% for value in values %}
+        <span class="tag is-light">{{include.property.parameter[value]}}</span>
+      {% endfor %}
     {% else %}
       {{ include.values[include.property.property_name] }}
     {% endif %}

@@ -7,7 +7,7 @@ type Scenario = {
   type: string;
   prop: string;
   isValid: boolean;
-  propertyParameter?: string | string[];
+  propertyParameter?: string | string[] | object;
   altered?: string;
   propertyErrorDescription?: string;
   error?: string;
@@ -53,12 +53,16 @@ const scenarios: Scenario[] = [
   { type: 'dob', prop: '2016-05-25', isValid: true, altered: '2016-05-25' },
   { type: 'dob', prop: ' 20 16- 05- 25 ', isValid: true, altered: '2016-05-25' },
 
-  { type: 'gender', prop: 'Man', isValid: true, altered: 'male' },
-  { type: 'gender', prop: 'male', isValid: true, altered: 'male' },
-  { type: 'gender', prop: 'F', isValid: true, altered: 'female' },
-  { type: 'gender', prop: 'Female', isValid: true, altered: 'female' },
-  { type: 'gender', prop: 'Woman', isValid: true, altered: 'female' },
-  { type: 'gender', prop: 'X', isValid: false, error: 'male' },
+  { type: 'select_one', prop: ' male', isValid: true, propertyParameter: { male: 'Male', female: 'Female' } },
+  { type: 'select_one', prop: 'female ', isValid: true, propertyParameter: { male: 'Male', female: 'Female' } },
+  { type: 'select_one', prop: 'f', isValid: false, propertyParameter: { male: 'Male', female: 'Female' } },
+  { type: 'select_one', prop: '', isValid: false, propertyParameter: { male: 'Male', female: 'Female' } },
+
+  { type: 'select_multiple', prop: 'male', isValid: true, propertyParameter: { male: 'Male', female: 'Female' } },
+  { type: 'select_multiple', prop: 'male female', isValid: true, propertyParameter: { male: 'Male', female: 'Female' } },
+  { type: 'select_multiple', prop: ' male  female', isValid: true, propertyParameter: { male: 'Male', female: 'Female' } },
+  { type: 'select_multiple', prop: 'f,m', isValid: false, propertyParameter: { male: 'Male', female: 'Female' }, error: 'Invalid values' },
+  { type: 'select_multiple', prop: '', isValid: false, propertyParameter: { male: 'Male', female: 'Female' }, error: 'required' },
 ];
 
 describe('lib/validation.ts', () => {

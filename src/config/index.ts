@@ -31,7 +31,7 @@ export type HierarchyConstraint = {
   property_name: string;
   type: string;
   required: boolean;
-  parameter? : string | string[];
+  parameter? : string | string[] | object;
   errorDescription? : string;
   
   contact_type: string;
@@ -43,7 +43,7 @@ export type ContactProperty = {
   property_name: string;
   type: string;
   required: boolean;
-  parameter? : string | string[];
+  parameter? : string | string[] | object;
   errorDescription? : string;
 };
 

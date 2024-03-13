@@ -13,7 +13,7 @@ export default class ValidatorRegex implements IValidator {
       throw Error(`property of type regex - 'parameter' should not be an array`);
     }
 
-    const regex = new RegExp(property.parameter);
+    const regex = new RegExp(property.parameter.toString());
     const validatorStr = new ValidatorString();
     const altered = validatorStr.format(input);
     const match = altered.match(regex);
