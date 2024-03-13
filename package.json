@@ -1,6 +1,6 @@
 {
   "name": "cht-user-management",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "main": "dist/index.js",
   "dependencies": {
     "@fastify/autoload": "^5.8.0",
@@ -34,6 +34,7 @@
     "@fastify/static": "^7.0.1",
     "@medic/eslint-config": "^1.1.0",
     "@types/chai": "^4.3.11",
+    "@types/chai-as-promised": "^7.1.8",
     "@types/mocha": "^10.0.6",
     "@types/rewire": "^2.5.30",
     "@types/sinon": "^17.0.2",
