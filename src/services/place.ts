@@ -14,15 +14,14 @@ export type UserCreationDetails = {
   password?: string;
   placeId?: string;
   contactId?: string;
-  disabledUsers?: string[];
 };
 
 export enum PlaceUploadState {
   SUCCESS = 'success',
   FAILURE = 'failure',
-  PENDING = 'pending',
+  STAGED = 'staged',
   SCHEDULED = 'scheduled',
-  IN_PROGESS = 'in_progress',
+  IN_PROGRESS = 'in_progress',
 }
 
 const PLACE_PREFIX = 'place_';
@@ -57,7 +56,7 @@ export default class Place {
     this.contact = new Contact(type);
     this.properties = {};
     this.hierarchyProperties = {};
-    this.state = PlaceUploadState.PENDING;
+    this.state = PlaceUploadState.STAGED;
     this.resolvedHierarchy = [];
   }
 
@@ -118,7 +117,7 @@ export default class Place {
 
   public asChtPayload(username: string): PlacePayload {
     const user_attribution = {
-      tool: `cht_usr-${appVersion}`,
+      tool: `cht-user-management-${appVersion}`,
       username,
       created_time: Date.now(),
       replacement: this.resolvedHierarchy[0],
@@ -218,6 +217,10 @@ export default class Place {
     }
 
     return username;
+  }
+
+  public get hasValidationErrors() : boolean {
+    return Object.keys(this.validationErrors as any).length > 0;
   }
 
   public get isDependant() : boolean {

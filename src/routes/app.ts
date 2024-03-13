@@ -1,11 +1,12 @@
 import { FastifyInstance } from 'fastify';
+
+import { ChtApi } from '../lib/cht-api';
 import { Config } from '../config';
+import ProgressModel from '../services/progress-model';
+import RemotePlaceCache from '../lib/remote-place-cache';
+import RemotePlaceResolver from '../lib/remote-place-resolver';
 import SessionCache from '../services/session-cache';
 import { UploadManager } from '../services/upload-manager';
-import { PlaceUploadState } from '../services/place';
-import { ChtApi } from '../lib/cht-api';
-import RemotePlaceResolver from '../lib/remote-place-resolver';
-import RemotePlaceCache from '../lib/remote-place-cache';
 
 export default async function sessionCache(fastify: FastifyInstance) {
   fastify.get('/', async (req, resp) => {
@@ -18,8 +19,6 @@ export default async function sessionCache(fastify: FastifyInstance) {
     const contactType = Config.getContactType(placeTypeName);
 
     const sessionCache: SessionCache = req.sessionCache;
-    const failed = sessionCache.getPlaces({ state: PlaceUploadState.FAILURE });
-    const scheduledJobs = sessionCache.getPlaces({ state: PlaceUploadState.SCHEDULED });
     const placeData = contactTypes.map((item) => {
       return {
         ...item,
@@ -30,24 +29,21 @@ export default async function sessionCache(fastify: FastifyInstance) {
 
     const tmplData = {
       view: 'list',
+      session: req.chtSession,
       logo: Config.getLogoBase64(),
+      op,
       contactType,
       contactTypes: placeData,
-      sessionState: sessionCache.state,
-      hasFailedJobs: failed.length > 0,
-      failedJobCount: failed.length,
-      scheduledJobCount: scheduledJobs.length,
-      session: req.chtSession,
-      op,
+      progress: new ProgressModel(sessionCache),
     };
 
-    return resp.view('src/public/app/view.html', tmplData);
+    return resp.view('src/liquid/app/view.html', tmplData);
   });
 
   fastify.post('/app/remove-all', async (req) => {
     const sessionCache: SessionCache = req.sessionCache;
     sessionCache.removeAll();
-    fastify.uploadManager.refresh(req.sessionCache);
+    fastify.uploadManager.triggerRefresh(undefined);
   });
 
   fastify.post('/app/refresh-all', async (req) => {
@@ -60,7 +56,7 @@ export default async function sessionCache(fastify: FastifyInstance) {
     await RemotePlaceResolver.resolve(places, sessionCache, chtApi, { fuzz: true });
     places.forEach(p => p.validate());
 
-    fastify.uploadManager.refresh(req.sessionCache);
+    fastify.uploadManager.triggerRefresh(undefined);
   });
 
   // initiates place creation via the job manager
@@ -68,9 +64,7 @@ export default async function sessionCache(fastify: FastifyInstance) {
     const uploadManager: UploadManager = fastify.uploadManager;
     const sessionCache: SessionCache = req.sessionCache;
 
-    uploadManager.eventedSessionStateChange(sessionCache, 'in_progress');
     const chtApi = new ChtApi(req.chtSession);
     uploadManager.doUpload(sessionCache.getPlaces(), chtApi);
-    uploadManager.eventedSessionStateChange(sessionCache, 'done');
   });
 }

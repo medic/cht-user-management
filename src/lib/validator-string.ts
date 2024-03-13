@@ -6,9 +6,7 @@ export default class ValidatorString implements IValidator {
   }
 
   format(input : string) : string {
-    input = input.replace(/\./g, ' ');
-    input = input.replace(/\//g, ' / ');
-    input = input.replace(/[^a-zA-Z0-9 ()/\-']/g, '');
+    input = input.replace(/[^^a-zA-Z0-9À-ÖØ-öø-ÿ ()@./\-']/gu, '');
     input = input.replace(/\s\s+/g, ' ');
     return input.trim();
   }
