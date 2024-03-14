@@ -40,6 +40,7 @@ describe('lib/cht-session.ts', () => {
       ChtSession.__set__('axios', mockAxios);
 
       const session = await ChtSession.default.create(mockAuthInfo, 'user', 'pwd');
+      expect(mockAxios.post.args[0][0]).to.be.a('string');
       expect(session.sessionToken).to.eq('AuthSession=123');
       expect(session.username).to.eq('user');
     });
