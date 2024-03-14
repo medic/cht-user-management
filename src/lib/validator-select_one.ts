@@ -1,6 +1,5 @@
 import {ContactProperty} from '../config';
 import {IValidator} from './validation';
-import {property} from "lodash";
 
 export default class ValidatorSelectOne implements IValidator {
   isValid(input: string, property: ContactProperty): boolean {
