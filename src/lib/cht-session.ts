@@ -95,7 +95,7 @@ export default class ChtSession {
     };
   }
   
-  private static async createUrl(authInfo: AuthenticationInfo, path: string) {
+  private static createUrl(authInfo: AuthenticationInfo, path: string) {
     const protocol = authInfo.useHttp ? 'http' : 'https';
     return `${protocol}://${authInfo.domain}/${path}`;
   }
