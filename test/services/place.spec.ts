@@ -4,7 +4,7 @@ import Place from '../../src/services/place';
 import { mockSimpleContactType, mockValidContactType, mockSimpleMultipleRolesContactType } from '../mocks';
 import RemotePlaceResolver from '../../src/lib/remote-place-resolver';
 
-describe('service place.ts', () => {
+describe('services/place.ts', () => {
   it('setPropertiesFromFormData', () => {
     const contactType = mockSimpleContactType('string', undefined);
     contactType.contact_properties = contactType.place_properties;
