@@ -124,6 +124,8 @@ async function findRemotePlacesInHierarchy(
   chtApi: ChtApi
 ) : Promise<RemotePlace[]> {
   let searchPool = await RemotePlaceCache.getPlacesWithType(chtApi, hierarchyLevel.contact_type);
+  searchPool = searchPool.filter(remotePlace => chtApi.chtSession.isPlaceAuthorized(remotePlace));
+
   const topDownHierarchy = Config.getHierarchyWithReplacement(place.type, 'desc');
   for (const { level } of topDownHierarchy) {
     if (level <= hierarchyLevel.level) {
