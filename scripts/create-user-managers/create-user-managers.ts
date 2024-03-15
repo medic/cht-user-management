@@ -16,7 +16,7 @@ export default async function createUserManagers(argv: string[]) {
   const authInfo: AuthenticationInfo = {
     friendly: 'not-useful',
     domain: cmdArgs.hostname,
-    useHttp: true,
+    useHttp: false,
   };
 
   const session = await ChtSession.create(authInfo, cmdArgs.adminUsername, cmdArgs.adminPassword);
@@ -44,7 +44,7 @@ export default async function createUserManagers(argv: string[]) {
 
 async function createUserManager(username: string, placeDocId: string, chtApi: typeof ChtApi, adminUsername: string, passwordOverride?: string) {
   const place = new Place(UserManagerContactType);
-  place.contact.properties.name = username;
+  place.contact.properties.name = `${username} (User Manager)`;
 
   const chtPayload = place.asChtPayload(adminUsername);
   chtPayload.contact.role = 'user_manager';
