@@ -360,7 +360,7 @@ describe('services/place-factory.ts', () => {
     const place: Place = await PlaceFactory.createOne(fakeFormData, contactType, sessionCache, chtApi);
     expectInvalidProperties(place.validationErrors, ['hierarchy_replacement'], 'Cannot find');
     expect(place.resolvedHierarchy[1]?.id).to.eq('parent-id');
-    expect(place.resolvedHierarchy[0]).to.be.undefined;
+    expect(place.resolvedHierarchy[0]).to.eq(RemotePlaceResolver.NoResult);
   });
   
   it('place not under users facility is invalid', async () => {
