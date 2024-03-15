@@ -19,7 +19,7 @@
       "name": "health_center",
       "friendly": "VHT Area",
       "contact_type": "person",
-      "user_role": "vht",
+      "user_role": ["vht"],
       "username_from_place": true,
       "deactivate_users_on_replace": true,
       "hierarchy": [

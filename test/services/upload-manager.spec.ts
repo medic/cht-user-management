@@ -368,7 +368,7 @@ async function createMocks(options: {
     place_prop: 'foo',
     hierarchy_PARENT: remotePlace.name,
     contact_name: 'contact',
-    ...(options.supportMultipleRoles ? { user_role: 'role1+role2' } : {}),
+    ...({ user_role: options.supportMultipleRoles ?  'role1 role2' : 'role' }),
   };
 
   return { fakeFormData, contactType, sessionCache, chtApi, remotePlace };

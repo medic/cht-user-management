@@ -76,6 +76,7 @@ export default async function place(fastify: FastifyInstance) {
       place,
       contactType,
       hierarchy: Config.getHierarchyWithReplacement(contactType, 'desc'),
+      userRoleProperty: Config.getUserRoleConfig(contactType),
       ...moveModel,
     };
 

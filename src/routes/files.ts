@@ -16,7 +16,7 @@ export default async function files(fastify: FastifyInstance) {
       ...hierarchy.map(p => p.friendly_name),
       ...placeTypeConfig.place_properties.map(p => p.friendly_name),
       ...placeTypeConfig.contact_properties.map(p => p.friendly_name),
-      ...(userRoleConfig ? [userRoleConfig.friendly_name] : []),
+      ...(Config.supportsMultipleRoles(placeTypeConfig) ? [userRoleConfig.friendly_name] : []),
     ]);
 
     return stringify([columns]);
@@ -35,7 +35,9 @@ export default async function files(fastify: FastifyInstance) {
         place.contact.properties.phone,
         place.creationDetails.username,
         place.creationDetails.password,
+        place.extractUserRoles().join(' '),
       ];
+     
       const result = results.get(place.type) || [];
       result.push(record);
       results.set(place.type, result);
@@ -49,7 +51,8 @@ export default async function files(fastify: FastifyInstance) {
         'name',
         'phone',
         'username',
-        'password'
+        'password',
+        'role',
       ];
       zip.file(
         `${contactType.name}.csv`,

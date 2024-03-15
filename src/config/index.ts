@@ -17,7 +17,7 @@ export type ContactType = {
   name: string;
   friendly: string;
   contact_type: string;
-  user_role: string | ContactProperty;
+  user_role: string[];
   username_from_place: boolean;
   hierarchy: HierarchyConstraint[];
   replacement_property: ContactProperty;
@@ -102,11 +102,19 @@ export class Config {
     ], 'level', sortBy);
   }
 
-  public static getUserRoleConfig(contactType: ContactType): ContactProperty | undefined {
-    if (typeof contactType.user_role === 'string') {
-      return;
-    }
-    return contactType.user_role;
+  public static getUserRoleConfig(contactType: ContactType): ContactProperty {
+    const userRoleConfig : ContactProperty = {
+      friendly_name: 'Role(s)',
+      property_name: 'role',
+      type: 'string',
+      required: true,
+      parameter: contactType.user_role,
+    };
+    return userRoleConfig;
+  }
+
+  public static supportsMultipleRoles(contactType: ContactType): boolean {
+    return contactType.user_role.length > 1;
   }
 
   public static async mutate(payload: PlacePayload, chtApi: ChtApi, isReplacement: boolean): Promise<PlacePayload | undefined> {
@@ -138,11 +146,13 @@ export class Config {
     const requiredContactProps = contactType.contact_properties.filter(p => p.required);
     const requiredPlaceProps = isReplacement ? [] : contactType.place_properties.filter(p => p.required);
     const requiredHierarchy = contactType.hierarchy.filter(h => h.required);
+    const requiredUserRole = Config.supportsMultipleRoles(contactType) ? [Config.getUserRoleConfig(contactType)] : [];
 
     return [
       ...requiredHierarchy,
       ...requiredContactProps,
-      ...requiredPlaceProps
+      ...requiredPlaceProps,
+      ...requiredUserRole
     ];
   }
 

@@ -4,7 +4,7 @@
     {{include.prop.friendly_name}}
   </label>
   <div class="control">
-    <div class="select is-multiple is-medium">
+    <div class="select is-multiple is-nomal">
       <select name="{{ prop_name }}" multiple >
         {% for option in include.prop.parameter %}
           <option value="{{ option }}" {% if data[prop_name] and data[prop_name] contains option %}selected{% endif %}>

@@ -134,21 +134,35 @@ describe('lib/validation.ts', () => {
     }]);
   });
 
+  it('user_role property empty throws', () => {
+    const contactType = mockSimpleMultipleRolesContactType('string', undefined, []);
+    const place = mockPlace(contactType, 'prop');
+    
+    expect(() => Validation.getValidationErrors(place)).to.throw('unvalidatable');
+  });
+
+  it('user_role property contains empty string throws', () => {
+    const contactType = mockSimpleMultipleRolesContactType('string', undefined, ['']);
+    const place = mockPlace(contactType, 'prop');
+    
+    expect(() => Validation.getValidationErrors(place)).to.throw('unvalidatable');
+  });
+
   it('user role is invalid when not allowed', () => {
-    const contactType = mockSimpleMultipleRolesContactType('string', undefined, undefined, ['supervisor', 'stock_manager']);
+    const contactType = mockSimpleMultipleRolesContactType('string', undefined, ['supervisor', 'stock_manager']);
     const place = mockPlace(contactType, 'prop');
 
     const formData = {
       place_prop: 'abc',
       contact_prop: 'efg',
       garbage: 'ghj',
-      user_role: 'supervisor+stock manager',
+      user_role: 'supervisor stockmanager',
     };
     place.setPropertiesFromFormData(formData);
 
     expect(Validation.getValidationErrors(place)).to.deep.eq([{
       property_name: 'user_role',
-      description: `Role 'stock manager' is not allowed`, 
+      description: `Role 'stockmanager' is not allowed`, 
     }]);
   });
 });

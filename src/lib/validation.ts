@@ -1,3 +1,4 @@
+import _ from 'lodash';
 import { Config, ContactProperty } from '../config';
 import Place from '../services/place';
 import RemotePlaceResolver from './remote-place-resolver';
@@ -131,21 +132,30 @@ export class Validation {
     prefix: string
   ) : ValidationError[] {
     const invalid: ValidationError[] = [];
-
-    const userRoleConfig = Config.getUserRoleConfig(place.type);
-    if (!userRoleConfig || !Array.isArray(userRoleConfig.parameter)) {
-      return invalid;
+    // Check if user roles are specified and not empty strings
+    const userAllowedRoles = place.type.user_role;
+    if (!userAllowedRoles.length || userAllowedRoles.some(role => role.trim() === '')) {
+      throw Error(`unvalidatable config: 'user_role' property is empty or contains empty strings`);
     }
 
+    // Check if at least one role is provided
+    const userRoleProperty = Config.getUserRoleConfig(place.type);
     const extractedRoles = place.extractUserRoles();
-    for (const role of extractedRoles) {
-      if (!userRoleConfig.parameter.includes(role)) {
-        invalid.push({
-          property_name: `${prefix}${userRoleConfig.property_name}`,
-          description: `Role '${role}' is not allowed`,
-        });
-      }
+    if (extractedRoles.length === 0) {
+      invalid.push({
+        property_name: `${prefix}${userRoleProperty.property_name}`,
+        description: `Should provide at least one role`,
+      });
     }
+
+    // Check for invalid roles
+    const invalidRoles = _.difference(extractedRoles, userAllowedRoles);
+    invalidRoles.forEach(role => {
+      invalid.push({
+        property_name: `${prefix}${userRoleProperty.property_name}`,
+        description: `Role '${role}' is not allowed`,
+      });
+    });
 
     return invalid;
   }

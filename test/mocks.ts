@@ -42,7 +42,7 @@ export const mockSimpleContactType = (
     name: 'contacttype-name',
     friendly: 'friendly',
     contact_type: 'contact-type',
-    user_role: 'role',
+    user_role: ['role'],
     username_from_place: false,
     hierarchy: [
       {
@@ -64,7 +64,7 @@ export const mockValidContactType = (propertyType, propertyValidator: string | s
   name: 'contacttype-name',
   friendly: 'friendly',
   contact_type: 'contact-type',
-  user_role: 'role',
+  user_role: ['role'],
   username_from_place: false,
   hierarchy: [
     {
@@ -126,48 +126,22 @@ export function expectInvalidProperties(
   }
 }
 
-export const mockUserRole = (allowed_roles:  string[]): ContactProperty => ({
-  friendly_name: 'Role',
-  property_name: 'role',
-  parameter: allowed_roles,
-  required: true
-});
-
 export const mockValidMultipleRolesContactType = (propertyType, propertyValidator: string | string[] | undefined): ContactType => {
   const baseMock = mockValidContactType(propertyType, propertyValidator);
 
   return {
     ...baseMock,
-    user_role: mockUserRole(['role1', 'role2']),
+    user_role: ['role1', 'role2'],
   };
 };
 
 export const mockSimpleMultipleRolesContactType = (
   propertyType,
   propertyValidator: string | string[] | undefined,
+  allowedRoles: string[],
   errorDescription?: string,
-  allowedRoles?: string[],
 ) : ContactType => {
-  const mockedProperty = mockProperty(propertyType, propertyValidator);
-  mockedProperty.errorDescription = errorDescription;
-  return {
-    name: 'contacttype-name',
-    friendly: 'friendly',
-    contact_type: 'contact-type',
-    user_role: mockUserRole(allowedRoles ?? ['role1', 'role2']),
-    username_from_place: false,
-    hierarchy: [
-      {
-        ...mockProperty('name', undefined, 'PARENT'),
-        level: 1,
-        contact_type: 'parent',
-      },
-    ],
-    replacement_property: mockProperty('name', undefined, 'replacement'),
-    place_properties: [
-      mockProperty('name', undefined, 'name'),
-      mockedProperty,
-    ],
-    contact_properties: [],
-  };
+  const baseMock = mockSimpleContactType(propertyType, propertyValidator, errorDescription);
+  baseMock.user_role = allowedRoles;
+  return baseMock;
 };
