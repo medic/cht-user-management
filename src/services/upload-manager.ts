@@ -5,12 +5,12 @@ import { ChtApi, PlacePayload } from '../lib/cht-api';
 import { Config } from '../config';
 import Place, { PlaceUploadState } from './place';
 import RemotePlaceCache from '../lib/remote-place-cache';
-import SessionCache, { SessionCacheUploadState } from './session-cache';
 import { UploadNewPlace } from './upload.new';
-import { UploadReplacementPlace } from './upload.replacement';
+import { UploadReplacementWithDeletion } from './upload.replacement';
+import { UploadReplacementWithDeactivation } from './upload.deactivate';
 import { UserPayload } from './user-payload';
 
-const UPLOAD_BATCH_SIZE = 10;
+const UPLOAD_BATCH_SIZE = 1;
 
 export interface Uploader {
    handleContact (payload: PlacePayload): Promise<string | undefined>;
@@ -20,7 +20,7 @@ export interface Uploader {
 
 export class UploadManager extends EventEmitter {
   doUpload = async (places: Place[], chtApi: ChtApi) => {
-    const placesNeedingUpload = places.filter(p => !p.isCreated && Object.keys(p.validationErrors as any).length === 0);
+    const placesNeedingUpload = places.filter(p => !p.isCreated && !p.hasValidationErrors);
     this.eventedPlaceStateChange(placesNeedingUpload, PlaceUploadState.SCHEDULED);
 
     const independants = placesNeedingUpload.filter(p => !p.isDependant);
@@ -38,10 +38,10 @@ export class UploadManager extends EventEmitter {
   }
 
   private async uploadSinglePlace(place: Place, chtApi: ChtApi) {
-    this.eventedPlaceStateChange(place, PlaceUploadState.IN_PROGESS);
+    this.eventedPlaceStateChange(place, PlaceUploadState.IN_PROGRESS);
 
     try {
-      const uploader: Uploader = place.hierarchyProperties.replacement ? new UploadReplacementPlace(chtApi) : new UploadNewPlace(chtApi);
+      const uploader: Uploader = pickUploader(place, chtApi);
       const payload = place.asChtPayload(chtApi.chtSession.username);
       await Config.mutate(payload, chtApi, !!place.properties.replacement);
 
@@ -82,23 +82,38 @@ export class UploadManager extends EventEmitter {
     }
   }
 
-  public refresh(sessionCache: SessionCache) {
-    this.emit('session_state_change', sessionCache.state);
-    this.emit('places_state_change', PlaceUploadState.PENDING);
-  }
-
-  public eventedSessionStateChange(sessionCache: SessionCache, state: SessionCacheUploadState) {
-    sessionCache.state = state;
-    this.emit('session_state_change', state);
+  public triggerRefresh(place_id: string | undefined) {
+    if (place_id) {
+      this.emit('refresh_table_row', place_id);
+    } else {
+      this.emit('refresh_table');
+    }
   }
 
   private eventedPlaceStateChange = (subject: Place | Place[], state: PlaceUploadState) => {
-    if (Array.isArray(subject)) {
-      subject.forEach(place => place.state = state);
-    } else {
-      subject.state = state;
+    if (!Array.isArray(subject)) {
+      subject = [subject];
+    }
+    
+    if (subject.length > 1) {
+      this.triggerRefresh(undefined);
+      return;
     }
 
-    this.emit('places_state_change', state);
+    subject.forEach(place => {
+      place.state = state;
+      this.triggerRefresh(place.id);
+    });
   };
 }
+
+function pickUploader(place: Place, chtApi: ChtApi): Uploader {
+  if (!place.hierarchyProperties.replacement) {
+    return new UploadNewPlace(chtApi);
+  }
+
+  return place.type.deactivate_users_on_replace ? 
+    new UploadReplacementWithDeactivation(chtApi) :
+    new UploadReplacementWithDeletion(chtApi);
+}
+

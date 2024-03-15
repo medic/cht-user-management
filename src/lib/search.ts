@@ -56,11 +56,11 @@ async function getRemoteResults(
   chtApi: ChtApi,
   dataPrefix: string
 ) : Promise<RemotePlace[]> {
-  const allResults = (await RemotePlaceCache.getPlacesWithType(chtApi, hierarchyLevel.contact_type))
-    .filter(remotePlace => chtApi.chtSession.isPlaceAuthorized(remotePlace));
+  let remoteResults = (await RemotePlaceCache.getPlacesWithType(chtApi, hierarchyLevel.contact_type))
+    .filter(remotePlace => chtApi.chtSession.isPlaceAuthorized(remotePlace))
+    .filter(place => place.name.includes(searchString));
 
   const topDownHierarchy = Config.getHierarchyWithReplacement(contactType, 'desc');
-  let remoteResults = allResults.filter(place => place.name.includes(searchString));
   for (const constrainingHierarchy of topDownHierarchy) {
     if (hierarchyLevel.level >= constrainingHierarchy.level) {
       break;

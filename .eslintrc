@@ -8,8 +8,9 @@
     "ecmaVersion": 8
   },
   "ignorePatterns": [
-    "**/node_modules/**",
-    "**/dist/**"
+    "node_modules/**",
+    "dist/**",
+    "src/public/**"
   ],
   "plugins": ["promise", "node"],
   "rules": {

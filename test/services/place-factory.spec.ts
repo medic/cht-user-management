@@ -296,26 +296,37 @@ describe('services/place-factory.ts', () => {
     expect(place.resolvedHierarchy[1]?.id).to.eq('parent-id');
     expect(place.resolvedHierarchy[0]?.id).to.eq('multiple');
   });
-});
 
-it('replacement place not under parent is invalid', async () => {
-  const { remotePlace, sessionCache, contactType, fakeFormData, chtApi } = mockScenario();
+  it('replacement place not under parent is invalid', async () => {
+    const { remotePlace, sessionCache, contactType, fakeFormData, chtApi } = mockScenario();
+    
+    const toReplace: RemotePlace = {
+      id: 'id-replace',
+      name: 'to-replace',
+      lineage: ['different-parent'],
+      type: 'remote',
+    };
+    fakeFormData.hierarchy_replacement = toReplace.name;
+    chtApi.getPlacesWithType
+      .resolves([remotePlace])
+      .onSecondCall().resolves([toReplace]);
+
+    const place: Place = await PlaceFactory.createOne(fakeFormData, contactType, sessionCache, chtApi);
+    expectInvalidProperties(place.validationErrors, ['hierarchy_replacement'], 'Cannot find');
+    expect(place.resolvedHierarchy[1]?.id).to.eq('parent-id');
+    expect(place.resolvedHierarchy[0]).to.be.undefined;
+  });
   
-  const toReplace: RemotePlace = {
-    id: 'id-replace',
-    name: 'to-replace',
-    lineage: ['different-parent'],
-    type: 'remote',
-  };
-  fakeFormData.hierarchy_replacement = toReplace.name;
-  chtApi.getPlacesWithType
-    .resolves([remotePlace])
-    .onSecondCall().resolves([toReplace]);
+  it('place not under users facility is invalid', async () => {
+    const { remotePlace, sessionCache, contactType, parentContactType, fakeFormData, chtApi } = mockScenario();
+    const parent1 = mockParentPlace(parentContactType, fakeFormData.hierarchy_PARENT);
+    chtApi.getPlacesWithType.resolves([remotePlace]);
+    chtApi.chtSession = mockChtSession('other');
+    fakeFormData.hierarchy_PARENT = parent1.name;
 
-  const place: Place = await PlaceFactory.createOne(fakeFormData, contactType, sessionCache, chtApi);
-  expectInvalidProperties(place.validationErrors, ['hierarchy_replacement'], 'Cannot find');
-  expect(place.resolvedHierarchy[1]?.id).to.eq('parent-id');
-  expect(place.resolvedHierarchy[0]).to.be.undefined;
+    const place: Place = await PlaceFactory.createOne(fakeFormData, contactType, sessionCache, chtApi);
+    expectInvalidProperties(place.validationErrors, ['hierarchy_PARENT'], 'Cannot find');
+  });
 });
 
 function mockScenario() {

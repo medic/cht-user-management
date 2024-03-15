@@ -61,24 +61,19 @@ const dockerCommand = (args) => {
 };
 
 (async () => {
-  try {
-    const tags = getImageTags();
-    const dockerfilePath = path.join(__dirname, '..', 'Dockerfile');
-    const tagFlags = tags.map(tag => ['-t', tag]).flat();
-    const dockerBuildParams = [
-      'build',
-      '-f',
-      dockerfilePath,
-      ...tagFlags,
-      '.'
-    ];
+  const tags = getImageTags();
+  const dockerfilePath = path.join(__dirname, '..', 'Dockerfile');
+  const tagFlags = tags.map(tag => ['-t', tag]).flat();
+  const dockerBuildParams = [
+    'build',
+    '-f',
+    dockerfilePath,
+    ...tagFlags,
+    '.'
+  ];
 
-    await dockerCommand(dockerBuildParams);
-    for (const tag of tags) {
-      await dockerCommand(['push', tag]);
-    }
-
-  } catch (err) {
-    console.error('Error while publishing docker image', err);
+  await dockerCommand(dockerBuildParams);
+  for (const tag of tags) {
+    await dockerCommand(['push', tag]);
   }
 })();
