@@ -84,7 +84,11 @@ export class Validation {
       if (hierarchyLevel.level !== 0 || data) {
         const isExpected = hierarchyLevel.required;
         const resolution = place.resolvedHierarchy[hierarchyLevel.level];
-        const isValid = !isExpected || resolution?.type === 'remote' || resolution?.type === 'local';
+        const isValid = resolution?.type !== 'invalid' && (
+          !isExpected || 
+          resolution?.type === 'remote' || 
+          resolution?.type === 'local'
+        );
         if (!isValid) {
           const levelUp = hierarchy[index + 1]?.property_name;
           result.push({

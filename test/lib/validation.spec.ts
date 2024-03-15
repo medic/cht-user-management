@@ -2,6 +2,7 @@ import { expect } from 'chai';
 
 import { Validation } from '../../src/lib/validation';
 import { mockSimpleContactType, mockPlace, mockSimpleMultipleRolesContactType } from '../mocks';
+import RemotePlaceResolver from '../../src/lib/remote-place-resolver';
 
 type Scenario = {
   type: string;
@@ -95,6 +96,20 @@ describe('lib/validation.ts', () => {
     place.hierarchyProperties = { PARENT: 'parent' };
 
     expect(Validation.getValidationErrors(place)).to.be.empty;
+  });
+
+  it('#91 - parent is invalid when required:false but resolution is NoResult', () => {
+    const contactType = mockSimpleContactType('string', undefined);
+    contactType.hierarchy[0].required = false;
+
+    const place = mockPlace(contactType, 'prop');
+    place.resolvedHierarchy[1] = RemotePlaceResolver.NoResult;
+
+    console.log('Validation.getValidationErrors(place)', Validation.getValidationErrors(place));
+    expect(Validation.getValidationErrors(place)).to.deep.eq([{
+      property_name: 'hierarchy_PARENT',
+      description: `Cannot find 'parent' matching 'parent'`,
+    }]);
   });
 
   it('parent is invalid when missing but expected', () => {
