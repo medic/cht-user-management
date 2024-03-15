@@ -103,17 +103,19 @@ export class Config {
   }
 
   public static getUserRoleConfig(contactType: ContactType): ContactProperty {
-    const userRoleConfig : ContactProperty = {
+    return {
       friendly_name: 'Role(s)',
       property_name: 'role',
-      type: 'string',
+      type: 'select_role',
       required: true,
       parameter: contactType.user_role,
     };
-    return userRoleConfig;
   }
 
   public static supportsMultipleRoles(contactType: ContactType): boolean {
+    if (!contactType.user_role.length || contactType.user_role.some(role => !role.trim())) {
+      throw Error(`unvalidatable config: 'user_role' property is empty or contains empty strings`);
+    }
     return contactType.user_role.length > 1;
   }
 
