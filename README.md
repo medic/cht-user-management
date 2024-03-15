@@ -44,6 +44,7 @@ Property | Type | Description
 `contact_types.replacement_property` | Property | Defines how this `contact_type` is described when being replaced. The `property_name` is always `replacement`. See [ConfigProperty](#ConfigProperty).
 `contact_types.place_properties` | Array<ConfigProperty> | Defines the attributes which are collected and set on the user's created place. See [ConfigProperty](#ConfigProperty).
 `contact_types.contact_properties` | Array<ConfigProperty> | Defines the attributes which are collected and set on the user's primary contact doc. See [ConfigProperty](#ConfigProperty).
+`contact_types.deactivate_users_on_replace` | boolean | Controls what should happen to the defunct contact and user documents when a user is replaced. When `false`, the contact and user account will be deleted. When `true`, the contact will be unaltered and the user account will be assigned the role `deactivated`. This allows for account restoration.
 `logoBase64` | Image in base64 | Logo image for your project
 
 #### ConfigProperty
@@ -60,14 +61,14 @@ required | boolean | True if the object should not exist without this informatio
 #### ConfigPropertyType
 The `ConfigPropertyType` defines a property's validation rules and auto-formatting rules. The optional `parameter` information alters the behavior of the `ConfigPropertyType`.
 
-Type | Validation Rules | Auto Formatting Rules | Validator | parameter
--- | -- | -- | --
-string | Must be defined | Removes double whitespaces, leading or trailing whitespaces, and any character which is not alphanumeric or ` ()\-'` | None
-name | Must be defined | Same as string + title case + `parameter` behavior | One or more regexes which are removed from the value when matched (eg. `"parameter": ["\\sCHU"]` will format `This Unit` into `This`)
-regex | Must match the `regex` captured by `parameter` | Same as `string` | A regex which must be matched to pass validation (eg. `"parameter": "^\\d{6}$"` will accept only 6 digit numbers)
-phone | A valid phone number for the specified locality | Auto formatting provided by [libphonenumber](https://github.com/google/libphonenumber) | Two letter country code specifying the locality of phone number (eg. `"parameter": "KE"`)
-none | None | None | None
-gender | A binary gender (eg. `Male`, `Woman`, `M`) | Formats to either `Male` or `Female` | None
+| Type   | Validation Rules                                       | Auto Formatting Rules                                                | Validator                                                                                               | parameter     |
+|--------|--------------------------------------------------------|---------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------|---------------|
+| string | Must be defined                                        | Removes double whitespaces, leading or trailing whitespaces, and any character which is not alphanumeric or ` ()\-'` | None                                                                                                   |
+| name   | Must be defined                                        | Same as string + title case + `parameter` behavior                  | One or more regexes which are removed from the value when matched (eg. `"parameter": ["\\sCHU"]` will format `This Unit` into `This`) |
+| regex  | Must match the `regex` captured by `parameter`         | Same as `string`                                                    | A regex which must be matched to pass validation (eg. `"parameter": "^\\d{6}$"` will accept only 6 digit numbers)     |
+| phone  | A valid phone number for the specified locality       | Auto formatting provided by [libphonenumber](https://github.com/google/libphonenumber)          | Two letter country code specifying the locality of phone number (eg. `"parameter": "KE"`)             |
+| none   | None                                                  | None                                                                | None                                                                                                   |
+| gender | A binary gender (eg. `Male`, `Woman`, `M`)            | Formats to either `Male` or `Female`                                | None                                                                                                   |
 
 ### Deployment
 This tool is available via Docker by running `docker compose up`. Set the [Environment Variables](#environment-variables).

@@ -1,0 +1,43 @@
+<html>
+
+<head>
+  <title>CHT User Management Tool</title>
+  <script src="/public/htmx.min.js"></script>
+  <script src="/public/sse.js"></script>
+  <script src="/public/bulma-calendar.min.js"></script>
+
+  <link rel="stylesheet" href="/public/bulma.min.css" />
+  <link rel="stylesheet" href="/public/bulma-tooltip.min.css" />
+  <link rel="stylesheet" href="/public/bulma-calendar.min.css" />
+  <link rel="stylesheet" href="/public/material-symbols.css" />
+
+  <style>
+    .material-symbols-outlined {
+      margin-right: 5px;
+    };
+  </style>
+</head>
+
+<body>
+  {% include "app/nav.html" %}
+
+  <div id="app" class="" style="min-height: 100vh">
+    <div id="workflow-content" class="container tile is-parent">
+      {% if view == "list" %}
+        {% include "app/fragment_home.html" %}
+      {% else %}
+        {% include "app/form_switch.html" %}
+      {% endif %}
+    </div>
+  </div>
+
+  <script type="text/javascript">
+    bulmaCalendar.attach('input[type="date"]', {
+      lang: 'en-US',
+      dateFormat: 'yyyy-MM-dd',
+      maxDate: new Date(),
+    });
+  </script>
+</body>
+
+</html>

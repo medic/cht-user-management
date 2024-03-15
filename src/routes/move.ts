@@ -23,7 +23,7 @@ export default async function sessionCache(fastify: FastifyInstance) {
       ...moveViewModel(contactType),
     };
 
-    return resp.view('src/public/app/view.html', tmplData);
+    return resp.view('src/liquid/app/view.html', tmplData);
   });
 
   fastify.post('/move', async (req, resp) => {
@@ -35,7 +35,7 @@ export default async function sessionCache(fastify: FastifyInstance) {
     
     try {
       const tmplData = await MoveLib.move(formData, contactType, sessionCache, chtApi);
-      return resp.view('src/public/components/move_result.html', tmplData);
+      return resp.view('src/liquid/components/move_result.html', tmplData);
     } catch (e: any) {
       const tmplData = {
         view: 'move',
@@ -48,7 +48,7 @@ export default async function sessionCache(fastify: FastifyInstance) {
         error: e.toString(),
       };
   
-      return resp.view('src/public/place/move_form.html', tmplData);
+      return resp.view('src/liquid/place/move_form.html', tmplData);
     }
   });
 }

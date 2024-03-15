@@ -12,7 +12,7 @@ import { Config } from '../../src/config';
 import RemotePlaceResolver from '../../src/lib/remote-place-resolver';
 import { UploadManagerRetryScenario } from '../lib/retry-logic.spec';
 
-describe('upload-manager.ts', () => {
+describe('services/upload-manager.ts', () => {
   beforeEach(() => {
     RemotePlaceCache.clear({});
   });
@@ -45,6 +45,7 @@ describe('upload-manager.ts', () => {
       type: 'role',
       username: 'contact',
     });
+    expect(chtApi.deleteDoc.called).to.be.false;
     expect(place.isCreated).to.be.true;
   });
 
@@ -62,6 +63,7 @@ describe('upload-manager.ts', () => {
 
     expect(chtApi.getPlacesWithType.calledTwice).to.be.true;
     expect(chtApi.getPlacesWithType.args[0]).to.deep.eq(['parent']);
+    expect(chtApi.deleteDoc.called).to.be.false;
     expect(place.isCreated).to.be.true;
   });
 
@@ -102,6 +104,7 @@ describe('upload-manager.ts', () => {
     expect(chtApi.updatePlace.calledOnce).to.be.true;
     expect(chtApi.updatePlace.args[0][0]).to.not.have.property('prop');
     expect(chtApi.updatePlace.args[0][0]).to.not.have.property('name');
+    expect(chtApi.deleteDoc.calledOnce).to.be.true;
     expect(place.isCreated).to.be.true;
   });
 
@@ -132,6 +135,38 @@ describe('upload-manager.ts', () => {
     expect(chtApi.createUser.args[0][0]).to.deep.include({
       username: 'replacement_based_username',
     });
+    expect(place.isCreated).to.be.true;
+  });
+
+  it('contact_type replacement with deactivate_users_on_replace:true', async () => {
+    const { remotePlace, sessionCache, contactType, fakeFormData, chtApi } = await createMocks();
+    contactType.deactivate_users_on_replace = true;
+
+    fakeFormData.hierarchy_replacement = 'deactivate me';
+    fakeFormData.place_name = ''; // optional due to replacement
+
+    const toReplace: RemotePlace = {
+      id: 'id-replace',
+      name: 'deactivate me',
+      lineage: [remotePlace.id],
+      type: 'remote',
+    };
+
+    chtApi.getPlacesWithType
+      .resolves([remotePlace])
+      .onSecondCall()
+      .resolves([toReplace]);
+
+    const place = await PlaceFactory.createOne(fakeFormData, contactType, sessionCache, chtApi);
+    expect(place.validationErrors).to.be.empty; // only parent is required when replacing
+
+    const uploadManager = new UploadManager();
+    await uploadManager.doUpload([place], chtApi);
+    expect(chtApi.createUser.callCount).to.eq(1);
+    expect(chtApi.disableUsersWithPlace.called).to.be.false;
+    expect(chtApi.deleteDoc.called).to.be.false;
+    expect(chtApi.deactivateUsersWithPlace.called).to.be.true;
+    expect(chtApi.deactivateUsersWithPlace.args[0][0]).to.eq('id-replace');
     expect(place.isCreated).to.be.true;
   });
 
@@ -228,6 +263,7 @@ describe('upload-manager.ts', () => {
     expect(chtApi.getParentAndSibling.called).to.be.false;
     expect(chtApi.createContact.called).to.be.false;
     expect(chtApi.updatePlace.called).to.be.false;
+    expect(chtApi.deleteDoc.called).to.be.false;
     expect(chtApi.disableUsersWithPlace.called).to.be.false;
   });
 
@@ -278,11 +314,18 @@ async function createMocks() {
     createPlace: sinon.stub().resolves('created-place-id'),
     updateContactParent: sinon.stub().resolves('created-contact-id'),
     createUser: sinon.stub().resolves(),
-
+    
     getParentAndSibling: sinon.stub().resolves({ parent: {}, sibling: {} }),
     createContact: sinon.stub().resolves('replacement-contact-id'),
-    updatePlace: sinon.stub().resolves('updated-place-id'),
+    updatePlace: sinon.stub().resolves({
+      _id: 'updated-place-id',
+      user_attribution: {
+        previousPrimaryContacts: ['prev_contact_id'],
+      },
+    }),
+    deleteDoc: sinon.stub().resolves(),
     disableUsersWithPlace: sinon.stub().resolves(['org.couchdb.user:disabled']),
+    deactivateUsersWithPlace: sinon.stub().resolves(),
   };
   
   const fakeFormData: any = {
