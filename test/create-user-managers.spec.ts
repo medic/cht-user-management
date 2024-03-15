@@ -48,12 +48,12 @@ describe('scripts/create-user-managers.ts', () => {
     const actual = await createUserManagers.default(argv);
     expect(actual).to.have.property('length', 1);
     expect(actual[0]).to.deep.include({
-      fullname: 'Stan Lee',
+      fullname: 'Stan Lee (User Manager)',
       password: 'S3cret_abc',
       phone: undefined,
       place: 'county_id',
       type: 'user_manager',
-      username: 'stan_lee',
+      username: 'stan_lee_user_manager',
     });
   });
 
