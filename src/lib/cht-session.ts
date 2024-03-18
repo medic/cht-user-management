@@ -97,6 +97,7 @@ export default class ChtSession {
       sessionUrl,
       {
         headers: { Cookie: sessionToken },
+        'axios-retry': axiosRetryConfig,
       },
     );
   
