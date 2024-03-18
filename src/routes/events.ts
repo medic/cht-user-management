@@ -15,7 +15,7 @@ export default async function events(fastify: FastifyInstance) {
       userRoleProperty: Config.getUserRoleConfig(item),
     }));
 
-    return resp.view('src/liquid/place/list.html', {
+    return resp.view('src/liquid/place/list_event.html', {
       contactTypes: placeData,
       session: req.chtSession,
       progress: new ProgressModel(sessionCache),

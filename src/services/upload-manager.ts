@@ -10,7 +10,7 @@ import { UploadReplacementWithDeletion } from './upload.replacement';
 import { UploadReplacementWithDeactivation } from './upload.deactivate';
 import { UserPayload } from './user-payload';
 
-const UPLOAD_BATCH_SIZE = 1;
+const UPLOAD_BATCH_SIZE = 15;
 
 export interface Uploader {
    handleContact (payload: PlacePayload): Promise<string | undefined>;
