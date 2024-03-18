@@ -125,23 +125,3 @@ export function expectInvalidProperties(
     expect(Object.values(validationErrors as any)?.[0]).to.include(expectedError);
   }
 }
-
-export const mockValidMultipleRolesContactType = (propertyType, propertyValidator: string | string[] | undefined): ContactType => {
-  const baseMock = mockValidContactType(propertyType, propertyValidator);
-
-  return {
-    ...baseMock,
-    user_role: ['role1', 'role2'],
-  };
-};
-
-export const mockSimpleMultipleRolesContactType = (
-  propertyType,
-  propertyValidator: string | string[] | undefined,
-  allowedRoles: string[],
-  errorDescription?: string,
-) : ContactType => {
-  const baseMock = mockSimpleContactType(propertyType, propertyValidator, errorDescription);
-  baseMock.user_role = allowedRoles;
-  return baseMock;
-};

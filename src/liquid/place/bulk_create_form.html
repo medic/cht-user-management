@@ -84,8 +84,7 @@
             <tr>
               <td>{{ userRoleProperty.friendly_name }}</td>
               <td>{{ userRoleProperty.required }}</td>
-              <td>Role(s) of the user, <i>allowed roles are {{ contactType.user_role | join: ', ' }}</i> <br> 
-                 (separate multiple roles with <b>space</b>)
+              <td>Role of the user. Specify multiple roles with <i>space</i>. Allowed roles are <i>{{ contactType.user_role | join: ', ' }}
               </td>
             </tr>
             {% endif %}

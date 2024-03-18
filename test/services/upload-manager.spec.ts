@@ -3,7 +3,7 @@ import { expect } from 'chai';
 import sinon from 'sinon';
 
 import { UploadManager } from '../../src/services/upload-manager';
-import { mockValidContactType, mockParentPlace, mockChtSession, expectInvalidProperties, mockValidMultipleRolesContactType } from '../mocks';
+import { mockValidContactType, mockParentPlace, mockChtSession, expectInvalidProperties } from '../mocks';
 import PlaceFactory from '../../src/services/place-factory';
 import SessionCache from '../../src/services/session-cache';
 import { ChtApi, RemotePlace } from '../../src/lib/cht-api';
@@ -283,7 +283,11 @@ describe('services/upload-manager.ts', () => {
   });
 
   it('mock data is properly sent to chtApi (multiple roles)', async () => {
-    const { fakeFormData, contactType, chtApi, sessionCache, remotePlace } = await createMocks({ supportMultipleRoles: true });
+    const { fakeFormData, contactType, chtApi, sessionCache, remotePlace } = await createMocks();
+
+    contactType.user_role = ['role1', 'role2'];
+    fakeFormData.user_role = 'role1 role2';
+
     const place = await PlaceFactory.createOne(fakeFormData, contactType, sessionCache, chtApi);
 
     const uploadManager = new UploadManager();
@@ -330,12 +334,8 @@ async function createChu(remotePlace: RemotePlace, chu_name: string, sessionCach
   return chu;
 }
 
-async function createMocks(options: {
-  supportMultipleRoles?: boolean;
-} = {}) {
-  const contactType = options.supportMultipleRoles 
-    ? mockValidMultipleRolesContactType('string', undefined) 
-    : mockValidContactType('string', undefined);
+async function createMocks() {
+  const contactType = mockValidContactType('string', undefined);
   const remotePlace: RemotePlace = {
     id: 'parent-id',
     name: 'parent-name',
@@ -367,8 +367,7 @@ async function createMocks(options: {
     place_name: 'place',
     place_prop: 'foo',
     hierarchy_PARENT: remotePlace.name,
-    contact_name: 'contact',
-    ...({ user_role: options.supportMultipleRoles ?  'role1 role2' : 'role' }),
+    contact_name: 'contact'
   };
 
   return { fakeFormData, contactType, sessionCache, chtApi, remotePlace };

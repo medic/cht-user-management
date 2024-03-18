@@ -71,7 +71,6 @@ export default class PlaceFactory {
           place.hierarchyProperties[hierarchyConstraint.property_name] = row[columnIndex];
         }
 
-
         if (Config.supportsMultipleRoles(contactType)) {
           const userRoleProperty = Config.getUserRoleConfig(contactType);
           place.userRoles[userRoleProperty.property_name] = row[

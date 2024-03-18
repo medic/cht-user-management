@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 
 import Place from '../../src/services/place';
-import { mockSimpleContactType, mockValidContactType, mockSimpleMultipleRolesContactType } from '../mocks';
+import { mockSimpleContactType, mockValidContactType } from '../mocks';
 import RemotePlaceResolver from '../../src/lib/remote-place-resolver';
 
 describe('services/place.ts', () => {
@@ -137,7 +137,8 @@ describe('services/place.ts', () => {
   });
 
   it('setPropertiesFromFormData (supports multiple roles)', () => {
-    const contactType = mockSimpleMultipleRolesContactType('string', undefined, ['role1', 'role2']);
+    const contactType = mockSimpleContactType('string', undefined);
+    contactType.user_role = ['role1', 'role2'];
     contactType.contact_properties = contactType.place_properties;
     const place = new Place(contactType);
     place.properties.existing = 'existing';

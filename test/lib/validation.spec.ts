@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 
 import { Validation } from '../../src/lib/validation';
-import { mockSimpleContactType, mockPlace, mockSimpleMultipleRolesContactType } from '../mocks';
+import { mockSimpleContactType, mockPlace } from '../mocks';
 import RemotePlaceResolver from '../../src/lib/remote-place-resolver';
 
 type Scenario = {
@@ -150,21 +150,27 @@ describe('lib/validation.ts', () => {
   });
 
   it('user_role property empty throws', () => {
-    const contactType = mockSimpleMultipleRolesContactType('string', undefined, []);
+    const contactType = mockSimpleContactType('string', undefined);
+    contactType.user_role = [];
+
     const place = mockPlace(contactType, 'prop');
     
     expect(() => Validation.getValidationErrors(place)).to.throw('unvalidatable');
   });
 
   it('user_role property contains empty string throws', () => {
-    const contactType = mockSimpleMultipleRolesContactType('string', undefined, ['']);
+    const contactType = mockSimpleContactType('string', undefined);
+    contactType.user_role = [''];
+
     const place = mockPlace(contactType, 'prop');
     
     expect(() => Validation.getValidationErrors(place)).to.throw('unvalidatable');
   });
 
   it('user role is invalid when not allowed', () => {
-    const contactType = mockSimpleMultipleRolesContactType('string', undefined, ['supervisor', 'stock_manager']);
+    const contactType = mockSimpleContactType('string', undefined);
+    contactType.user_role = ['supervisor', 'stock_manager'];
+
     const place = mockPlace(contactType, 'prop');
 
     const formData = {
