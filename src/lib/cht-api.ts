@@ -37,7 +37,7 @@ export class ChtApi {
 
   constructor(session: ChtSession) {
     this.session = session;
-    this.axiosInstance = this.axiosInstance;
+    this.axiosInstance = session.axiosInstance;
   }
 
   public get chtSession(): ChtSession {
