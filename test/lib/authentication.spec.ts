@@ -1,13 +1,17 @@
-import { expect } from 'chai';
+import chai from 'chai';
+import chaiExclude from 'chai-exclude';
 import { mockChtSession } from '../mocks';
 import Auth from '../../dist/lib/authentication';
+
+chai.use(chaiExclude);
+const { expect } = chai;
 
 describe('lib/authentication.ts', () => {
   it('encode and decode', () => {
     const session = mockChtSession();
     const encoded = Auth.encodeToken(session);
     const decoded = Auth.decodeToken(encoded);
-    expect(session).to.deep.eq(decoded);
+    expect(session).excluding('axiosInstance').to.deep.eq(decoded);
   });
 
   it('invalid token cannot be decoded', () => {

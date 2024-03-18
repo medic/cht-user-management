@@ -37,7 +37,10 @@ describe('lib/cht-session.ts', () => {
         post: sinon.stub().resolves(mockSessionResponse()),
         get: sinon.stub().resolves(mockUserFacilityDoc()),
       };
-      ChtSession.__set__('axios', mockAxios);
+      ChtSession.__set__('axios', {
+        create: sinon.stub().returns(mockAxios),
+        ...mockAxios,
+      });
 
       const session = await ChtSession.default.create(mockAuthInfo, 'user', 'pwd');
       expect(mockAxios.post.args[0][0]).to.be.a('string');
@@ -81,7 +84,10 @@ describe('lib/cht-session.ts', () => {
       post: sinon.stub().resolves(mockSessionResponse()),
       get: sinon.stub().resolves(mockUserFacilityDoc()),
     };
-    ChtSession.__set__('axios', mockAxios);
+    ChtSession.__set__('axios', {
+      create: sinon.stub().returns(mockAxios),
+      ...mockAxios,
+    });
 
     const session = await ChtSession.default.create(mockAuthInfo, 'user', 'pwd');
     const data = JSON.stringify(session);
@@ -104,7 +110,10 @@ describe('lib/cht-session.ts', () => {
           post: sinon.stub().resolves(mockSessionResponse()),
           get: sinon.stub().resolves(mockUserFacilityDoc(scenario.facilityId, scenario.isAdmin)),
         };
-        ChtSession.__set__('axios', mockAxios);
+        ChtSession.__set__('axios', {
+          create: sinon.stub().returns(mockAxios),
+          ...mockAxios,
+        });
 
         const session = await ChtSession.default.create(mockAuthInfo, 'user', 'pwd');
         const place: RemotePlace = {
