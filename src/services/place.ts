@@ -47,7 +47,7 @@ export default class Place {
     [key: string]: any;
   };
 
-  public userRoles: {
+  public userRoleProperties: {
     [key: string]: any;
   };
 
@@ -64,7 +64,7 @@ export default class Place {
     this.hierarchyProperties = {};
     this.state = PlaceUploadState.STAGED;
     this.resolvedHierarchy = [];
-    this.userRoles = {};
+    this.userRoleProperties = {};
   }
 
   /*
@@ -95,16 +95,16 @@ export default class Place {
       this.hierarchyProperties[propertyName] = formData[`${hierarchyPrefix}${propertyName}`] ?? '';
     }
 
-    if (Config.supportsMultipleRoles(this.type)) {
+    if (Config.hasMultipleRoles(this.type)) {
       const userRoleConfig = Config.getUserRoleConfig(this.type);
       const propertyName = userRoleConfig.property_name;
       const roleFormData = formData[`${USER_PREFIX}${propertyName}`];
       
       // When multiple are selected, the form data is an array
       if (Array.isArray(roleFormData)) {
-        this.userRoles[propertyName] = roleFormData.join(' ');
+        this.userRoleProperties[propertyName] = roleFormData.join(' ');
       } else {
-        this.userRoles[propertyName] = roleFormData;
+        this.userRoleProperties[propertyName] = roleFormData;
       }
     }
   }
@@ -129,7 +129,7 @@ export default class Place {
       ...addPrefixToPropertySet(this.hierarchyProperties, hierarchyPrefix),
       ...addPrefixToPropertySet(this.properties, PLACE_PREFIX),
       ...addPrefixToPropertySet(this.contact.properties, CONTACT_PREFIX),
-      ...addPrefixToPropertySet(this.userRoles, USER_PREFIX),
+      ...addPrefixToPropertySet(this.userRoleProperties, USER_PREFIX),
     };
   }
 
@@ -237,13 +237,13 @@ export default class Place {
     return username;
   }
 
-  public extractUserRoles(): string[] {
-    if (!Config.supportsMultipleRoles(this.type)) {
+  public get userRoles(): string[] {
+    if (!Config.hasMultipleRoles(this.type)) {
       return this.type.user_role;
     }
 
     const userRoleConfig = Config.getUserRoleConfig(this.type);
-    const roles = this.userRoles[userRoleConfig.property_name];
+    const roles = this.userRoleProperties[userRoleConfig.property_name];
     return roles.split(' ').map((role: string) => role.trim()).filter(Boolean);
   }
 

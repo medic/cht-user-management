@@ -46,7 +46,7 @@ export class Validation {
       ...Validation.validateHierarchy(place),
       ...Validation.validateProperties(place.properties, place.type.place_properties, requiredColumns, 'place_'),
       ...Validation.validateProperties(place.contact.properties, place.type.contact_properties, requiredColumns, 'contact_'),
-      ...Validation.validateProperties(place.userRoles, [Config.getUserRoleConfig(place.type)], requiredColumns, 'user_')
+      ...Validation.validateProperties(place.userRoleProperties, [Config.getUserRoleConfig(place.type)], requiredColumns, 'user_')
     ];
 
     return result;

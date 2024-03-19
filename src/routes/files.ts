@@ -16,7 +16,7 @@ export default async function files(fastify: FastifyInstance) {
       ...hierarchy.map(p => p.friendly_name),
       ...placeTypeConfig.place_properties.map(p => p.friendly_name),
       ...placeTypeConfig.contact_properties.map(p => p.friendly_name),
-      ...(Config.supportsMultipleRoles(placeTypeConfig) ? [userRoleConfig.friendly_name] : []),
+      ...(Config.hasMultipleRoles(placeTypeConfig) ? [userRoleConfig.friendly_name] : []),
     ]);
 
     return stringify([columns]);
@@ -37,7 +37,7 @@ export default async function files(fastify: FastifyInstance) {
         place.contact.properties.phone,
         place.creationDetails.username,
         place.creationDetails.password,
-        place.extractUserRoles().join(' ')
+        place.userRoles.join(' ')
       ]);
       const constraints = Config.getHierarchyWithReplacement(contactType);
       const props = Object.keys(places[0].hierarchyProperties).map(prop => constraints.find(c => c.property_name === prop)!.friendly_name);

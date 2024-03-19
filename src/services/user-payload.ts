@@ -13,7 +13,7 @@ export class UserPayload {
   constructor(place: Place, placeId: string, contactId: string) {
     this.username = place.generateUsername();
     this.password = this.generatePassword();
-    this.roles = place.extractUserRoles();
+    this.roles = place.userRoles;
     this.place = placeId;
     this.contact = contactId;
     this.fullname = place.contact.name;

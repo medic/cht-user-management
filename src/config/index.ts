@@ -112,7 +112,7 @@ export class Config {
     };
   }
 
-  public static supportsMultipleRoles(contactType: ContactType): boolean {
+  public static hasMultipleRoles(contactType: ContactType): boolean {
     if (!contactType.user_role.length || contactType.user_role.some(role => !role.trim())) {
       throw Error(`unvalidatable config: 'user_role' property is empty or contains empty strings`);
     }
@@ -148,7 +148,7 @@ export class Config {
     const requiredContactProps = contactType.contact_properties.filter(p => p.required);
     const requiredPlaceProps = isReplacement ? [] : contactType.place_properties.filter(p => p.required);
     const requiredHierarchy = contactType.hierarchy.filter(h => h.required);
-    const requiredUserRole = Config.supportsMultipleRoles(contactType) ? [Config.getUserRoleConfig(contactType)] : [];
+    const requiredUserRole = Config.hasMultipleRoles(contactType) ? [Config.getUserRoleConfig(contactType)] : [];
 
     return [
       ...requiredHierarchy,

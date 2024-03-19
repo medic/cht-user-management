@@ -136,7 +136,7 @@ describe('services/place.ts', () => {
     expect(actual.contact.contact_type).to.be.undefined;
   });
 
-  it('setPropertiesFromFormData (supports multiple roles)', () => {
+  it('setPropertiesFromFormData supports multiple roles', () => {
     const contactType = mockSimpleContactType('string', undefined);
     contactType.user_role = ['role1', 'role2'];
     contactType.contact_properties = contactType.place_properties;
@@ -158,10 +158,7 @@ describe('services/place.ts', () => {
     expect(place.contact.properties).to.deep.eq({
       prop: 'efg',
     });
-    expect(place.userRoles).to.deep.eq({
-      role: 'role1 role2',
-    });
-    expect(place.extractUserRoles()).to.deep.eq([
+    expect(place.userRoles).to.deep.eq([
       'role1',
       'role2',
     ]);

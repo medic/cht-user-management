@@ -7,7 +7,7 @@ export default class ValidatorRole implements IValidator {
     const allowedRoles = property.parameter as string[];
     
     // Check if user roles are specified and not empty
-    const selectedRoles = input.split(' ').map((role: string) => role.trim()).filter(Boolean);
+    const selectedRoles = input ? input.split(' ').map((role: string) => role.trim()).filter(Boolean) : [];
     if (!selectedRoles.length) {
       return `Should provide at least one role`;
     }

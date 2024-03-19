@@ -117,7 +117,6 @@ describe('lib/retry-logic', () => {
         };
         const place = {
           generateUsername: sinon.stub().returns('username'),
-          extractUserRoles: sinon.stub().returns([]),
           type: mockSimpleContactType('string', 'bar'),
           contact: { properties: {} },
         };
