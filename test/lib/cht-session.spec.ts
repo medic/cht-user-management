@@ -23,9 +23,9 @@ const mockSessionResponse = (headers: Array<string> = ['AuthSession=123']) => ({
   },
 });
 
-const mockUserFacilityDoc = (facilityId: string = 'parent-id', isAdmin: boolean = false) => ({
+const mockUserFacilityDoc = (facilityId: string = 'parent-id', roles:string[] = []) => ({
   data: {
-    roles: isAdmin ? ['admin'] : [],
+    roles,
     facility_id: facilityId,
   }
 });
@@ -71,7 +71,7 @@ describe('lib/cht-session.ts', () => {
     it('throw if user-settings has no facility_id', async () => {
       const mockAxios = {
         post: sinon.stub().resolves(mockSessionResponse()),
-        get: sinon.stub().resolves(mockUserFacilityDoc('', false)),
+        get: sinon.stub().resolves(mockUserFacilityDoc('', [])),
       };
       ChtSession.__set__('axios', mockAxios);
 
@@ -97,18 +97,20 @@ describe('lib/cht-session.ts', () => {
 
   describe('isPlaceAuthorized', () => {
     const scenarios = [
-      { isAdmin: false, facilityId: 'parent-id', isExpected: true },
-      { isAdmin: false, facilityId: 'dne', isExpected: false },
+      { roles: [], facilityId: 'parent-id', isExpected: true },
+      { roles: [], facilityId: 'dne', isExpected: false },
 
-      { isAdmin: true, facilityId: 'parent-id', isExpected: true },
-      { isAdmin: true, facilityId: 'dne', isExpected: true },
+      { roles: ['admin'], facilityId: 'parent-id', isExpected: true },
+      { roles: ['admin'], facilityId: 'dne', isExpected: true },
+      
+      { roles: ['_admin'], facilityId: 'dne', isExpected: true }, // #102
     ];
     
     for (const scenario of scenarios) {
       it(JSON.stringify(scenario), async () => {
         const mockAxios = {
           post: sinon.stub().resolves(mockSessionResponse()),
-          get: sinon.stub().resolves(mockUserFacilityDoc(scenario.facilityId, scenario.isAdmin)),
+          get: sinon.stub().resolves(mockUserFacilityDoc(scenario.facilityId, scenario.roles)),
         };
         ChtSession.__set__('axios', {
           create: sinon.stub().returns(mockAxios),

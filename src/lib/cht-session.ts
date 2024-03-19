@@ -1,3 +1,4 @@
+import _ from 'lodash';
 const axios = require('axios'); // require is needed for rewire
 
 import { AuthenticationInfo } from '../config';
@@ -101,8 +102,10 @@ export default class ChtSession {
       },
     );
   
+    const adminRoles = ['admin', '_admin'];
+    const isAdmin = _.intersection(adminRoles, resp.data?.roles).length > 0;
     return {
-      isAdmin: !!resp.data?.roles?.includes('admin'),
+      isAdmin,
       facilityId: resp.data?.facility_id,
     };
   }
