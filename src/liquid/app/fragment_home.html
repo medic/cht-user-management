@@ -1,0 +1,13 @@
+<div class="tile is-child" hx-ext="sse" sse-connect="/events/connection">
+  <div
+    id="places_parent"
+    class="tile is-child"
+    hx-get="/events/places/all" 
+    hx-target="this"
+    hx-swap="none" 
+    hx-trigger="sse:place_state_change"
+  >
+    {% include "place/directive.html" %}
+    {% include "place/list.html" %}  
+  </div>
+</div>

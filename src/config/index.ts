@@ -17,12 +17,13 @@ export type ContactType = {
   name: string;
   friendly: string;
   contact_type: string;
-  user_role: string;
+  user_role: string[];
   username_from_place: boolean;
   hierarchy: HierarchyConstraint[];
   replacement_property: ContactProperty;
   place_properties: ContactProperty[];
   contact_properties: ContactProperty[];
+  deactivate_users_on_replace: boolean;
 };
 
 export type HierarchyConstraint = {
@@ -101,6 +102,23 @@ export class Config {
     ], 'level', sortBy);
   }
 
+  public static getUserRoleConfig(contactType: ContactType): ContactProperty {
+    return {
+      friendly_name: 'Role(s)',
+      property_name: 'role',
+      type: 'select_role',
+      required: true,
+      parameter: contactType.user_role,
+    };
+  }
+
+  public static hasMultipleRoles(contactType: ContactType): boolean {
+    if (!contactType.user_role.length || contactType.user_role.some(role => !role.trim())) {
+      throw Error(`unvalidatable config: 'user_role' property is empty or contains empty strings`);
+    }
+    return contactType.user_role.length > 1;
+  }
+
   public static async mutate(payload: PlacePayload, chtApi: ChtApi, isReplacement: boolean): Promise<PlacePayload | undefined> {
     return partnerConfig.mutate && partnerConfig.mutate(payload, chtApi, isReplacement);
   }
@@ -130,11 +148,13 @@ export class Config {
     const requiredContactProps = contactType.contact_properties.filter(p => p.required);
     const requiredPlaceProps = isReplacement ? [] : contactType.place_properties.filter(p => p.required);
     const requiredHierarchy = contactType.hierarchy.filter(h => h.required);
+    const requiredUserRole = Config.hasMultipleRoles(contactType) ? [Config.getUserRoleConfig(contactType)] : [];
 
     return [
       ...requiredHierarchy,
       ...requiredContactProps,
-      ...requiredPlaceProps
+      ...requiredPlaceProps,
+      ...requiredUserRole
     ];
   }
 

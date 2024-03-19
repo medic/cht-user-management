@@ -66,18 +66,12 @@
       <div class="navbar-item has-dropdown is-hoverable">
         <a class="navbar-link is-arrowless">
           <span class="material-symbols-outlined">cloud</span>
-          Connected to <i>{{ session.authInfo.friendly}} as {{ session.username }}</i>
+          Connected to <i>{{ session.authInfo.friendly }} as {{ session.username }}</i>
         </a>
       
         <div class="navbar-dropdown is-right">
-          <a class="navbar-item" hx-post="/app/apply-changes" hx-swap="none">
-            <span class="material-symbols-outlined">group_add</span> Upload
-          </a>
-
-          <a class="navbar-item" href="/files/credentials" download="{{ session.authInfo.domain }}.users.csv">
-            <span class="material-symbols-outlined">save_as</span> Save Credentials
-          </a>
-    
+          {% include "components/button_upload.html" className="navbar-item" %}
+          {% include "components/button_save_credentials.html" className="navbar-item" %}    
           <a class="navbar-item" href="/logout">
             <span class="material-symbols-outlined">logout</span> Logout
           </a>

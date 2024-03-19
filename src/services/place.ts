@@ -14,19 +14,20 @@ export type UserCreationDetails = {
   password?: string;
   placeId?: string;
   contactId?: string;
-  disabledUsers?: string[];
 };
 
 export enum PlaceUploadState {
   SUCCESS = 'success',
   FAILURE = 'failure',
-  PENDING = 'pending',
+  STAGED = 'staged',
   SCHEDULED = 'scheduled',
-  IN_PROGESS = 'in_progress',
+  IN_PROGRESS = 'in_progress',
 }
 
 const PLACE_PREFIX = 'place_';
 const CONTACT_PREFIX = 'contact_';
+const USER_PREFIX = 'user_';
+
 
 export default class Place {
   public readonly id: string;
@@ -46,6 +47,10 @@ export default class Place {
     [key: string]: any;
   };
 
+  public userRoleProperties: {
+    [key: string]: any;
+  };
+
   public state : PlaceUploadState;
 
   public validationErrors?: { [key: string]: string };
@@ -57,8 +62,9 @@ export default class Place {
     this.contact = new Contact(type);
     this.properties = {};
     this.hierarchyProperties = {};
-    this.state = PlaceUploadState.PENDING;
+    this.state = PlaceUploadState.STAGED;
     this.resolvedHierarchy = [];
+    this.userRoleProperties = {};
   }
 
   /*
@@ -86,9 +92,19 @@ export default class Place {
 
     for (const hierarchyLevel of Config.getHierarchyWithReplacement(this.type)) {
       const propertyName = hierarchyLevel.property_name;
-      delete this.hierarchyProperties[propertyName];
-      if (formData[`${hierarchyPrefix}${propertyName}`]) {
-        this.hierarchyProperties[propertyName] = formData[`${hierarchyPrefix}${propertyName}`];
+      this.hierarchyProperties[propertyName] = formData[`${hierarchyPrefix}${propertyName}`] ?? '';
+    }
+
+    if (Config.hasMultipleRoles(this.type)) {
+      const userRoleConfig = Config.getUserRoleConfig(this.type);
+      const propertyName = userRoleConfig.property_name;
+      const roleFormData = formData[`${USER_PREFIX}${propertyName}`];
+      
+      // When multiple are selected, the form data is an array
+      if (Array.isArray(roleFormData)) {
+        this.userRoleProperties[propertyName] = roleFormData.join(' ');
+      } else {
+        this.userRoleProperties[propertyName] = roleFormData;
       }
     }
   }
@@ -113,12 +129,13 @@ export default class Place {
       ...addPrefixToPropertySet(this.hierarchyProperties, hierarchyPrefix),
       ...addPrefixToPropertySet(this.properties, PLACE_PREFIX),
       ...addPrefixToPropertySet(this.contact.properties, CONTACT_PREFIX),
+      ...addPrefixToPropertySet(this.userRoleProperties, USER_PREFIX),
     };
   }
 
   public asChtPayload(username: string): PlacePayload {
     const user_attribution = {
-      tool: `cht_usr-${appVersion}`,
+      tool: `cht-user-management-${appVersion}`,
       username,
       created_time: Date.now(),
       replacement: this.resolvedHierarchy[0],
@@ -138,18 +155,28 @@ export default class Place {
       }, {});
     };
 
+    const contactAttributes = (contactType: string) => {
+      const RESERVED_CONTACT_TYPES = ['district_hospital', 'health_center', 'clinic', 'person'];
+
+      if (RESERVED_CONTACT_TYPES.includes(contactType)) {
+        return { type: contactType };
+      }
+
+      return {
+        type: 'contact',
+        contact_type: contactType,
+      };
+    };
     return {
       ...filteredProperties(this.properties),
+      ...contactAttributes(this.type.name),
       _id: this.isReplacement ? this.resolvedHierarchy[0]?.id : this.id,
-      type: 'contact',
-      contact_type: this.type.name,
       parent: this.resolvedHierarchy[1]?.id,
       user_attribution,
       contact: {
         ...filteredProperties(this.contact.properties),
+        ...contactAttributes(this.contact.type.contact_type),
         name: this.contact.name,
-        type: 'contact',
-        contact_type: this.contact.type.contact_type,
         user_attribution,
       }
     };
@@ -208,6 +235,20 @@ export default class Place {
     }
 
     return username;
+  }
+
+  public get userRoles(): string[] {
+    if (!Config.hasMultipleRoles(this.type)) {
+      return this.type.user_role;
+    }
+
+    const userRoleConfig = Config.getUserRoleConfig(this.type);
+    const roles = this.userRoleProperties[userRoleConfig.property_name];
+    return roles.split(' ').map((role: string) => role.trim()).filter(Boolean);
+  }
+
+  public get hasValidationErrors() : boolean {
+    return Object.keys(this.validationErrors as any).length > 0;
   }
 
   public get isDependant() : boolean {

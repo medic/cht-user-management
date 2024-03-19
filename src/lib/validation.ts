@@ -1,3 +1,4 @@
+import _ from 'lodash';
 import { Config, ContactProperty } from '../config';
 import Place from '../services/place';
 import RemotePlaceResolver from './remote-place-resolver';
@@ -10,6 +11,7 @@ import ValidatorPhone from './validator-phone';
 import ValidatorRegex from './validator-regex';
 import ValidatorSkip from './validator-skip';
 import ValidatorString from './validator-string';
+import ValidatorRole from './validator-role';
 
 export type ValidationError = {
   property_name: string;
@@ -34,6 +36,7 @@ const TypeValidatorMap: ValidatorMap = {
   none: new ValidatorSkip(),
   gender: new ValidatorGender(),
   dob: new ValidatorDateOfBirth(),
+  select_role: new ValidatorRole(),
 };
 
 export class Validation {
@@ -42,7 +45,8 @@ export class Validation {
     const result = [
       ...Validation.validateHierarchy(place),
       ...Validation.validateProperties(place.properties, place.type.place_properties, requiredColumns, 'place_'),
-      ...Validation.validateProperties(place.contact.properties, place.type.contact_properties, requiredColumns, 'contact_')
+      ...Validation.validateProperties(place.contact.properties, place.type.contact_properties, requiredColumns, 'contact_'),
+      ...Validation.validateProperties(place.userRoleProperties, [Config.getUserRoleConfig(place.type)], requiredColumns, 'user_')
     ];
 
     return result;
@@ -80,7 +84,11 @@ export class Validation {
       if (hierarchyLevel.level !== 0 || data) {
         const isExpected = hierarchyLevel.required;
         const resolution = place.resolvedHierarchy[hierarchyLevel.level];
-        const isValid = !isExpected || resolution?.type === 'remote' || resolution?.type === 'local';
+        const isValid = resolution?.type !== 'invalid' && (
+          !isExpected || 
+          resolution?.type === 'remote' || 
+          resolution?.type === 'local'
+        );
         if (!isValid) {
           const levelUp = hierarchy[index + 1]?.property_name;
           result.push({
@@ -110,7 +118,7 @@ export class Validation {
     for (const property of properties) {
       const value = obj[property.property_name];
 
-      const isRequired = requiredProperties.includes(property);
+      const isRequired = this.isRequiredProperty(property, requiredProperties);
       if (value || isRequired) {
         const isValid = Validation.isValid(property, value);
         if (isValid === false || typeof isValid === 'string') {
@@ -171,5 +179,9 @@ export class Validation {
     }
 
     return `Cannot find '${friendlyType}' matching '${searchStr}'${requiredParentSuffix}`;
+  }
+
+  private static isRequiredProperty(property: ContactProperty, requiredColumns: ContactProperty[]): boolean {
+    return requiredColumns.some((prop) => _.isEqual(prop, property));
   }
 }

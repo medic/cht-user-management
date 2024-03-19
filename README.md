@@ -4,6 +4,19 @@
 
 A simple user-facing web application using [CHT's API](https://docs.communityhealthtoolkit.org/apps/reference/api/) that supports user management needs for CHT projects at scale.
 
+## eCHIS Kenya Training Videos
+
+* [Creating a New User in CHIS User Management Tool](https://www.loom.com/share/4504606894bc4013bda940f2b360e546)
+* [Replacing an Existing Community Health Promoter using the User Management Tool](https://www.loom.com/share/0dc7881611664d7b8cbd6c810f95035b)
+* [How to Replace a CHA Using the User Management Tool](https://www.loom.com/share/d7fcf91390f9453980f07223c8a16709)
+* [Bulk Uploading Users with the User Management Tool](https://www.loom.com/share/c50b023988d34d95b61338ead4fab59b)
+* [Moving an Existing Place with the User Management Tool](https://www.loom.com/share/cd9e98aefedb490fae61775c86b9b6fe)
+* [CHIS Kenya - CHA Changing a Phone Number for a CHP](https://www.loom.com/share/8a0f629161944567b6ca504ab27ec6cf)
+* [How to Bulk Replace CHPs with CHIS User Management Tool](https://www.loom.com/share/33d9395a515741fa9620f7004578de24)
+
+For Developers:
+* [Running CHT User Management Tool with a Local CHT Instance](https://www.loom.com/share/645cf995a9c44a5ab843628538a019ff)
+
 ## Using this tool with your CHT Project
 
 To use the User Management Tool with your CHT project, you'll need to create a new project configuration folder and follow some deployment steps.
@@ -24,13 +37,14 @@ Property | Type | Description
 `contact_types.name` | string | The name of the contact_type as it [appears in the app's base_settings.json](https://docs.communityhealthtoolkit.org/apps/reference/app-settings/hierarchy/)
 `contact_types.friendly` | string | Friendly name of the contact type
 `contact_types.contact_type` | string | The contact_type of the primary contact. [As defined in base_settings.json](https://docs.communityhealthtoolkit.org/apps/reference/app-settings/hierarchy/)
-`contact_types.user_role` | string | The [role](https://docs.communityhealthtoolkit.org/apps/reference/app-settings/user-roles/) of the user which is created
+`contact_types.user_role` | string[] | A list of allowed [user roles](https://docs.communityhealthtoolkit.org/apps/reference/app-settings/user-roles/). If only one is provided, it will be used by default.
 `contact_types.username_from_place` | boolean | When true, the username is generated from the place's name. When false, the username is generated from the primary contact's name. Default is false.
 `contact_types.hierarchy` | Array<ConfigProperty> | Defines how this `contact_type` is connected into the hierarchy. An element with `level:1` (parent) is required and additional elements can be provided to support disambiguation. See [ConfigProperty](#ConfigProperty).
 `contact_types.hierarchy.level` | integer | The hierarchy element with `level:1` is the parent, `level:3` is the great grandparent.
 `contact_types.replacement_property` | Property | Defines how this `contact_type` is described when being replaced. The `property_name` is always `replacement`. See [ConfigProperty](#ConfigProperty).
 `contact_types.place_properties` | Array<ConfigProperty> | Defines the attributes which are collected and set on the user's created place. See [ConfigProperty](#ConfigProperty).
 `contact_types.contact_properties` | Array<ConfigProperty> | Defines the attributes which are collected and set on the user's primary contact doc. See [ConfigProperty](#ConfigProperty).
+`contact_types.deactivate_users_on_replace` | boolean | Controls what should happen to the defunct contact and user documents when a user is replaced. When `false`, the contact and user account will be deleted. When `true`, the contact will be unaltered and the user account will be assigned the role `deactivated`. This allows for account restoration.
 `logoBase64` | Image in base64 | Logo image for your project
 
 #### ConfigProperty
@@ -47,14 +61,14 @@ required | boolean | True if the object should not exist without this informatio
 #### ConfigPropertyType
 The `ConfigPropertyType` defines a property's validation rules and auto-formatting rules. The optional `parameter` information alters the behavior of the `ConfigPropertyType`.
 
-Type | Validation Rules | Auto Formatting Rules | Validator | parameter
--- | -- | -- | --
-string | Must be defined | Removes double whitespaces, leading or trailing whitespaces, and any character which is not alphanumeric or ` ()\-'` | None
-name | Must be defined | Same as string + title case + `parameter` behavior | One or more regexes which are removed from the value when matched (eg. `"parameter": ["\\sCHU"]` will format `This Unit` into `This`)
-regex | Must match the `regex` captured by `parameter` | Same as `string` | A regex which must be matched to pass validation (eg. `"parameter": "^\\d{6}$"` will accept only 6 digit numbers)
-phone | A valid phone number for the specified locality | Auto formatting provided by [libphonenumber](https://github.com/google/libphonenumber) | Two letter country code specifying the locality of phone number (eg. `"parameter": "KE"`)
-none | None | None | None
-gender | A binary gender (eg. `Male`, `Woman`, `M`) | Formats to either `Male` or `Female` | None
+| Type   | Validation Rules                                       | Auto Formatting Rules                                                | Validator                                                                                               | parameter     |
+|--------|--------------------------------------------------------|---------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------|---------------|
+| string | Must be defined                                        | Removes double whitespaces, leading or trailing whitespaces, and any character which is not alphanumeric or ` ()\-'` | None                                                                                                   |
+| name   | Must be defined                                        | Same as string + title case + `parameter` behavior                  | One or more regexes which are removed from the value when matched (eg. `"parameter": ["\\sCHU"]` will format `This Unit` into `This`) |
+| regex  | Must match the `regex` captured by `parameter`         | Same as `string`                                                    | A regex which must be matched to pass validation (eg. `"parameter": "^\\d{6}$"` will accept only 6 digit numbers)     |
+| phone  | A valid phone number for the specified locality       | Auto formatting provided by [libphonenumber](https://github.com/google/libphonenumber)          | Two letter country code specifying the locality of phone number (eg. `"parameter": "KE"`)             |
+| none   | None                                                  | None                                                                | None                                                                                                   |
+| gender | A binary gender (eg. `Male`, `Woman`, `M`)            | Formats to either `Male` or `Female`                                | None                                                                                                   |
 
 ### Deployment
 This tool is available via Docker by running `docker compose up`. Set the [Environment Variables](#environment-variables).

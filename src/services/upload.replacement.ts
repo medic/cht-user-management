@@ -1,8 +1,9 @@
 import { ChtApi, PlacePayload } from '../lib/cht-api';
 import Place from './place';
+import { retryOnUpdateConflict } from '../lib/retry-logic';
 import { Uploader } from './upload-manager';
 
-export class UploadReplacementPlace implements Uploader {
+export class UploadReplacementWithDeletion implements Uploader {
   private readonly chtApi: ChtApi;
 
   constructor(chtApi: ChtApi) {
@@ -21,12 +22,14 @@ export class UploadReplacementPlace implements Uploader {
       throw Error('contactId and placeId are required');
     }
 
-    const updatedPlaceId = await this.chtApi.updatePlace(payload, contactId);
-    const disabledUsers = await this.chtApi.disableUsersWithPlace(placeId);
-    place.creationDetails.disabledUsers = disabledUsers;
+    const updatedPlaceDoc = await retryOnUpdateConflict<any>(() => this.chtApi.updatePlace(payload, contactId));
+    const previousPrimaryContact = updatedPlaceDoc.user_attribution.previousPrimaryContacts?.pop();
+    if (previousPrimaryContact) {
+      await retryOnUpdateConflict<any>(() => this.chtApi.deleteDoc(previousPrimaryContact));
+    }
 
-    // (optional) mute and rename contacts associated to the disabled users
-    return updatedPlaceId;
+    await this.chtApi.disableUsersWithPlace(placeId);
+    return updatedPlaceDoc._id;
   };
 
   linkContactAndPlace = async (place: Place, placeId: string): Promise<void> => {

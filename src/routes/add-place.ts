@@ -25,9 +25,10 @@ export default async function addPlace(fastify: FastifyInstance) {
       hierarchy: Config.getHierarchyWithReplacement(contactType, 'desc'),
       contactType,
       contactTypes,
+      userRoleProperty: Config.getUserRoleConfig(contactType)
     };
 
-    return resp.view('src/public/app/view.html', tmplData);
+    return resp.view('src/liquid/app/view.html', tmplData);
   });
 
   // you want to create a place? replace a contact? you'll have to go through me first
@@ -53,7 +54,7 @@ export default async function addPlace(fastify: FastifyInstance) {
         const csvBuf = await fileData.toBuffer();
         await PlaceFactory.createBulk(csvBuf, contactType, sessionCache, chtApi);
       } catch (error) {
-        return fastify.view('src/public/place/bulk_create_form.html', {
+        return fastify.view('src/liquid/place/bulk_create_form.html', {
           contactType,
           errors: {
             message: error,
@@ -91,10 +92,11 @@ export default async function addPlace(fastify: FastifyInstance) {
       contactTypes: Config.contactTypes(),
       backend: `/place/edit/${id}`,
       data,
+      userRoleProperty: Config.getUserRoleConfig(place.type)
     };
 
     resp.header('HX-Push-Url', `/place/edit/${id}`);
-    return resp.view('src/public/app/view.html', tmplData);
+    return resp.view('src/liquid/app/view.html', tmplData);
   });
 
   fastify.post('/place/edit/:id', async (req, resp) => {
@@ -122,7 +124,7 @@ export default async function addPlace(fastify: FastifyInstance) {
     await RemotePlaceResolver.resolveOne(place, sessionCache, chtApi, { fuzz: true });
     place.validate();
 
-    fastify.uploadManager.refresh(req.sessionCache);
+    fastify.uploadManager.triggerRefresh(place.id);
   });
 
   fastify.post('/place/upload/:id', async (req) => {
@@ -135,14 +137,13 @@ export default async function addPlace(fastify: FastifyInstance) {
 
     const chtApi = new ChtApi(req.chtSession);
     const uploadManager: UploadManager = fastify.uploadManager;
-    await uploadManager.doUpload([place], chtApi);
-    fastify.uploadManager.refresh(req.sessionCache);
+    uploadManager.doUpload([place], chtApi);
   });
 
   fastify.post('/place/remove/:id', async (req) => {
     const { id } = req.params as any;
     const sessionCache: SessionCache = req.sessionCache;
     sessionCache.removePlace(id);
-    fastify.uploadManager.refresh(req.sessionCache);
+    fastify.uploadManager.triggerRefresh(id);
   });
 }

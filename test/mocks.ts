@@ -1,8 +1,10 @@
 import { expect } from 'chai';
-import { ChtApi, ChtSession, RemotePlace } from '../src/lib/cht-api';
+import Sinon from 'sinon';
+
+import { ChtApi, RemotePlace } from '../src/lib/cht-api';
+import ChtSession from '../src/lib/cht-session';
 import { ContactProperty, ContactType } from '../src/lib/config';
 import Place from '../src/services/place';
-import Sinon from 'sinon';
 
 export const mockPlace = (type: ContactType, prop: any) : Place => {
   const result = new Place(type);
@@ -25,12 +27,7 @@ export const mockPlace = (type: ContactType, prop: any) : Place => {
 };
 
 export const mockChtApi: ChtApi = (first: RemotePlace[] = [], second: RemotePlace[] = []) => ({
-  chtSession: {
-    authInfo: {
-      domain: 'domain',
-    },
-    username: 'user',
-  },
+  chtSession: mockChtSession(),
   getPlacesWithType: Sinon.stub().resolves(first).onSecondCall().resolves(second),
 });
 
@@ -45,7 +42,7 @@ export const mockSimpleContactType = (
     name: 'contacttype-name',
     friendly: 'friendly',
     contact_type: 'contact-type',
-    user_role: 'role',
+    user_role: ['role'],
     username_from_place: false,
     hierarchy: [
       {
@@ -67,7 +64,7 @@ export const mockValidContactType = (propertyType, propertyValidator: string | s
   name: 'contacttype-name',
   friendly: 'friendly',
   contact_type: 'contact-type',
-  user_role: 'role',
+  user_role: ['role'],
   username_from_place: false,
   hierarchy: [
     {
@@ -106,15 +103,16 @@ export const mockProperty = (type, parameter: string | string[] | undefined, pro
   required: true
 });
 
-export const mockChtSession = () : ChtSession => ({
-  authInfo: {
-    friendly: 'domian',
+export const mockChtSession = (userFacilityId: string = '*') : ChtSession => new ChtSession(
+  {
+    friendly: 'domain',
     domain: 'domain.com',
     useHttp: true,
   },
-  sessionToken: 'session-token',
-  username: 'username',
-});
+  'session-token',
+  'username',
+  userFacilityId
+);
 
 export function expectInvalidProperties(
   validationErrors: { [key: string]: string } | undefined,

@@ -14,14 +14,14 @@
       "domain": "moh-ug-test.dev.medicmobile.org"
     }
   ],
-
   "contact_types": [
     {
       "name": "health_center",
       "friendly": "VHT Area",
       "contact_type": "person",
-      "user_role": "vht",
+      "user_role": ["vht"],
       "username_from_place": true,
+      "deactivate_users_on_replace": true,
       "hierarchy": [
         {
           "friendly_name": "Health Center",

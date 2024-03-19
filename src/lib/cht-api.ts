@@ -1,17 +1,8 @@
 import _ from 'lodash';
-import axios, { AxiosHeaders } from 'axios';
+import axios from 'axios';
 import { UserPayload } from '../services/user-payload';
-import { AuthenticationInfo, Config, ContactType } from '../config';
-
-const {
-  NODE_ENV
-} = process.env;
-
-export type ChtSession = {
-  authInfo: AuthenticationInfo;
-  sessionToken: string;
-  username: string;
-};
+import { Config, ContactType } from '../config';
+import ChtSession from './cht-session';
 
 export type PlacePayload = {
   name: string;
@@ -48,39 +39,7 @@ export class ChtApi {
   }
 
   public get chtSession(): ChtSession {
-    return { ...this.session };
-  }
-
-  public static async createSession(authInfo: AuthenticationInfo, username : string, password: string): Promise<ChtSession> {
-    const COUCH_AUTH_COOKIE_NAME = 'AuthSession=';
-    const protocol = authInfo.useHttp ? 'http' : 'https';
-    const sessionUrl = `${protocol}://${authInfo.domain}/_session`;
-    const resp = await axios.post(sessionUrl, {
-      name: username,
-      password,
-    }, {
-      auth: {
-        username,
-        password 
-      }
-    });
-    const setCookieHeader = (resp.headers as AxiosHeaders).get('set-cookie') as AxiosHeaders;
-    const sessionToken = setCookieHeader?.[0].split(';')
-      .find((header : string) => header.startsWith(COUCH_AUTH_COOKIE_NAME));
-
-    if (NODE_ENV !== 'production') {
-      if (!sessionToken) {
-        console.log(`failed to login to ${sessionUrl}`);
-      } else {
-        console.log(`successfully logged in to ${sessionUrl}`);
-      }
-    }
-    
-    return {
-      authInfo,
-      username,
-      sessionToken,
-    };
+    return this.session.clone();
   }
 
   // workaround https://github.com/medic/cht-core/issues/8674
@@ -123,31 +82,42 @@ export class ChtApi {
     return resp.data.id;
   };
 
-  updatePlace = async (payload: PlacePayload, contactId: string): Promise<string> => {
+  updatePlace = async (payload: PlacePayload, contactId: string): Promise<any> => {
     const doc: any = await this.getDoc(payload._id);
 
     const payloadClone:any = _.cloneDeep(payload);
     delete payloadClone.contact;
     delete payloadClone.parent;
-    Object.assign(doc, payloadClone, { contact: { _id: contactId }});
 
-    const url = `${this.protocolAndHost}/medic/${payload._id}`;
-    console.log('axios.put', url);
-    const resp = await axios.put(url, doc, this.authorizationOptions());
-    return resp.data.id;
+    const previousPrimaryContact = doc.contact._id;
+    Object.assign(doc, payloadClone, { contact: { _id: contactId }});
+    doc.user_attribution ||= {};
+    doc.user_attribution.previousPrimaryContacts ||= [];
+    doc.user_attribution.previousPrimaryContacts.push(previousPrimaryContact);
+
+    const putUrl = `${this.protocolAndHost}/medic/${payload._id}`;
+    console.log('axios.put', putUrl);
+    const resp = await axios.put(putUrl, doc, this.authorizationOptions());
+    if (!resp.data.ok) {
+      throw Error('response from chtApi.updatePlace was not OK');
+    }
+
+    return doc;
+  };
+
+  deleteDoc = async (docId: string): Promise<void> => {
+    const doc: any = await this.getDoc(docId);
+
+    const deleteContactUrl = `${this.protocolAndHost}/medic/${doc._id}?rev=${doc._rev}`;
+    console.log('axios.delete', deleteContactUrl);
+    const resp = await axios.delete(deleteContactUrl, this.authorizationOptions());
+    if (!resp.data.ok) {
+      throw Error('response from chtApi.deleteDoc was not OK');
+    }
   };
 
   disableUsersWithPlace = async (placeId: string): Promise<string[]> => {
-    const url = `${this.protocolAndHost}/_users/_find`;
-    const payload = {
-      selector: {
-        facility_id: placeId,
-      },
-    };
-
-    console.log('axios.post', url);
-    const resp = await axios.post(url, payload, this.authorizationOptions());
-    const usersToDisable: string[] = resp.data?.docs?.map((d: any) => d._id);
+    const usersToDisable: string[] = await this.getUsersAtPlace(placeId);
     for (const userDocId of usersToDisable) {
       await this.disableUser(userDocId);
     }
@@ -161,10 +131,30 @@ export class ChtApi {
     return axios.delete(url, this.authorizationOptions());
   };
 
+  deactivateUsersWithPlace = async (placeId: string): Promise<string[]> => {
+    const usersToDeactivate: string[] = await this.getUsersAtPlace(placeId);
+    for (const userDocId of usersToDeactivate) {
+      await this.deactivateUser(userDocId);
+    }
+    return usersToDeactivate;
+  };
+
+  deactivateUser = async (docId: string): Promise<void> => {
+    const username = docId.substring('org.couchdb.user:'.length);
+    const url = `${this.protocolAndHost}/api/v1/users/${username}`;
+    console.log('axios.post', url);
+    const deactivationPayload = { roles: ['deactivated' ]};
+    return axios.post(url, deactivationPayload, this.authorizationOptions());
+  };
+
   createUser = async (user: UserPayload): Promise<void> => {
     const url = `${this.protocolAndHost}/api/v1/users`;
     console.log('axios.post', url);
-    await axios.post(url, user, this.authorizationOptions());
+    const axiosRequestionConfig = {
+      ...this.authorizationOptions(),
+      'axios-retry': { retries: 0 }, // upload-manager handles retries for this
+    };
+    await axios.post(url, user, axiosRequestionConfig);
   };
 
   getParentAndSibling = async (parentId: string, contactType: ContactType): Promise<{ parent: any; sibling: any }> => {
@@ -219,6 +209,19 @@ export class ChtApi {
     const resp = await axios.get(url, this.authorizationOptions());
     return resp.data;
   };
+
+  private async getUsersAtPlace(placeId: string): Promise<string[]> {
+    const url = `${this.protocolAndHost}/_users/_find`;
+    const payload = {
+      selector: {
+        facility_id: placeId,
+      },
+    };
+
+    console.log('axios.post', url);
+    const resp = await axios.post(url, payload, this.authorizationOptions());
+    return resp.data?.docs?.map((d: any) => d._id);
+  }
 
   private authorizationOptions(): any {
     return {

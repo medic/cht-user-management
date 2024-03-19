@@ -2,6 +2,7 @@ import { expect } from 'chai';
 
 import { Validation } from '../../src/lib/validation';
 import { mockSimpleContactType, mockPlace } from '../mocks';
+import RemotePlaceResolver from '../../src/lib/remote-place-resolver';
 
 type Scenario = {
   type: string;
@@ -13,10 +14,14 @@ type Scenario = {
   error?: string;
 };
 
+const EMAIL_REGEX = '^[a-zA-Z0-9._+-]+@[a-zA-Z0-9.-]+.[a-zA-Z]{2,}$';
+
 const scenarios: Scenario[] = [
   { type: 'string', prop: 'abc', isValid: true },
   { type: 'string', prop: ' ab\nc', isValid: true, altered: 'abc' },
-  { type: 'string', prop: 'Mr.  Sand(m-a-n)', isValid: true, altered: 'Mr Sand(m-a-n)' },
+  { type: 'string', prop: 'Mr.  Sand(m-a-n)', isValid: true, altered: 'Mr. Sand(m-a-n)' },
+  { type: 'string', prop: 'Université ', isValid: true, altered: 'Université' },
+  { type: 'string', prop: `Infirmière d'Etat`, isValid: true, altered: `Infirmière d'Etat` },
   { type: 'string', prop: '', isValid: false, altered: '', error: 'Required' },
   
   { type: 'phone', prop: '+254712345678', isValid: true, altered: '0712 345678', propertyParameter: 'KE' },
@@ -27,16 +32,20 @@ const scenarios: Scenario[] = [
   { type: 'regex', propertyParameter: '^\\d{6}$', prop: '123456', isValid: true },
   { type: 'regex', propertyParameter: '^\\d{6}$', prop: ' 123456 *&%', isValid: true, altered: '123456' },
   { type: 'regex', propertyParameter: '^\\d{6}$', prop: '1234567', isValid: false, error: 'six digit', propertyErrorDescription: 'six digit number' },
+  { type: 'regex', propertyParameter: EMAIL_REGEX, prop: 'email@address.com', isValid: true, altered: 'email@address.com' },
+  { type: 'regex', propertyParameter: EMAIL_REGEX, prop: '.com', isValid: false, propertyErrorDescription: 'valid email address', error: 'email' },
   { type: 'regex', propertyParameter: undefined, prop: 'abc', isValid: false, error: 'missing parameter' },
   
   { type: 'name', prop: 'abc', isValid: true, altered: 'Abc' },
   { type: 'name', prop: 'a b c', isValid: true, altered: 'A B C' },
+  { type: 'name', prop: 'Mr.  Sand(m-a-n)', isValid: true, altered: 'Mr Sand(m-a-n)' },
   { type: 'name', prop: 'WELDON KO(E)CH \n', isValid: true, altered: 'Weldon Ko(e)ch' },
   { type: 'name', prop: 'S \'am \'s', isValid: true, altered: 'S\'am\'s' },
   { type: 'name', prop: 'KYAMBOO/KALILUNI', isValid: true, altered: 'Kyamboo / Kaliluni' },
   { type: 'name', prop: 'NZATANI / ILALAMBYU', isValid: true, altered: 'Nzatani / Ilalambyu' },
   { type: 'name', prop: 'Sam\'s CHU', propertyParameter: ['CHU', 'Comm Unit'], isValid: true, altered: 'Sam\'s' },
   { type: 'name', prop: 'Jonathan M.Barasa', isValid: true, altered: 'Jonathan M Barasa' },
+  { type: 'name', prop: ' ', isValid: true, altered: '' },
 
   { type: 'dob', prop: '', isValid: false },
   { type: 'dob', prop: '2016/05/25', isValid: false },
@@ -53,7 +62,7 @@ const scenarios: Scenario[] = [
   { type: 'gender', prop: 'X', isValid: false, error: 'male' },
 ];
 
-describe('lib/validation', () => {
+describe('lib/validation.ts', () => {
   for (const scenario of scenarios) {
     it(`scenario: ${JSON.stringify(scenario)}`, () => {
       const contactType = mockSimpleContactType(scenario.type, scenario.propertyParameter, scenario.propertyErrorDescription);
@@ -67,7 +76,7 @@ describe('lib/validation', () => {
       }
 
       const actualAltered = Validation.format(place);
-      expect(actualAltered.properties.prop).to.eq(scenario.altered || scenario.prop);
+      expect(actualAltered.properties.prop).to.eq(scenario.altered ?? scenario.prop);
     });
   }
 
@@ -87,6 +96,20 @@ describe('lib/validation', () => {
     place.hierarchyProperties = { PARENT: 'parent' };
 
     expect(Validation.getValidationErrors(place)).to.be.empty;
+  });
+
+  it('#91 - parent is invalid when required:false but resolution is NoResult', () => {
+    const contactType = mockSimpleContactType('string', undefined);
+    contactType.hierarchy[0].required = false;
+
+    const place = mockPlace(contactType, 'prop');
+    place.resolvedHierarchy[1] = RemotePlaceResolver.NoResult;
+
+    console.log('Validation.getValidationErrors(place)', Validation.getValidationErrors(place));
+    expect(Validation.getValidationErrors(place)).to.deep.eq([{
+      property_name: 'hierarchy_PARENT',
+      description: `Cannot find 'parent' matching 'parent'`,
+    }]);
   });
 
   it('parent is invalid when missing but expected', () => {
@@ -123,6 +146,44 @@ describe('lib/validation', () => {
     expect(validationErrors).to.deep.eq([{
       property_name: 'hierarchy_replacement',
       description: `Cannot find 'contacttype-name' matching 'Sin Bad' under 'Parent'`,
+    }]);
+  });
+
+  it('user_role property empty throws', () => {
+    const contactType = mockSimpleContactType('string', undefined);
+    contactType.user_role = [];
+
+    const place = mockPlace(contactType, 'prop');
+    
+    expect(() => Validation.getValidationErrors(place)).to.throw('unvalidatable');
+  });
+
+  it('user_role property contains empty string throws', () => {
+    const contactType = mockSimpleContactType('string', undefined);
+    contactType.user_role = [''];
+
+    const place = mockPlace(contactType, 'prop');
+    
+    expect(() => Validation.getValidationErrors(place)).to.throw('unvalidatable');
+  });
+
+  it('user role is invalid when not allowed', () => {
+    const contactType = mockSimpleContactType('string', undefined);
+    contactType.user_role = ['supervisor', 'stock_manager'];
+
+    const place = mockPlace(contactType, 'prop');
+
+    const formData = {
+      place_prop: 'abc',
+      contact_prop: 'efg',
+      garbage: 'ghj',
+      user_role: 'supervisor stockmanager',
+    };
+    place.setPropertiesFromFormData(formData);
+
+    expect(Validation.getValidationErrors(place)).to.deep.eq([{
+      property_name: 'user_role',
+      description: `Role 'stockmanager' is not allowed`, 
     }]);
   });
 });
