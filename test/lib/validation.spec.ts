@@ -148,5 +148,43 @@ describe('lib/validation.ts', () => {
       description: `Cannot find 'contacttype-name' matching 'Sin Bad' under 'Parent'`,
     }]);
   });
+
+  it('user_role property empty throws', () => {
+    const contactType = mockSimpleContactType('string', undefined);
+    contactType.user_role = [];
+
+    const place = mockPlace(contactType, 'prop');
+    
+    expect(() => Validation.getValidationErrors(place)).to.throw('unvalidatable');
+  });
+
+  it('user_role property contains empty string throws', () => {
+    const contactType = mockSimpleContactType('string', undefined);
+    contactType.user_role = [''];
+
+    const place = mockPlace(contactType, 'prop');
+    
+    expect(() => Validation.getValidationErrors(place)).to.throw('unvalidatable');
+  });
+
+  it('user role is invalid when not allowed', () => {
+    const contactType = mockSimpleContactType('string', undefined);
+    contactType.user_role = ['supervisor', 'stock_manager'];
+
+    const place = mockPlace(contactType, 'prop');
+
+    const formData = {
+      place_prop: 'abc',
+      contact_prop: 'efg',
+      garbage: 'ghj',
+      user_role: 'supervisor stockmanager',
+    };
+    place.setPropertiesFromFormData(formData);
+
+    expect(Validation.getValidationErrors(place)).to.deep.eq([{
+      property_name: 'user_role',
+      description: `Role 'stockmanager' is not allowed`, 
+    }]);
+  });
 });
 

@@ -18,6 +18,9 @@
             {% for contact_property in contactType.contact_properties %}
               <th id="contact_{{contact_property.property_name}}">{{contact_property.friendly_name}}</th>
             {% endfor %}
+            {% if contactType.user_role.size > 1 %}
+              <th id="{{userRoleProperty.property_name}}">{{ contactType.userRoleProperty.friendly_name }}</th>
+            {% endif %}
             <th></th>
             <th></th>
           </tr>
@@ -56,6 +59,16 @@
                   values=place.contact.properties
               %}
             {% endfor %}
+
+            {% if contactType.user_role.size > 1 %}
+              {% capture propertyName %}user_{{ contactType.userRoleProperty.property_name }}{% endcapture %}
+              {%
+                include "components/list_cell.html"
+                  propertyName=propertyName
+                  property=contactType.userRoleProperty
+                  values=place.userRoleProperties
+              %}
+            {% endif %}
 
             <td>
               {% capture tag_text %}{% if place.validationErrors == empty %}{{ place.state }}{% else %}INVALID{% endif %}{% endcapture %}
