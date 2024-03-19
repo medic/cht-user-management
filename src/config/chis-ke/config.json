@@ -314,8 +314,8 @@
         {
           "friendly_name": "CHP Area Name",
           "property_name": "name",
-          "type": "name",
-          "parameter": ["\\sArea"],
+          "type": "generated",
+          "parameter": "{{ contact.name }} Area",
           "required": true
         }
       ],

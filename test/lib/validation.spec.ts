@@ -75,8 +75,8 @@ describe('lib/validation.ts', () => {
         expect(actualValidity?.[0].description).to.include(scenario.error);
       }
 
-      const actualAltered = Validation.format(place);
-      expect(actualAltered.properties.prop).to.eq(scenario.altered ?? scenario.prop);
+      Validation.format(place);
+      expect(place.properties.prop).to.eq(scenario.altered ?? scenario.prop);
     });
   }
 

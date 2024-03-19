@@ -131,7 +131,7 @@ describe('services/place-factory.ts', () => {
       'contact.properties.name': 'Sally',
       'contact.properties.phone': '0712 345678',
       creationDetails: {},
-      'properties.name': 'Sally',
+      'properties.name': 'Sally Area',
       'hierarchyProperties.CHU': 'Chepalungu',
       resolvedHierarchy: [
         {

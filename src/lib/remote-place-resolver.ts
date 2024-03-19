@@ -42,7 +42,7 @@ export default class RemotePlaceResolver {
         continue;
       }
       
-      const fuzzFunction = getFuzzFunction(hierarchyLevel, place.type);
+      const fuzzFunction = getFuzzFunction(place, hierarchyLevel, place.type);
       const mapIdToDetails = {};
       if (hierarchyLevel.level > 0) { // no replacing local places
         const searchKeys = getSearchKeys(place, hierarchyLevel.property_name, fuzzFunction, false);
@@ -109,13 +109,13 @@ export default class RemotePlaceResolver {
   };
 }
 
-function getFuzzFunction(hierarchyLevel: HierarchyConstraint, contactType: ContactType) {
+function getFuzzFunction(place: Place, hierarchyLevel: HierarchyConstraint, contactType: ContactType) {
   if (hierarchyLevel.level === 0) {
     const nameProperty = Config.getPropertyWithName(contactType.place_properties, 'name');
-    return (val: string) => Validation.formatSingle(nameProperty, val);
+    return (val: string) => Validation.formatSingle(place, nameProperty, val);
   }
   
-  return (val: string) => Validation.formatSingle(hierarchyLevel, val);
+  return (val: string) => Validation.formatSingle(place, hierarchyLevel, val);
 }
 
 async function findRemotePlacesInHierarchy(

@@ -43,7 +43,7 @@
           "friendly_name": "VHT Area Name",
           "property_name": "name",
           "type": "name",
-          "parameter": ["\\sArea", "\\s\\(.*\\)"],
+          "parameter": "{{ contact.name }} Area ({{ place.village }})",
           "required": true
         },
 
