@@ -2,7 +2,7 @@ cht-user-management:
   image:
     tag: 1.1.6
   env:
-    CONFIG_NAME: chis-ug
+    CONFIG_NAME: chis-tg
 
   # EKS prod ELB
   ingress:
@@ -19,7 +19,7 @@ cht-user-management:
 
     className: alb
     hosts:
-      - host: users-chis-ug.app.medicmobile.org
+      - host: users-chis-tg.app.medicmobile.org
         paths:
           - path: /
             pathType: Prefix
