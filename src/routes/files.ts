@@ -1,4 +1,3 @@
-import _ from 'lodash';
 import { FastifyInstance } from 'fastify';
 import { stringify } from 'csv/sync';
 import { Config } from '../config';
