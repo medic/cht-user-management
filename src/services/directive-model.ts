@@ -33,8 +33,6 @@ export default class DirectiveModel {
 
     this.filter = this.stringToDirectiveFilter(filterCookie);
     this.hiddenCount = this.totalCount - sessionCache.getPlaces({ filter: this.filter }).length;
-    
-    console.log('FILTER IS!!!!!!!!', filterCookie, this.filter, this.hiddenCount);
   }
 
   private stringToDirectiveFilter(filterString: string | undefined): DirectiveFilter {
