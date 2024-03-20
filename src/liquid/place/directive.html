@@ -23,18 +23,16 @@
           <li>
             {% include "components/filter_tag.html"
               class="is-info"
-              filterName="stage"
+              filterName="staged"
               count=directiveModel.stagedCount
-              description="staged"
             %}
           </li>
 
           <li>
             {% include "components/filter_tag.html"
               class="is-warning"
-              filterName="validation"
+              filterName="invalid"
               count=directiveModel.validationErrorCount
-              description="validation errors"
             %}
           </li>
 
@@ -42,17 +40,15 @@
             {% include "components/filter_tag.html"
               class="is-success"
               filterName="success"
-              count=directiveModel.completeCount
-              description="uploaded"
+              count=directiveModel.successCount
             %}
           </li>
 
           <li>
             {% include "components/filter_tag.html"
               class="is-danger"
-              filterName="fail"
+              filterName="failure"
               count=directiveModel.failureCount
-              description="failures"
             %}
           </li>
         </ul>

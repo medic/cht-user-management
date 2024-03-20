@@ -1,7 +1,7 @@
 import { PlaceUploadState } from './place';
 import SessionCache from './session-cache';
 
-const PlaceFilterCookieValues = ['stage', 'validation', 'success', 'fail', undefined] as const;
+const PlaceFilterCookieValues = ['staged', 'invalid', 'success', 'failure', undefined] as const;
 export type DirectiveFilter = typeof PlaceFilterCookieValues[number]; 
 
 export default class DirectiveModel {
@@ -19,15 +19,15 @@ export default class DirectiveModel {
 
   constructor(sessionCache: SessionCache, filterCookie?: string) {
     this.successCount = sessionCache.getPlaces({ filter: 'success' }).length;
-    this.failureCount = sessionCache.getPlaces({ filter: 'fail' }).length;
-    this.validationErrorCount = sessionCache.getPlaces({ filter: 'validation' }).length;
+    this.failureCount = sessionCache.getPlaces({ filter: 'failure' }).length;
+    this.validationErrorCount = sessionCache.getPlaces({ filter: 'invalid' }).length;
 
     const inProgressStates = [PlaceUploadState.IN_PROGRESS, PlaceUploadState.SCHEDULED];
     this.inProgressCount = sessionCache.getPlaces().filter(r => inProgressStates.includes(r.state)).length;
     this.totalCount = sessionCache.getPlaces().length;
     
     this.completeCount = this.successCount + this.failureCount;
-    this.stagedCount = sessionCache.getPlaces({ filter: 'stage' }).length;
+    this.stagedCount = sessionCache.getPlaces({ filter: 'staged' }).length;
     const percentage = this.stagedCount > 0 ? this.completeCount / this.totalCount : 0;
     this.percent = Math.round(percentage * 100.0) + '%';
 

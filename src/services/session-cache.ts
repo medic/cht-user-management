@@ -68,9 +68,9 @@ function getFilterFunction(directiveFilter: DirectiveFilter) {
 
   const filterFuncs = {
     success: (place: Place) => place.state === PlaceUploadState.SUCCESS,
-    fail: (place: Place) => place.state === PlaceUploadState.FAILURE,
-    validation: (place: Place) => place.hasValidationErrors,
-    stage: (place: Place) => !place.hasValidationErrors && ![PlaceUploadState.SUCCESS, PlaceUploadState.FAILURE].includes(place.state),
+    failure: (place: Place) => place.state === PlaceUploadState.FAILURE,
+    invalid: (place: Place) => place.hasValidationErrors,
+    staged: (place: Place) => !place.hasValidationErrors && ![PlaceUploadState.SUCCESS, PlaceUploadState.FAILURE].includes(place.state),
   };
   return filterFuncs[directiveFilter];
 }

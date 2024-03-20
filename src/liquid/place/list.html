@@ -79,13 +79,16 @@
             {% endif %}
 
             <td>
-              {% capture tag_text %}{% if place.validationErrors == empty %}{{ place.state }}{% else %}INVALID{% endif %}{% endcapture %}
+              {% capture tag_text %}{% if place.validationErrors == empty %}{{ place.state }}{% else %}invalid{% endif %}{% endcapture %}
               {% capture tag_class %}
-                {% if place.state == 'failure' or place.validationErrors != empty %}is-danger{% endif %}
+                {% if place.state == 'failure' %}is-danger
+                {% elsif place.state == 'success' %}is-success
+                {% elsif place.validationErrors != empty %}is-warning
+                {% endif %}
                 {% if place.uploadError %}has-tooltip-arrow has-tooltipl-multiline{% endif %}
               {% endcapture %}
               <span
-                class="tag is-info is-light {{ tag_class }}"
+                class="tag is-info {{ tag_class }}"
                 {% if place.uploadError %}data-tooltip="{{ place.uploadError | escape }}"{% endif %}
               >
                 {{ tag_text }}
