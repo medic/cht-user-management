@@ -24,6 +24,7 @@ export default async function sessionCache(fastify: FastifyInstance) {
         ...item,
         places: sessionCache.getPlaces({ type: item.name }),
         hierarchy: Config.getHierarchyWithReplacement(item, 'desc'),
+        userRoleProperty: Config.getUserRoleConfig(item),
       };
     });
 

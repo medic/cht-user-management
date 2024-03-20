@@ -208,10 +208,16 @@ export class ChtApi {
   };
 
   private async getUsersAtPlace(placeId: string): Promise<string[]> {
-    const url = `_users/_find`;
+    // #76 mm-online users cant query _users db after core4.4
+    const url = `medic/_find`;
     const payload = {
       selector: {
+        type: 'user-settings',
         facility_id: placeId,
+        $or: [
+          { inactive: false },
+          { inactive: { $exists: false } }
+        ]
       },
     };
 
