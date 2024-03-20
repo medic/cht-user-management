@@ -43,8 +43,8 @@ const TypeValidatorMap: ValidatorMap = {
   none: new ValidatorSkip(),
   phone: new ValidatorPhone(),
   regex: new ValidatorRegex(),
-  string: new ValidatorString(),
   select_role: new ValidatorRole(),
+  string: new ValidatorString(),
 };
 
 export class Validation {
@@ -61,8 +61,25 @@ export class Validation {
   }
 
   public static format(place: Place): void {
-    Validation.formattingPass(place, false);
-    Validation.formattingPass(place, true);
+    const doFormatting = (withGenerators: boolean) => {
+      const isGenerator = (property: ContactProperty) => property.type === 'generated';
+      const alterAllProperties = (propertiesToAlter: ContactProperty[], objectToAlter: any) => {
+        for (const property of propertiesToAlter) {
+          if (isGenerator(property) === withGenerators) {
+            this.alterProperty(place, property, objectToAlter);
+          }
+        }
+      };
+
+      alterAllProperties(place.type.contact_properties, place.contact.properties);
+      alterAllProperties(place.type.place_properties, place.properties);
+      for (const hierarchy of Config.getHierarchyWithReplacement(place.type)) {
+        this.alterProperty(place, hierarchy, place.hierarchyProperties);
+      }
+    };
+
+    doFormatting(false);
+    doFormatting(true);
   }
 
   public static formatSingle(place: Place, propertyMatch: ContactProperty, val: string): string {
@@ -156,23 +173,6 @@ export class Validation {
     } else if (value) {
       const altered = validator.format(value, property);
       obj[property.property_name] = altered;
-    }
-  }
-
-  private static formattingPass(place: Place, formatGenerators: boolean) {
-    const isGenerator = (property: ContactProperty) => property.type === 'generated';
-    const alterAllProperties = (propertiesToAlter: ContactProperty[], objectToAlter: any) => {
-      for (const property of propertiesToAlter) {
-        if (isGenerator(property) === formatGenerators) {
-          this.alterProperty(place, property, objectToAlter);
-        }
-      }
-    };
-
-    alterAllProperties(place.type.contact_properties, place.contact.properties);
-    alterAllProperties(place.type.place_properties, place.properties);
-    for (const hierarchy of Config.getHierarchyWithReplacement(place.type)) {
-      this.alterProperty(place, hierarchy, place.hierarchyProperties);
     }
   }
 
