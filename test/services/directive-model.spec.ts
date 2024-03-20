@@ -33,7 +33,7 @@ describe('services/directive-model.ts', () => {
     });
   });
 
-  it('with filter place with each state', () => {
+  it('success filter yields hidden count', () => {
     const sessionCache = new SessionCache();
     sessionCache.savePlaces(...oneOfEachTypePlace);
 
