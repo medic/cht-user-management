@@ -1,8 +1,9 @@
 import { FastifyInstance } from 'fastify';
 
+import Auth from '../lib/authentication';
 import { ChtApi } from '../lib/cht-api';
 import { Config } from '../config';
-import ProgressModel from '../services/progress-model';
+import DirectiveModel from '../services/directive-model';
 import RemotePlaceCache from '../lib/remote-place-cache';
 import RemotePlaceResolver from '../lib/remote-place-resolver';
 import SessionCache from '../services/session-cache';
@@ -17,12 +18,15 @@ export default async function sessionCache(fastify: FastifyInstance) {
     } = req.query as any;
 
     const contactType = Config.getContactType(placeTypeName);
-
     const sessionCache: SessionCache = req.sessionCache;
+    const directiveModel = new DirectiveModel(sessionCache, req.cookies['filter']);
     const placeData = contactTypes.map((item) => {
       return {
         ...item,
-        places: sessionCache.getPlaces({ type: item.name }),
+        places: sessionCache.getPlaces({
+          type: item.name,
+          filter: directiveModel.filter,
+        }),
         hierarchy: Config.getHierarchyWithReplacement(item, 'desc'),
         userRoleProperty: Config.getUserRoleConfig(item),
       };
@@ -35,7 +39,7 @@ export default async function sessionCache(fastify: FastifyInstance) {
       op,
       contactType,
       contactTypes: placeData,
-      progress: new ProgressModel(sessionCache),
+      directiveModel,
     };
 
     return resp.view('src/liquid/app/view.html', tmplData);
@@ -67,5 +71,21 @@ export default async function sessionCache(fastify: FastifyInstance) {
 
     const chtApi = new ChtApi(req.chtSession);
     uploadManager.doUpload(sessionCache.getPlaces(), chtApi);
+  });
+
+  fastify.post('/app/set-filter/:filter', async (req, resp) => {
+    const uploadManager: UploadManager = fastify.uploadManager;
+
+    const params: any = req.params;
+    const filter = params.filter;
+    resp.setCookie('filter', filter, {
+      signed: false,
+      httpOnly: true,
+      expires: Auth.cookieExpiry(),
+      path: '/',
+      secure: true,
+    });
+
+    uploadManager.triggerRefresh(undefined);
   });
 }
