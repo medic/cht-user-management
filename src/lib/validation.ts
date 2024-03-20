@@ -115,7 +115,7 @@ export class Validation {
     for (const property of properties) {
       const value = obj[property.property_name];
 
-      const isRequired = requiredProperties.some((prop) => _.isEqual(prop, property))
+      const isRequired = requiredProperties.some((prop) => _.isEqual(prop, property));
       if (value || isRequired) {
         const isValid = Validation.isValid(property, value);
         if (isValid === false || typeof isValid === 'string') {
