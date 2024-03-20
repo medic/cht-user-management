@@ -69,7 +69,7 @@ The `ConfigPropertyType` defines a property's validation rules and auto-formatti
 | phone     | A valid phone number for the specified locality        | Auto formatting provided by [libphonenumber](https://github.com/google/libphonenumber)          | Two letter country code specifying the locality of phone number (eg. `"parameter": "KE"`)             |
 | none      | None                                                   | None                                                                | None                                                                                                   |
 | gender    | A binary gender (eg. `Male`, `Woman`, `M`)             | Formats to either `Male` or `Female`                                | None                                                                                                   |
-| generated | None. No user inputs.                                  | Uses [LiquidJS](https://liquidjs.com) templates to generate data    | None                                                                                                   | [Details](#TheGeneratedConfigPropertyType)
+| generated | None. No user inputs.                                  | Uses [LiquidJS](https://liquidjs.com) templates to generate data    | None                                                                                                   | [Details](#The-Generated-ConfigPropertyType)
 
 #### The Generated ConfigPropertyType
 ContactProperties with `type: "generated"` use the [LiquidJS](https://liquidjs.com) template engine to populate a property with data. Here is an example of some configuration properties which use `"type": "generated"`:
