@@ -7,7 +7,7 @@ import SessionCache from './session-cache';
 import RemotePlaceResolver from '../lib/remote-place-resolver';
 
 export default class PlaceFactory {
-  public static async createBulk(csvBuffer: Buffer, contactType: ContactType, sessionCache: SessionCache, chtApi: ChtApi)
+  public static async createFromCsv(csvBuffer: Buffer, contactType: ContactType, sessionCache: SessionCache, chtApi: ChtApi)
     : Promise<Place[]> {
     const places = await PlaceFactory.loadPlacesFromCsv(csvBuffer, contactType);
     const validateAll = () => places.forEach(p => p.validate());

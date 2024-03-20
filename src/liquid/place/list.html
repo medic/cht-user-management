@@ -13,10 +13,14 @@
               <th id="hierarchy_{{ hierarchy.property_name }}">{{ hierarchy.friendly_name }}</th>
             {% endfor %}
             {% for property in contactType.place_properties %}
-              <th id="place_{{property.property_name}}">{{property.friendly_name}}</th>
+              {% if property.type != 'generated' %}
+                <th id="place_{{property.property_name}}">{{property.friendly_name}}</th>
+              {% endif %}
             {% endfor %}
             {% for contact_property in contactType.contact_properties %}
-              <th id="contact_{{contact_property.property_name}}">{{contact_property.friendly_name}}</th>
+              {% if property.type != 'generated' %}
+                <th id="contact_{{contact_property.property_name}}">{{contact_property.friendly_name}}</th>
+              {% endif %}
             {% endfor %}
             {% if contactType.user_role.size > 1 %}
               <th id="{{userRoleProperty.property_name}}">{{ contactType.userRoleProperty.friendly_name }}</th>
@@ -40,24 +44,28 @@
             {% endfor %}
 
             {% for property in contactType.place_properties %}
-              {% capture propertyName %}place_{{ property.property_name }}{% endcapture %}
+              {% if property.type != 'generated' %}
+                {% capture propertyName %}place_{{ property.property_name }}{% endcapture %}
 
-              {%
-                include "components/list_cell.html"
-                  propertyName=propertyName
-                  property=property
-                  values=place.properties
-              %}
+                {%
+                  include "components/list_cell.html"
+                    propertyName=propertyName
+                    property=property
+                    values=place.properties
+                %}
+              {% endif %}
             {% endfor %}
           
             {% for contact_property in contactType.contact_properties %}
-              {% capture propertyName %}contact_{{ contact_property.property_name }}{% endcapture %}
-              {%
-                include "components/list_cell.html"
-                  propertyName=propertyName
-                  property=contact_property
-                  values=place.contact.properties
-              %}
+              {% if property.type != 'generated' %}
+                {% capture propertyName %}contact_{{ contact_property.property_name }}{% endcapture %}
+                {%
+                  include "components/list_cell.html"
+                    propertyName=propertyName
+                    property=contact_property
+                    values=place.contact.properties
+                %}
+              {% endif %}
             {% endfor %}
 
             {% if contactType.user_role.size > 1 %}

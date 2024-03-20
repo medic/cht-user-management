@@ -60,6 +60,10 @@ const scenarios: Scenario[] = [
   { type: 'gender', prop: 'Female', isValid: true, altered: 'female' },
   { type: 'gender', prop: 'Woman', isValid: true, altered: 'female' },
   { type: 'gender', prop: 'X', isValid: false, error: 'male' },
+
+  { type: 'generated', prop: 'b', propertyParameter: 'a {{ place.prop }} c', isValid: true, altered: 'a b c' },
+  { type: 'generated', prop: 'b', propertyParameter: '{{ contact.name }} ({{ lineage.PARENT }})', isValid: true, altered: 'contact (Parent)' },
+  { type: 'generated', prop: 'b', propertyParameter: 'x {{ contact.dne }}', isValid: true, altered: 'x ' },
 ];
 
 describe('lib/validation.ts', () => {
@@ -75,8 +79,8 @@ describe('lib/validation.ts', () => {
         expect(actualValidity?.[0].description).to.include(scenario.error);
       }
 
-      const actualAltered = Validation.format(place);
-      expect(actualAltered.properties.prop).to.eq(scenario.altered ?? scenario.prop);
+      Validation.format(place);
+      expect(place.properties.prop).to.eq(scenario.altered ?? scenario.prop);
     });
   }
 

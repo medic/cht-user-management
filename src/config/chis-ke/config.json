@@ -228,6 +228,7 @@
         "friendly_name": "Affected CHU",
         "property_name": "replacement",
         "type": "name",
+        "parameter": ["\\sCommunity Health Unit", "\\sCommunity Unit", "\\sUnit", "\\sCU", "\\sCHU"],
         "required": true
       },
       "place_properties": [
@@ -266,7 +267,7 @@
           "friendly_name": "CHA Name",
           "property_name": "name",
           "type": "name",
-          "parameter": ["\\(PHO\\)", "\\(CHA\\)"],
+          "parameter": ["\\(\\s*PHO\\s*\\)", "\\(\\s*CHA\\s*\\)"],
           "required": true
         },
         {
@@ -314,8 +315,8 @@
         {
           "friendly_name": "CHP Area Name",
           "property_name": "name",
-          "type": "name",
-          "parameter": ["\\sArea"],
+          "type": "generated",
+          "parameter": "{{ contact.name }} Area",
           "required": true
         }
       ],
