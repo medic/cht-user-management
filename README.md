@@ -72,7 +72,7 @@ The `ConfigPropertyType` defines a property's validation rules and auto-formatti
 | generated | None. No user inputs.                                  | Uses [LiquidJS](https://liquidjs.com) templates to generate data    | None                                                                                                   | [Details](#TheGeneratedConfigPropertyType)
 
 #### The Generated ConfigPropertyType
-ContactProperties with `type: "generated"` use the [LiquidJS](https://liquidjs.com) template to populate the property's data. Here is an example of some configuration properties. The user will be prompted to input the contact's name (CHP Name), but the user is _not_ prompted to input the place's name (CHP Area Name).  The place's name will automatically be assigned a value. If the user puts `John` as the contact's name, then the place will be called `John's Area`.
+ContactProperties with `type: "generated"` use the [LiquidJS](https://liquidjs.com) template engine to populate a property with data. Here is an example of some configuration properties which use `"type": "generated"`:
 
 ```json
 {
@@ -96,13 +96,15 @@ ContactProperties with `type: "generated"` use the [LiquidJS](https://liquidjs.c
 }
 ```
 
+The user will be prompted to input the contact's name (CHP Name). The user is _not_ prompted to input the place's name (CHP Area Name) because the place's name will automatically be assigned a value.  In this example, if the user puts `john` as the contact's name, then the place will be named `John's Area`.
+
 The data that is passed to the template is consistent with the properties defined in your configuration.
 
 Variable | Value
 -- | --
-place | Properties are the `place_properties.property_name` values from configuration
-contact | Properties are the `contact_properties.property_name` values from configuration
-lineage | Properties are the `hierarchy.property_name` values from configuration
+place | Has the attributes from `place_properties.property_name` 
+contact | Has the attributes from `contact_properties.property_name`
+lineage | Has the attributes from `hierarchy.property_name` 
 
 ### Deployment
 This tool is available via Docker by running `docker compose up`. Set the [Environment Variables](#environment-variables).
