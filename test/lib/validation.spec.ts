@@ -2,6 +2,7 @@ import { expect } from 'chai';
 
 import { Validation } from '../../src/lib/validation';
 import { mockSimpleContactType, mockPlace } from '../mocks';
+import RemotePlaceResolver from '../../src/lib/remote-place-resolver';
 
 type Scenario = {
   type: string;
@@ -97,6 +98,20 @@ describe('lib/validation.ts', () => {
     expect(Validation.getValidationErrors(place)).to.be.empty;
   });
 
+  it('#91 - parent is invalid when required:false but resolution is NoResult', () => {
+    const contactType = mockSimpleContactType('string', undefined);
+    contactType.hierarchy[0].required = false;
+
+    const place = mockPlace(contactType, 'prop');
+    place.resolvedHierarchy[1] = RemotePlaceResolver.NoResult;
+
+    console.log('Validation.getValidationErrors(place)', Validation.getValidationErrors(place));
+    expect(Validation.getValidationErrors(place)).to.deep.eq([{
+      property_name: 'hierarchy_PARENT',
+      description: `Cannot find 'parent' matching 'parent'`,
+    }]);
+  });
+
   it('parent is invalid when missing but expected', () => {
     const contactType = mockSimpleContactType('string', undefined);
     const place = mockPlace(contactType, 'prop');
@@ -131,6 +146,44 @@ describe('lib/validation.ts', () => {
     expect(validationErrors).to.deep.eq([{
       property_name: 'hierarchy_replacement',
       description: `Cannot find 'contacttype-name' matching 'Sin Bad' under 'Parent'`,
+    }]);
+  });
+
+  it('user_role property empty throws', () => {
+    const contactType = mockSimpleContactType('string', undefined);
+    contactType.user_role = [];
+
+    const place = mockPlace(contactType, 'prop');
+    
+    expect(() => Validation.getValidationErrors(place)).to.throw('unvalidatable');
+  });
+
+  it('user_role property contains empty string throws', () => {
+    const contactType = mockSimpleContactType('string', undefined);
+    contactType.user_role = [''];
+
+    const place = mockPlace(contactType, 'prop');
+    
+    expect(() => Validation.getValidationErrors(place)).to.throw('unvalidatable');
+  });
+
+  it('user role is invalid when not allowed', () => {
+    const contactType = mockSimpleContactType('string', undefined);
+    contactType.user_role = ['supervisor', 'stock_manager'];
+
+    const place = mockPlace(contactType, 'prop');
+
+    const formData = {
+      place_prop: 'abc',
+      contact_prop: 'efg',
+      garbage: 'ghj',
+      user_role: 'supervisor stockmanager',
+    };
+    place.setPropertiesFromFormData(formData);
+
+    expect(Validation.getValidationErrors(place)).to.deep.eq([{
+      property_name: 'user_role',
+      description: `Role 'stockmanager' is not allowed`, 
     }]);
   });
 });

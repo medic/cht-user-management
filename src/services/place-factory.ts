@@ -70,6 +70,14 @@ export default class PlaceFactory {
           const columnIndex = csvColumns.indexOf(hierarchyConstraint.friendly_name);
           place.hierarchyProperties[hierarchyConstraint.property_name] = row[columnIndex];
         }
+
+        if (Config.hasMultipleRoles(contactType)) {
+          const userRoleProperty = Config.getUserRoleConfig(contactType);
+          place.userRoleProperties[userRoleProperty.property_name] = row[
+            csvColumns.indexOf(userRoleProperty.friendly_name)
+          ];
+        }
+        
         places.push(place);
       }
       count++;

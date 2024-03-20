@@ -1,0 +1,17 @@
+{% capture prop_name %}{{ include.prefix }}{{include.prop.property_name}}{% endcapture %}
+<div class="field">
+  <label class="label">
+    {{include.prop.friendly_name}}
+  </label>
+  <div class="control">
+    <div class="select is-multiple is-nomal">
+      <select name="{{ prop_name }}" multiple >
+        {% for option in include.prop.parameter %}
+          <option value="{{ option }}" {% if data[prop_name] and data[prop_name] contains option %}selected{% endif %}>
+            {{ option }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+  </div>
+</div>

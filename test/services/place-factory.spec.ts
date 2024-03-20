@@ -3,13 +3,14 @@ import fs from 'fs';
 import { expect } from 'chai';
 import sinon from 'sinon';
 
-import PlaceFactory from '../../src/services/place-factory';
-import SessionCache from '../../src/services/session-cache';
-import { RemotePlace } from '../../src/lib/cht-api';
 import { expectInvalidProperties, mockChtSession, mockParentPlace, mockProperty, mockValidContactType } from '../mocks';
-import Place from '../../src/services/place';
 import { Config } from '../../src/config';
+import Place from '../../src/services/place';
+import PlaceFactory from '../../src/services/place-factory';
+import { RemotePlace } from '../../src/lib/cht-api';
 import RemotePlaceCache from '../../src/lib/remote-place-cache';
+import RemotePlaceResolver from '../../src/lib/remote-place-resolver';
+import SessionCache from '../../src/services/session-cache';
 
 describe('services/place-factory.ts', () => {
   beforeEach(() => {
@@ -236,6 +237,51 @@ describe('services/place-factory.ts', () => {
     expect(place.resolvedHierarchy).to.deep.eq([undefined, remotePlace, grandParent]);
   });
 
+  it('#91 - no result for optional level in hierarchy causes validation error', async () => {
+    const { remotePlace, sessionCache, contactType, fakeFormData, chtApi } = mockScenario();
+    
+    const grandParent: RemotePlace = {
+      id: 'id-grandparent',
+      name: 'grand-parent',
+      type: 'remote',
+      lineage: [],
+    };
+    remotePlace.lineage = [grandParent.id];
+    fakeFormData.hierarchy_GRANDPARENT = 'no match';
+
+    chtApi.getPlacesWithType
+      .resolves([grandParent])
+      .onSecondCall().resolves([remotePlace]);
+
+    const place: Place = await PlaceFactory.createOne(fakeFormData, contactType, sessionCache, chtApi);
+    expect(place.resolvedHierarchy[2]).to.eq(RemotePlaceResolver.NoResult);
+    expectInvalidProperties(place.validationErrors, ['hierarchy_PARENT', 'hierarchy_GRANDPARENT'], 'Cannot find');
+  });
+
+  it('hierarchy resolution can be resolved by editing to blank', async () => {
+    const { remotePlace, sessionCache, contactType, fakeFormData, chtApi } = mockScenario();
+    
+    const grandParent: RemotePlace = {
+      id: 'id-grandparent',
+      name: 'grand-parent',
+      type: 'remote',
+      lineage: [],
+    };
+    remotePlace.lineage = [grandParent.id];
+    fakeFormData.hierarchy_GRANDPARENT = 'no match';
+
+    chtApi.getPlacesWithType
+      .resolves([grandParent])
+      .onSecondCall().resolves([remotePlace]);
+
+    const place: Place = await PlaceFactory.createOne(fakeFormData, contactType, sessionCache, chtApi);
+    expectInvalidProperties(place.validationErrors, ['hierarchy_PARENT', 'hierarchy_GRANDPARENT'], 'Cannot find');
+
+    fakeFormData.hierarchy_GRANDPARENT = '';
+    const edited = await PlaceFactory.editOne(place.id, fakeFormData, sessionCache, chtApi);
+    expect(edited.validationErrors).to.be.empty;
+  });
+
   it('ambiguous parent disambiguated by greatgrandparent', async () => {
     const { remotePlace, sessionCache, contactType, fakeFormData, chtApi } = mockScenario();
     
@@ -314,7 +360,7 @@ describe('services/place-factory.ts', () => {
     const place: Place = await PlaceFactory.createOne(fakeFormData, contactType, sessionCache, chtApi);
     expectInvalidProperties(place.validationErrors, ['hierarchy_replacement'], 'Cannot find');
     expect(place.resolvedHierarchy[1]?.id).to.eq('parent-id');
-    expect(place.resolvedHierarchy[0]).to.be.undefined;
+    expect(place.resolvedHierarchy[0]).to.eq(RemotePlaceResolver.NoResult);
   });
   
   it('place not under users facility is invalid', async () => {
