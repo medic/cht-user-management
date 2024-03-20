@@ -14,12 +14,6 @@ import ValidatorSkip from './validator-skip';
 import ValidatorString from './validator-string';
 import ValidatorRole from './validator-role';
 
-type GeneratorScope = {
-  place: any;
-  contact: any;
-  lineage: any;
-};
-
 export type ValidationError = {
   property_name: string;
   description: string;
@@ -163,12 +157,7 @@ export class Validation {
     const value = obj[property.property_name];
     const validator = this.getValidator(property);
     if (validator instanceof ValidatorGenerated) {
-      const generationScope: GeneratorScope = {
-        place: place.properties,
-        contact: place.contact.properties,
-        lineage: place.hierarchyProperties,
-      };
-      const altered = validator.format(generationScope, property);
+      const altered = validator.format(place, property);
       obj[property.property_name] = altered;
     } else if (value) {
       const altered = validator.format(value, property);

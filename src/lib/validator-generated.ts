@@ -1,10 +1,17 @@
 import { Liquid } from 'liquidjs';
 import { IValidator } from './validation';
 import { ContactProperty } from '../config';
+import Place from '../services/place';
 
 const engine = new Liquid({
-  strictVariables: true,
+  strictVariables: false,
 });
+
+type GeneratorScope = {
+  place: any;
+  contact: any;
+  lineage: any;
+};
 
 export default class ValidatorGenerated implements IValidator {
   isValid(input: string, property : ContactProperty) : boolean | string {
@@ -12,9 +19,20 @@ export default class ValidatorGenerated implements IValidator {
     return engine.parse(parameter)?.length > 0;
   }
 
-  format(scope : any, property : ContactProperty) : string {
+  format(input : any, property : ContactProperty) : string {
+    if (!(input instanceof Place)) {
+      throw Error('invalid program. ValidatorGenerated should be passed a Place');
+    }
+
+    const place:Place = input;
+    const generationScope: GeneratorScope = {
+      place: place.properties,
+      contact: place.contact.properties,
+      lineage: place.hierarchyProperties,
+    };
+
     const parameter = this.getParameter(property);
-    return engine.parseAndRenderSync(parameter, scope);
+    return engine.parseAndRenderSync(parameter, generationScope);
   }
 
   get defaultError(): string {
