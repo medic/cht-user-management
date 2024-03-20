@@ -9,7 +9,7 @@ export default async function events(fastify: FastifyInstance) {
   fastify.get('/events/places/all', async (req, resp) => {
     const sessionCache: SessionCache = req.sessionCache;
     const contactTypes = Config.contactTypes();
-    const directiveModel = new DirectiveModel(sessionCache, req.cookies['filter']);
+    const directiveModel = new DirectiveModel(sessionCache, req.cookies.filter);
     const placeData = contactTypes.map(item => ({
       ...item,
       places: sessionCache.getPlaces({

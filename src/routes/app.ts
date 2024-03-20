@@ -19,7 +19,7 @@ export default async function sessionCache(fastify: FastifyInstance) {
 
     const contactType = Config.getContactType(placeTypeName);
     const sessionCache: SessionCache = req.sessionCache;
-    const directiveModel = new DirectiveModel(sessionCache, req.cookies['filter']);
+    const directiveModel = new DirectiveModel(sessionCache, req.cookies.filter);
     const placeData = contactTypes.map((item) => {
       return {
         ...item,

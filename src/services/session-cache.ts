@@ -62,7 +62,7 @@ export default class SessionCache {
 }
 
 function getFilterFunction(directiveFilter: DirectiveFilter) {
-if (!directiveFilter) {
+  if (!directiveFilter) {
     return () => true;
   }
 
@@ -73,5 +73,5 @@ if (!directiveFilter) {
     stage: (place: Place) => !place.hasValidationErrors && ![PlaceUploadState.SUCCESS, PlaceUploadState.FAILURE].includes(place.state),
   };
   return filterFuncs[directiveFilter];
-};
+}
 
