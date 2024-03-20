@@ -123,7 +123,7 @@ describe('services/place-factory.ts', () => {
     const singleCsvBuffer = fs.readFileSync('./test/single.csv');
     const chpType = Config.getContactType('d_community_health_volunteer_area');
     
-    const places: Place[] = await PlaceFactory.createBulk(singleCsvBuffer, chpType, sessionCache, chtApi);
+    const places: Place[] = await PlaceFactory.createFromCsv(singleCsvBuffer, chpType, sessionCache, chtApi);
     expect(places).to.have.property('length', 1);
 
     const [successfulPlace] = places;
@@ -131,7 +131,7 @@ describe('services/place-factory.ts', () => {
       'contact.properties.name': 'Sally',
       'contact.properties.phone': '0712 345678',
       creationDetails: {},
-      'properties.name': 'Sally',
+      'properties.name': 'Sally Area',
       'hierarchyProperties.CHU': 'Chepalungu',
       resolvedHierarchy: [
         {

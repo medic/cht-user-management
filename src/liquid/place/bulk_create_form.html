@@ -65,19 +65,23 @@
             {% endfor %}
 
             {% for row in contactType.place_properties %}
-            <tr>
-              <td>{{ row.friendly_name }}</td>
-              <td>{{ row.required }}</td>
-              <td>Property on place</td>
-            </tr>
+              {% if row.type != 'generated' %}
+              <tr>
+                <td>{{ row.friendly_name }}</td>
+                <td>{{ row.required }}</td>
+                <td>Property on place</td>
+              </tr>
+              {% endif %}
             {% endfor %}
 
             {% for row in contactType.contact_properties %}
-            <tr>
-              <td>{{ row.friendly_name }}</td>
-              <td>{{ row.required }}</td>
-              <td>Property on primary contact</td>
-            </tr>
+              {% if row.type != 'generated' %}
+              <tr>
+                <td>{{ row.friendly_name }}</td>
+                <td>{{ row.required }}</td>
+                <td>Property on primary contact</td>
+              </tr>
+              {% endif %}
             {% endfor %}
 
             {% if contactType.user_role.size > 1 %}

@@ -52,7 +52,7 @@ export default async function addPlace(fastify: FastifyInstance) {
       }
       try {
         const csvBuf = await fileData.toBuffer();
-        await PlaceFactory.createBulk(csvBuf, contactType, sessionCache, chtApi);
+        await PlaceFactory.createFromCsv(csvBuf, contactType, sessionCache, chtApi);
       } catch (error) {
         return fastify.view('src/liquid/place/bulk_create_form.html', {
           contactType,

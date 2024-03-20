@@ -13,7 +13,7 @@ export default class ValidatorName implements IValidator {
     let toAlter = input;
     if (property.parameter) {
       if (!Array.isArray(property.parameter)) {
-        throw Error(`property of type name's parameter should be an array`);
+        throw Error(`property with type "name": parameter should be an array`);
       }
       
       toAlter = property.parameter.reduce((agg, toRemove) => {
