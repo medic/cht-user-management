@@ -79,6 +79,15 @@
               <td>Property on primary contact</td>
             </tr>
             {% endfor %}
+
+            {% if contactType.user_role.size > 1 %}
+            <tr>
+              <td>{{ userRoleProperty.friendly_name }}</td>
+              <td>{{ userRoleProperty.required }}</td>
+              <td>Role of the user. Separate multiple roles with a <i>space</i>. Allowed roles are <i>{{ contactType.user_role | join: ', ' }}
+              </td>
+            </tr>
+            {% endif %}
           </tbody>
         </table>
       </div>

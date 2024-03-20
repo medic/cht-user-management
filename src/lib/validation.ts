@@ -1,3 +1,4 @@
+import _ from 'lodash';
 import { Config, ContactProperty } from '../config';
 import Place from '../services/place';
 import RemotePlaceResolver from './remote-place-resolver';
@@ -11,6 +12,7 @@ import ValidatorPhone from './validator-phone';
 import ValidatorRegex from './validator-regex';
 import ValidatorSkip from './validator-skip';
 import ValidatorString from './validator-string';
+import ValidatorRole from './validator-role';
 
 type GeneratorScope = {
   place: any;
@@ -42,6 +44,7 @@ const TypeValidatorMap: ValidatorMap = {
   phone: new ValidatorPhone(),
   regex: new ValidatorRegex(),
   string: new ValidatorString(),
+  select_role: new ValidatorRole(),
 };
 
 export class Validation {
@@ -50,7 +53,8 @@ export class Validation {
     const result = [
       ...Validation.validateHierarchy(place),
       ...Validation.validateProperties(place.properties, place.type.place_properties, requiredColumns, 'place_'),
-      ...Validation.validateProperties(place.contact.properties, place.type.contact_properties, requiredColumns, 'contact_')
+      ...Validation.validateProperties(place.contact.properties, place.type.contact_properties, requiredColumns, 'contact_'),
+      ...Validation.validateProperties(place.userRoleProperties, [Config.getUserRoleConfig(place.type)], requiredColumns, 'user_')
     ];
 
     return result;
@@ -111,7 +115,7 @@ export class Validation {
     for (const property of properties) {
       const value = obj[property.property_name];
 
-      const isRequired = requiredProperties.includes(property);
+      const isRequired = requiredProperties.some((prop) => _.isEqual(prop, property))
       if (value || isRequired) {
         const isValid = Validation.isValid(property, value);
         if (isValid === false || typeof isValid === 'string') {
@@ -142,7 +146,11 @@ export class Validation {
     const value = obj[property.property_name];
     const validator = this.getValidator(property);
     if (validator instanceof ValidatorGenerated) {
-      const generationScope = Validation.createGeneratorScope(place);
+      const generationScope: GeneratorScope = {
+        place: place.properties,
+        contact: place.contact.properties,
+        lineage: place.hierarchyProperties,
+      };
       const altered = validator.format(generationScope, property);
       obj[property.property_name] = altered;
     } else if (value) {
@@ -194,13 +202,5 @@ export class Validation {
     }
 
     return `Cannot find '${friendlyType}' matching '${searchStr}'${requiredParentSuffix}`;
-  }
-
-  private static createGeneratorScope(place: Place): GeneratorScope {
-    return {
-      place: place.properties,
-      contact: place.contact.properties,
-      lineage: place.hierarchyProperties,
-    };
   }
 }

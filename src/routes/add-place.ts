@@ -25,6 +25,7 @@ export default async function addPlace(fastify: FastifyInstance) {
       hierarchy: Config.getHierarchyWithReplacement(contactType, 'desc'),
       contactType,
       contactTypes,
+      userRoleProperty: Config.getUserRoleConfig(contactType)
     };
 
     return resp.view('src/liquid/app/view.html', tmplData);
@@ -91,6 +92,7 @@ export default async function addPlace(fastify: FastifyInstance) {
       contactTypes: Config.contactTypes(),
       backend: `/place/edit/${id}`,
       data,
+      userRoleProperty: Config.getUserRoleConfig(place.type)
     };
 
     resp.header('HX-Push-Url', `/place/edit/${id}`);

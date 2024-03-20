@@ -211,7 +211,7 @@
       "name": "c_community_health_unit",
       "friendly": "Community Health Unit",
       "contact_type": "person",
-      "user_role": "community_health_assistant",
+      "user_role": ["community_health_assistant"],
       "username_from_place": true,
       "deactivate_users_on_replace": false,
       "hierarchy": [
@@ -282,7 +282,7 @@
       "name": "d_community_health_volunteer_area",
       "friendly": "Community Health Promoter",
       "contact_type": "person",
-      "user_role": "community_health_volunteer",
+      "user_role": ["community_health_volunteer"],
       "username_from_place": false,
       "deactivate_users_on_replace": false,
       "hierarchy": [
