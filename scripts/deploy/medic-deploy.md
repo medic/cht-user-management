@@ -48,7 +48,7 @@ helm upgrade \
       --kube-context arn:aws:eks:eu-west-2:720541322708:cluster/prod-cht-eks \
       --namespace users-chis-prod \
       --values values/users-chis-tg.yaml \
-      users-chis-ug medic/cht-user-management
+      users-chis-tg medic/cht-user-management
 ```
 ### How to
 
