@@ -18,7 +18,7 @@
               {% endif %}
             {% endfor %}
             {% for contact_property in contactType.contact_properties %}
-              {% if property.type != 'generated' %}
+              {% if contact_property.type != 'generated' %}
                 <th id="contact_{{contact_property.property_name}}">{{contact_property.friendly_name}}</th>
               {% endif %}
             {% endfor %}
