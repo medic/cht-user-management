@@ -10,7 +10,91 @@
       "domain": "moh-togo-uat.dev.medicmobile.org"
     }
   ],
-  "contact_types": [  
+  "contact_types": [
+    {
+      "name": "cg70_supervision",
+      "friendly": "Supervision Area",
+      "contact_type": "cg72_supervision",
+      "user_role": ["supervisor"],
+      "username_from_place": true,
+      "deactivate_users_on_replace": true,
+      "hierarchy": [
+        {
+          "friendly_name": "Sanitary Training",
+          "property_name": "sanitary_training",
+          "contact_type": "cf60_sanitary",
+          "type": "name",
+          "required": true,
+          "level": 1
+        }
+      ],
+      "replacement_property": {
+        "friendly_name": "Affected Supervision Area",
+        "property_name": "replacement",
+        "type": "string",
+        "parameter": ["\\(Supervision Area Name\\)", "\\(SUPERVISION AREA NAME\\)"],
+        "required": true
+      },
+      "place_properties": [
+        {
+          "friendly_name": "Supervision Area Name",
+          "property_name": "supervision_area",
+          "type": "string",
+          "parameter": ["\\(Supervision Area Name\\)", "\\(SUPERVISION AREA NAME\\)"],
+          "required": true
+        },
+        {
+          "friendly_name": "Supervision Area Full Name",
+          "property_name": "name",
+          "type": "generated",
+          "parameter": "{{ place.supervision_area }} ({{ lineage.sanitary_training }})",
+          "required": true
+        }
+      ],
+      "contact_properties": [
+        {
+          "friendly_name": "Last Name",
+          "property_name": "last_name",
+          "type": "string",
+          "parameter": ["\\(LAST NAME\\)", "\\(LASTNAME\\)", "\\(LAST-NAME\\)"],
+          "required": true
+        },
+        {
+          "friendly_name": "First Name",
+          "property_name": "first_name",
+          "type": "string",
+          "parameter": ["\\(Chw First Name\\)", "\\(Chw Firstname\\)"],
+          "required": true
+        },
+        {
+          "friendly_name": "Full Name",
+          "property_name": "name",
+          "type": "generated",
+          "parameter": "{{ contact.last_name }} {{ contact.first_name }}",
+          "required": true
+        },
+        {
+          "friendly_name": "Gender",
+          "property_name": "sex",
+          "type": "gender",
+          "required": true
+        },
+        {
+          "friendly_name": "Telephone",
+          "property_name": "telephone",
+          "type": "phone",
+          "parameter": "TG",
+          "required": true
+        },
+        {
+          "friendly_name": "Appartenance NGO/Structure",
+          "property_name": "appartenance_ngo",
+          "type": "string",
+          "parameter": ["\\(STRUCTURE NAME\\)", "\\(STRUCTURE-NAME\\)"],
+          "required": true
+        }
+      ]
+    },
     {
       "name": "ci90_chw_site",
       "friendly": "CHW Post",
@@ -46,10 +130,24 @@
       ],
       "contact_properties": [
         {
+          "friendly_name": "CHW Last Name",
+          "property_name": "last_name",
+          "type": "string",
+          "parameter": ["\\(CHW LAST NAME\\)", "\\(CHW LASTNAME\\)", "\\(CHW-LASTNAME\\)"],
+          "required": true
+        },
+        {
+          "friendly_name": "CHW First Name",
+          "property_name": "first_name",
+          "type": "string",
+          "parameter": ["\\(Chw First Name\\)", "\\(Chw Firstname\\)"],
+          "required": true
+        },
+        {
           "friendly_name": "CHW Full Name",
           "property_name": "name",
           "type": "string",
-          "parameter": ["\\(Chw Full Name\\)", "\\(CHW FULL NAME\\)", "\\(CHW NAME\\)", "\\(Chw Name\\)"],
+          "parameter": "{{ contact.last_name }} {{ contact.first_name }}",
           "required": true
         },
         {
@@ -67,7 +165,7 @@
         },
         {
           "friendly_name": "CHW Occupation",
-          "property_name": "occupation",
+          "property_name": "function",
           "type": "string",
           "required": true
         },
@@ -80,7 +178,7 @@
         },
         {
           "friendly_name": "Telephone",
-          "property_name": "telephone",
+          "property_name": "phone",
           "type": "phone",
           "parameter": "TG",
           "required": true
