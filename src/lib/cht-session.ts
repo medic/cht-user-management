@@ -3,12 +3,14 @@ const axios = require('axios'); // require is needed for rewire
 
 import { AuthenticationInfo } from '../config';
 import { AxiosHeaders, AxiosInstance } from 'axios';
-import axiosRetry from 'axios-retry'; // eslint-disable-line @typescript-eslint/no-unused-vars
+import axiosRetry from 'axios-retry';
 import { axiosRetryConfig } from './retry-logic';
 import { RemotePlace } from './cht-api';
 
 const COUCH_AUTH_COOKIE_NAME = 'AuthSession=';
 const ADMIN_FACILITY_ID = '*';
+
+axiosRetry(axios, axiosRetryConfig);
 
 export default class ChtSession {
   public readonly authInfo: AuthenticationInfo;
@@ -27,8 +29,8 @@ export default class ChtSession {
       baseURL: ChtSession.createUrl(authInfo, ''),
       timeout: 10000,
       headers: { Cookie: sessionToken },
-      'axios-retry': axiosRetryConfig, 
     });
+    axiosRetry(this.axiosInstance, axiosRetryConfig);
 
     if (!this.sessionToken || !this.authInfo.domain || !this.username || !this.facilityId) {
       throw new Error('invalid CHT session information');
@@ -82,7 +84,6 @@ export default class ChtSession {
           username,
           password
         },
-        'axios-retry': axiosRetryConfig,
       }
     );
     const setCookieHeader = (resp.headers as AxiosHeaders).get('set-cookie') as AxiosHeaders;
@@ -98,7 +99,6 @@ export default class ChtSession {
       sessionUrl,
       {
         headers: { Cookie: sessionToken },
-        'axios-retry': axiosRetryConfig,
       },
     );
   

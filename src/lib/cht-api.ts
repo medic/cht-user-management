@@ -1,6 +1,4 @@
 import _ from 'lodash';
-import axiosRetry from 'axios-retry'; // eslint-disable-line @typescript-eslint/no-unused-vars
-
 import ChtSession from './cht-session';
 import { Config, ContactType } from '../config';
 import { UserPayload } from '../services/user-payload';
