@@ -61,14 +61,50 @@ required | boolean | True if the object should not exist without this informatio
 #### ConfigPropertyType
 The `ConfigPropertyType` defines a property's validation rules and auto-formatting rules. The optional `parameter` information alters the behavior of the `ConfigPropertyType`.
 
-| Type   | Validation Rules                                       | Auto Formatting Rules                                                | Validator                                                                                               | parameter     |
-|--------|--------------------------------------------------------|---------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------|---------------|
-| string | Must be defined                                        | Removes double whitespaces, leading or trailing whitespaces, and any character which is not alphanumeric or ` ()\-'` | None                                                                                                   |
-| name   | Must be defined                                        | Same as string + title case + `parameter` behavior                  | One or more regexes which are removed from the value when matched (eg. `"parameter": ["\\sCHU"]` will format `This Unit` into `This`) |
-| regex  | Must match the `regex` captured by `parameter`         | Same as `string`                                                    | A regex which must be matched to pass validation (eg. `"parameter": "^\\d{6}$"` will accept only 6 digit numbers)     |
-| phone  | A valid phone number for the specified locality       | Auto formatting provided by [libphonenumber](https://github.com/google/libphonenumber)          | Two letter country code specifying the locality of phone number (eg. `"parameter": "KE"`)             |
-| none   | None                                                  | None                                                                | None                                                                                                   |
-| gender | A binary gender (eg. `Male`, `Woman`, `M`)            | Formats to either `Male` or `Female`                                | None                                                                                                   |
+| Type      | Validation Rules                                       | Auto Formatting Rules                                               | Validator                                                                                              | parameter     |
+|-----------|--------------------------------------------------------|---------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------|---------------|
+| string    | Must be defined                                        | Removes double whitespaces, leading or trailing whitespaces, and any character which is not alphanumeric or ` ()\-'` | None                                                                                                   |
+| name      | Must be defined                                        | Same as string + title case + `parameter` behavior                  | One or more regexes which are removed from the value when matched (eg. `"parameter": ["\\sCHU"]` will format `this CHU` into `This`) |
+| regex     | Must match the `regex` captured by `parameter`         | Same as `string`                                                    | A regex which must be matched to pass validation (eg. `"parameter": "^\\d{6}$"` will accept only 6 digit numbers)     |
+| phone     | A valid phone number for the specified locality        | Auto formatting provided by [libphonenumber](https://github.com/google/libphonenumber)          | Two letter country code specifying the locality of phone number (eg. `"parameter": "KE"`)             |
+| none      | None                                                   | None                                                                | None                                                                                                   |
+| gender    | A binary gender (eg. `Male`, `Woman`, `M`)             | Formats to either `Male` or `Female`                                | None                                                                                                   |
+| generated | None. No user inputs.                                  | Uses [LiquidJS](https://liquidjs.com) templates to generate data    | None                                                                                                   | [Details](#The-Generated-ConfigPropertyType)
+
+#### The Generated ConfigPropertyType
+ContactProperties with `type: "generated"` use the [LiquidJS](https://liquidjs.com) template engine to populate a property with data. Here is an example of some configuration properties which use `"type": "generated"`:
+
+```json
+{
+  "place_properties": [
+    {
+      "friendly_name": "CHP Area Name",
+      "property_name": "name",
+      "type": "generated",
+      "parameter": "{{ contact.name }}'s Area",
+      "required": true
+    }
+  ],
+  "contact_properties": [
+    {
+      "friendly_name": "CHP Name",
+      "property_name": "name",
+      "type": "name",
+      "required": true
+    }
+  ]
+}
+```
+
+The user will be prompted to input the contact's name (CHP Name). The user is _not_ prompted to input the place's name (CHP Area Name) because the place's name will automatically be assigned a value.  In this example, if the user puts `john` as the contact's name, then the place will be named `John's Area`.
+
+The data that is passed to the template is consistent with the properties defined in your configuration.
+
+Variable | Value
+-- | --
+place | Has the attributes from `place_properties.property_name` 
+contact | Has the attributes from `contact_properties.property_name`
+lineage | Has the attributes from `hierarchy.property_name` 
 
 ### Deployment
 This tool is available via Docker by running `docker compose up`. Set the [Environment Variables](#environment-variables).
