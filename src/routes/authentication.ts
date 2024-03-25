@@ -1,9 +1,9 @@
 import { FastifyInstance, FastifyRequest } from 'fastify';
 
 import Auth from '../lib/authentication';
-import { ChtApi } from '../lib/cht-api';
 import { Config } from '../config';
 import { version as appVersion } from '../package.json';
+import ChtSession from '../lib/cht-session';
 
 export default async function authentication(fastify: FastifyInstance) {
   const unauthenticatedOptions = {
@@ -15,7 +15,7 @@ export default async function authentication(fastify: FastifyInstance) {
   fastify.get('/login', unauthenticatedOptions, async (req, resp) => {
     const tmplData = {
       logo: Config.getLogoBase64(),
-      domains: Config.getDomains,
+      domains: Config.getDomains(),
     };
 
     return resp.view('src/liquid/auth/view.html', tmplData);
@@ -31,17 +31,17 @@ export default async function authentication(fastify: FastifyInstance) {
     const { username, password, domain } = data;
 
     const authInfo = Config.getAuthenticationInfo(domain);
-    let session;
+    let chtSession;
     try {
-      session = await ChtApi.createSession(authInfo, username, password);
+      chtSession = await ChtSession.create(authInfo, username, password);
     } catch (e: any) {
       return resp.view('src/liquid/auth/authentication_form.html', {
-        domains: Config.getDomains,
+        domains: Config.getDomains(),
         errors: true,
       });
     }
 
-    const tokenizedSession = Auth.encodeToken(session);
+    const tokenizedSession = Auth.encodeToken(chtSession);
     const expires = Auth.cookieExpiry();
     resp.setCookie(Auth.AUTH_COOKIE_NAME, tokenizedSession, {
       signed: false,

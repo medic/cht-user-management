@@ -65,20 +65,33 @@
             {% endfor %}
 
             {% for row in contactType.place_properties %}
-            <tr>
-              <td>{{ row.friendly_name }}</td>
-              <td>{{ row.required }}</td>
-              <td>Property on place</td>
-            </tr>
+              {% if row.type != 'generated' %}
+              <tr>
+                <td>{{ row.friendly_name }}</td>
+                <td>{{ row.required }}</td>
+                <td>Property on place</td>
+              </tr>
+              {% endif %}
             {% endfor %}
 
             {% for row in contactType.contact_properties %}
-            <tr>
-              <td>{{ row.friendly_name }}</td>
-              <td>{{ row.required }}</td>
-              <td>Property on primary contact</td>
-            </tr>
+              {% if row.type != 'generated' %}
+              <tr>
+                <td>{{ row.friendly_name }}</td>
+                <td>{{ row.required }}</td>
+                <td>Property on primary contact</td>
+              </tr>
+              {% endif %}
             {% endfor %}
+
+            {% if contactType.user_role.size > 1 %}
+            <tr>
+              <td>{{ userRoleProperty.friendly_name }}</td>
+              <td>{{ userRoleProperty.required }}</td>
+              <td>Role of the user. Separate multiple roles with a <i>space</i>. Allowed roles are <i>{{ contactType.user_role | join: ', ' }}
+              </td>
+            </tr>
+            {% endif %}
           </tbody>
         </table>
       </div>

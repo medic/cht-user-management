@@ -7,7 +7,7 @@ import SessionCache from './session-cache';
 import RemotePlaceResolver from '../lib/remote-place-resolver';
 
 export default class PlaceFactory {
-  public static async createBulk(csvBuffer: Buffer, contactType: ContactType, sessionCache: SessionCache, chtApi: ChtApi)
+  public static async createFromCsv(csvBuffer: Buffer, contactType: ContactType, sessionCache: SessionCache, chtApi: ChtApi)
     : Promise<Place[]> {
     const places = await PlaceFactory.loadPlacesFromCsv(csvBuffer, contactType);
     const validateAll = () => places.forEach(p => p.validate());
@@ -70,6 +70,14 @@ export default class PlaceFactory {
           const columnIndex = csvColumns.indexOf(hierarchyConstraint.friendly_name);
           place.hierarchyProperties[hierarchyConstraint.property_name] = row[columnIndex];
         }
+
+        if (Config.hasMultipleRoles(contactType)) {
+          const userRoleProperty = Config.getUserRoleConfig(contactType);
+          place.userRoleProperties[userRoleProperty.property_name] = row[
+            csvColumns.indexOf(userRoleProperty.friendly_name)
+          ];
+        }
+        
         places.push(place);
       }
       count++;

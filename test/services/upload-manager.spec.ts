@@ -12,7 +12,7 @@ import { Config } from '../../src/config';
 import RemotePlaceResolver from '../../src/lib/remote-place-resolver';
 import { UploadManagerRetryScenario } from '../lib/retry-logic.spec';
 
-describe('upload-manager.ts', () => {
+describe('services/upload-manager.ts', () => {
   beforeEach(() => {
     RemotePlaceCache.clear({});
   });
@@ -42,7 +42,7 @@ describe('upload-manager.ts', () => {
     expect(userPayload).to.deep.include({
       contact: 'created-contact-id',
       place: 'created-place-id',
-      type: 'role',
+      roles: ['role'],
       username: 'contact',
     });
     expect(chtApi.deleteDoc.called).to.be.false;
@@ -218,8 +218,8 @@ describe('upload-manager.ts', () => {
     expect(chp.isCreated).to.be.true;
 
     // chu is created first
-    expect(chtApi.createUser.args[0][0].type).to.eq('community_health_assistant');
-    expect(chtApi.createUser.args[1][0].type).to.eq('community_health_volunteer');
+    expect(chtApi.createUser.args[0][0].roles).to.deep.eq(['community_health_assistant']);
+    expect(chtApi.createUser.args[1][0].roles).to.deep.eq(['community_health_volunteer']);
 
     const cachedChus = await RemotePlaceCache.getPlacesWithType(chtApi, chu.type.name);
     expect(cachedChus).to.have.property('length', 1);
@@ -281,6 +281,41 @@ describe('upload-manager.ts', () => {
     expect(chtApi.createUser.callCount).to.be.gt(2); // retried
     expect(chu.uploadError).to.include('could not create user');  
   });
+
+  it('mock data is properly sent to chtApi (multiple roles)', async () => {
+    const { fakeFormData, contactType, chtApi, sessionCache, remotePlace } = await createMocks();
+
+    contactType.user_role = ['role1', 'role2'];
+    fakeFormData.user_role = 'role1 role2';
+
+    const place = await PlaceFactory.createOne(fakeFormData, contactType, sessionCache, chtApi);
+
+    const uploadManager = new UploadManager();
+    await uploadManager.doUpload([place], chtApi);
+
+    expect(chtApi.createPlace.calledOnce).to.be.true;
+    const placePayload = chtApi.createPlace.args[0][0];
+    expect(placePayload).to.nested.include({
+      'contact.contact_type': contactType.contact_type,
+      'contact.name': 'contact',
+      prop: 'foo',
+      name: 'Place Community Health Unit',
+      parent: remotePlace.id,
+      contact_type: contactType.name,
+    });
+    expect(chtApi.updateContactParent.calledOnce).to.be.true;
+    expect(chtApi.updateContactParent.args[0]).to.deep.eq(['created-place-id']);
+
+    expect(chtApi.createUser.calledOnce).to.be.true;
+    const userPayload = chtApi.createUser.args[0][0];
+    expect(userPayload).to.deep.include({
+      contact: 'created-contact-id',
+      place: 'created-place-id',
+      roles: ['role1', 'role2'],
+      username: 'contact',
+    });
+    expect(place.isCreated).to.be.true;
+  });
 });
 
 async function createChu(remotePlace: RemotePlace, chu_name: string, sessionCache: any, chtApi: ChtApi) {
@@ -332,7 +367,7 @@ async function createMocks() {
     place_name: 'place',
     place_prop: 'foo',
     hierarchy_PARENT: remotePlace.name,
-    contact_name: 'contact',
+    contact_name: 'contact'
   };
 
   return { fakeFormData, contactType, sessionCache, chtApi, remotePlace };

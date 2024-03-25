@@ -1,15 +1,17 @@
-{% capture prop_name %}{{ include.prefix }}{{include.prop.property_name}}{% endcapture %}
-<div class="field">
-  <label class="label">
-    {{include.prop.friendly_name}}
-  </label>
-  <div class="control">
-    <input
-      name="{{ prop_name }}"
-      type="{% if include.prop.type == 'dob' %}date{% else %}text{% endif %}"
-      class="input"
-      {% if false and include.prop.type == 'regex' %} pattern="{{ include.prop.parameter }}" {% endif %}
-      {% if data[prop_name] %} value="{{ data[prop_name] }}" {% endif %}
-    />
+{% if include.prop.type != 'generated' %}
+  {% capture prop_name %}{{ include.prefix }}{{include.prop.property_name}}{% endcapture %}
+  <div class="field">
+    <label class="label">
+      {{include.prop.friendly_name}}
+    </label>
+    <div class="control">
+      <input
+        name="{{ prop_name }}"
+        type="{% if include.prop.type == 'dob' %}date{% else %}text{% endif %}"
+        class="input"
+        {% if false and include.prop.type == 'regex' %} pattern="{{ include.prop.parameter }}" {% endif %}
+        {% if data[prop_name] %} value="{{ data[prop_name] }}" {% endif %}
+      />
+    </div>
   </div>
-</div>
+{% endif %}

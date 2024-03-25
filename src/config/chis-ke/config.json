@@ -211,7 +211,7 @@
       "name": "c_community_health_unit",
       "friendly": "Community Health Unit",
       "contact_type": "person",
-      "user_role": "community_health_assistant",
+      "user_role": ["community_health_assistant"],
       "username_from_place": true,
       "deactivate_users_on_replace": false,
       "hierarchy": [
@@ -228,6 +228,7 @@
         "friendly_name": "Affected CHU",
         "property_name": "replacement",
         "type": "name",
+        "parameter": ["\\sCommunity Health Unit", "\\sCommunity Unit", "\\sUnit", "\\sCU", "\\sCHU"],
         "required": true
       },
       "place_properties": [
@@ -266,7 +267,7 @@
           "friendly_name": "CHA Name",
           "property_name": "name",
           "type": "name",
-          "parameter": ["\\(PHO\\)", "\\(CHA\\)"],
+          "parameter": ["\\(\\s*PHO\\s*\\)", "\\(\\s*CHA\\s*\\)"],
           "required": true
         },
         {
@@ -282,7 +283,7 @@
       "name": "d_community_health_volunteer_area",
       "friendly": "Community Health Promoter",
       "contact_type": "person",
-      "user_role": "community_health_volunteer",
+      "user_role": ["community_health_volunteer"],
       "username_from_place": false,
       "deactivate_users_on_replace": false,
       "hierarchy": [
@@ -314,8 +315,8 @@
         {
           "friendly_name": "CHP Area Name",
           "property_name": "name",
-          "type": "name",
-          "parameter": ["\\sArea"],
+          "type": "generated",
+          "parameter": "{{ contact.name }} Area",
           "required": true
         }
       ],

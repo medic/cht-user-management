@@ -9,7 +9,7 @@ Chai.use(chaiAsPromised);
 
 const { expect } = Chai;
 
-describe('lib/move', () => {
+describe('lib/move.ts', () => {
   const chtApi = () => mockChtApi(
     [
       { id: 'from-sub', name: 'From Sub', lineage: [], type: 'remote' },
@@ -30,7 +30,7 @@ describe('lib/move', () => {
     const actual = await MoveLib.move(formData, contactType, sessionCache, chtApi());
     expect(actual.command).to.include('--contacts=chu-id');
     expect(actual.command).to.include('--parent=to-sub');
-    expect(actual.command).to.include('--url=https://user:password@domain');
+    expect(actual.command).to.include('--url=http://username:password@domain.com', actual.command);
 
     expect(actual.fromLineage.map((l:any) => l.id)).to.deep.eq(['chu-id', 'from-sub']);
     expect(actual.toLineage.map((l:any) => l.id)).to.deep.eq([undefined, 'to-sub']);

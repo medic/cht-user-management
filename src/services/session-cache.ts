@@ -1,5 +1,6 @@
+import ChtSession from '../lib/cht-session';
+import { DirectiveFilter } from './directive-model';
 import Place, { PlaceUploadState } from './place';
-import { ChtSession } from '../lib/cht-api';
 
 export type SessionCacheUploadState = 'in_progress' | 'done' | 'staged';
 
@@ -31,12 +32,14 @@ export default class SessionCache {
   public getPlaces = (options?: {
     type?: string;
     state?: PlaceUploadState;
+    filter?: DirectiveFilter;
     created?: boolean;
     id?: string;
     nameExact?: string;
     nameIncludes?: string;
   }) : Place[] => {
     return Object.values(this.places)
+      .filter(p => !options?.filter || getFilterFunction(options.filter)(p))
       .filter(p => !options?.type || p.type.name === options.type)
       .filter(p => !options?.state || p.state === options.state)
       .filter(p => !options?.id || p.id === options.id)
@@ -57,3 +60,18 @@ export default class SessionCache {
     this.places = {};
   };
 }
+
+function getFilterFunction(directiveFilter: DirectiveFilter) {
+  if (!directiveFilter) {
+    return () => true;
+  }
+
+  const filterFuncs = {
+    success: (place: Place) => place.state === PlaceUploadState.SUCCESS,
+    failure: (place: Place) => place.state === PlaceUploadState.FAILURE,
+    invalid: (place: Place) => place.hasValidationErrors,
+    staged: (place: Place) => !place.hasValidationErrors && ![PlaceUploadState.SUCCESS, PlaceUploadState.FAILURE].includes(place.state),
+  };
+  return filterFuncs[directiveFilter];
+}
+

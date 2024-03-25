@@ -35,11 +35,14 @@ export default class RemotePlaceResolver {
   ) : Promise<void> => {
     const topDownHierarchy = Config.getHierarchyWithReplacement(place.type, 'desc');
     for (const hierarchyLevel of topDownHierarchy) {
+      // #91 - for editing: forget previous resolution
+      delete place.resolvedHierarchy[hierarchyLevel.level];
+
       if (!place.hierarchyProperties[hierarchyLevel.property_name]) {
         continue;
       }
       
-      const fuzzFunction = getFuzzFunction(hierarchyLevel, place.type);
+      const fuzzFunction = getFuzzFunction(place, hierarchyLevel, place.type);
       const mapIdToDetails = {};
       if (hierarchyLevel.level > 0) { // no replacing local places
         const searchKeys = getSearchKeys(place, hierarchyLevel.property_name, fuzzFunction, false);
@@ -106,13 +109,13 @@ export default class RemotePlaceResolver {
   };
 }
 
-function getFuzzFunction(hierarchyLevel: HierarchyConstraint, contactType: ContactType) {
+function getFuzzFunction(place: Place, hierarchyLevel: HierarchyConstraint, contactType: ContactType) {
   if (hierarchyLevel.level === 0) {
     const nameProperty = Config.getPropertyWithName(contactType.place_properties, 'name');
-    return (val: string) => Validation.formatSingle(nameProperty, val);
+    return (val: string) => Validation.formatSingle(place, nameProperty, val);
   }
   
-  return (val: string) => Validation.formatSingle(hierarchyLevel, val);
+  return (val: string) => Validation.formatSingle(place, hierarchyLevel, val);
 }
 
 async function findRemotePlacesInHierarchy(
@@ -121,6 +124,8 @@ async function findRemotePlacesInHierarchy(
   chtApi: ChtApi
 ) : Promise<RemotePlace[]> {
   let searchPool = await RemotePlaceCache.getPlacesWithType(chtApi, hierarchyLevel.contact_type);
+  searchPool = searchPool.filter(remotePlace => chtApi.chtSession.isPlaceAuthorized(remotePlace));
+
   const topDownHierarchy = Config.getHierarchyWithReplacement(place.type, 'desc');
   for (const { level } of topDownHierarchy) {
     if (level <= hierarchyLevel.level) {
@@ -176,7 +181,7 @@ function pickFromMapOptimistic(map: RemotePlaceMap, placeName: string, fuzzFunct
   const fuzzyName = fuzzFunction(placeName);
   const fuzzyResult = map[fuzzyName.toLowerCase()];
   const [optimisticResult] = [result, fuzzyResult].filter(r => r && r.type !== 'invalid');
-  return optimisticResult || result || fuzzyResult;
+  return optimisticResult || result || fuzzyResult || RemotePlaceResolver.NoResult;
 }
 
 function findLocalPlaces(

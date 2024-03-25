@@ -2,6 +2,7 @@ import { expect } from 'chai';
 
 import { Validation } from '../../src/lib/validation';
 import { mockSimpleContactType, mockPlace } from '../mocks';
+import RemotePlaceResolver from '../../src/lib/remote-place-resolver';
 
 type Scenario = {
   type: string;
@@ -59,9 +60,13 @@ const scenarios: Scenario[] = [
   { type: 'gender', prop: 'Female', isValid: true, altered: 'female' },
   { type: 'gender', prop: 'Woman', isValid: true, altered: 'female' },
   { type: 'gender', prop: 'X', isValid: false, error: 'male' },
+
+  { type: 'generated', prop: 'b', propertyParameter: 'a {{ place.prop }} c', isValid: true, altered: 'a b c' },
+  { type: 'generated', prop: 'b', propertyParameter: '{{ contact.name }} ({{ lineage.PARENT }})', isValid: true, altered: 'contact (Parent)' },
+  { type: 'generated', prop: 'b', propertyParameter: 'x {{ contact.dne }}', isValid: true, altered: 'x ' },
 ];
 
-describe('lib/validation', () => {
+describe('lib/validation.ts', () => {
   for (const scenario of scenarios) {
     it(`scenario: ${JSON.stringify(scenario)}`, () => {
       const contactType = mockSimpleContactType(scenario.type, scenario.propertyParameter, scenario.propertyErrorDescription);
@@ -74,8 +79,8 @@ describe('lib/validation', () => {
         expect(actualValidity?.[0].description).to.include(scenario.error);
       }
 
-      const actualAltered = Validation.format(place);
-      expect(actualAltered.properties.prop).to.eq(scenario.altered ?? scenario.prop);
+      Validation.format(place);
+      expect(place.properties.prop).to.eq(scenario.altered ?? scenario.prop);
     });
   }
 
@@ -95,6 +100,20 @@ describe('lib/validation', () => {
     place.hierarchyProperties = { PARENT: 'parent' };
 
     expect(Validation.getValidationErrors(place)).to.be.empty;
+  });
+
+  it('#91 - parent is invalid when required:false but resolution is NoResult', () => {
+    const contactType = mockSimpleContactType('string', undefined);
+    contactType.hierarchy[0].required = false;
+
+    const place = mockPlace(contactType, 'prop');
+    place.resolvedHierarchy[1] = RemotePlaceResolver.NoResult;
+
+    console.log('Validation.getValidationErrors(place)', Validation.getValidationErrors(place));
+    expect(Validation.getValidationErrors(place)).to.deep.eq([{
+      property_name: 'hierarchy_PARENT',
+      description: `Cannot find 'parent' matching 'parent'`,
+    }]);
   });
 
   it('parent is invalid when missing but expected', () => {
@@ -131,6 +150,44 @@ describe('lib/validation', () => {
     expect(validationErrors).to.deep.eq([{
       property_name: 'hierarchy_replacement',
       description: `Cannot find 'contacttype-name' matching 'Sin Bad' under 'Parent'`,
+    }]);
+  });
+
+  it('user_role property empty throws', () => {
+    const contactType = mockSimpleContactType('string', undefined);
+    contactType.user_role = [];
+
+    const place = mockPlace(contactType, 'prop');
+    
+    expect(() => Validation.getValidationErrors(place)).to.throw('unvalidatable');
+  });
+
+  it('user_role property contains empty string throws', () => {
+    const contactType = mockSimpleContactType('string', undefined);
+    contactType.user_role = [''];
+
+    const place = mockPlace(contactType, 'prop');
+    
+    expect(() => Validation.getValidationErrors(place)).to.throw('unvalidatable');
+  });
+
+  it('user role is invalid when not allowed', () => {
+    const contactType = mockSimpleContactType('string', undefined);
+    contactType.user_role = ['supervisor', 'stock_manager'];
+
+    const place = mockPlace(contactType, 'prop');
+
+    const formData = {
+      place_prop: 'abc',
+      contact_prop: 'efg',
+      garbage: 'ghj',
+      user_role: 'supervisor stockmanager',
+    };
+    place.setPropertiesFromFormData(formData);
+
+    expect(Validation.getValidationErrors(place)).to.deep.eq([{
+      property_name: 'user_role',
+      description: `Role 'stockmanager' is not allowed`, 
     }]);
   });
 });
