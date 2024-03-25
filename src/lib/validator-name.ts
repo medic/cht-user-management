@@ -32,9 +32,11 @@ export default class ValidatorName implements IValidator {
 
   private titleCase(value: string): string {
     const words = value.toLowerCase().split(' ');
+    const titleCase = (word: string) => word[0].toUpperCase() + word.slice(1);
+    const isRomanNumeral = /^[ivx]+$/ig;
     const titleCased = words
-      .filter(x => x)
-      .map(word => word[0].toUpperCase() + word.slice(1)).join(' ');
+      .filter(Boolean)
+      .map(word => word.match(isRomanNumeral) ? word.toUpperCase() : titleCase(word)).join(' ');
     return titleCased.replace(/ '/g, '\'');
   }
 }
