@@ -51,12 +51,14 @@ const scenarios: Scenario[] = [
 
   { type: 'dob', prop: '', isValid: false },
   { type: 'dob', prop: '2016/05/25', isValid: false },
-  { type: 'dob', prop: '15/2/1985', isValid: true, altered: '1985-02-15' },
-  { type: 'dob', prop: '1/2/1985', isValid: true, altered: '1985-02-01' },
   { type: 'dob', prop: 'May 25, 2016', isValid: false },
   { type: 'dob', prop: '2030-05-25', isValid: false },
   { type: 'dob', prop: '2016-05-25', isValid: true, altered: '2016-05-25' },
   { type: 'dob', prop: ' 20 16- 05- 25 ', isValid: true, altered: '2016-05-25' },
+  { type: 'dob', prop: '23', isValid: false, error: 'Not a valid' },
+  { type: 'dob', prop: '15/2/1985', isValid: true, altered: '1985-02-15' },
+  { type: 'dob', prop: '1/2/1 985', isValid: true, altered: '1985-02-01' },
+  { type: 'dob', prop: '1/13/1985', isValid: false },
 
   { type: 'gender', prop: 'Man', isValid: true, altered: 'male' },
   { type: 'gender', prop: 'male', isValid: true, altered: 'male' },
