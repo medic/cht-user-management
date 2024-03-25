@@ -27,7 +27,6 @@ export default class ChtSession {
     
     this.axiosInstance = axios.create({
       baseURL: ChtSession.createUrl(authInfo, ''),
-      timeout: 90000,
       headers: { Cookie: sessionToken },
     });
     axiosRetry(this.axiosInstance, axiosRetryConfig);
