@@ -22,11 +22,14 @@ export default class ValidatorDateOfBirth implements IValidator {
   }
 
   get defaultError(): string {
-    return 'Not a valid Date of Birth (eg. 1990-02-26)';
+    return 'Not a valid Date of Birth (eg. 1990-02-26 or 26/2/1985)';
   }
 }
 
 const parse = (input: string) => {
   const strippedInput = input.replace(/ /ig, '');
-  return DateTime.fromISO(strippedInput);
+  const hasSlash = strippedInput.includes('/');
+  return hasSlash ?
+    DateTime.fromFormat(strippedInput, 'd/M/yyyy') 
+    : DateTime.fromISO(strippedInput);
 };

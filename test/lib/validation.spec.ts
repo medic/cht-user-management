@@ -51,6 +51,8 @@ const scenarios: Scenario[] = [
 
   { type: 'dob', prop: '', isValid: false },
   { type: 'dob', prop: '2016/05/25', isValid: false },
+  { type: 'dob', prop: '15/2/1985', isValid: true, altered: '1985-02-15' },
+  { type: 'dob', prop: '1/2/1985', isValid: true, altered: '1985-02-01' },
   { type: 'dob', prop: 'May 25, 2016', isValid: false },
   { type: 'dob', prop: '2030-05-25', isValid: false },
   { type: 'dob', prop: '2016-05-25', isValid: true, altered: '2016-05-25' },
