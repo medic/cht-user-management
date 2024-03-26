@@ -16,7 +16,7 @@
       "friendly": "Supervision Area",
       "contact_type": "cg72_supervision",
       "user_role": ["supervisor"],
-      "username_from_place": true,
+      "username_from_place": false,
       "deactivate_users_on_replace": true,
       "hierarchy": [
         {
@@ -38,17 +38,10 @@
       "place_properties": [
         {
           "friendly_name": "Supervision Area Name",
-          "property_name": "supervision_area",
-          "type": "string",
-          "parameter": ["\\(Supervision Area Name\\)", "\\(SUPERVISION AREA NAME\\)"],
-          "required": true
-        },
-        {
-          "friendly_name": "Supervision Area Full Name",
           "property_name": "name",
           "type": "generated",
-          "parameter": "{{ place.supervision_area }} ({{ lineage.sanitary_training }})",
-          "required": true
+          "parameter": "{{ contact.last_name }} {{ contact.first_name }} ({{ lineage.sanitary_training }})",
+          "required": false
         }
       ],
       "contact_properties": [
@@ -71,7 +64,7 @@
           "property_name": "name",
           "type": "generated",
           "parameter": "{{ contact.last_name }} {{ contact.first_name }}",
-          "required": true
+          "required": false
         },
         {
           "friendly_name": "Gender",
@@ -87,10 +80,10 @@
           "required": true
         },
         {
-          "friendly_name": "Appartenance NGO/Structure",
+          "friendly_name": "NGO/Provenance Structure",
           "property_name": "appartenance_ngo",
           "type": "string",
-          "parameter": ["\\(STRUCTURE NAME\\)", "\\(STRUCTURE-NAME\\)"],
+          "parameter": ["\\(STRUCTURE[ -]NAME\\)"],
           "required": true
         }
       ]
@@ -130,25 +123,25 @@
       ],
       "contact_properties": [
         {
-          "friendly_name": "CHW Last Name",
+          "friendly_name": "Last Name",
           "property_name": "last_name",
           "type": "string",
           "parameter": ["\\(CHW LAST NAME\\)", "\\(CHW LASTNAME\\)", "\\(CHW-LASTNAME\\)"],
           "required": true
         },
         {
-          "friendly_name": "CHW First Name",
+          "friendly_name": "First Name",
           "property_name": "first_name",
           "type": "string",
           "parameter": ["\\(Chw First Name\\)", "\\(Chw Firstname\\)"],
           "required": true
         },
         {
-          "friendly_name": "CHW Full Name",
+          "friendly_name": "Full Name",
           "property_name": "name",
-          "type": "string",
+          "type": "generated",
           "parameter": "{{ contact.last_name }} {{ contact.first_name }}",
-          "required": true
+          "required": false
         },
         {
           "friendly_name": "Agent Type",
@@ -158,19 +151,19 @@
           "required": true
         },
         {
-          "friendly_name": "CHW Sex",
+          "friendly_name": "Sex",
           "property_name": "sex",
           "type": "gender",
           "required": true
         },
         {
-          "friendly_name": "CHW Occupation",
-          "property_name": "function",
+          "friendly_name": "Occupation",
+          "property_name": "occupation",
           "type": "string",
           "required": true
         },
         {
-          "friendly_name": "CHW Age",
+          "friendly_name": "Age",
           "property_name": "age",
           "type": "regex",
           "parameter": "^\\d{2}$",
@@ -178,9 +171,9 @@
         },
         {
           "friendly_name": "Telephone",
-          "property_name": "phone",
-          "type": "phone",
-          "parameter": "TG",
+          "property_name": "telephone",
+          "type": "regex",
+          "parameter": "^\\d{8}$",
           "required": true
         },
         {
