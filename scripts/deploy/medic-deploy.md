@@ -64,7 +64,8 @@ _You can get `$deployment_name` from the `list --all` command above_
 
 ```shell
 helm --kube-context arn:aws:eks:eu-west-2:720541322708:cluster/prod-cht-eks \
-      --namespace users-chis-prod history $deployment_name
+      --namespace users-chis-prod \
+      history $deployment_name
 ```
 
 #### Get current configuration of a deployment
