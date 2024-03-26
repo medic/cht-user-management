@@ -8,6 +8,7 @@ import { Validation } from '../lib/validation';
 // can't use package.json because of rootDir in ts
 import { version as appVersion } from '../package.json';
 import RemotePlaceResolver from '../lib/remote-place-resolver';
+import { DateTime } from 'luxon';
 
 export type UserCreationDetails = {
   username?: string;
@@ -155,6 +156,19 @@ export default class Place {
       }, {});
     };
 
+    const buildContactProperties = (properties: any) => {
+      const props = filteredProperties(properties);
+      return Object.keys(props).reduce((acc: any, key: string) => {
+        if (key === 'age') {
+          const age: string[] = props[key].split(' ');
+          acc.date_of_birth = DateTime.now().minus({ years: parseInt(age[0]) }).toISODate();
+        } else {
+          acc[key] = props[key];
+        }
+        return acc;
+      }, {});
+    };
+
     const contactAttributes = (contactType: string) => {
       const RESERVED_CONTACT_TYPES = ['district_hospital', 'health_center', 'clinic', 'person'];
 
@@ -174,7 +188,7 @@ export default class Place {
       parent: this.resolvedHierarchy[1]?.id,
       user_attribution,
       contact: {
-        ...filteredProperties(this.contact.properties),
+        ...buildContactProperties(this.contact.properties),
         ...contactAttributes(this.contact.type.contact_type),
         name: this.contact.name,
         user_attribution,

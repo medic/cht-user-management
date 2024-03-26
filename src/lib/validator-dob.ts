@@ -1,7 +1,7 @@
 import { DateTime } from 'luxon';
 import { IValidator } from './validation';
 
-export default class ValidatorDateOfBirth implements IValidator {
+export class ValidatorDateOfBirth implements IValidator {
   isValid(input: string) : boolean | string {
     try {
       const parsed = parse(input);
@@ -30,3 +30,26 @@ const parse = (input: string) => {
   const strippedInput = input.replace(/ /ig, '');
   return DateTime.fromISO(strippedInput);
 };
+
+export class ValidatorAge implements IValidator {
+  private trimSpace(input: string): string {
+    return input.replace(/\s/g, '');
+  }
+
+  isValid(input: string): boolean {
+    const age = parseInt(this.trimSpace(input));
+    return !isNaN(age) && age > 18 && age < 200;
+  }
+
+  format(input: string): string {
+    const age = parseInt(this.trimSpace(input));
+    if (isNaN(age)) {
+      return input;
+    }
+    return `${age} years`;
+  }
+
+  get defaultError(): string {
+    return 'Age should be a number between 18 and 200';
+  }
+}

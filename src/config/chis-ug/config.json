@@ -99,9 +99,9 @@
           "required": true
         },
         {
-          "friendly_name": "Date of Birth",
-          "property_name": "date_of_birth",
-          "type": "dob",
+          "friendly_name": "Age",
+          "property_name": "age",
+          "type": "age",
           "required": true
         },
         {

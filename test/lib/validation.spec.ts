@@ -54,6 +54,12 @@ const scenarios: Scenario[] = [
   { type: 'dob', prop: '2016-05-25', isValid: true, altered: '2016-05-25' },
   { type: 'dob', prop: ' 20 16- 05- 25 ', isValid: true, altered: '2016-05-25' },
 
+  { type: 'age', prop: '', isValid: false, altered: '' },
+  { type: 'age', prop: '20', isValid: true, altered: '20 years' },
+  { type: 'age', prop: ' 20 ', isValid: true, altered: '20 years'  },
+  { type: 'age', prop: 'abc', isValid: false, altered: 'abc' },
+  { type: 'age', prop: '  1 0   0 ', isValid: true, altered: '100 years' },
+  
   { type: 'gender', prop: 'Man', isValid: true, altered: 'male' },
   { type: 'gender', prop: 'male', isValid: true, altered: 'male' },
   { type: 'gender', prop: 'F', isValid: true, altered: 'female' },
