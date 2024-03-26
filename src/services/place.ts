@@ -9,6 +9,7 @@ import { Validation } from '../lib/validation';
 import { version as appVersion } from '../package.json';
 import RemotePlaceResolver from '../lib/remote-place-resolver';
 import { DateTime } from 'luxon';
+import { ValidatorDateOfBirth } from '../lib/validator-dob';
 
 export type UserCreationDetails = {
   username?: string;
@@ -160,8 +161,15 @@ export default class Place {
       const props = filteredProperties(properties);
       return Object.keys(props).reduce((acc: any, key: string) => {
         if (key === 'age') {
-          const age: string[] = props[key].split(' ');
-          acc.date_of_birth = DateTime.now().minus({ years: parseInt(age[0]) }).toISODate();
+          const dobValidator = new ValidatorDateOfBirth();
+          if (dobValidator.isValid(props[key])) {
+            acc.date_of_birth = props[key];
+          } else {
+            const age: string[] = props[key].split(' ');
+            acc.date_of_birth = DateTime.now()
+              .minus({ years: parseInt(age[0]) })
+              .toISODate();
+          }
         } else {
           acc[key] = props[key];
         }

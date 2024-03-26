@@ -2,7 +2,7 @@ import { DateTime } from 'luxon';
 import { IValidator } from './validation';
 
 export class ValidatorDateOfBirth implements IValidator {
-  isValid(input: string) : boolean | string {
+  isValid(input: string) : boolean {
     try {
       const parsed = parse(input);
       return parsed.isValid && parsed.diffNow('hours').hours <= 0;
@@ -32,17 +32,22 @@ const parse = (input: string) => {
 };
 
 export class ValidatorAge implements IValidator {
+  private dobValidator = new ValidatorDateOfBirth();
+
   private trimSpace(input: string): string {
     return input.replace(/\s/g, '');
   }
 
   isValid(input: string): boolean {
     const age = parseInt(this.trimSpace(input));
-    return !isNaN(age) && age > 18 && age < 200;
+    return (this.dobValidator.isValid(input)) || (!isNaN(age) && age > 18 && age < 200);
   }
 
   format(input: string): string {
-    const age = parseInt(this.trimSpace(input));
+    if (this.dobValidator.isValid(input)) {
+      return this.dobValidator.format(input);
+    }
+    const age = Number(this.trimSpace(input));
     if (isNaN(age)) {
       return input;
     }
@@ -50,6 +55,6 @@ export class ValidatorAge implements IValidator {
   }
 
   get defaultError(): string {
-    return 'Age should be a number between 18 and 200';
+    return 'Age should be a number between 18 and 200 or a valid date (eg. 1990-02-26)';
   }
 }

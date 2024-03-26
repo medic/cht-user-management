@@ -59,6 +59,8 @@ const scenarios: Scenario[] = [
   { type: 'age', prop: ' 20 ', isValid: true, altered: '20 years'  },
   { type: 'age', prop: 'abc', isValid: false, altered: 'abc' },
   { type: 'age', prop: '  1 0   0 ', isValid: true, altered: '100 years' },
+  { type: 'age', prop: '2000-01-01', isValid: true, altered: '2000-01-01' },
+  { type: 'age', prop: '2000-abc', isValid: false, altered: '2000-abc' },
   
   { type: 'gender', prop: 'Man', isValid: true, altered: 'male' },
   { type: 'gender', prop: 'male', isValid: true, altered: 'male' },
