@@ -42,7 +42,7 @@ helm upgrade \
 ```
 #### TG
 ```shell
-# Edit tag in users-chis-ug.yaml and then run:
+# Edit tag in users-chis-tg.yaml and then run:
 
 helm upgrade \
       --kube-context arn:aws:eks:eu-west-2:720541322708:cluster/prod-cht-eks \
