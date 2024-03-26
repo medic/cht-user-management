@@ -39,19 +39,19 @@ export class ValidatorAge implements IValidator {
   }
 
   isValid(input: string): boolean {
-    const age = parseInt(this.trimSpace(input));
-    return (this.dobValidator.isValid(input)) || (!isNaN(age) && age > 18 && age < 200);
+    const age = Number(this.trimSpace(input));
+    return (!isNaN(age) && age > 18 && age < 200) || (this.dobValidator.isValid(input));
   }
 
   format(input: string): string {
+    const age = Number(this.trimSpace(input));
+    if (!isNaN(age)) {
+      return `${age} years`;
+    }
     if (this.dobValidator.isValid(input)) {
       return this.dobValidator.format(input);
     }
-    const age = Number(this.trimSpace(input));
-    if (isNaN(age)) {
-      return input;
-    }
-    return `${age} years`;
+    return input;
   }
 
   get defaultError(): string {
