@@ -81,26 +81,20 @@ kubectl --context arn:aws:eks:eu-west-2:720541322708:cluster/prod-cht-eks \
 ```
 
 #### View logs of a deployment
+
+Where `$ENV` is one of `ke`, `ug` or  `tg`
+
 ```shell
 kubectl --context arn:aws:eks:eu-west-2:720541322708:cluster/prod-cht-eks \
-      --namespace users-chis-prod logs deploy/users-chis-ke-cht-user-management
-# or
-kubectl --context arn:aws:eks:eu-west-2:720541322708:cluster/prod-cht-eks \
-      --namespace users-chis-prod logs deploy/users-chis-ug-cht-user-management
-# or
-kubectl --context arn:aws:eks:eu-west-2:720541322708:cluster/prod-cht-eks \
-      --namespace users-chis-prod logs deploy/users-chis-tg-cht-user-management
+      --namespace users-chis-prod logs deploy/users-chis-$ENV-cht-user-management
 ```
 _You can replace `deploy/x` with for example `pods/y` from the get all command above_
 
 #### Get more details of a deployment
+
+Where `$ENV` is one of `ke`, `ug` or  `tg`
+
 ```shell
 kubectl --context arn:aws:eks:eu-west-2:720541322708:cluster/prod-cht-eks \
-      --namespace users-chis-prod describe deploy/users-chis-ke-cht-user-management
-# or
-kubectl --context arn:aws:eks:eu-west-2:720541322708:cluster/prod-cht-eks \
-      --namespace users-chis-prod describe deploy/users-chis-ug-cht-user-management
-# or
-kubectl --context arn:aws:eks:eu-west-2:720541322708:cluster/prod-cht-eks \
-      --namespace users-chis-prod describe deploy/users-chis-tg-cht-user-management
+      --namespace users-chis-prod describe deploy/users-chis-$ENV-cht-user-management
 ```
