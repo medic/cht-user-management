@@ -1,8 +1,8 @@
 <div id="place_list" hx-swap-oob="true">
   {% for contactType in contactTypes %}
   <div id="{{contactType.name}}" class="mb-6">
+    <h2 class="title is-4">{{contactType.friendly}}</h2>
     {% if contactType.places.length > 0 %}
-      <h2 class="title is-4">{{contactType.friendly}}</h2>
       <table
         id="table_places"
         class="table is-fullwidth is-striped is-hoverable"
@@ -79,13 +79,16 @@
             {% endif %}
 
             <td>
-              {% capture tag_text %}{% if place.validationErrors == empty %}{{ place.state }}{% else %}INVALID{% endif %}{% endcapture %}
+              {% capture tag_text %}{% if place.validationErrors == empty %}{{ place.state }}{% else %}invalid{% endif %}{% endcapture %}
               {% capture tag_class %}
-                {% if place.state == 'failure' or place.validationErrors != empty %}is-danger{% endif %}
+                {% if place.state == 'failure' %}is-danger
+                {% elsif place.state == 'success' %}is-success
+                {% elsif place.validationErrors != empty %}is-warning
+                {% endif %}
                 {% if place.uploadError %}has-tooltip-arrow has-tooltipl-multiline{% endif %}
               {% endcapture %}
               <span
-                class="tag is-info is-light {{ tag_class }}"
+                class="tag is-info {{ tag_class }}"
                 {% if place.uploadError %}data-tooltip="{{ place.uploadError | escape }}"{% endif %}
               >
                 {{ tag_text }}
@@ -123,6 +126,10 @@
           {% endfor%}
         </tbody>
       </table>
+    {% else %}
+      <div class="notification is-white">
+        <i>No Results</i>
+      </div>
     {% endif %}
   {% endfor %}
 </div>

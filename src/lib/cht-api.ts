@@ -1,8 +1,8 @@
 import _ from 'lodash';
-import axios from 'axios';
-import { UserPayload } from '../services/user-payload';
-import { Config, ContactType } from '../config';
 import ChtSession from './cht-session';
+import { Config, ContactType } from '../config';
+import { UserPayload } from '../services/user-payload';
+import { AxiosInstance } from 'axios';
 
 export type PlacePayload = {
   name: string;
@@ -31,11 +31,11 @@ export type RemotePlace = {
 
 export class ChtApi {
   private session: ChtSession;
-  private protocolAndHost: string;
+  private axiosInstance: AxiosInstance;
 
   constructor(session: ChtSession) {
     this.session = session;
-    this.protocolAndHost = `http${session.authInfo.useHttp ? '' : 's'}://${session.authInfo.domain}`;
+    this.axiosInstance = session.axiosInstance;
   }
 
   public get chtSession(): ChtSession {
@@ -57,9 +57,9 @@ export class ChtApi {
 
     contactDoc.parent = minify(parentDoc);
 
-    const putUrl = `${this.protocolAndHost}/medic/${contactId}`;
+    const putUrl = `medic/${contactId}`;
     console.log('axios.put', putUrl);
-    const putResp = await axios.put(putUrl, contactDoc, this.authorizationOptions());
+    const putResp = await this.axiosInstance.put(putUrl, contactDoc);
     if (putResp.status !== 201) {
       throw new Error(putResp.data);
     }
@@ -68,17 +68,17 @@ export class ChtApi {
   };
 
   createPlace = async (payload: PlacePayload): Promise<string> => {
-    const url = `${this.protocolAndHost}/api/v1/places`;
+    const url = `api/v1/places`;
     console.log('axios.post', url);
-    const resp = await axios.post(url, payload, this.authorizationOptions());
+    const resp = await this.axiosInstance.post(url, payload);
     return resp.data.id;
   };
 
   // because there is no PUT for /api/v1/places
   createContact = async (payload: PlacePayload): Promise<string> => {
-    const url = `${this.protocolAndHost}/api/v1/people`;
+    const url = `api/v1/people`;
     console.log('axios.post', url);
-    const resp = await axios.post(url, payload.contact, this.authorizationOptions());
+    const resp = await this.axiosInstance.post(url, payload.contact);
     return resp.data.id;
   };
 
@@ -95,9 +95,9 @@ export class ChtApi {
     doc.user_attribution.previousPrimaryContacts ||= [];
     doc.user_attribution.previousPrimaryContacts.push(previousPrimaryContact);
 
-    const putUrl = `${this.protocolAndHost}/medic/${payload._id}`;
+    const putUrl = `medic/${payload._id}`;
     console.log('axios.put', putUrl);
-    const resp = await axios.put(putUrl, doc, this.authorizationOptions());
+    const resp = await this.axiosInstance.put(putUrl, doc);
     if (!resp.data.ok) {
       throw Error('response from chtApi.updatePlace was not OK');
     }
@@ -108,9 +108,9 @@ export class ChtApi {
   deleteDoc = async (docId: string): Promise<void> => {
     const doc: any = await this.getDoc(docId);
 
-    const deleteContactUrl = `${this.protocolAndHost}/medic/${doc._id}?rev=${doc._rev}`;
+    const deleteContactUrl = `medic/${doc._id}?rev=${doc._rev}`;
     console.log('axios.delete', deleteContactUrl);
-    const resp = await axios.delete(deleteContactUrl, this.authorizationOptions());
+    const resp = await this.axiosInstance.delete(deleteContactUrl);
     if (!resp.data.ok) {
       throw Error('response from chtApi.deleteDoc was not OK');
     }
@@ -126,9 +126,9 @@ export class ChtApi {
 
   disableUser = async (docId: string): Promise<void> => {
     const username = docId.substring('org.couchdb.user:'.length);
-    const url = `${this.protocolAndHost}/api/v1/users/${username}`;
+    const url = `api/v1/users/${username}`;
     console.log('axios.delete', url);
-    return axios.delete(url, this.authorizationOptions());
+    return this.axiosInstance.delete(url);
   };
 
   deactivateUsersWithPlace = async (placeId: string): Promise<string[]> => {
@@ -141,27 +141,25 @@ export class ChtApi {
 
   deactivateUser = async (docId: string): Promise<void> => {
     const username = docId.substring('org.couchdb.user:'.length);
-    const url = `${this.protocolAndHost}/api/v1/users/${username}`;
+    const url = `api/v1/users/${username}`;
     console.log('axios.post', url);
     const deactivationPayload = { roles: ['deactivated' ]};
-    return axios.post(url, deactivationPayload, this.authorizationOptions());
+    return this.axiosInstance.post(url, deactivationPayload);
   };
 
   createUser = async (user: UserPayload): Promise<void> => {
-    const url = `${this.protocolAndHost}/api/v1/users`;
+    const url = `api/v1/users`;
     console.log('axios.post', url);
     const axiosRequestionConfig = {
-      ...this.authorizationOptions(),
       'axios-retry': { retries: 0 }, // upload-manager handles retries for this
     };
-    await axios.post(url, user, axiosRequestionConfig);
+    await this.axiosInstance.post(url, user, axiosRequestionConfig);
   };
 
   getParentAndSibling = async (parentId: string, contactType: ContactType): Promise<{ parent: any; sibling: any }> => {
-    const url = `${this.protocolAndHost}/medic/_design/medic/_view/contacts_by_depth`;
+    const url = `medic/_design/medic/_view/contacts_by_depth`;
     console.log('axios.get', url);
-    const resp = await axios.get(url, {
-      ...this.authorizationOptions(),
+    const resp = await this.axiosInstance.get(url, {
       params: {
         keys: JSON.stringify([
           [parentId, 0],
@@ -179,17 +177,14 @@ export class ChtApi {
 
   getPlacesWithType = async (placeType: string)
     : Promise<RemotePlace[]> => {
-    const url = `${this.protocolAndHost}/medic/_design/medic-client/_view/contacts_by_type_freetext`;
+    const url = `medic/_design/medic-client/_view/contacts_by_type_freetext`;
     const params = {
       startkey: JSON.stringify([ placeType, 'name:']),
       endkey: JSON.stringify([ placeType, 'name:\ufff0']),
       include_docs: true,
     };
     console.log('axios.get', url, params);
-    const resp = await axios.get(url, {
-      params,
-      ...this.authorizationOptions(),
-    });
+    const resp = await this.axiosInstance.get(url, { params });
 
     return resp.data.rows
       .map((row: any): RemotePlace => {
@@ -204,15 +199,15 @@ export class ChtApi {
   };
 
   getDoc = async (id: string): Promise<any> => {
-    const url = `${this.protocolAndHost}/medic/${id}`;
+    const url = `medic/${id}`;
     console.log('axios.get', url);
-    const resp = await axios.get(url, this.authorizationOptions());
+    const resp = await this.axiosInstance.get(url);
     return resp.data;
   };
 
   private async getUsersAtPlace(placeId: string): Promise<string[]> {
     // #76 mm-online users cant query _users db after core4.4
-    const url = `${this.protocolAndHost}/medic/_find`;
+    const url = `medic/_find`;
     const payload = {
       selector: {
         type: 'user-settings',
@@ -225,14 +220,8 @@ export class ChtApi {
     };
 
     console.log('axios.post', url);
-    const resp = await axios.post(url, payload, this.authorizationOptions());
+    const resp = await this.axiosInstance.post(url, payload);
     return resp.data?.docs?.map((d: any) => d._id);
-  }
-
-  private authorizationOptions(): any {
-    return {
-      headers: { Cookie: this.session.sessionToken },
-    };
   }
 }
 
