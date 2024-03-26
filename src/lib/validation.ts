@@ -1,9 +1,11 @@
+import _ from 'lodash';
 import { Config, ContactProperty } from '../config';
 import Place from '../services/place';
 import RemotePlaceResolver from './remote-place-resolver';
 import { RemotePlace } from './cht-api';
 
 import ValidatorDateOfBirth from './validator-dob';
+import ValidatorGenerated from './validator-generated';
 import ValidatorName from './validator-name';
 import ValidatorPhone from './validator-phone';
 import ValidatorRegex from './validator-regex';
@@ -11,6 +13,7 @@ import ValidatorSkip from './validator-skip';
 import ValidatorString from './validator-string';
 import ValidatorSelectMultiple from './validator-select_multiple';
 import ValidatorSelectOne from './validator-select_one';
+import ValidatorRole from './validator-role';
 
 export type ValidationError = {
   property_name: string;
@@ -28,14 +31,16 @@ type ValidatorMap = {
 };
 
 const TypeValidatorMap: ValidatorMap = {
-  string: new ValidatorString(),
+  dob: new ValidatorDateOfBirth(),
+  generated: new ValidatorGenerated(),
   name: new ValidatorName(),
-  regex: new ValidatorRegex(),
-  phone: new ValidatorPhone(),
   none: new ValidatorSkip(),
+  phone: new ValidatorPhone(),
+  regex: new ValidatorRegex(),
+  string: new ValidatorString(),
+  select_role: new ValidatorRole(),
   select_one: new ValidatorSelectOne(),
   select_multiple: new ValidatorSelectMultiple(),
-  dob: new ValidatorDateOfBirth(),
 };
 
 export class Validation {
@@ -44,31 +49,38 @@ export class Validation {
     const result = [
       ...Validation.validateHierarchy(place),
       ...Validation.validateProperties(place.properties, place.type.place_properties, requiredColumns, 'place_'),
-      ...Validation.validateProperties(place.contact.properties, place.type.contact_properties, requiredColumns, 'contact_')
+      ...Validation.validateProperties(place.contact.properties, place.type.contact_properties, requiredColumns, 'contact_'),
+      ...Validation.validateProperties(place.userRoleProperties, [Config.getUserRoleConfig(place.type)], requiredColumns, 'user_')
     ];
 
     return result;
   }
 
-  public static format(place: Place): Place {
-    const alterAllProperties = (propertiesToAlter: ContactProperty[], objectToAlter: any) => {
-      for (const property of propertiesToAlter) {
-        this.alterProperty(property, objectToAlter);
+  public static format(place: Place): void {
+    const doFormatting = (withGenerators: boolean) => {
+      const isGenerator = (property: ContactProperty) => property.type === 'generated';
+      const alterAllProperties = (propertiesToAlter: ContactProperty[], objectToAlter: any) => {
+        for (const property of propertiesToAlter) {
+          if (isGenerator(property) === withGenerators) {
+            this.alterProperty(place, property, objectToAlter);
+          }
+        }
+      };
+
+      alterAllProperties(place.type.contact_properties, place.contact.properties);
+      alterAllProperties(place.type.place_properties, place.properties);
+      for (const hierarchy of Config.getHierarchyWithReplacement(place.type)) {
+        this.alterProperty(place, hierarchy, place.hierarchyProperties);
       }
     };
 
-    alterAllProperties(place.type.contact_properties, place.contact.properties);
-    alterAllProperties(place.type.place_properties, place.properties);
-    for (const hierarchy of Config.getHierarchyWithReplacement(place.type)) {
-      this.alterProperty(hierarchy, place.hierarchyProperties);
-    }
-
-    return place;
+    doFormatting(false);
+    doFormatting(true);
   }
 
-  public static formatSingle(propertyMatch: ContactProperty, val: string): string {
+  public static formatSingle(place: Place, propertyMatch: ContactProperty, val: string): string {
     const object = { [propertyMatch.property_name]: val };
-    Validation.alterProperty(propertyMatch, object);
+    Validation.alterProperty(place, propertyMatch, object);
     return object[propertyMatch.property_name];
   }
 
@@ -82,7 +94,11 @@ export class Validation {
       if (hierarchyLevel.level !== 0 || data) {
         const isExpected = hierarchyLevel.required;
         const resolution = place.resolvedHierarchy[hierarchyLevel.level];
-        const isValid = !isExpected || resolution?.type === 'remote' || resolution?.type === 'local';
+        const isValid = resolution?.type !== 'invalid' && (
+          !isExpected || 
+          resolution?.type === 'remote' || 
+          resolution?.type === 'local'
+        );
         if (!isValid) {
           const levelUp = hierarchy[index + 1]?.property_name;
           result.push({
@@ -112,7 +128,7 @@ export class Validation {
     for (const property of properties) {
       const value = obj[property.property_name];
 
-      const isRequired = requiredProperties.includes(property);
+      const isRequired = requiredProperties.some((prop) => _.isEqual(prop, property));
       if (value || isRequired) {
         const isValid = Validation.isValid(property, value);
         if (isValid === false || typeof isValid === 'string') {
@@ -139,10 +155,14 @@ export class Validation {
     }
   }
 
-  private static alterProperty(property : ContactProperty, obj: any) {
+  private static alterProperty(place: Place, property : ContactProperty, obj: any) {
     const value = obj[property.property_name];
-    if (value) {
-      const altered = this.getValidator(property).format(value, property);
+    const validator = this.getValidator(property);
+    if (validator instanceof ValidatorGenerated) {
+      const altered = validator.format(place, property);
+      obj[property.property_name] = altered;
+    } else if (value) {
+      const altered = validator.format(value, property);
       obj[property.property_name] = altered;
     }
   }

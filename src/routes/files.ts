@@ -1,7 +1,6 @@
-import _ from 'lodash';
 import { FastifyInstance } from 'fastify';
 import { stringify } from 'csv/sync';
-import { Config, ContactType } from '../config';
+import { Config } from '../config';
 import SessionCache from '../services/session-cache';
 import JSZip from 'jszip';
 
@@ -9,54 +8,46 @@ export default async function files(fastify: FastifyInstance) {
   fastify.get('/files/template/:placeType', async (req) => {
     const params: any = req.params;
     const placeType = params.placeType;
-    const placeTypeConfig = Config.getContactType(placeType);
-    const hierarchy = Config.getHierarchyWithReplacement(placeTypeConfig);
-    const columns = _.uniq([
-      ...hierarchy.map(p => p.friendly_name),
-      ...placeTypeConfig.place_properties.map(p => p.friendly_name),
-      ...placeTypeConfig.contact_properties.map(p => p.friendly_name),
-    ]);
-
+    const columns = Config.getCsvTemplateColumns(placeType);
     return stringify([columns]);
   });
 
   fastify.get('/files/credentials', async (req, reply) => {
     const sessionCache: SessionCache = req.sessionCache;
-    const results = new Map<ContactType, String[][]>();
-    const places = sessionCache.getPlaces();
-    places.forEach(place => {
-      const parent = Config.getParentProperty(place.type);
-      const record = [
-        place.hierarchyProperties[parent.property_name],
+    const zip = new JSZip();
+    for (const contactType of Config.contactTypes()) {
+      const places = sessionCache.getPlaces({ type: contactType.name });
+      if (!places.length) {
+        continue;
+      }
+      const rows = places.map((place) => [
+        ...Object.values(place.hierarchyProperties),
         place.name,
         place.contact.properties.name,
         place.contact.properties.phone,
+        place.userRoles.join(' '),
         place.creationDetails.username,
         place.creationDetails.password,
-      ];
-      const result = results.get(place.type) || [];
-      result.push(record);
-      results.set(place.type, result);
-    });
-    const zip = new JSZip();
-    results.forEach((places, contactType) => {
-      const parent = Config.getParentProperty(contactType);
+      ]);
+      const constraints = Config.getHierarchyWithReplacement(contactType);
+      const props = Object.keys(places[0].hierarchyProperties).map(prop => constraints.find(c => c.property_name === prop)!.friendly_name);
       const columns = [
-        parent.friendly_name,
+        ...props,
         contactType.friendly,
         'name',
         'phone',
+        'role',
         'username',
-        'password'
+        'password',
       ];
       zip.file(
         `${contactType.name}.csv`,
-        stringify(places, {
-          columns: columns,
+        stringify(rows, {
+          columns,
           header: true,
         })
       );
-    });
+    }
     reply.header('Content-Disposition', `attachment; filename="${Date.now()}_${req.chtSession.authInfo.friendly}_users.zip"`);
     return zip.generateNodeStream();
   });

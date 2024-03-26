@@ -14,11 +14,6 @@ const timeoutMiddleware = (req, res, next) => {
   next();
 };
 
-app.post('/_session', (req, res) => {
-  res.set('Set-Cookie', 'AuthSession=abc123');
-  res.status(200).send('OK');
-});
-
 app.get('/medic/_design/medic-client/_view/contacts_by_type_freetext', (req, res) => {
   const startkey = JSON.parse(req.query.startkey);
   console.log('contacts_by_type_freetext', startkey);
@@ -36,6 +31,22 @@ app.get('/medic/_design/medic-client/_view/contacts_by_type_freetext', (req, res
 });
 
 app.use(timeoutMiddleware);
+
+app.post('/_session', (req, res) => {
+  setTimeout(() => {
+    res.set('Set-Cookie', 'AuthSession=abc123');
+    res.status(200).send('OK');
+  }, 0);
+});
+
+app.get('/medic/org.couchdb.user:*', (req, res) => {
+  setTimeout(() => {
+    res.status(200).json({
+      _id: 'org.couchdb.user:foo',
+      roles: ['admin'],
+    });
+  }, 0);
+});
 
 app.all('*', (req, res) => {
   setTimeout(() => {

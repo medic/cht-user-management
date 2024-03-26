@@ -1,10 +1,13 @@
 {% capture prop_name %}{{ include.prefix }}{{include.prop.property_name}}{% endcapture %}
-<div class="field">
-  <label class="label">
-    {{include.prop.friendly_name}}
-  </label>
-  <div class="control">
-    {% if include.prop.type == 'select_one' or include.prop.type == 'select_multiple' %}
+
+{% if include.prop.type != 'generated' %}
+  {% capture prop_name %}{{ include.prefix }}{{include.prop.property_name}}{% endcapture %}
+  <div class="field">
+    <label class="label">
+      {{include.prop.friendly_name}}
+    </label>
+    <div class="control">
+      {% if include.prop.type == 'select_one' or include.prop.type == 'select_multiple' %}
     <div class="select">
       <select name="{{ prop_name }}" {% if include.prop.type == 'select_multiple' %}multiple{% endif %}>
         {% for params in include.prop.parameter %}
@@ -15,13 +18,14 @@
       </select>
     </div>
     {% else %}
-    <input
-      name="{{ prop_name }}"
-      type="{% if include.prop.type == 'dob' %}date{% else %}text{% endif %}"
-      class="input"
-      {% if false and include.prop.type == 'regex' %} pattern="{{ include.prop.parameter }}" {% endif %}
-      {% if data[prop_name] %} value="{{ data[prop_name] }}" {% endif %}
-    />
+      <input
+        name="{{ prop_name }}"
+        type="{% if include.prop.type == 'dob' %}date{% else %}text{% endif %}"
+        class="input"
+        {% if false and include.prop.type == 'regex' %} pattern="{{ include.prop.parameter }}" {% endif %}
+        {% if data[prop_name] %} value="{{ data[prop_name] }}" {% endif %}
+      />
     {% endif %}
+    </div>
   </div>
-</div>
+{% endif %}

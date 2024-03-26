@@ -42,7 +42,7 @@ export const mockSimpleContactType = (
     name: 'contacttype-name',
     friendly: 'friendly',
     contact_type: 'contact-type',
-    user_role: 'role',
+    user_role: ['role'],
     username_from_place: false,
     deactivate_users_on_replace: false,
     hierarchy: [
@@ -65,7 +65,7 @@ export const mockValidContactType = (propertyType: string, propertyValidator: st
   name: 'contacttype-name',
   friendly: 'friendly',
   contact_type: 'contact-type',
-  user_role: 'role',
+  user_role: ['role'],
   username_from_place: false,
   deactivate_users_on_replace: false,
   hierarchy: [

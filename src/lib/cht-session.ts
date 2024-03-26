@@ -1,23 +1,35 @@
+import _ from 'lodash';
 const axios = require('axios'); // require is needed for rewire
 
 import { AuthenticationInfo } from '../config';
-import { AxiosHeaders } from 'axios';
+import { AxiosHeaders, AxiosInstance } from 'axios';
+import axiosRetry from 'axios-retry';
+import { axiosRetryConfig } from './retry-logic';
 import { RemotePlace } from './cht-api';
 
 const COUCH_AUTH_COOKIE_NAME = 'AuthSession=';
 const ADMIN_FACILITY_ID = '*';
 
+axiosRetry(axios, axiosRetryConfig);
+
 export default class ChtSession {
   public readonly authInfo: AuthenticationInfo;
-  public readonly sessionToken: string;
   public readonly username: string;
   public readonly facilityId: string;
+  public readonly axiosInstance: AxiosInstance;
+  public readonly sessionToken: string;
 
   private constructor(authInfo: AuthenticationInfo, sessionToken: string, username: string, facilityId: string) {
     this.authInfo = authInfo;
-    this.sessionToken = sessionToken;
     this.username = username;
     this.facilityId = facilityId;
+    this.sessionToken = sessionToken;
+    
+    this.axiosInstance = axios.create({
+      baseURL: ChtSession.createUrl(authInfo, ''),
+      headers: { Cookie: sessionToken },
+    });
+    axiosRetry(this.axiosInstance, axiosRetryConfig);
 
     if (!this.sessionToken || !this.authInfo.domain || !this.username || !this.facilityId) {
       throw new Error('invalid CHT session information');
@@ -70,7 +82,7 @@ export default class ChtSession {
         auth: {
           username,
           password
-        }
+        },
       }
     );
     const setCookieHeader = (resp.headers as AxiosHeaders).get('set-cookie') as AxiosHeaders;
@@ -89,14 +101,16 @@ export default class ChtSession {
       },
     );
   
+    const adminRoles = ['admin', '_admin'];
+    const isAdmin = _.intersection(adminRoles, resp.data?.roles).length > 0;
     return {
-      isAdmin: !!resp.data?.roles?.includes('admin'),
+      isAdmin,
       facilityId: resp.data?.facility_id,
     };
   }
   
   private static createUrl(authInfo: AuthenticationInfo, path: string) {
     const protocol = authInfo.useHttp ? 'http' : 'https';
-    return `${protocol}://${authInfo.domain}/${path}`;
+    return `${protocol}://${authInfo.domain}${path ? '/' : ''}${path}`;
   }
 }

@@ -23,22 +23,37 @@ const mockSessionResponse = (headers: Array<string> = ['AuthSession=123']) => ({
   },
 });
 
-const mockUserFacilityDoc = (facilityId: string = 'parent-id', isAdmin: boolean = false) => ({
+const mockUserFacilityDoc = (facilityId: string = 'parent-id', roles:string[] = []) => ({
   data: {
-    roles: isAdmin ? ['admin'] : [],
+    roles,
     facility_id: facilityId,
   }
 });
 
+let mockAxios;
+
 describe('lib/cht-session.ts', () => {
+  beforeEach(() => {
+    mockAxios = {
+      interceptors: {
+        request: {
+          use: sinon.stub(),
+        },
+        response: {
+          use: sinon.stub(),
+        },
+      },
+      post: sinon.stub().resolves(mockSessionResponse()),
+      get: sinon.stub().resolves(mockUserFacilityDoc()),
+    };
+    ChtSession.__set__('axios', {
+      create: sinon.stub().returns(mockAxios),
+      ...mockAxios,
+    });
+  });
+
   describe('create', () => {
     it('nominal', async () => {
-      const mockAxios = {
-        post: sinon.stub().resolves(mockSessionResponse()),
-        get: sinon.stub().resolves(mockUserFacilityDoc()),
-      };
-      ChtSession.__set__('axios', mockAxios);
-
       const session = await ChtSession.default.create(mockAuthInfo, 'user', 'pwd');
       expect(mockAxios.post.args[0][0]).to.be.a('string');
       expect(session.sessionToken).to.eq('AuthSession=123');
@@ -46,30 +61,17 @@ describe('lib/cht-session.ts', () => {
     });
 
     it('throw cht yields no authtoken', async () => {
-      const mockAxios = {
-        post: sinon.stub().resolves(mockSessionResponse([])),
-        get: sinon.stub().resolves(mockUserFacilityDoc()),
-      };
-      ChtSession.__set__('axios', mockAxios);
-
+      mockAxios.post.resolves(mockSessionResponse([]));
       await expect(ChtSession.default.create(mockAuthInfo, 'user', 'pwd')).to.eventually.be.rejectedWith('failed to obtain token');
     });
 
     it('throw if no user doc', async () => {
-      const mockAxios = {
-        post: sinon.stub().resolves(mockSessionResponse()),
-        get: sinon.stub().rejects('404'),
-      };
-      ChtSession.__set__('axios', mockAxios);
-
+      mockAxios.get.rejects('404');
       await expect(ChtSession.default.create(mockAuthInfo, 'user', 'pwd')).to.eventually.be.rejectedWith();
     });
 
     it('throw if user-settings has no facility_id', async () => {
-      const mockAxios = {
-        post: sinon.stub().resolves(mockSessionResponse()),
-        get: sinon.stub().resolves(mockUserFacilityDoc('', false)),
-      };
+      mockAxios.get.resolves(mockUserFacilityDoc('', []));
       ChtSession.__set__('axios', mockAxios);
 
       await expect(ChtSession.default.create(mockAuthInfo, 'user', 'pwd')).to.eventually.be.rejectedWith('does not have a facility_id');
@@ -77,12 +79,6 @@ describe('lib/cht-session.ts', () => {
   });
 
   it('createFromDataString', async () => {
-    const mockAxios = {
-      post: sinon.stub().resolves(mockSessionResponse()),
-      get: sinon.stub().resolves(mockUserFacilityDoc()),
-    };
-    ChtSession.__set__('axios', mockAxios);
-
     const session = await ChtSession.default.create(mockAuthInfo, 'user', 'pwd');
     const data = JSON.stringify(session);
     const actual = ChtSession.default.createFromDataString(data);
@@ -91,20 +87,18 @@ describe('lib/cht-session.ts', () => {
 
   describe('isPlaceAuthorized', () => {
     const scenarios = [
-      { isAdmin: false, facilityId: 'parent-id', isExpected: true },
-      { isAdmin: false, facilityId: 'dne', isExpected: false },
+      { roles: [], facilityId: 'parent-id', isExpected: true },
+      { roles: [], facilityId: 'dne', isExpected: false },
 
-      { isAdmin: true, facilityId: 'parent-id', isExpected: true },
-      { isAdmin: true, facilityId: 'dne', isExpected: true },
+      { roles: ['admin'], facilityId: 'parent-id', isExpected: true },
+      { roles: ['admin'], facilityId: 'dne', isExpected: true },
+      
+      { roles: ['_admin'], facilityId: 'dne', isExpected: true }, // #102
     ];
     
     for (const scenario of scenarios) {
       it(JSON.stringify(scenario), async () => {
-        const mockAxios = {
-          post: sinon.stub().resolves(mockSessionResponse()),
-          get: sinon.stub().resolves(mockUserFacilityDoc(scenario.facilityId, scenario.isAdmin)),
-        };
-        ChtSession.__set__('axios', mockAxios);
+        mockAxios.get.resolves(mockUserFacilityDoc(scenario.facilityId, scenario.roles));
 
         const session = await ChtSession.default.create(mockAuthInfo, 'user', 'pwd');
         const place: RemotePlace = {
