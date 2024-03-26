@@ -18,7 +18,7 @@ General public is welcome to look at these instructions for who they might use t
 
 ### Deploy new version
 
-These commands should be run in the `./scripts/deploy` directory in this repo. Also note you may need to replace `medic/cht-user-management` with the full path to the helm chart repository you checked out above. Ensure the image has [been published](https://github.com/medic/cht-user-management/tree/main#publishing-new-docker-images) first [to ECR](https://gallery.ecr.aws/medic/cht-user-management) and also that the `values.yaml` file ([KE](https://github.com/medic/cht-user-management/blob/main/scripts/deploy/values/users-chis-ke.yaml) or [UG](https://github.com/medic/cht-user-management/blob/main/scripts/deploy/values/users-chis-ug.yaml))  or [TG](https://github.com/medic/cht-user-management/blob/main/scripts/deploy/values/users-chis-tg.yaml)) has the same version in the `tag:` as the new image.
+These commands should be run in the `./scripts/deploy` directory in this repo. Also note you may need to replace `medic/cht-user-management` with the full path to the helm chart repository you checked out above. Ensure the image has [been published](https://github.com/medic/cht-user-management/tree/main#publishing-new-docker-images) first [to ECR](https://gallery.ecr.aws/medic/cht-user-management) and also that the respective `values.yaml` file (in [values folder](https://github.com/medic/cht-user-management/blob/main/scripts/deploy/values/)) has the same version in the `tag:` as the new image.
 
 #### KE
 ```shell
