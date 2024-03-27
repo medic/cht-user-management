@@ -31,6 +31,19 @@ export default async function addPlace(fastify: FastifyInstance) {
     return resp.view('src/liquid/app/view.html', tmplData);
   });
 
+  fastify.post('/widget', async (req, resp) => {
+    const queryParams: any = req.query;
+    const contactType = Config.getContactType(queryParams.place_type).contact_properties.find(prop => prop.type === queryParams.input);
+    return resp.view('src/liquid/components/contact_type_property.html', {
+      data: req.body,
+      include: {
+        prefix: "contact_",
+        place_type: queryParams.place_type,
+        prop: contactType
+      }
+    });
+  });
+
   // you want to create a place? replace a contact? you'll have to go through me first
   fastify.post('/place', async (req, resp) => {
     const { op, type: placeType } = req.query as any;

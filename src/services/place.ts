@@ -58,6 +58,10 @@ export default class Place {
   public validationErrors?: { [key: string]: string };
   public uploadError? : string;
 
+  private optionalInputs: {
+    [key: string]: any;
+  }
+
   constructor(type: ContactType) {
     this.id = uuidv4();
     this.type = type;
@@ -67,6 +71,7 @@ export default class Place {
     this.state = PlaceUploadState.STAGED;
     this.resolvedHierarchy = [];
     this.userRoleProperties = {};
+    this.optionalInputs = {};
   }
 
   /*
@@ -90,7 +95,10 @@ export default class Place {
     this.contact.properties = {
       ...this.contact.properties,
       ...getPropertySetWithPrefix(this.type.contact_properties, CONTACT_PREFIX),
-    };
+    };    
+    Object.keys(formData).filter(k => k.startsWith('option_')).forEach(k => {
+      this.optionalInputs[k] = formData[k];
+    });
 
     for (const hierarchyLevel of Config.getHierarchyWithReplacement(this.type)) {
       const propertyName = hierarchyLevel.property_name;
@@ -132,6 +140,7 @@ export default class Place {
       ...addPrefixToPropertySet(this.properties, PLACE_PREFIX),
       ...addPrefixToPropertySet(this.contact.properties, CONTACT_PREFIX),
       ...addPrefixToPropertySet(this.userRoleProperties, USER_PREFIX),
+      ...this.optionalInputs
     };
   }
 

@@ -25,7 +25,7 @@ hx-target="this" hx-swap="outerHTML">
   <section class="section is-small">
     {% for prop in contactType.contact_properties %}
       {%
-        include "components/contact_type_property.html" prefix="contact_" prop=prop
+        include "components/contact_type_property.html" prefix="contact_" prop=prop place_type=contactType.name
       %}
     {% endfor %}
   </section>
