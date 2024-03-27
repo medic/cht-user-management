@@ -1,0 +1,24 @@
+cht-user-management:
+  image:
+    tag: 1.1.6
+  env:
+    CONFIG_NAME: chis-tg
+
+  # EKS prod ELB
+  ingress:
+    enabled: true
+    annotations:
+      alb.ingress.kubernetes.io/scheme: internet-facing
+      alb.ingress.kubernetes.io/tags: Environment=prod,Team=SRE
+      alb.ingress.kubernetes.io/group.name: prod-cht-alb
+      alb.ingress.kubernetes.io/ssl-redirect: '443'
+      alb.ingress.kubernetes.io/target-type: ip
+      alb.ingress.kubernetes.io/healthcheck-port: traffic-port
+      alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
+
+    className: alb
+    hosts:
+      - host: users-chis-tg.app.medicmobile.org
+        paths:
+          - path: /
+            pathType: Prefix
