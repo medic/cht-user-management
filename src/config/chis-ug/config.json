@@ -29,7 +29,7 @@
           "contact_type": "district_hospital",
           "type": "name",
           "required": true,
-          "parameter": ["H[ /]*C", "hospital", "mission"],
+          "parameter": ["\\sH[ /]*C\\s"],
           "level": 1
         }
       ],
@@ -52,13 +52,13 @@
           "friendly_name": "District",
           "property_name": "district",
           "type": "name",
-          "parameter": ["district"],
+          "parameter": ["\\sdistrict\\s"],
           "required": true
         },
         {
           "friendly_name": "Sub District",
           "property_name": "sub_district",
-          "parameter": ["sub", "district"],
+          "parameter": ["\\ssub\\s", "\\sdistrict\\s"],
           "type": "name",
           "required": false
         },
@@ -66,27 +66,27 @@
           "friendly_name": "County",
           "property_name": "county",
           "type": "name",
-          "parameter": ["county"],
+          "parameter": ["\\scounty\\s"],
           "required": true
         },
         {
           "friendly_name": "Sub County",
           "property_name": "sub_county",
           "type": "name",
-          "parameter": ["sub", "county"],
+          "parameter": ["\\ssub\\s", "\\scounty\\s"],
           "required": true
         },
         {
           "friendly_name": "Parish",
           "property_name": "parish",
-          "parameter": ["parish"],
+          "parameter": ["\\sparish\\s"],
           "type": "name",
           "required": true
         },
         {
           "friendly_name": "Village",
           "property_name": "village",
-          "parameter": ["village"],
+          "parameter": ["\\svillage\\s"],
           "type": "name",
           "required": true
         }
