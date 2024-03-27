@@ -62,7 +62,8 @@
     "publish": "node scripts/publish.js",
     "deploy-ke": "cd scripts/deploy && helm upgrade --kube-context arn:aws:eks:eu-west-2:720541322708:cluster/prod-cht-eks --namespace users-chis-prod --values values/users-chis-ke.yaml users-chis-ke medic/cht-user-management",
     "deploy-ug": "cd scripts/deploy && helm upgrade --kube-context arn:aws:eks:eu-west-2:720541322708:cluster/prod-cht-eks --namespace users-chis-prod --values values/users-chis-ug.yaml users-chis-ug medic/cht-user-management",
-    "deploy": "npm run deploy-ke && npm run deploy-ug"
+    "deploy-tg": "cd scripts/deploy && helm upgrade --kube-context arn:aws:eks:eu-west-2:720541322708:cluster/prod-cht-eks --namespace users-chis-prod --values values/users-chis-tg.yaml users-chis-tg medic/cht-user-management",
+    "deploy": "npm run deploy-ke && npm run deploy-ug && npm run deploy-tg"
   },
   "repository": {
     "type": "git",
