@@ -145,7 +145,7 @@ export class Config {
   public static getPropertyWithName(properties: ContactProperty[], name: string) : ContactProperty {
     const property = properties.find(prop => prop.property_name === name);
     if (!property) {
-      throw Error(`unable to find place_property with property_name:"${name}"`);
+      throw Error(`unable to find property_name:"${name}"`);
     }
 
     return property;
