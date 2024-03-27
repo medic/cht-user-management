@@ -15,6 +15,8 @@ type Scenario = {
 };
 
 const EMAIL_REGEX = '^[a-zA-Z0-9._+-]+@[a-zA-Z0-9.-]+.[a-zA-Z]{2,}$';
+const GENDER_OPTIONS = { male: 'Male', female: 'Female' };
+const CANDIES_OPTIONS = { chocolate: 'Chocolate', strawberry: 'Strawberry' };
 
 const scenarios: Scenario[] = [
   { type: 'string', prop: 'abc', isValid: true },
@@ -55,16 +57,17 @@ const scenarios: Scenario[] = [
   { type: 'dob', prop: ' 20 16- 05- 25 ', isValid: true, altered: '2016-05-25' },
 
 
-  { type: 'select_one', prop: ' male', isValid: true, propertyParameter: { male: 'Male', female: 'Female' } },
-  { type: 'select_one', prop: 'female ', isValid: true, propertyParameter: { male: 'Male', female: 'Female' } },
-  { type: 'select_one', prop: 'f', isValid: false, propertyParameter: { male: 'Male', female: 'Female' } },
-  { type: 'select_one', prop: '', isValid: false, propertyParameter: { male: 'Male', female: 'Female' } },
+  { type: 'select_one', prop: ' male', isValid: true, propertyParameter: GENDER_OPTIONS },
+  { type: 'select_one', prop: 'female ', isValid: true, propertyParameter: GENDER_OPTIONS },
+  { type: 'select_one', prop: 'FeMale ', isValid: false, propertyParameter: GENDER_OPTIONS },
+  { type: 'select_one', prop: 'f', isValid: false, propertyParameter: GENDER_OPTIONS },
+  { type: 'select_one', prop: '', isValid: false, propertyParameter: GENDER_OPTIONS },
 
-  { type: 'select_multiple', prop: 'male', isValid: true, propertyParameter: { male: 'Male', female: 'Female' } },
-  { type: 'select_multiple', prop: 'male female', isValid: true, propertyParameter: { male: 'Male', female: 'Female' } },
-  { type: 'select_multiple', prop: ' male  female', isValid: true, propertyParameter: { male: 'Male', female: 'Female' } },
-  { type: 'select_multiple', prop: 'f,m', isValid: false, propertyParameter: { male: 'Male', female: 'Female' }, error: 'Invalid values' },
-  { type: 'select_multiple', prop: '', isValid: false, propertyParameter: { male: 'Male', female: 'Female' }, error: 'required' },
+  { type: 'select_multiple', prop: 'chocolate', isValid: true, propertyParameter: CANDIES_OPTIONS },
+  { type: 'select_multiple', prop: 'chocolate strawberry', isValid: true, propertyParameter: CANDIES_OPTIONS },
+  { type: 'select_multiple', prop: ' chocolate  strawberry', isValid: true, propertyParameter: CANDIES_OPTIONS },
+  { type: 'select_multiple', prop: 'c,s', isValid: false, propertyParameter: CANDIES_OPTIONS, error: 'Invalid values' },
+  { type: 'select_multiple', prop: '', isValid: false, propertyParameter: CANDIES_OPTIONS, error: 'required' },
 
   { type: 'generated', prop: 'b', propertyParameter: 'a {{ place.prop }} c', isValid: true, altered: 'a b c' },
   { type: 'generated', prop: 'b', propertyParameter: '{{ contact.name }} ({{ lineage.PARENT }})', isValid: true, altered: 'contact (Parent)' },
@@ -196,4 +199,3 @@ describe('lib/validation.ts', () => {
     }]);
   });
 });
-
