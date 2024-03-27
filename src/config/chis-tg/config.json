@@ -8,6 +8,10 @@
     {
       "friendly": "MoH Togo UAT",
       "domain": "moh-togo-uat.dev.medicmobile.org"
+    },
+    {
+      "friendly": "MoH Togo PROD",
+      "domain": "moh-togo.app.medicmobile.org"
     }
   ],
   "contact_types": [
@@ -17,7 +21,7 @@
       "contact_type": "cg72_supervision",
       "user_role": ["supervisor"],
       "username_from_place": false,
-      "deactivate_users_on_replace": true,
+      "deactivate_users_on_replace": false,
       "hierarchy": [
         {
           "friendly_name": "Sanitary Training",
@@ -32,7 +36,7 @@
         "friendly_name": "Affected Supervision Area",
         "property_name": "replacement",
         "type": "string",
-        "parameter": ["\\(Supervision Area Name\\)", "\\(SUPERVISION AREA NAME\\)"],
+        "parameter": ["\\(*Supervision*\\)"],
         "required": true
       },
       "place_properties": [
@@ -49,14 +53,14 @@
           "friendly_name": "Last Name",
           "property_name": "last_name",
           "type": "string",
-          "parameter": ["\\(LAST NAME\\)", "\\(LASTNAME\\)", "\\(LAST-NAME\\)"],
+          "parameter": ["\\(*Last*\\)"],
           "required": true
         },
         {
           "friendly_name": "First Name",
           "property_name": "first_name",
           "type": "string",
-          "parameter": ["\\(Chw First Name\\)", "\\(Chw Firstname\\)"],
+          "parameter": ["\\(*First*\\)"],
           "required": true
         },
         {
@@ -75,8 +79,8 @@
         {
           "friendly_name": "Telephone",
           "property_name": "telephone",
-          "type": "phone",
-          "parameter": "TG",
+          "type": "regex",
+          "parameter": "^\\d{8}$",
           "required": true
         },
         {
@@ -109,7 +113,7 @@
         "friendly_name": "Affected CHW Post",
         "property_name": "replacement",
         "type": "string",
-        "parameter": ["\\(Chw Post Name\\)", "\\(CHW POST NAME\\)", "\\(POST NAME\\)", "\\(Post Name\\)"],
+        "parameter": ["\\(*Post*\\)"],
         "required": true
       },
       "place_properties": [
@@ -117,7 +121,7 @@
           "friendly_name": "CHW Post Name",
           "property_name": "name",
           "type": "string",
-          "parameter": ["\\(Chw Post Name\\)", "\\(CHW POST NAME\\)", "\\(POST NAME\\)", "\\(Post Name\\)"],
+          "parameter": ["\\(*Post*\\)"],
           "required": true
         }
       ],
@@ -126,14 +130,14 @@
           "friendly_name": "Last Name",
           "property_name": "last_name",
           "type": "string",
-          "parameter": ["\\(CHW LAST NAME\\)", "\\(CHW LASTNAME\\)", "\\(CHW-LASTNAME\\)"],
+          "parameter": ["\\(*Last*\\)"],
           "required": true
         },
         {
           "friendly_name": "First Name",
           "property_name": "first_name",
           "type": "string",
-          "parameter": ["\\(Chw First Name\\)", "\\(Chw Firstname\\)"],
+          "parameter": ["\\(*First*\\)"],
           "required": true
         },
         {
