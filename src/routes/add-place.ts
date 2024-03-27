@@ -37,7 +37,7 @@ export default async function addPlace(fastify: FastifyInstance) {
     return resp.view('src/liquid/components/contact_type_property.html', {
       data: req.body,
       include: {
-        prefix: "contact_",
+        prefix: 'contact_',
         place_type: queryParams.place_type,
         prop: contactType
       }

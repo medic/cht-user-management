@@ -60,7 +60,7 @@ export default class Place {
 
   private optionalInputs: {
     [key: string]: any;
-  }
+  };
 
   constructor(type: ContactType) {
     this.id = uuidv4();
