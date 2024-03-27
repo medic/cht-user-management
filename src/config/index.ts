@@ -103,12 +103,19 @@ export class Config {
   }
 
   public static getUserRoleConfig(contactType: ContactType): ContactProperty {
+    const parameter = contactType.user_role.reduce(
+      (acc: { [key: string]: string }, curr: string) => {
+        acc[curr] = curr;
+        return acc;
+      }, {}
+    );
+
     return {
       friendly_name: 'Role(s)',
       property_name: 'role',
-      type: 'select_role',
+      type: 'select_multiple',
       required: true,
-      parameter: contactType.user_role,
+      parameter: parameter,
     };
   }
 

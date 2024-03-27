@@ -1,5 +1,3 @@
-{% capture prop_name %}{{ include.prefix }}{{include.prop.property_name}}{% endcapture %}
-
 {% if include.prop.type != 'generated' %}
   {% capture prop_name %}{{ include.prefix }}{{include.prop.property_name}}{% endcapture %}
   <div class="field">
@@ -8,24 +6,25 @@
     </label>
     <div class="control">
       {% if include.prop.type == 'select_one' or include.prop.type == 'select_multiple' %}
-    <div class="select">
-      <select name="{{ prop_name }}" {% if include.prop.type == 'select_multiple' %}multiple{% endif %}>
-        {% for params in include.prop.parameter %}
-        <option value="{{ params[0] }}" {% if data[prop_name] == params[0] or data[prop_name] contains params[0] %}selected{% endif %}>
-          {{ params[1] }}
-        </option>
-        {% endfor %}
-      </select>
-    </div>
-    {% else %}
-      <input
-        name="{{ prop_name }}"
-        type="{% if include.prop.type == 'dob' %}date{% else %}text{% endif %}"
-        class="input"
-        {% if false and include.prop.type == 'regex' %} pattern="{{ include.prop.parameter }}" {% endif %}
-        {% if data[prop_name] %} value="{{ data[prop_name] }}" {% endif %}
-      />
-    {% endif %}
+        {% assign is_multiple = include.prop.type == 'select_multiple'  %}
+        <div class="select is-fullwidth{% if is_multiple %} is-multiple{% endif %}">
+          <select name="{{ prop_name }}" {% if is_multiple %}multiple{% endif %}>
+            {% for params in include.prop.parameter %}
+            <option value="{{ params[0] }}" {% if data[prop_name] == params[0] or data[prop_name] contains params[0] %}selected{% endif %}>
+              {{ params[1] }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+      {% else %}
+        <input
+          name="{{ prop_name }}"
+          type="{% if include.prop.type == 'dob' %}date{% else %}text{% endif %}"
+          class="input"
+          {% if false and include.prop.type == 'regex' %} pattern="{{ include.prop.parameter }}" {% endif %}
+          {% if data[prop_name] %} value="{{ data[prop_name] }}" {% endif %}
+        />
+      {% endif %}
     </div>
   </div>
 {% endif %}
