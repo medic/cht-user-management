@@ -99,8 +99,8 @@
           "required": true
         },
         {
-          "friendly_name": "Age",
-          "property_name": "age",
+          "friendly_name": "Date of Birth",
+          "property_name": "date_of_birth",
           "type": "age",
           "required": true
         },

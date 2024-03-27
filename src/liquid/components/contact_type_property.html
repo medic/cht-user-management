@@ -4,8 +4,7 @@
   {% if include.prop.type == 'age' %}
   <div class="field">
     <input type="checkbox" name="option_dob_unknown" hx-target="#div_{{include.prop.property_name}}"
-      hx-post="/widget?place_type={{include.place_type}}&input=age" {% if data['option_dob_unknown'] %} checked {% endif
-      %} />
+      hx-post="/widget?place_type={{include.place_type}}&input=age" />
     <label>Date of birth unknown</label>
   </div>
   <div class="field">

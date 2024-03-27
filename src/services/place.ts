@@ -8,8 +8,6 @@ import { Validation } from '../lib/validation';
 // can't use package.json because of rootDir in ts
 import { version as appVersion } from '../package.json';
 import RemotePlaceResolver from '../lib/remote-place-resolver';
-import { DateTime } from 'luxon';
-import { ValidatorDateOfBirth } from '../lib/validator-dob';
 
 export type UserCreationDetails = {
   username?: string;
@@ -58,10 +56,6 @@ export default class Place {
   public validationErrors?: { [key: string]: string };
   public uploadError? : string;
 
-  private optionalInputs: {
-    [key: string]: any;
-  };
-
   constructor(type: ContactType) {
     this.id = uuidv4();
     this.type = type;
@@ -71,7 +65,6 @@ export default class Place {
     this.state = PlaceUploadState.STAGED;
     this.resolvedHierarchy = [];
     this.userRoleProperties = {};
-    this.optionalInputs = {};
   }
 
   /*
@@ -96,9 +89,6 @@ export default class Place {
       ...this.contact.properties,
       ...getPropertySetWithPrefix(this.type.contact_properties, CONTACT_PREFIX),
     };    
-    Object.keys(formData).filter(k => k.startsWith('option_')).forEach(k => {
-      this.optionalInputs[k] = formData[k];
-    });
 
     for (const hierarchyLevel of Config.getHierarchyWithReplacement(this.type)) {
       const propertyName = hierarchyLevel.property_name;
@@ -140,7 +130,6 @@ export default class Place {
       ...addPrefixToPropertySet(this.properties, PLACE_PREFIX),
       ...addPrefixToPropertySet(this.contact.properties, CONTACT_PREFIX),
       ...addPrefixToPropertySet(this.userRoleProperties, USER_PREFIX),
-      ...this.optionalInputs
     };
   }
 
@@ -166,26 +155,6 @@ export default class Place {
       }, {});
     };
 
-    const buildContactProperties = (properties: any) => {
-      const props = filteredProperties(properties);
-      return Object.keys(props).reduce((acc: any, key: string) => {
-        if (key === 'age') {
-          const dobValidator = new ValidatorDateOfBirth();
-          if (dobValidator.isValid(props[key])) {
-            acc.date_of_birth = props[key];
-          } else {
-            const age: string[] = props[key].split(' ');
-            acc.date_of_birth = DateTime.now()
-              .minus({ years: parseInt(age[0]) })
-              .toISODate();
-          }
-        } else {
-          acc[key] = props[key];
-        }
-        return acc;
-      }, {});
-    };
-
     const contactAttributes = (contactType: string) => {
       const RESERVED_CONTACT_TYPES = ['district_hospital', 'health_center', 'clinic', 'person'];
 
@@ -205,7 +174,7 @@ export default class Place {
       parent: this.resolvedHierarchy[1]?.id,
       user_attribution,
       contact: {
-        ...buildContactProperties(this.contact.properties),
+        ...filteredProperties(this.contact.properties),
         ...contactAttributes(this.contact.type.contact_type),
         name: this.contact.name,
         user_attribution,

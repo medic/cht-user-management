@@ -46,7 +46,7 @@ export class ValidatorAge implements IValidator {
   format(input: string): string {
     const age = Number(this.trimSpace(input));
     if (!isNaN(age)) {
-      return `${age}`;
+      return DateTime.now().minus({years: age}).toISODate();
     }
     if (this.dobValidator.isValid(input)) {
       return this.dobValidator.format(input);

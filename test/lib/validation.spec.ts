@@ -3,6 +3,7 @@ import { expect } from 'chai';
 import { Validation } from '../../src/lib/validation';
 import { mockSimpleContactType, mockPlace } from '../mocks';
 import RemotePlaceResolver from '../../src/lib/remote-place-resolver';
+import { DateTime } from 'luxon';
 
 type Scenario = {
   type: string;
@@ -55,10 +56,10 @@ const scenarios: Scenario[] = [
   { type: 'dob', prop: ' 20 16- 05- 25 ', isValid: true, altered: '2016-05-25' },
 
   { type: 'age', prop: '', isValid: false, altered: '' },
-  { type: 'age', prop: '20', isValid: true, altered: '20' },
-  { type: 'age', prop: ' 20 ', isValid: true, altered: '20'  },
+  { type: 'age', prop: '20', isValid: true, altered: DateTime.now().minus( { years: 20 }).toISODate() },
+  { type: 'age', prop: ' 20 ', isValid: true, altered: DateTime.now().minus({ years: 20 }).toISODate() },
   { type: 'age', prop: 'abc', isValid: false, altered: 'abc' },
-  { type: 'age', prop: '  1 0   0 ', isValid: true, altered: '100' },
+  { type: 'age', prop: '  1 0   0 ', isValid: true, altered: DateTime.now().minus({years: 100}).toISODate() },
   { type: 'age', prop: '2000-01-01', isValid: true, altered: '2000-01-01' },
   { type: 'age', prop: '2000-abc', isValid: false, altered: '2000-abc' },
   
