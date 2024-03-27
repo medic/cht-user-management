@@ -13,7 +13,6 @@ import ValidatorSkip from './validator-skip';
 import ValidatorString from './validator-string';
 import ValidatorSelectMultiple from './validator-select_multiple';
 import ValidatorSelectOne from './validator-select_one';
-import ValidatorRole from './validator-role';
 
 export type ValidationError = {
   property_name: string;
@@ -38,7 +37,6 @@ const TypeValidatorMap: ValidatorMap = {
   phone: new ValidatorPhone(),
   regex: new ValidatorRegex(),
   string: new ValidatorString(),
-  select_role: new ValidatorRole(),
   select_one: new ValidatorSelectOne(),
   select_multiple: new ValidatorSelectMultiple(),
 };

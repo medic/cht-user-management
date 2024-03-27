@@ -73,7 +73,11 @@
         {
           "friendly_name": "Gender",
           "property_name": "sex",
-          "type": "gender",
+          "type": "select_one",
+          "parameter": {
+            "male": "Masculin",
+            "female": "Feminin"
+          },
           "required": true
         },
         {
@@ -157,7 +161,11 @@
         {
           "friendly_name": "Sex",
           "property_name": "sex",
-          "type": "gender",
+          "type": "select_one",
+          "parameter": {
+            "male": "Masculin",
+            "female": "Feminin"
+          },
           "required": true
         },
         {

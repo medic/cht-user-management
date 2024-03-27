@@ -192,7 +192,7 @@ describe('lib/validation.ts', () => {
 
     expect(Validation.getValidationErrors(place)).to.deep.eq([{
       property_name: 'user_role',
-      description: 'Error in isValid for \'select_multiple\': Error: Invalid values: stockmanager'
+      description: 'Invalid values: stockmanager'
     }]);
   });
 });

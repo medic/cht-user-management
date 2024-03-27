@@ -3,12 +3,12 @@ import {IValidator} from './validation';
 import ValidatorString from './validator-string';
 
 export default class ValidatorSelectOne implements IValidator {
-  isValid(input: string, property: ContactProperty): boolean {
+  isValid(input: string, property: ContactProperty): boolean|string {
     const stringValidator = new ValidatorString();
     const trimmedInput = stringValidator.format(input); 
 
     if (trimmedInput.length === 0 && property.required) {
-      throw new Error('Value is required');
+      return `Value is required`;
     }
     // Verify property.parameter is an object
     if (!property?.parameter || typeof property.parameter !== 'object') {

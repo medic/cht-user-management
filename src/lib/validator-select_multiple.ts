@@ -45,7 +45,6 @@ export default class ValidatorSelectMultiple implements IValidator {
       return input;
     } 
 
-    // If input is a string, split it by delimiter
     return input
       .split(this.DELIMITER)
       .map(value => stringValidator.format(value))
