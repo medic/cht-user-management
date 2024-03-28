@@ -58,6 +58,7 @@ const scenarios: Scenario[] = [
   { type: 'dob', prop: ' 20 ', isValid: true, altered: DateTime.now().minus({ years: 20 }).toISODate() },
   { type: 'dob', prop: 'abc', isValid: false, altered: 'abc' },
   { type: 'dob', prop: '  1 0   0 ', isValid: true, altered: DateTime.now().minus({ years: 100 }).toISODate() },
+  { type: 'dob', prop: '-1', isValid: false, altered: '-1' },
   
   { type: 'gender', prop: 'Man', isValid: true, altered: 'male' },
   { type: 'gender', prop: 'male', isValid: true, altered: 'male' },

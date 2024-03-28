@@ -18,7 +18,7 @@ hx-target="this" hx-swap="outerHTML">
 
     {% for prop in contactType.place_properties %}
       {%
-        include "components/contact_type_property.html" prefix="place_" prop=prop
+        include "components/contact_type_property.html" prefix="place_" prop=prop place_type=contactType.name
       %}
     {% endfor %}
   </section>

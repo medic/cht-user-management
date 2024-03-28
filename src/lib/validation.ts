@@ -4,7 +4,7 @@ import Place from '../services/place';
 import RemotePlaceResolver from './remote-place-resolver';
 import { RemotePlace } from './cht-api';
 
-import { ValidatorAge } from './validator-dob';
+import ValidatorDob from './validator-dob';
 import ValidatorGender from './validator-gender';
 import ValidatorGenerated from './validator-generated';
 import ValidatorName from './validator-name';
@@ -30,7 +30,7 @@ type ValidatorMap = {
 };
 
 const TypeValidatorMap: ValidatorMap = {
-  dob: new ValidatorAge(),
+  dob: new ValidatorDob(),
   gender: new ValidatorGender(),
   generated: new ValidatorGenerated(),
   name: new ValidatorName(),

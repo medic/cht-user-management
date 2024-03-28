@@ -17,7 +17,7 @@
     <div class="field">
       <div class="control">
         <input type="checkbox" name="option_dob_unknown" hx-target="#div_{{include.prop.property_name}}"
-          hx-post="/widget?place_type={{include.place_type}}&input={{include.prop.type}}" {% if
+          hx-post="/place/dob?place_type={{include.place_type}}&prefix={{include.prefix}}&prop_type={{include.prop.type}}" {% if
           data['option_dob_unknown'] %} checked {% endif%} />
         <label>Date of birth unknown</label>
       </div>

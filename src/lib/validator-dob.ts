@@ -5,7 +5,7 @@ class ValidatorDateOfBirth implements IValidator {
   isValid(input: string) : boolean {
     try {
       const parsed = parse(input);
-      return parsed.isValid && parsed.diffNow('hours').hours <= 0;
+      return parsed.isValid && parsed < DateTime.now();
     } catch (e) {
       return false;
     }
@@ -14,7 +14,7 @@ class ValidatorDateOfBirth implements IValidator {
   format(input : string) : string {
     const parsed = parse(input);
     const asISODate = parsed.toISODate();
-    if (!asISODate) {
+    if (!this.isValid(input) || !asISODate) {
       return input;
     }
 
@@ -31,8 +31,12 @@ const parse = (input: string) => {
   return DateTime.fromISO(strippedInput);
 };
 
-export class ValidatorAge implements IValidator {
+export default class ValidatorAge implements IValidator {
   private dobValidator = new ValidatorDateOfBirth();
+
+  private isAgeValid(age: number): boolean {
+    return !isNaN(age) && age > 0;
+  }
 
   private trimSpace(input: string): string {
     return input.replace(/\s/g, '');
@@ -40,12 +44,12 @@ export class ValidatorAge implements IValidator {
 
   isValid(input: string): boolean {
     const age = Number(this.trimSpace(input));
-    return (!isNaN(age) && age > 18 && age < 200) || (this.dobValidator.isValid(input));
+    return this.isAgeValid(age) || this.dobValidator.isValid(input);
   }
 
   format(input: string): string {
     const age = Number(this.trimSpace(input));
-    if (!isNaN(age)) {
+    if (this.isAgeValid(age)) {
       return DateTime.now().minus({years: age}).toISODate();
     }
     if (this.dobValidator.isValid(input)) {
