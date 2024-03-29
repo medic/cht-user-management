@@ -9,11 +9,11 @@ export default class ValidatorRegex implements IValidator {
       throw Error(`property of type regex - ${property.friendly_name} is missing parameter`);
     }
 
-    if (Array.isArray(property.parameter)) {
-      throw Error(`property of type regex - 'parameter' should not be an array`);
+    if (typeof property.parameter !== 'string') {
+      throw Error(`property '${property.friendly_name}' of type 'regex' expects 'parameter' to be a string.`);
     }
-
-    const regex = new RegExp(property.parameter);
+    
+    const regex = new RegExp(property.parameter.toString());
     const validatorStr = new ValidatorString();
     const altered = validatorStr.format(input);
     const match = altered.match(regex);
