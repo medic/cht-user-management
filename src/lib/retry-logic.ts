@@ -9,12 +9,12 @@ const RETRYABLE_STATUS_CODES = [500, 502, 503, 504, 511];
 export const axiosRetryConfig = {
   retries: RETRY_COUNT,
   retryDelay: () => 1000,
-  retryCondition: (err: AxiosError) => {
-    const status = err.response?.status;
-    return (!status || RETRYABLE_STATUS_CODES.includes(status)) && isRetryAllowed(err);
+  retryCondition: (error: AxiosError) => {
+    const status = error.response?.status;
+    return (!status || RETRYABLE_STATUS_CODES.includes(status)) && isRetryAllowed(error);
   },
   onRetry: (retryCount: number, error: AxiosError, requestConfig: AxiosRequestConfig) => {
-    console.log(`${requestConfig.url} failure. Retrying (${retryCount})`);
+    console.log(`${requestConfig.url} failure (${error.response?.status || '?'}). Retrying (${retryCount})`);
   },
 };
 
