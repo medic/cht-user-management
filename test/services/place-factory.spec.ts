@@ -411,10 +411,10 @@ describe('services/place-factory.ts', () => {
     fakeFormData.hierarchy_replacement = 'to-replace';
 
     contactType.replacement_property = {
-      friendly_name: "Outgoing CHP",
-      property_name: "replacement",
-      type: "name",
-      parameter: ["\\sArea", "\\s\\(.*\\)"],
+      friendly_name: 'Outgoing CHP',
+      property_name: 'replacement',
+      type: 'name',
+      parameter: ['\\sArea', '\\s\\(.*\\)'],
       required: true
     };
 
@@ -440,10 +440,10 @@ describe('services/place-factory.ts', () => {
     fakeFormData.hierarchy_replacement = 'to-replace';
 
     contactType.replacement_property = {
-      friendly_name: "Outgoing CHP",
-      property_name: "replacement",
-      type: "generated",
-      parameter: "{{ contact.name }} Area",
+      friendly_name: 'Outgoing CHP',
+      property_name: 'replacement',
+      type: 'generated',
+      parameter: '{{ contact.name }} Area',
       required: true
     };
 
