@@ -21,7 +21,7 @@ export default class ValidatorSelectMultiple implements IValidator {
     );
 
     if (invalidValues.length > 0) {
-      return `Invalid values: ${invalidValues.join(', ')}`;
+      return `Invalid values for property "${property.friendly_name}": ${invalidValues.join(', ')}`;
     }
 
     // Check if any values are missing and property is required
@@ -48,7 +48,7 @@ export default class ValidatorSelectMultiple implements IValidator {
     return input
       .split(this.DELIMITER)
       .map(value => stringValidator.format(value))
-      .filter(value => value);
+      .filter(Boolean);
   }
 }
 

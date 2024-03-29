@@ -9,10 +9,10 @@ import ValidatorGenerated from './validator-generated';
 import ValidatorName from './validator-name';
 import ValidatorPhone from './validator-phone';
 import ValidatorRegex from './validator-regex';
-import ValidatorSkip from './validator-skip';
-import ValidatorString from './validator-string';
 import ValidatorSelectMultiple from './validator-select_multiple';
 import ValidatorSelectOne from './validator-select_one';
+import ValidatorSkip from './validator-skip';
+import ValidatorString from './validator-string';
 
 export type ValidationError = {
   property_name: string;

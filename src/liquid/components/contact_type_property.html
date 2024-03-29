@@ -6,16 +6,12 @@
     </label>
     <div class="control">
       {% if include.prop.type == 'select_one' or include.prop.type == 'select_multiple' %}
-        {% assign is_multiple = include.prop.type == 'select_multiple'  %}
-        <div class="select is-fullwidth{% if is_multiple %} is-multiple{% endif %}">
-          <select name="{{ prop_name }}" {% if is_multiple %}multiple{% endif %}>
-            {% for params in include.prop.parameter %}
-            <option value="{{ params[0] }}" {% if data[prop_name] == params[0] or data[prop_name] contains params[0] %}selected{% endif %}>
-              {{ params[1] }}
-            </option>
-            {% endfor %}
-          </select>
-        </div>
+        {%
+          include "components/contact_type_select.html"
+          prop_name=prop_name
+          prop=prop
+          data=data
+        %}
       {% else %}
         <input
           name="{{ prop_name }}"

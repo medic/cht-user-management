@@ -3,7 +3,12 @@ import { IValidator } from './validation';
 import ValidatorString from './validator-string';
 
 export default class ValidatorName implements IValidator {
-  isValid(input: string) : boolean | string {
+  isValid(input: string, property : ContactProperty) : boolean | string {
+    // Verify property.parameter is always array
+    if (property.parameter && !Array.isArray(property.parameter)) {
+      throw Error(`property '${property.friendly_name}' of type 'regex' expects 'parameter' to be an array.`);
+    }
+
     return !!input;
   }
 

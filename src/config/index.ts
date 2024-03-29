@@ -115,7 +115,7 @@ export class Config {
       property_name: 'role',
       type: 'select_multiple',
       required: true,
-      parameter: parameter,
+      parameter,
     };
   }
 
