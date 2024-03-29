@@ -14,7 +14,7 @@ export const axiosRetryConfig = {
     return (!status || RETRYABLE_STATUS_CODES.includes(status)) && isRetryAllowed(error);
   },
   onRetry: (retryCount: number, error: AxiosError, requestConfig: AxiosRequestConfig) => {
-    console.log(`${requestConfig.url} failure (${error.response?.status || '?'}). Retrying (${retryCount})`);
+    console.log(`${requestConfig.url} failure (${error?.response?.status || '?'}). Retrying (${retryCount})`);
   },
 };
 
