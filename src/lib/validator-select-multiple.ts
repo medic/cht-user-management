@@ -1,10 +1,11 @@
 import {ContactProperty} from '../config';
 import {IValidator} from './validation';
 import ValidatorString from './validator-string';
-import ValidatorSelectOne from './validator-select_one';
+import ValidatorSelectOne from './validator-select-one';
+
+const DELIMITER = ' ';
 
 export default class ValidatorSelectMultiple implements IValidator {
-  DELIMITER = ' ';
 
   isValid(input: string, property: ContactProperty): boolean | string {
     // Verify property.parameter is an object and is not null
@@ -33,7 +34,7 @@ export default class ValidatorSelectMultiple implements IValidator {
   }
 
   format(input: string): string {
-    return Array.isArray(input) ? input.join(this.DELIMITER) : input;
+    return Array.isArray(input) ? input.join(DELIMITER) : input;
   }
 
   get defaultError(): string {
@@ -46,9 +47,8 @@ export default class ValidatorSelectMultiple implements IValidator {
     } 
 
     return input
-      .split(this.DELIMITER)
+      .split(DELIMITER)
       .map(value => stringValidator.format(value))
       .filter(Boolean);
   }
 }
-

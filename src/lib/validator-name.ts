@@ -6,7 +6,7 @@ export default class ValidatorName implements IValidator {
   isValid(input: string, property : ContactProperty) : boolean | string {
     // Verify property.parameter is always array
     if (property.parameter && !Array.isArray(property.parameter)) {
-      throw Error(`property '${property.friendly_name}' of type 'regex' expects 'parameter' to be an array.`);
+      throw Error(`Property '${property.friendly_name}' of type 'name' expects 'parameter' to be an array.`);
     }
 
     return !!input;

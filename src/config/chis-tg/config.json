@@ -159,7 +159,7 @@
           "required": true
         },
         {
-          "friendly_name": "Sex",
+          "friendly_name": "Gender",
           "property_name": "sex",
           "type": "select_one",
           "parameter": {

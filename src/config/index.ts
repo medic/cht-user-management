@@ -111,7 +111,7 @@ export class Config {
     );
 
     return {
-      friendly_name: 'Role(s)',
+      friendly_name: 'Roles',
       property_name: 'role',
       type: 'select_multiple',
       required: true,

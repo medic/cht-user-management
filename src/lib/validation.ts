@@ -9,8 +9,8 @@ import ValidatorGenerated from './validator-generated';
 import ValidatorName from './validator-name';
 import ValidatorPhone from './validator-phone';
 import ValidatorRegex from './validator-regex';
-import ValidatorSelectMultiple from './validator-select_multiple';
-import ValidatorSelectOne from './validator-select_one';
+import ValidatorSelectMultiple from './validator-select-multiple';
+import ValidatorSelectOne from './validator-select-one';
 import ValidatorSkip from './validator-skip';
 import ValidatorString from './validator-string';
 
