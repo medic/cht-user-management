@@ -108,7 +108,11 @@
         {
           "friendly_name": "Sex",
           "property_name": "sex",
-          "type": "gender",
+          "type": "select_one",
+          "parameter": {
+            "male": "Male",
+            "female": "Female"
+          },
           "required": true
         }
       ]
