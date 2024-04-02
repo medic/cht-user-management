@@ -110,12 +110,12 @@ export default class RemotePlaceResolver {
 }
 
 function getFuzzFunction(place: Place, hierarchyLevel: HierarchyConstraint, contactType: ContactType) {
-  if (hierarchyLevel.level === 0) {
-    const nameProperty = Config.getPropertyWithName(contactType.place_properties, 'name');
-    return (val: string) => Validation.formatSingle(place, nameProperty, val);
+  const fuzzingProperty = hierarchyLevel.level === 0 ? contactType.replacement_property : hierarchyLevel;
+  if (fuzzingProperty.type === 'generated') {
+    throw Error(`Invalid configuration: hierarchy properties cannot be of type "generated".`);
   }
-  
-  return (val: string) => Validation.formatSingle(place, hierarchyLevel, val);
+
+  return (val: string) => Validation.formatSingle(place, fuzzingProperty, val);
 }
 
 async function findRemotePlacesInHierarchy(

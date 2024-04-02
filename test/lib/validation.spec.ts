@@ -1,3 +1,4 @@
+import { DateTime } from 'luxon';
 import { expect } from 'chai';
 
 import { Validation } from '../../src/lib/validation';
@@ -8,13 +9,15 @@ type Scenario = {
   type: string;
   prop: string;
   isValid: boolean;
-  propertyParameter?: string | string[];
+  propertyParameter?: string | string[] | object;
   altered?: string;
   propertyErrorDescription?: string;
   error?: string;
 };
 
 const EMAIL_REGEX = '^[a-zA-Z0-9._+-]+@[a-zA-Z0-9.-]+.[a-zA-Z]{2,}$';
+const GENDER_OPTIONS = { male: 'Male', female: 'Female' };
+const CANDIES_OPTIONS = { chocolate: 'Chocolate', strawberry: 'Strawberry' };
 
 const scenarios: Scenario[] = [
   { type: 'string', prop: 'abc', isValid: true },
@@ -55,17 +58,26 @@ const scenarios: Scenario[] = [
   { type: 'dob', prop: '2030-05-25', isValid: false },
   { type: 'dob', prop: '2016-05-25', isValid: true, altered: '2016-05-25' },
   { type: 'dob', prop: ' 20 16- 05- 25 ', isValid: true, altered: '2016-05-25' },
-  { type: 'dob', prop: '23', isValid: false, error: 'Not a valid' },
+  { type: 'dob', prop: '20', isValid: true, altered: DateTime.now().minus({ years: 20 }).toISODate() },
+  { type: 'dob', prop: ' 20 ', isValid: true, altered: DateTime.now().minus({ years: 20 }).toISODate() },
+  { type: 'dob', prop: 'abc', isValid: false, altered: 'abc' },
+  { type: 'dob', prop: '  1 0   0 ', isValid: true, altered: DateTime.now().minus({ years: 100 }).toISODate() },
+  { type: 'dob', prop: '-1', isValid: false, altered: '-1' },
   { type: 'dob', prop: '15/2/1985', isValid: true, altered: '1985-02-15' },
   { type: 'dob', prop: '1/2/1 985', isValid: true, altered: '1985-02-01' },
   { type: 'dob', prop: '1/13/1985', isValid: false },
+  
+  { type: 'select_one', prop: ' male', isValid: true, propertyParameter: GENDER_OPTIONS },
+  { type: 'select_one', prop: 'female ', isValid: true, propertyParameter: GENDER_OPTIONS },
+  { type: 'select_one', prop: 'FeMale ', isValid: false, propertyParameter: GENDER_OPTIONS },
+  { type: 'select_one', prop: 'f', isValid: false, propertyParameter: GENDER_OPTIONS },
+  { type: 'select_one', prop: '', isValid: false, propertyParameter: GENDER_OPTIONS },
 
-  { type: 'gender', prop: 'Man', isValid: true, altered: 'male' },
-  { type: 'gender', prop: 'male', isValid: true, altered: 'male' },
-  { type: 'gender', prop: 'F', isValid: true, altered: 'female' },
-  { type: 'gender', prop: 'Female', isValid: true, altered: 'female' },
-  { type: 'gender', prop: 'Woman', isValid: true, altered: 'female' },
-  { type: 'gender', prop: 'X', isValid: false, error: 'male' },
+  { type: 'select_multiple', prop: 'chocolate', isValid: true, propertyParameter: CANDIES_OPTIONS },
+  { type: 'select_multiple', prop: 'chocolate strawberry', isValid: true, propertyParameter: CANDIES_OPTIONS },
+  { type: 'select_multiple', prop: ' chocolate  strawberry', isValid: true, propertyParameter: CANDIES_OPTIONS },
+  { type: 'select_multiple', prop: 'c,s', isValid: false, propertyParameter: CANDIES_OPTIONS, error: 'Invalid values' },
+  { type: 'select_multiple', prop: '', isValid: false, propertyParameter: CANDIES_OPTIONS, error: 'required' },
 
   { type: 'generated', prop: 'b', propertyParameter: 'a {{ place.prop }} c', isValid: true, altered: 'a b c' },
   { type: 'generated', prop: 'b', propertyParameter: '{{ contact.name }} ({{ lineage.PARENT }})', isValid: true, altered: 'contact (Parent)' },
@@ -193,8 +205,7 @@ describe('lib/validation.ts', () => {
 
     expect(Validation.getValidationErrors(place)).to.deep.eq([{
       property_name: 'user_role',
-      description: `Role 'stockmanager' is not allowed`, 
+      description: `Invalid values for property "Roles": stockmanager`
     }]);
   });
 });
-
