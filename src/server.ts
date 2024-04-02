@@ -12,6 +12,7 @@ import view from '@fastify/view';
 
 import Auth from './lib/authentication';
 import SessionCache from './services/session-cache';
+import { ChtApi_4_6 } from './lib/cht-api-4-6';
 import { ChtApi_4_7 } from './lib/cht-api-4-7';
 import { ChtApi } from './lib/cht-api';
 import ChtSession from './lib/cht-session';
@@ -66,10 +67,14 @@ const build = (opts: FastifyServerOptions): FastifyInstance => {
 };
 
 function createChtApi(chtSession: ChtSession): ChtApi {
-  if (semver.gte(chtSession.chtCoreVersion, '4.7.0')) {
+  if (semver.gte(chtSession.chtCoreVersion, '4.5.0')) { // TODO: change when not testing on dev
     return new ChtApi_4_7(chtSession);
   }
   
+  if (semver.gte(chtSession.chtCoreVersion, '4.6.0')) {
+    return new ChtApi_4_6(chtSession);
+  }
+
   return new ChtApi(chtSession);
 }
 

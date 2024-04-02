@@ -29,6 +29,11 @@ export type RemotePlace = {
   type: 'remote' | 'local' | 'invalid';
 };
 
+export type CreatedPlaceResult = {
+  placeId: string;
+  contactId?: string;
+};
+
 export class ChtApi {
   private session: ChtSession;
   protected axiosInstance: AxiosInstance;
@@ -67,18 +72,26 @@ export class ChtApi {
     return contactDoc._id;
   };
 
-  createPlace = async (payload: PlacePayload): Promise<string> => {
+  createPlace = async (payload: PlacePayload): Promise<CreatedPlaceResult> => {
     const url = `api/v1/places`;
     console.log('axios.post', url);
     const resp = await this.axiosInstance.post(url, payload);
-    return resp.data.id;
+    return {
+      placeId: resp.data.id,
+      contactId: resp.data.contact?.id,
+    };
   };
 
   // because there is no PUT for /api/v1/places
   createContact = async (payload: PlacePayload): Promise<string> => {
+    const payloadWithPlace = {
+      ...payload.contact,
+      place: payload._id,
+    };
+
     const url = `api/v1/people`;
     console.log('axios.post', url);
-    const resp = await this.axiosInstance.post(url, payload.contact);
+    const resp = await this.axiosInstance.post(url, payloadWithPlace);
     return resp.data.id;
   };
 

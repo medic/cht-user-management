@@ -1,7 +1,7 @@
 import EventEmitter from 'events';
 
 import * as RetryLogic from '../lib/retry-logic';
-import { ChtApi, PlacePayload } from '../lib/cht-api';
+import { ChtApi, CreatedPlaceResult, PlacePayload } from '../lib/cht-api';
 import { Config } from '../config';
 import Place, { PlaceUploadState } from './place';
 import RemotePlaceCache from '../lib/remote-place-cache';
@@ -14,7 +14,7 @@ const UPLOAD_BATCH_SIZE = 15;
 
 export interface Uploader {
    handleContact (payload: PlacePayload): Promise<string | undefined>;
-   handlePlacePayload (place: Place, payload: PlacePayload) : Promise<string>;
+   handlePlacePayload (place: Place, payload: PlacePayload) : Promise<CreatedPlaceResult>;
    linkContactAndPlace (place: Place, placeId: string): Promise<void>;
 }
 
@@ -51,15 +51,18 @@ export class UploadManager extends EventEmitter {
       }
 
       if (!place.creationDetails.placeId) {
-        const placeId = await uploader.handlePlacePayload(place, payload);
-        place.creationDetails.placeId = placeId;
+        const placeResult = await uploader.handlePlacePayload(place, payload);
+        place.creationDetails.placeId = placeResult.placeId;
+        place.creationDetails.contactId ||= placeResult.contactId;
       }
 
-      const createdPlaceId = place.creationDetails.placeId; // closure required for typescript
-      await RetryLogic.retryOnUpdateConflict<void>(() => uploader.linkContactAndPlace(place, createdPlaceId));
-
       if (!place.creationDetails.contactId) {
-        throw Error('creationDetails.contactId not set');
+        const createdPlaceId = place.creationDetails.placeId; // closure required for typescript
+        await RetryLogic.retryOnUpdateConflict<void>(() => uploader.linkContactAndPlace(place, createdPlaceId));
+
+        if (!place.creationDetails.contactId) {
+          throw Error('creationDetails.contactId not set');
+        }
       }
 
       if (!place.creationDetails.username) {

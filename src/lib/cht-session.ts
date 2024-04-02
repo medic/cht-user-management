@@ -114,14 +114,14 @@ export default class ChtSession {
     const adminRoles = ['admin', '_admin'];
     const userDoc = userResponse.data;
     const isAdmin = _.intersection(adminRoles, userDoc?.roles).length > 0;
-    const chtCoreVersion = semver.coerce(monitoringResponse.data?.version?.app)?.version;
+    const chtCoreVersion = monitoringResponse.data?.version?.app;
 
     const facilityId = isAdmin ? ADMIN_FACILITY_ID : userDoc?.facility_id;
     if (!facilityId) {
       throw Error(`User ${username} does not have a facility_id connected to their user doc`);
     }
 
-    if (!chtCoreVersion) {
+    if (!semver.valid(chtCoreVersion)) {
       throw Error(`Cannot parse cht core version for instance "${authInfo.domain}"`);
     }
 
