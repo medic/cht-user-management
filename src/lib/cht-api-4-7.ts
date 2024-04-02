@@ -1,4 +1,3 @@
-import { ChtApi } from './cht-api';
 import { ChtApi_4_6 } from './cht-api-4-6';
 import ChtSession from './cht-session';
 

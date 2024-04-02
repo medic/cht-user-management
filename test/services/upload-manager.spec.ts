@@ -346,7 +346,7 @@ async function createMocks() {
   const chtApi = {
     chtSession: mockChtSession(),
     getPlacesWithType: sinon.stub().resolves([remotePlace]),
-    createPlace: sinon.stub().resolves('created-place-id'),
+    createPlace: sinon.stub().resolves({ placeId: 'created-place-id' }),
     updateContactParent: sinon.stub().resolves('created-contact-id'),
     createUser: sinon.stub().resolves(),
     

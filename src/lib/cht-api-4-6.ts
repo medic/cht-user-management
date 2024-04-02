@@ -7,7 +7,7 @@ export class ChtApi_4_6 extends ChtApi {
   }
 
   // #8674: assign parent place to new contacts
-  public override updateContactParent = async (parentId: string): Promise<string> => {
+  public override updateContactParent = async (): Promise<string> => {
     throw Error(`invalid program. should never update contact's parent after cht-core 4.6`);
   };
 }
