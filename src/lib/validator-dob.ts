@@ -13,16 +13,16 @@ export default class ValidatorDateOfBirth implements IValidator {
 
   format(input : string) : string {
     const parsed = this.parse(input);
-    const asISODate = parsed.toISODate();
-    if (!this.isValid(input) || !asISODate) {
+    if (!this.isValid(input)) {
       return input;
     }
 
-    return asISODate;
+    const asISODate = parsed.toISODate();
+    return asISODate ?? input;
   }
 
   get defaultError(): string {
-    return 'Not a valid Date of Birth (eg. 1990-02-26 or 25)';
+    return 'Not a valid Date of Birth (eg. 1990-02-26 or 26/2/1985 or 38)';
   }
 
   private parse(input: string): DateTime {
@@ -32,6 +32,9 @@ export default class ValidatorDateOfBirth implements IValidator {
       return DateTime.now().minus({ years: asNumber });
     }
 
-    return DateTime.fromISO(strippedInput);
+    const hasSlash = strippedInput.includes('/');
+    return hasSlash ?
+      DateTime.fromFormat(strippedInput, 'd/M/yyyy') 
+      : DateTime.fromISO(strippedInput);
   }
 }

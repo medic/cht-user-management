@@ -48,6 +48,8 @@ const scenarios: Scenario[] = [
   { type: 'name', prop: 'NZATANI / ILALAMBYU', isValid: true, altered: 'Nzatani / Ilalambyu' },
   { type: 'name', prop: 'Sam\'s CHU', propertyParameter: ['CHU', 'Comm Unit'], isValid: true, altered: 'Sam\'s' },
   { type: 'name', prop: 'Jonathan M.Barasa', isValid: true, altered: 'Jonathan M Barasa' },
+  { type: 'name', prop: 'Robert xiv', isValid: true, altered: 'Robert XIV' },
+  
   { type: 'name', prop: ' ', isValid: true, altered: '' },
 
   { type: 'dob', prop: '', isValid: false },
@@ -61,6 +63,9 @@ const scenarios: Scenario[] = [
   { type: 'dob', prop: 'abc', isValid: false, altered: 'abc' },
   { type: 'dob', prop: '  1 0   0 ', isValid: true, altered: DateTime.now().minus({ years: 100 }).toISODate() },
   { type: 'dob', prop: '-1', isValid: false, altered: '-1' },
+  { type: 'dob', prop: '15/2/1985', isValid: true, altered: '1985-02-15' },
+  { type: 'dob', prop: '1/2/1 985', isValid: true, altered: '1985-02-01' },
+  { type: 'dob', prop: '1/13/1985', isValid: false },
   
   { type: 'select_one', prop: ' male', isValid: true, propertyParameter: GENDER_OPTIONS },
   { type: 'select_one', prop: 'female ', isValid: true, propertyParameter: GENDER_OPTIONS },
