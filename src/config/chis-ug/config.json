@@ -36,6 +36,7 @@
         "friendly_name": "Outgoing VHT",
         "property_name": "REPLACEMENT",
         "type": "name",
+        "parameter": ["\\sArea", "\\s\\(.*\\)"],
         "required": true
       },
       "place_properties": [
@@ -107,7 +108,11 @@
         {
           "friendly_name": "Sex",
           "property_name": "sex",
-          "type": "gender",
+          "type": "select_one",
+          "parameter": {
+            "male": "Male",
+            "female": "Female"
+          },
           "required": true
         }
       ]

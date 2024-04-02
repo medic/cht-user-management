@@ -9,6 +9,10 @@ export default class ValidatorPhone implements IValidator {
       throw Error(`property of type phone on ${property.friendly_name} missing parameter with locale`);
     }
 
+    if (typeof property.parameter !== 'string') {
+      throw Error(`property '${property.friendly_name}' of type 'phone' expects 'parameter' to be a string.`);
+    }
+
     try {
       const isValid = isValidNumberForRegion(input, property.parameter as CountryCode);
       if (isValid) {

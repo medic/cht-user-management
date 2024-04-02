@@ -31,7 +31,7 @@ export type HierarchyConstraint = {
   property_name: string;
   type: string;
   required: boolean;
-  parameter? : string | string[];
+  parameter? : string | string[] | object;
   errorDescription? : string;
   
   contact_type: string;
@@ -43,7 +43,7 @@ export type ContactProperty = {
   property_name: string;
   type: string;
   required: boolean;
-  parameter? : string | string[];
+  parameter? : string | string[] | object;
   errorDescription? : string;
 };
 
@@ -103,12 +103,19 @@ export class Config {
   }
 
   public static getUserRoleConfig(contactType: ContactType): ContactProperty {
+    const parameter = contactType.user_role.reduce(
+      (acc: { [key: string]: string }, curr: string) => {
+        acc[curr] = curr;
+        return acc;
+      }, {}
+    );
+
     return {
-      friendly_name: 'Role(s)',
+      friendly_name: 'Roles',
       property_name: 'role',
-      type: 'select_role',
+      type: 'select_multiple',
       required: true,
-      parameter: contactType.user_role,
+      parameter,
     };
   }
 

@@ -5,13 +5,22 @@
       {{include.prop.friendly_name}}
     </label>
     <div class="control">
-      <input
-        name="{{ prop_name }}"
-        type="{% if include.prop.type == 'dob' %}date{% else %}text{% endif %}"
-        class="input"
-        {% if false and include.prop.type == 'regex' %} pattern="{{ include.prop.parameter }}" {% endif %}
-        {% if data[prop_name] %} value="{{ data[prop_name] }}" {% endif %}
-      />
+      {% if include.prop.type == 'select_one' or include.prop.type == 'select_multiple' %}
+        {%
+          include "components/contact_type_select.html"
+          prop_name=prop_name
+          prop=include.prop
+          data=data
+        %}
+      {% else %}
+        <input
+          name="{{ prop_name }}"
+          type="{% if include.prop.type == 'dob' %}date{% else %}text{% endif %}"
+          class="input"
+          {% if false and include.prop.type == 'regex' %} pattern="{{ include.prop.parameter }}" {% endif %}
+          {% if data[prop_name] %} value="{{ data[prop_name] }}" {% endif %}
+        />
+      {% endif %}
     </div>
   </div>
 {% endif %}
