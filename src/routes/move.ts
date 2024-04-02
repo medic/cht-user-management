@@ -31,7 +31,7 @@ export default async function sessionCache(fastify: FastifyInstance) {
 
     const sessionCache: SessionCache = req.sessionCache;
     const contactType = Config.getContactType(formData.place_type);
-    const chtApi = new ChtApi(req.chtSession);
+    const chtApi = ChtApi.create(req.chtSession);
     
     try {
       const tmplData = await MoveLib.move(formData, contactType, sessionCache, chtApi);

@@ -53,7 +53,7 @@ export default async function sessionCache(fastify: FastifyInstance) {
 
   fastify.post('/app/refresh-all', async (req) => {
     const sessionCache: SessionCache = req.sessionCache;
-    const chtApi = new ChtApi(req.chtSession);
+    const chtApi = ChtApi.create(req.chtSession);
 
     RemotePlaceCache.clear(chtApi);
 
@@ -69,7 +69,7 @@ export default async function sessionCache(fastify: FastifyInstance) {
     const uploadManager: UploadManager = fastify.uploadManager;
     const sessionCache: SessionCache = req.sessionCache;
 
-    const chtApi = new ChtApi(req.chtSession);
+    const chtApi = ChtApi.create(req.chtSession);
     uploadManager.doUpload(sessionCache.getPlaces(), chtApi);
   });
 

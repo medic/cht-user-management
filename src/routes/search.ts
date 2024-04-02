@@ -28,7 +28,7 @@ export default async function place(fastify: FastifyInstance) {
       throw Error('must have place_id when editing');
     }
 
-    const chtApi = new ChtApi(req.chtSession);
+    const chtApi = ChtApi.create(req.chtSession);
     const hierarchyLevel = Config.getHierarchyWithReplacement(contactType).find(hierarchy => hierarchy.level === level);
     if (!hierarchyLevel) {
       throw Error(`not hierarchy constraint at ${level}`);
