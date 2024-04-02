@@ -1,7 +1,6 @@
 import { FastifyInstance } from 'fastify';
 
 import Auth from '../lib/authentication';
-import { ChtApiFactory } from '../lib/cht-api-factory';
 import { Config } from '../config';
 import DirectiveModel from '../services/directive-model';
 import RemotePlaceCache from '../lib/remote-place-cache';
@@ -34,7 +33,7 @@ export default async function sessionCache(fastify: FastifyInstance) {
 
     const tmplData = {
       view: 'list',
-      session: req.chtSession,
+      session: req.chtApi.chtSession,
       logo: Config.getLogoBase64(),
       op,
       contactType,
@@ -53,12 +52,10 @@ export default async function sessionCache(fastify: FastifyInstance) {
 
   fastify.post('/app/refresh-all', async (req) => {
     const sessionCache: SessionCache = req.sessionCache;
-    const chtApi = ChtApiFactory.create(req.chtSession);
-
-    RemotePlaceCache.clear(chtApi);
+    RemotePlaceCache.clear(req.chtApi);
 
     const places = sessionCache.getPlaces({ created: false });
-    await RemotePlaceResolver.resolve(places, sessionCache, chtApi, { fuzz: true });
+    await RemotePlaceResolver.resolve(places, sessionCache, req.chtApi, { fuzz: true });
     places.forEach(p => p.validate());
 
     fastify.uploadManager.triggerRefresh(undefined);
@@ -69,8 +66,7 @@ export default async function sessionCache(fastify: FastifyInstance) {
     const uploadManager: UploadManager = fastify.uploadManager;
     const sessionCache: SessionCache = req.sessionCache;
 
-    const chtApi = ChtApiFactory.create(req.chtSession);
-    uploadManager.doUpload(sessionCache.getPlaces(), chtApi);
+    uploadManager.doUpload(sessionCache.getPlaces(), req.chtApi);
   });
 
   fastify.post('/app/set-filter/:filter', async (req, resp) => {

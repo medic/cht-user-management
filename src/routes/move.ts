@@ -1,7 +1,6 @@
 import _ from 'lodash';
 
 import { Config, ContactType } from '../config';
-import { ChtApiFactory } from '../lib/cht-api-factory';
 import { FastifyInstance } from 'fastify';
 import MoveLib from '../lib/move';
 import SessionCache from '../services/session-cache';
@@ -19,7 +18,7 @@ export default async function sessionCache(fastify: FastifyInstance) {
       logo: Config.getLogoBase64(),
       contactTypes,
       contactType,
-      session: req.chtSession,
+      session: req.chtApi.chtSession,
       ...moveViewModel(contactType),
     };
 
@@ -31,17 +30,16 @@ export default async function sessionCache(fastify: FastifyInstance) {
 
     const sessionCache: SessionCache = req.sessionCache;
     const contactType = Config.getContactType(formData.place_type);
-    const chtApi = ChtApiFactory.create(req.chtSession);
     
     try {
-      const tmplData = await MoveLib.move(formData, contactType, sessionCache, chtApi);
+      const tmplData = await MoveLib.move(formData, contactType, sessionCache, req.chtApi);
       return resp.view('src/liquid/components/move_result.html', tmplData);
     } catch (e: any) {
       const tmplData = {
         view: 'move',
         op: 'move',
         contactTypes: Config.contactTypes(),
-        session: req.chtSession,
+        session: req.chtApi.chtSession,
         data: formData,
         contactType,
         ...moveViewModel(contactType),

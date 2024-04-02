@@ -1,7 +1,6 @@
 import { FastifyInstance } from 'fastify';
 
 import { Config } from '../config';
-import { ChtApiFactory  } from '../lib/cht-api-factory';
 import { RemotePlace } from '../lib/cht-api';
 import SessionCache from '../services/session-cache';
 import SearchLib from '../lib/search';
@@ -29,12 +28,11 @@ export default async function place(fastify: FastifyInstance) {
       throw Error('must have place_id when editing');
     }
 
-    const chtApi = ChtApiFactory.create(req.chtSession);
     const hierarchyLevel = Config.getHierarchyWithReplacement(contactType).find(hierarchy => hierarchy.level === level);
     if (!hierarchyLevel) {
       throw Error(`not hierarchy constraint at ${level}`);
     }
-    const searchResults: RemotePlace[] = await SearchLib.search(contactType, data, dataPrefix, hierarchyLevel, chtApi, sessionCache);
+    const searchResults: RemotePlace[] = await SearchLib.search(contactType, data, dataPrefix, hierarchyLevel, req.chtApi, sessionCache);
 
     return resp.view('src/liquid/components/search_results.html', {
       op,

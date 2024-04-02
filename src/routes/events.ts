@@ -22,7 +22,7 @@ export default async function events(fastify: FastifyInstance) {
 
     return resp.view('src/liquid/place/list_event.html', {
       contactTypes: placeData,
-      session: req.chtSession,
+      session: req.chtApi.chtSession,
       directiveModel,
     });
   });
