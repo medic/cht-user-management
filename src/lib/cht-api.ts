@@ -1,9 +1,7 @@
 import _ from 'lodash';
 import { AxiosInstance } from 'axios';
-import { ChtApi_4_7 } from './cht-api-4-7';
 import ChtSession from './cht-session';
 import { Config, ContactType } from '../config';
-import * as semver from 'semver';
 import { UserPayload } from '../services/user-payload';
 
 export type PlacePayload = {
@@ -35,17 +33,9 @@ export class ChtApi {
   private session: ChtSession;
   protected axiosInstance: AxiosInstance;
 
-  protected constructor(session: ChtSession) {
+  public constructor(session: ChtSession) {
     this.session = session;
     this.axiosInstance = session.axiosInstance;
-  }
-
-  public static create(session: ChtSession): ChtApi {
-    if (semver.gte(session.chtCoreVersion, '4.7.0')) {
-      return new ChtApi_4_7(session);
-    }
-
-    return ChtApi.create(session);
   }
 
   public get chtSession(): ChtSession {

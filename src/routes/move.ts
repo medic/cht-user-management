@@ -1,7 +1,7 @@
 import _ from 'lodash';
 
 import { Config, ContactType } from '../config';
-import { ChtApi } from '../lib/cht-api';
+import { ChtApiFactory } from '../lib/cht-api-factory';
 import { FastifyInstance } from 'fastify';
 import MoveLib from '../lib/move';
 import SessionCache from '../services/session-cache';
@@ -31,7 +31,7 @@ export default async function sessionCache(fastify: FastifyInstance) {
 
     const sessionCache: SessionCache = req.sessionCache;
     const contactType = Config.getContactType(formData.place_type);
-    const chtApi = ChtApi.create(req.chtSession);
+    const chtApi = ChtApiFactory.create(req.chtSession);
     
     try {
       const tmplData = await MoveLib.move(formData, contactType, sessionCache, chtApi);
