@@ -1,6 +1,6 @@
 cht-user-management:
   image:
-    tag: 1.0.8
+    tag: 1.1.6
   env:
     CONFIG_NAME: chis-ke
 
@@ -14,7 +14,6 @@ cht-user-management:
       alb.ingress.kubernetes.io/ssl-redirect: '443'
       alb.ingress.kubernetes.io/target-type: ip
       alb.ingress.kubernetes.io/healthcheck-port: traffic-port
-      alb.ingress.kubernetes.io/certificate-arn: arn:aws:iam::720541322708:server-certificate/2023-wildcard-app-medicmobile-org-chain
       alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
 
     className: alb

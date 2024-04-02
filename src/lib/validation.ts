@@ -4,15 +4,15 @@ import Place from '../services/place';
 import RemotePlaceResolver from './remote-place-resolver';
 import { RemotePlace } from './cht-api';
 
-import ValidatorDob from './validator-dob';
-import ValidatorGender from './validator-gender';
+import ValidatorDateOfBirth from './validator-dob';
 import ValidatorGenerated from './validator-generated';
 import ValidatorName from './validator-name';
 import ValidatorPhone from './validator-phone';
 import ValidatorRegex from './validator-regex';
+import ValidatorSelectMultiple from './validator-select-multiple';
+import ValidatorSelectOne from './validator-select-one';
 import ValidatorSkip from './validator-skip';
 import ValidatorString from './validator-string';
-import ValidatorRole from './validator-role';
 
 export type ValidationError = {
   property_name: string;
@@ -30,15 +30,15 @@ type ValidatorMap = {
 };
 
 const TypeValidatorMap: ValidatorMap = {
-  dob: new ValidatorDob(),
-  gender: new ValidatorGender(),
+  dob: new ValidatorDateOfBirth(),
   generated: new ValidatorGenerated(),
   name: new ValidatorName(),
   none: new ValidatorSkip(),
   phone: new ValidatorPhone(),
   regex: new ValidatorRegex(),
-  select_role: new ValidatorRole(),
   string: new ValidatorString(),
+  select_one: new ValidatorSelectOne(),
+  select_multiple: new ValidatorSelectMultiple(),
 };
 
 export class Validation {

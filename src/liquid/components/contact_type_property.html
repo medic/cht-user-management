@@ -1,39 +1,43 @@
-<div id="div_{{include.prop.property_name}}">
-  {% if include.prop.type != 'generated' %}
-  {% capture prop_name %}{{ include.prefix }}{{include.prop.property_name}}{% endcapture %}
-  {% if include.prop.type == 'dob' %}
-  <div class="field">
+{% if include.prop.type != 'generated' %}
+{% capture prop_name %}{{ include.prefix }}{{include.prop.property_name}}{% endcapture %}
+
+  <div id="div_{{include.prop.property_name}}" class="field">
     <label class="label">
       {% if data['option_dob_unknown'] %}
-      Age (Years)
+        Age in Years
       {%else%}
-      {{include.prop.friendly_name}}
+        {{include.prop.friendly_name}}
       {% endif%}
     </label>
-    <div class="control">
-      <input name="{{ prop_name }}" {% if data['option_dob_unknown'] %} type="text" {%else%} type="date" {%endif%}
-        class="input" {% if data[prop_name] %} value="{{ data[prop_name] }}" {% endif %} />
-    </div>
-    <div class="field">
+    {% if include.prop.type == 'dob' %}
+      {%
+        include "components/contact_type_dob.html"
+          prop_name=prop_name
+          isInYears=data['option_dob_unknown']
+          place_type=include.place_type
+          prefix=include.prefix
+          prop=include.prop
+          data=data
+      %}
+    {% else %}
       <div class="control">
-        <input type="checkbox" name="option_dob_unknown" hx-target="#div_{{include.prop.property_name}}"
-          hx-post="/place/dob?place_type={{include.place_type}}&prefix={{include.prefix}}&prop_type={{include.prop.type}}" {% if
-          data['option_dob_unknown'] %} checked {% endif%} />
-        <label>Date of birth unknown</label>
+        {% if include.prop.type == 'select_one' or include.prop.type == 'select_multiple' %}
+          {%
+            include "components/contact_type_select.html"
+              prop_name=prop_name
+              prop=include.prop
+              data=data
+          %}
+        {% else %}
+          <input
+            name="{{ prop_name }}"
+            type="{% if include.prop.type == 'dob' %}date{% else %}text{% endif %}"
+            class="input"
+            {% if false and include.prop.type == 'regex' %} pattern="{{ include.prop.parameter }}" {% endif %}
+            {% if data[prop_name] %} value="{{ data[prop_name] }}" {% endif %}
+          />
+        {% endif %}
       </div>
-    </div>
+    {% endif %}
   </div>
-  {% else %}
-  <div class="field">
-    <label class="label">
-      {{include.prop.friendly_name}}
-    </label>
-    <div class="control">
-      <input name="{{ prop_name }}" type="{% if include.prop.type == 'dob' %}date{% else %}text{% endif %}"
-        class="input" {% if false and include.prop.type=='regex' %} pattern="{{ include.prop.parameter }}" {% endif %}
-        {% if data[prop_name] %} value="{{ data[prop_name] }}" {% endif %} />
-    </div>
-  </div>
-  {% endif %}
-  {% endif %}
-</div>
+{% endif %}
