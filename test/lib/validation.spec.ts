@@ -1,9 +1,9 @@
+import { DateTime } from 'luxon';
 import { expect } from 'chai';
 
 import { Validation } from '../../src/lib/validation';
 import { mockSimpleContactType, mockPlace } from '../mocks';
 import RemotePlaceResolver from '../../src/lib/remote-place-resolver';
-import { DateTime } from 'luxon';
 
 type Scenario = {
   type: string;
