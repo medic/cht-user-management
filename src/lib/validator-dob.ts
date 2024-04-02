@@ -33,5 +33,5 @@ export default class ValidatorDateOfBirth implements IValidator {
     }
 
     return DateTime.fromISO(strippedInput);
-  };
+  }
 }
