@@ -13,8 +13,7 @@ export default class ValidatorDateOfBirth implements IValidator {
 
   format(input : string) : string {
     const parsed = this.parse(input);
-    const asISODate = parsed.toISODate();
-    if (!this.isValid(input) || !asISODate) {
+    if (!this.isValid(input)) {
       return input;
     }
 
