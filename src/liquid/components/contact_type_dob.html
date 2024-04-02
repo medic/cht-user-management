@@ -12,7 +12,7 @@
     <input 
       type="checkbox" 
       name="option_dob_unknown" 
-      hx-target="#div_{{include.prop.property_name}}"
+      hx-target="#div_{{include.prefix}}{{include.prop.property_name}}"
       hx-post="/place/dob?place_type={{include.place_type}}&prefix={{include.prefix}}&prop_type={{include.prop.type}}" 
       {% if include.isInYears %} checked {% endif%} 
     />

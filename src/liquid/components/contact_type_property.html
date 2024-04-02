@@ -1,7 +1,7 @@
 {% if include.prop.type != 'generated' %}
-{% capture prop_name %}{{ include.prefix }}{{include.prop.property_name}}{% endcapture %}
+  {% capture prop_name %}{{ include.prefix }}{{include.prop.property_name}}{% endcapture %}
 
-  <div id="div_{{include.prop.property_name}}" class="field">
+  <div id="div_{{ include.prefix }}{{include.prop.property_name}}" class="field">
     <label class="label">
       {% if data['option_dob_unknown'] %}
         Age in Years
