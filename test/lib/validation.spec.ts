@@ -1,3 +1,4 @@
+import { DateTime } from 'luxon';
 import { expect } from 'chai';
 
 import { Validation } from '../../src/lib/validation';
@@ -55,8 +56,12 @@ const scenarios: Scenario[] = [
   { type: 'dob', prop: '2030-05-25', isValid: false },
   { type: 'dob', prop: '2016-05-25', isValid: true, altered: '2016-05-25' },
   { type: 'dob', prop: ' 20 16- 05- 25 ', isValid: true, altered: '2016-05-25' },
-
-
+  { type: 'dob', prop: '20', isValid: true, altered: DateTime.now().minus({ years: 20 }).toISODate() },
+  { type: 'dob', prop: ' 20 ', isValid: true, altered: DateTime.now().minus({ years: 20 }).toISODate() },
+  { type: 'dob', prop: 'abc', isValid: false, altered: 'abc' },
+  { type: 'dob', prop: '  1 0   0 ', isValid: true, altered: DateTime.now().minus({ years: 100 }).toISODate() },
+  { type: 'dob', prop: '-1', isValid: false, altered: '-1' },
+  
   { type: 'select_one', prop: ' male', isValid: true, propertyParameter: GENDER_OPTIONS },
   { type: 'select_one', prop: 'female ', isValid: true, propertyParameter: GENDER_OPTIONS },
   { type: 'select_one', prop: 'FeMale ', isValid: false, propertyParameter: GENDER_OPTIONS },
