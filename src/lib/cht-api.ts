@@ -206,16 +206,12 @@ export class ChtApi {
   };
 
   private async getUsersAtPlace(placeId: string): Promise<string[]> {
-    const url = `_users/_find`;
-    const payload = {
-      selector: {
-        facility_id: placeId,
-      },
-    };
-
+    const url = `api/v2/users?facility_id=${placeId}`;
     console.log('axios.post', url);
-    const resp = await this.axiosInstance.post(url, payload);
-    return resp.data?.docs?.map((d: any) => d._id);
+    const resp = await this.axiosInstance.get(url);
+    return resp.data
+      ?.filter((d : any) => !d.inactive)
+      ?.map((d: any) => d.id);
   }
 }
 

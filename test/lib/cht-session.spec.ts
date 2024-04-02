@@ -44,7 +44,8 @@ describe('lib/cht-session.ts', () => {
         },
       },
       post: sinon.stub().resolves(mockSessionResponse()),
-      get: sinon.stub().resolves(mockUserFacilityDoc()),
+      get: sinon.stub().resolves(mockUserFacilityDoc())
+        .onSecondCall().resolves({ data: { version: { app: '4.2.2' } } }),
     };
     ChtSession.__set__('axios', {
       create: sinon.stub().returns(mockAxios),

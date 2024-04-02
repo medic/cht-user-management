@@ -37,6 +37,7 @@
     "@types/chai-as-promised": "^7.1.8",
     "@types/mocha": "^10.0.6",
     "@types/rewire": "^2.5.30",
+    "@types/semver": "^7.5.8",
     "@types/sinon": "^17.0.2",
     "@typescript-eslint/eslint-plugin": "^7.2.0",
     "@typescript-eslint/parser": "^7.2.0",
@@ -48,6 +49,7 @@
     "eslint-plugin-promise": "^6.1.1",
     "mocha": "^10.2.0",
     "rewire": "^7.0.0",
+    "semver": "^7.6.0",
     "sinon": "^17.0.1",
     "ts-mocha": "^10.0.0",
     "tsc-watch": "^6.0.4"
