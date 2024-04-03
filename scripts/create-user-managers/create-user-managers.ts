@@ -11,6 +11,15 @@ const ChtSession = require('../../src/lib/cht-session').default; // require is n
 
 const UserManagerContactType: ContactType = UserManager;
 
+type CommandLineArgs = {
+  names: string[];
+  passwords?: string[];
+  county?: string;
+  hostname: string;
+  adminUsername: string;
+  adminPassword: string;
+};
+
 export default async function createUserManagers(argv: string[]) {
   const cmdArgs = parseCommandlineArguments(argv);
   const authInfo: AuthenticationInfo = {
@@ -63,15 +72,6 @@ async function createUserManager(username: string, placeDocId: string, chtApi: t
   await createUserWithRetries(userPayload, chtApi);
   return userPayload;
 }
-
-type CommandLineArgs = {
-  names: string[];
-  passwords?: string[];
-  county?: string;
-  hostname: string;
-  adminUsername: string;
-  adminPassword: string;
-};
 
 function parseCommandlineArguments(argv: string[]): CommandLineArgs {
   const program = new Command();
