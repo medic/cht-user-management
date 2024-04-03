@@ -26,6 +26,8 @@ export enum PlaceUploadState {
 
 const PLACE_PREFIX = 'place_';
 const CONTACT_PREFIX = 'contact_';
+const USER_PREFIX = 'user_';
+
 
 export default class Place {
   public readonly id: string;
@@ -45,6 +47,10 @@ export default class Place {
     [key: string]: any;
   };
 
+  public userRoleProperties: {
+    [key: string]: any;
+  };
+
   public state : PlaceUploadState;
 
   public validationErrors?: { [key: string]: string };
@@ -58,6 +64,7 @@ export default class Place {
     this.hierarchyProperties = {};
     this.state = PlaceUploadState.STAGED;
     this.resolvedHierarchy = [];
+    this.userRoleProperties = {};
   }
 
   /*
@@ -87,6 +94,19 @@ export default class Place {
       const propertyName = hierarchyLevel.property_name;
       this.hierarchyProperties[propertyName] = formData[`${hierarchyPrefix}${propertyName}`] ?? '';
     }
+
+    if (Config.hasMultipleRoles(this.type)) {
+      const userRoleConfig = Config.getUserRoleConfig(this.type);
+      const propertyName = userRoleConfig.property_name;
+      const roleFormData = formData[`${USER_PREFIX}${propertyName}`];
+      
+      // When multiple are selected, the form data is an array
+      if (Array.isArray(roleFormData)) {
+        this.userRoleProperties[propertyName] = roleFormData.join(' ');
+      } else {
+        this.userRoleProperties[propertyName] = roleFormData;
+      }
+    }
   }
 
   /**
@@ -109,6 +129,7 @@ export default class Place {
       ...addPrefixToPropertySet(this.hierarchyProperties, hierarchyPrefix),
       ...addPrefixToPropertySet(this.properties, PLACE_PREFIX),
       ...addPrefixToPropertySet(this.contact.properties, CONTACT_PREFIX),
+      ...addPrefixToPropertySet(this.userRoleProperties, USER_PREFIX),
     };
   }
 
@@ -214,6 +235,16 @@ export default class Place {
     }
 
     return username;
+  }
+
+  public get userRoles(): string[] {
+    if (!Config.hasMultipleRoles(this.type)) {
+      return this.type.user_role;
+    }
+
+    const userRoleConfig = Config.getUserRoleConfig(this.type);
+    const roles = this.userRoleProperties[userRoleConfig.property_name];
+    return roles.split(' ').map((role: string) => role.trim()).filter(Boolean);
   }
 
   public get hasValidationErrors() : boolean {

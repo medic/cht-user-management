@@ -1,8 +1,8 @@
 <div id="place_list" hx-swap-oob="true">
   {% for contactType in contactTypes %}
   <div id="{{contactType.name}}" class="mb-6">
+    <h2 class="title is-4">{{contactType.friendly}}</h2>
     {% if contactType.places.length > 0 %}
-      <h2 class="title is-4">{{contactType.friendly}}</h2>
       <table
         id="table_places"
         class="table is-fullwidth is-striped is-hoverable"
@@ -13,11 +13,18 @@
               <th id="hierarchy_{{ hierarchy.property_name }}">{{ hierarchy.friendly_name }}</th>
             {% endfor %}
             {% for property in contactType.place_properties %}
-              <th id="place_{{property.property_name}}">{{property.friendly_name}}</th>
+              {% if property.type != 'generated' %}
+                <th id="place_{{property.property_name}}">{{property.friendly_name}}</th>
+              {% endif %}
             {% endfor %}
             {% for contact_property in contactType.contact_properties %}
-              <th id="contact_{{contact_property.property_name}}">{{contact_property.friendly_name}}</th>
+              {% if contact_property.type != 'generated' %}
+                <th id="contact_{{contact_property.property_name}}">{{contact_property.friendly_name}}</th>
+              {% endif %}
             {% endfor %}
+            {% if contactType.user_role.size > 1 %}
+              <th id="{{userRoleProperty.property_name}}">{{ contactType.userRoleProperty.friendly_name }}</th>
+            {% endif %}
             <th></th>
             <th></th>
           </tr>
@@ -37,34 +44,51 @@
             {% endfor %}
 
             {% for property in contactType.place_properties %}
-              {% capture propertyName %}place_{{ property.property_name }}{% endcapture %}
+              {% if property.type != 'generated' %}
+                {% capture propertyName %}place_{{ property.property_name }}{% endcapture %}
 
-              {%
-                include "components/list_cell.html"
-                  propertyName=propertyName
-                  property=property
-                  values=place.properties
-              %}
+                {%
+                  include "components/list_cell.html"
+                    propertyName=propertyName
+                    property=property
+                    values=place.properties
+                %}
+              {% endif %}
             {% endfor %}
           
             {% for contact_property in contactType.contact_properties %}
-              {% capture propertyName %}contact_{{ contact_property.property_name }}{% endcapture %}
+              {% if contact_property.type != 'generated' %}
+                {% capture propertyName %}contact_{{ contact_property.property_name }}{% endcapture %}
+                {%
+                  include "components/list_cell.html"
+                    propertyName=propertyName
+                    property=contact_property
+                    values=place.contact.properties
+                %}
+              {% endif %}
+            {% endfor %}
+
+            {% if contactType.user_role.size > 1 %}
+              {% capture propertyName %}user_{{ contactType.userRoleProperty.property_name }}{% endcapture %}
               {%
                 include "components/list_cell.html"
                   propertyName=propertyName
-                  property=contact_property
-                  values=place.contact.properties
+                  property=contactType.userRoleProperty
+                  values=place.userRoleProperties
               %}
-            {% endfor %}
+            {% endif %}
 
             <td>
-              {% capture tag_text %}{% if place.validationErrors == empty %}{{ place.state }}{% else %}INVALID{% endif %}{% endcapture %}
+              {% capture tag_text %}{% if place.validationErrors == empty %}{{ place.state }}{% else %}invalid{% endif %}{% endcapture %}
               {% capture tag_class %}
-                {% if place.state == 'failure' or place.validationErrors != empty %}is-danger{% endif %}
+                {% if place.state == 'failure' %}is-danger
+                {% elsif place.state == 'success' %}is-success
+                {% elsif place.validationErrors != empty %}is-warning
+                {% endif %}
                 {% if place.uploadError %}has-tooltip-arrow has-tooltipl-multiline{% endif %}
               {% endcapture %}
               <span
-                class="tag is-info is-light {{ tag_class }}"
+                class="tag is-info {{ tag_class }}"
                 {% if place.uploadError %}data-tooltip="{{ place.uploadError | escape }}"{% endif %}
               >
                 {{ tag_text }}
@@ -102,6 +126,10 @@
           {% endfor%}
         </tbody>
       </table>
+    {% else %}
+      <div class="notification is-white">
+        <i>No Results</i>
+      </div>
     {% endif %}
   {% endfor %}
 </div>

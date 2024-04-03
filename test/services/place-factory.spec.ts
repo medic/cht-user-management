@@ -123,7 +123,7 @@ describe('services/place-factory.ts', () => {
     const singleCsvBuffer = fs.readFileSync('./test/single.csv');
     const chpType = Config.getContactType('d_community_health_volunteer_area');
     
-    const places: Place[] = await PlaceFactory.createBulk(singleCsvBuffer, chpType, sessionCache, chtApi);
+    const places: Place[] = await PlaceFactory.createFromCsv(singleCsvBuffer, chpType, sessionCache, chtApi);
     expect(places).to.have.property('length', 1);
 
     const [successfulPlace] = places;
@@ -131,7 +131,7 @@ describe('services/place-factory.ts', () => {
       'contact.properties.name': 'Sally',
       'contact.properties.phone': '0712 345678',
       creationDetails: {},
-      'properties.name': 'Sally',
+      'properties.name': 'Sally Area',
       'hierarchyProperties.CHU': 'Chepalungu',
       resolvedHierarchy: [
         {
@@ -372,6 +372,94 @@ describe('services/place-factory.ts', () => {
 
     const place: Place = await PlaceFactory.createOne(fakeFormData, contactType, sessionCache, chtApi);
     expectInvalidProperties(place.validationErrors, ['hierarchy_PARENT'], 'Cannot find');
+  });
+
+  it('#124 - testing replacement when place.name is generated', async () => {
+    const { remotePlace, sessionCache, contactType, fakeFormData, chtApi } = mockScenario();
+    fakeFormData.hierarchy_replacement = 'dne';
+
+    contactType.place_properties[0] = {
+      friendly_name: '124',
+      property_name: 'name',
+      type: 'generated',
+      parameter: '{{contact.name}} Area',
+    };
+
+    const otherPlace: RemotePlace = {
+      id: 'other-place',
+      name: 'other-place',
+      lineage: [remotePlace.id],
+      type: 'remote',
+    };
+    const toReplace: RemotePlace = {
+      id: 'id-replace',
+      name: 'to-replace',
+      lineage: [remotePlace.id],
+      type: 'remote',
+    };
+
+    chtApi.getPlacesWithType
+      .resolves([remotePlace])
+      .onSecondCall().resolves([toReplace, otherPlace]);
+
+    const place: Place = await PlaceFactory.createOne(fakeFormData, contactType, sessionCache, chtApi);
+    expectInvalidProperties(place.validationErrors, ['hierarchy_replacement'], 'Cannot find');
+  });
+
+  it('#124 - replacement_property is used for fuzzing during replacement', async () => {
+    const { remotePlace, sessionCache, contactType, fakeFormData, chtApi } = mockScenario();
+    fakeFormData.hierarchy_replacement = 'to-replace';
+
+    contactType.replacement_property = {
+      friendly_name: 'Outgoing CHP',
+      property_name: 'replacement',
+      type: 'name',
+      parameter: ['\\sArea', '\\s\\(.*\\)'],
+      required: true
+    };
+
+    const toReplace: RemotePlace = {
+      id: 'id-replace',
+      name: 'to-replace Area (village)',
+      lineage: [remotePlace.id],
+      type: 'remote',
+    };
+
+    chtApi.getPlacesWithType
+      .resolves([remotePlace])
+      .onSecondCall().resolves([toReplace]);
+
+    const place: Place = await PlaceFactory.createOne(fakeFormData, contactType, sessionCache, chtApi);
+    expect(place.validationErrors).to.be.empty;
+    expect(place.resolvedHierarchy[1]?.id).to.eq('parent-id');
+    expect(place.resolvedHierarchy[0]?.id).to.eq('id-replace');
+  });
+
+  it('#124 - replacement_property cannot have type:"generated"', async () => {
+    const { remotePlace, sessionCache, contactType, fakeFormData, chtApi } = mockScenario();
+    fakeFormData.hierarchy_replacement = 'to-replace';
+
+    contactType.replacement_property = {
+      friendly_name: 'Outgoing CHP',
+      property_name: 'replacement',
+      type: 'generated',
+      parameter: '{{ contact.name }} Area',
+      required: true
+    };
+
+    const toReplace: RemotePlace = {
+      id: 'id-replace',
+      name: 'to-replace Area',
+      lineage: [remotePlace.id],
+      type: 'remote',
+    };
+
+    chtApi.getPlacesWithType
+      .resolves([remotePlace])
+      .onSecondCall().resolves([toReplace]);
+
+    const createOne = PlaceFactory.createOne(fakeFormData, contactType, sessionCache, chtApi);
+    await expect(createOne).to.eventually.be.rejectedWith('cannot be of type "generated"');
   });
 });
 

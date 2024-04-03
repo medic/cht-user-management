@@ -3,7 +3,12 @@ import { IValidator } from './validation';
 import ValidatorString from './validator-string';
 
 export default class ValidatorName implements IValidator {
-  isValid(input: string) : boolean | string {
+  isValid(input: string, property : ContactProperty) : boolean | string {
+    // Verify property.parameter is always array
+    if (property.parameter && !Array.isArray(property.parameter)) {
+      throw Error(`Property '${property.friendly_name}' of type 'name' expects 'parameter' to be an array.`);
+    }
+
     return !!input;
   }
 
@@ -13,7 +18,7 @@ export default class ValidatorName implements IValidator {
     let toAlter = input;
     if (property.parameter) {
       if (!Array.isArray(property.parameter)) {
-        throw Error(`property of type name's parameter should be an array`);
+        throw Error(`property with type "name": parameter should be an array`);
       }
       
       toAlter = property.parameter.reduce((agg, toRemove) => {
@@ -32,9 +37,11 @@ export default class ValidatorName implements IValidator {
 
   private titleCase(value: string): string {
     const words = value.toLowerCase().split(' ');
+    const titleCase = (word: string) => word[0].toUpperCase() + word.slice(1);
+    const isRomanNumeral = /^[ivx]+$/ig;
     const titleCased = words
-      .filter(x => x)
-      .map(word => word[0].toUpperCase() + word.slice(1)).join(' ');
+      .filter(Boolean)
+      .map(word => word.match(isRomanNumeral) ? word.toUpperCase() : titleCase(word)).join(' ');
     return titleCased.replace(/ '/g, '\'');
   }
 }

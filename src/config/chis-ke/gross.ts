@@ -16,17 +16,15 @@ export default async function mutate(payload: PlacePayload, chtApi: ChtApi, isRe
     return payload;
   }
 
-  payload.name += ' Area';
-
   // if it is a replacement, the information is already set
   if (isReplacement || !payload.parent) {
     return payload;
   }
 
-  const scapeToPayload = (chpKey: string, chuKey: string = chpKey) => {
+  const scapeIntoPayload = (chpKey: string, chuKey: string = chpKey) => {
     const result = chu?.[chuKey] || sibling?.[chpKey];
     if (!result) {
-      throw Error(`eCHIS logic cant find existing data for ${chpKey}`);
+      throw Error(`eCHIS-KE logic cant find existing data for ${chpKey}`);
     }
 
     payload[chpKey] = result;
@@ -38,9 +36,9 @@ export default async function mutate(payload: PlacePayload, chtApi: ChtApi, isRe
     throw Error(`CHU does not exist`);
   }
 
-  scapeToPayload('link_facility_code');
-  scapeToPayload('link_facility_name');
-  scapeToPayload('chu_name', 'name');
-  scapeToPayload('chu_code', 'code');
+  scapeIntoPayload('link_facility_code');
+  scapeIntoPayload('link_facility_name');
+  scapeIntoPayload('chu_name', 'name');
+  scapeIntoPayload('chu_code', 'code');
   return payload;
 }

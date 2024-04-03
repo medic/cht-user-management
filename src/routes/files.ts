@@ -1,4 +1,3 @@
-import _ from 'lodash';
 import { FastifyInstance } from 'fastify';
 import { stringify } from 'csv/sync';
 import { Config } from '../config';
@@ -9,14 +8,7 @@ export default async function files(fastify: FastifyInstance) {
   fastify.get('/files/template/:placeType', async (req) => {
     const params: any = req.params;
     const placeType = params.placeType;
-    const placeTypeConfig = Config.getContactType(placeType);
-    const hierarchy = Config.getHierarchyWithReplacement(placeTypeConfig);
-    const columns = _.uniq([
-      ...hierarchy.map(p => p.friendly_name),
-      ...placeTypeConfig.place_properties.map(p => p.friendly_name),
-      ...placeTypeConfig.contact_properties.map(p => p.friendly_name),
-    ]);
-
+    const columns = Config.getCsvTemplateColumns(placeType);
     return stringify([columns]);
   });
 
@@ -33,6 +25,7 @@ export default async function files(fastify: FastifyInstance) {
         place.name,
         place.contact.properties.name,
         place.contact.properties.phone,
+        place.userRoles.join(' '),
         place.creationDetails.username,
         place.creationDetails.password,
       ]);
@@ -43,6 +36,7 @@ export default async function files(fastify: FastifyInstance) {
         contactType.friendly,
         'name',
         'phone',
+        'role',
         'username',
         'password',
       ];

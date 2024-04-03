@@ -25,9 +25,23 @@ export default async function addPlace(fastify: FastifyInstance) {
       hierarchy: Config.getHierarchyWithReplacement(contactType, 'desc'),
       contactType,
       contactTypes,
+      userRoleProperty: Config.getUserRoleConfig(contactType)
     };
 
     return resp.view('src/liquid/app/view.html', tmplData);
+  });
+
+  fastify.post('/place/dob', async (req, resp) => {
+    const { place_type, prefix, prop_type } = req.query as any;
+    const contactType = Config.getContactType(place_type).contact_properties.find(prop => prop.type === prop_type);
+    return resp.view('src/liquid/components/contact_type_property.html', {
+      data: req.body,
+      include: {
+        prefix: prefix,
+        place_type: place_type,
+        prop: contactType
+      }
+    });
   });
 
   // you want to create a place? replace a contact? you'll have to go through me first
@@ -51,7 +65,7 @@ export default async function addPlace(fastify: FastifyInstance) {
       }
       try {
         const csvBuf = await fileData.toBuffer();
-        await PlaceFactory.createBulk(csvBuf, contactType, sessionCache, chtApi);
+        await PlaceFactory.createFromCsv(csvBuf, contactType, sessionCache, chtApi);
       } catch (error) {
         return fastify.view('src/liquid/place/bulk_create_form.html', {
           contactType,
@@ -91,6 +105,7 @@ export default async function addPlace(fastify: FastifyInstance) {
       contactTypes: Config.contactTypes(),
       backend: `/place/edit/${id}`,
       data,
+      userRoleProperty: Config.getUserRoleConfig(place.type)
     };
 
     resp.header('HX-Push-Url', `/place/edit/${id}`);
