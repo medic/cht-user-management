@@ -1,5 +1,7 @@
 import _ from 'lodash';
 import { AxiosInstance } from 'axios';
+import * as semver from 'semver';
+
 import ChtSession from './cht-session';
 import { Config, ContactType } from '../config';
 import { UserPayload } from '../services/user-payload';
@@ -35,16 +37,34 @@ export type CreatedPlaceResult = {
 };
 
 export class ChtApi {
-  private session: ChtSession;
   protected axiosInstance: AxiosInstance;
+  private session: ChtSession;
+  private version: string;
 
-  public constructor(session: ChtSession) {
+  protected constructor(session: ChtSession) {
     this.session = session;
     this.axiosInstance = session.axiosInstance;
+    this.version = 'base';
   }
 
-  public get chtSession(): ChtSession {
-    return this.session.clone();
+  public static create(chtSession: ChtSession): ChtApi {
+    let result;
+    const coercedVersion = semver.valid(semver.coerce(chtSession.chtCoreVersion));
+    if (!coercedVersion) {
+      throw Error('invalid chtSession.chtCoreVersion');
+    }
+
+    if (semver.gte(coercedVersion, '4.7.0') || chtSession.chtCoreVersion === '4.6.0-local-development') { // TODO: change when not testing on dev
+      result = new ChtApi_4_7(chtSession);
+      result.version = '4.7';
+    } else if (semver.gte(coercedVersion, '4.6.0')) {
+      result = new ChtApi_4_6(chtSession);
+      result.version = '4.6';
+    } else {
+      result = new ChtApi(chtSession);
+    }
+  
+    return result;
   }
 
   // workaround https://github.com/medic/cht-core/issues/8674
@@ -137,27 +157,12 @@ export class ChtApi {
     return usersToDisable;
   };
 
-  disableUser = async (docId: string): Promise<void> => {
-    const username = docId.substring('org.couchdb.user:'.length);
-    const url = `api/v1/users/${username}`;
-    console.log('axios.delete', url);
-    return this.axiosInstance.delete(url);
-  };
-
   deactivateUsersWithPlace = async (placeId: string): Promise<string[]> => {
     const usersToDeactivate: string[] = await this.getUsersAtPlace(placeId);
     for (const userDocId of usersToDeactivate) {
       await this.deactivateUser(userDocId);
     }
     return usersToDeactivate;
-  };
-
-  deactivateUser = async (docId: string): Promise<void> => {
-    const username = docId.substring('org.couchdb.user:'.length);
-    const url = `api/v1/users/${username}`;
-    console.log('axios.post', url);
-    const deactivationPayload = { roles: ['deactivated' ]};
-    return this.axiosInstance.post(url, deactivationPayload);
   };
 
   createUser = async (user: UserPayload): Promise<void> => {
@@ -211,12 +216,13 @@ export class ChtApi {
       });
   };
 
-  getDoc = async (id: string): Promise<any> => {
-    const url = `medic/${id}`;
-    console.log('axios.get', url);
-    const resp = await this.axiosInstance.get(url);
-    return resp.data;
-  };
+  public get chtSession(): ChtSession {
+    return this.session.clone();
+  }
+
+  public get coreVersion(): string {
+    return this.version;
+  }
 
   protected async getUsersAtPlace(placeId: string): Promise<string[]> {
     const url = `_users/_find`;
@@ -229,6 +235,56 @@ export class ChtApi {
     console.log('axios.post', url);
     const resp = await this.axiosInstance.post(url, payload);
     return resp.data?.docs?.map((d: any) => d._id);
+  }
+
+  private getDoc = async (id: string): Promise<any> => {
+    const url = `medic/${id}`;
+    console.log('axios.get', url);
+    const resp = await this.axiosInstance.get(url);
+    return resp.data;
+  };
+
+  private async deactivateUser(docId: string): Promise<void> {
+    const username = docId.substring('org.couchdb.user:'.length);
+    const url = `api/v1/users/${username}`;
+    console.log('axios.post', url);
+    const deactivationPayload = { roles: ['deactivated' ]};
+    return this.axiosInstance.post(url, deactivationPayload);
+  };
+
+  private async disableUser(docId: string): Promise<void> {
+    const username = docId.substring('org.couchdb.user:'.length);
+    const url = `api/v1/users/${username}`;
+    console.log('axios.delete', url);
+    return this.axiosInstance.delete(url);
+  };
+}
+
+class ChtApi_4_6 extends ChtApi {
+  public constructor(session: ChtSession) {
+    super(session);
+  }
+
+  // #8674: assign parent place to new contacts
+  public override updateContactParent = async (): Promise<string> => {
+    throw Error(`program should never update contact's parent after cht-core 4.6`);
+  };
+}
+
+class ChtApi_4_7 extends ChtApi_4_6 {
+  public constructor(session: ChtSession) {
+    super(session);
+  }
+
+  // #8986: Look up a single user from their username
+  // #8877: Look up users from their facility_id or contact_id
+  protected override async getUsersAtPlace(placeId: string): Promise<string[]> {
+    const url = `api/v2/users?facility_id=${placeId}`;
+    console.log('axios.get', url);
+    const resp = await this.axiosInstance.get(url);
+    return resp.data
+      ?.filter((d : any) => !d.inactive) // TODO: needed?
+      ?.map((d: any) => d.id);
   }
 }
 

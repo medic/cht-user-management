@@ -7,14 +7,11 @@ import formbody from '@fastify/formbody';
 import { Liquid } from 'liquidjs';
 import multipart from '@fastify/multipart';
 import path from 'path';
-import * as semver from 'semver';
 import view from '@fastify/view';
 
 import Auth from './lib/authentication';
 import SessionCache from './services/session-cache';
-import { ChtApi_4_6, ChtApi_4_7 } from './lib/cht-api-override';
 import { ChtApi } from './lib/cht-api';
-import ChtSession from './lib/cht-session';
 
 const build = (opts: FastifyServerOptions): FastifyInstance => {
   const fastify = Fastify(opts);
@@ -54,7 +51,7 @@ const build = (opts: FastifyServerOptions): FastifyInstance => {
 
     try {
       const chtSession = Auth.decodeToken(cookieToken);
-      req.chtApi = createChtApi(chtSession);
+      req.chtApi = ChtApi.create(chtSession);
       req.sessionCache = SessionCache.getForSession(chtSession);
     } catch (e) {
       reply.redirect('/login');
@@ -64,17 +61,5 @@ const build = (opts: FastifyServerOptions): FastifyInstance => {
 
   return fastify;
 };
-
-function createChtApi(chtSession: ChtSession): ChtApi {
-  if (semver.gte(chtSession.chtCoreVersion, '4.5.0')) { // TODO: change when not testing on dev
-    return new ChtApi_4_7(chtSession);
-  }
-  
-  if (semver.gte(chtSession.chtCoreVersion, '4.6.0')) {
-    return new ChtApi_4_6(chtSession);
-  }
-
-  return new ChtApi(chtSession);
-}
 
 export default build;
