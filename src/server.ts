@@ -12,8 +12,7 @@ import view from '@fastify/view';
 
 import Auth from './lib/authentication';
 import SessionCache from './services/session-cache';
-import { ChtApi_4_6 } from './lib/cht-api-4-6';
-import { ChtApi_4_7 } from './lib/cht-api-4-7';
+import { ChtApi_4_6, ChtApi_4_7 } from './lib/cht-api-override';
 import { ChtApi } from './lib/cht-api';
 import ChtSession from './lib/cht-session';
 
