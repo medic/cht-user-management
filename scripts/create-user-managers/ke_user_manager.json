@@ -2,7 +2,7 @@
   "name": "user_manager",
   "friendly": "User Manager",
   "contact_type": "person",
-  "user_role": "user_manager",
+  "user_role": ["user_manager"],
   "username_from_place": false,
   "hierarchy": [],
   "deactivate_users_on_replace": false,

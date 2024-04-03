@@ -52,7 +52,7 @@ describe('scripts/create-user-managers.ts', () => {
       password: 'S3cret_abc',
       phone: undefined,
       place: 'county_id',
-      type: 'user_manager',
+      roles: ['user_manager'],
       username: 'stan_lee_user_manager',
     });
   });
