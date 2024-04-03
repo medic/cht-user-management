@@ -68,7 +68,7 @@ export class ChtApi {
   }
 
   // workaround https://github.com/medic/cht-core/issues/8674
-  updateContactParent = async (parentId: string): Promise<string> => {
+  async updateContactParent(parentId: string): Promise<string> {
     const parentDoc = await this.getDoc(parentId);
     const contactId = parentDoc?.contact?._id;
     if (!contactId) {
@@ -90,9 +90,9 @@ export class ChtApi {
     }
 
     return contactDoc._id;
-  };
+  }
 
-  createPlace = async (payload: PlacePayload): Promise<CreatedPlaceResult> => {
+  async createPlace(payload: PlacePayload): Promise<CreatedPlaceResult> {
     const url = `api/v1/places`;
     console.log('axios.post', url);
     const resp = await this.axiosInstance.post(url, payload);
@@ -100,10 +100,10 @@ export class ChtApi {
       placeId: resp.data.id,
       contactId: resp.data.contact?.id,
     };
-  };
+  }
 
   // because there is no PUT for /api/v1/places
-  createContact = async (payload: PlacePayload): Promise<string> => {
+  async createContact(payload: PlacePayload): Promise<string> {
     const payloadWithPlace = {
       ...payload.contact,
       place: payload._id,
@@ -113,9 +113,9 @@ export class ChtApi {
     console.log('axios.post', url);
     const resp = await this.axiosInstance.post(url, payloadWithPlace);
     return resp.data.id;
-  };
+  }
 
-  updatePlace = async (payload: PlacePayload, contactId: string): Promise<any> => {
+  async updatePlace(payload: PlacePayload, contactId: string): Promise<any> {
     const doc: any = await this.getDoc(payload._id);
 
     const payloadClone:any = _.cloneDeep(payload);
@@ -136,9 +136,9 @@ export class ChtApi {
     }
 
     return doc;
-  };
+  }
 
-  deleteDoc = async (docId: string): Promise<void> => {
+  async deleteDoc(docId: string): Promise<void> {
     const doc: any = await this.getDoc(docId);
 
     const deleteContactUrl = `medic/${doc._id}?rev=${doc._rev}`;
@@ -147,34 +147,34 @@ export class ChtApi {
     if (!resp.data.ok) {
       throw Error('response from chtApi.deleteDoc was not OK');
     }
-  };
+  }
 
-  disableUsersWithPlace = async (placeId: string): Promise<string[]> => {
+  async disableUsersWithPlace(placeId: string): Promise<string[]> {
     const usersToDisable: string[] = await this.getUsersAtPlace(placeId);
     for (const userDocId of usersToDisable) {
       await this.disableUser(userDocId);
     }
     return usersToDisable;
-  };
+  }
 
-  deactivateUsersWithPlace = async (placeId: string): Promise<string[]> => {
+  async deactivateUsersWithPlace(placeId: string): Promise<string[]> {
     const usersToDeactivate: string[] = await this.getUsersAtPlace(placeId);
     for (const userDocId of usersToDeactivate) {
       await this.deactivateUser(userDocId);
     }
     return usersToDeactivate;
-  };
+  }
 
-  createUser = async (user: UserPayload): Promise<void> => {
+  async createUser(user: UserPayload): Promise<void> {
     const url = `api/v1/users`;
     console.log('axios.post', url);
     const axiosRequestionConfig = {
       'axios-retry': { retries: 0 }, // upload-manager handles retries for this
     };
     await this.axiosInstance.post(url, user, axiosRequestionConfig);
-  };
+  }
 
-  getParentAndSibling = async (parentId: string, contactType: ContactType): Promise<{ parent: any; sibling: any }> => {
+  async getParentAndSibling(parentId: string, contactType: ContactType): Promise<{ parent: any; sibling: any }> {
     const url = `medic/_design/medic/_view/contacts_by_depth`;
     console.log('axios.get', url);
     const resp = await this.axiosInstance.get(url, {
@@ -191,10 +191,10 @@ export class ChtApi {
     const parent = docs.find((d: any) => d.contact_type === parentType);
     const sibling = docs.find((d: any) => d.contact_type === contactType.name);
     return { parent, sibling };
-  };
+  }
 
-  getPlacesWithType = async (placeType: string)
-    : Promise<RemotePlace[]> => {
+  public async getPlacesWithType(placeType: string)
+    : Promise<RemotePlace[]> {
     const url = `medic/_design/medic-client/_view/contacts_by_type_freetext`;
     const params = {
       startkey: JSON.stringify([ placeType, 'name:']),
@@ -214,7 +214,7 @@ export class ChtApi {
           type: 'remote',
         };
       });
-  };
+  }
 
   public get chtSession(): ChtSession {
     return this.session.clone();
@@ -237,12 +237,12 @@ export class ChtApi {
     return resp.data?.docs?.map((d: any) => d._id);
   }
 
-  private getDoc = async (id: string): Promise<any> => {
+  private async getDoc(id: string): Promise<any> {
     const url = `medic/${id}`;
     console.log('axios.get', url);
     const resp = await this.axiosInstance.get(url);
     return resp.data;
-  };
+  }
 
   private async deactivateUser(docId: string): Promise<void> {
     const username = docId.substring('org.couchdb.user:'.length);
@@ -250,14 +250,14 @@ export class ChtApi {
     console.log('axios.post', url);
     const deactivationPayload = { roles: ['deactivated' ]};
     return this.axiosInstance.post(url, deactivationPayload);
-  };
+  }
 
   private async disableUser(docId: string): Promise<void> {
     const username = docId.substring('org.couchdb.user:'.length);
     const url = `api/v1/users/${username}`;
     console.log('axios.delete', url);
     return this.axiosInstance.delete(url);
-  };
+  }
 }
 
 class ChtApi_4_6 extends ChtApi {

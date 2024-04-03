@@ -30,7 +30,7 @@ describe('lib/cht-api.ts', () => {
       const session = mockChtSession();
       session.chtCoreVersion = 'invalid';
       expect(() => ChtApi.create(session)).to.throw('invalid');
-    })
+    });
   });
 });
 

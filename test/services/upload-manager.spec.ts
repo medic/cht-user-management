@@ -16,7 +16,7 @@ describe('services/upload-manager.ts', () => {
   const coreScenarios = [
     'base',
     '4.6',
-    '4.7',
+    // no value to test this '4.7' since the results of the mock are identical  
   ];
 
   beforeEach(() => {
@@ -379,11 +379,9 @@ async function createMocks(coreVersion: string) {
     deactivateUsersWithPlace: sinon.stub().resolves(),
   };
 
-  if (coreVersion === '4.6') {
+  if (coreVersion !== 'base') {
     chtApi.createPlace.resolves({ placeId: 'created-place-id', contactId: 'created-contact-id' });
     chtApi.updateContactParent.throws('never');
-  } else if (coreVersion === '4.7') {
-    chtApi.createPlace.resolves({ placeId: 'created-place-id', contactId: 'created-contact-id' });
   }
   
   const fakeFormData: any = {
