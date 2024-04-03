@@ -74,7 +74,6 @@ async function getRemoteResults(
     const placesAtLevel = await RemotePlaceCache.getPlacesWithType(chtApi, constrainingHierarchy.contact_type);
     const relevantPlaceIds = placesAtLevel
       .filter(remotePlace => remotePlace.name.includes(searchStringAtLevel))
-      .filter(remotePlace => chtApi.chtSession.isPlaceAuthorized(remotePlace))
       .map(remotePlace => remotePlace.id);
     const hierarchyIndex = constrainingHierarchy.level - hierarchyLevel.level - 1;
     remoteResults = remoteResults.filter(result => relevantPlaceIds.includes(result.lineage[hierarchyIndex]));
