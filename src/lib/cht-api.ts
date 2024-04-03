@@ -51,10 +51,10 @@ export class ChtApi {
     let result;
     const coercedVersion = semver.valid(semver.coerce(chtSession.chtCoreVersion));
     if (!coercedVersion) {
-      throw Error('invalid chtSession.chtCoreVersion');
+      throw Error(`invalid cht core version "${chtSession.chtCoreVersion}"`);
     }
 
-    if (semver.gte(coercedVersion, '4.7.0') || chtSession.chtCoreVersion === '4.6.0-local-development') { // TODO: change when not testing on dev
+    if (semver.gte(coercedVersion, '4.7.0') || chtSession.chtCoreVersion === '4.6.0-local-development') {
       result = new ChtApi_4_7(chtSession);
       result.version = '4.7';
     } else if (semver.gte(coercedVersion, '4.6.0')) {
