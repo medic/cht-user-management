@@ -1,16 +1,17 @@
-import Fastify, { FastifyInstance, FastifyReply, FastifyRequest, FastifyServerOptions } from 'fastify';
 import autoload from '@fastify/autoload';
 import cookie from '@fastify/cookie';
-import formbody from '@fastify/formbody';
-import multipart from '@fastify/multipart';
-import fastifyStatic from '@fastify/static';
-import view from '@fastify/view';
-import { Liquid } from 'liquidjs';
+import Fastify, { FastifyInstance, FastifyReply, FastifyRequest, FastifyServerOptions } from 'fastify';
 import { FastifySSEPlugin } from 'fastify-sse-v2';
+import fastifyStatic from '@fastify/static';
+import formbody from '@fastify/formbody';
+import { Liquid } from 'liquidjs';
+import multipart from '@fastify/multipart';
 import path from 'path';
+import view from '@fastify/view';
 
 import Auth from './lib/authentication';
 import SessionCache from './services/session-cache';
+import { ChtApi } from './lib/cht-api';
 
 const build = (opts: FastifyServerOptions): FastifyInstance => {
   const fastify = Fastify(opts);
@@ -50,7 +51,7 @@ const build = (opts: FastifyServerOptions): FastifyInstance => {
 
     try {
       const chtSession = Auth.decodeToken(cookieToken);
-      req.chtSession = chtSession;
+      req.chtApi = ChtApi.create(chtSession);
       req.sessionCache = SessionCache.getForSession(chtSession);
     } catch (e) {
       reply.redirect('/login');

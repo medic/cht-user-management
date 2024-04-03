@@ -1,4 +1,4 @@
-import { ChtApi, PlacePayload } from '../lib/cht-api';
+import { ChtApi, CreatedPlaceResult, PlacePayload } from '../lib/cht-api';
 import Place from './place';
 import { retryOnUpdateConflict } from '../lib/retry-logic';
 import { Uploader } from './upload-manager';
@@ -14,7 +14,7 @@ export class UploadReplacementWithDeactivation implements Uploader {
     return await this.chtApi.createContact(payload);
   };
 
-  handlePlacePayload = async (place: Place, payload: PlacePayload): Promise<string> => {
+  handlePlacePayload = async (place: Place, payload: PlacePayload): Promise<CreatedPlaceResult> => {
     const contactId = place.creationDetails?.contactId;
     const placeId = place.resolvedHierarchy[0]?.id;
 
@@ -24,7 +24,10 @@ export class UploadReplacementWithDeactivation implements Uploader {
 
     const updatedPlaceDoc = await retryOnUpdateConflict<any>(() => this.chtApi.updatePlace(payload, contactId));
     await this.chtApi.deactivateUsersWithPlace(placeId);
-    return updatedPlaceDoc._id;
+    return {
+      placeId: updatedPlaceDoc._id,
+      contactId,
+    };
   };
 
   linkContactAndPlace = async (place: Place, placeId: string): Promise<void> => {

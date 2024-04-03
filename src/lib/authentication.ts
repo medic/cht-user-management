@@ -4,7 +4,7 @@ import ChtSession from './cht-session';
 
 const LOGIN_EXPIRES_AFTER_MS = 2 * 24 * 60 * 60 * 1000;
 const { COOKIE_PRIVATE_KEY } = process.env;
-const PRIVATE_KEY_SALT = '_'; // change to logout all users
+const PRIVATE_KEY_SALT = '2'; // change to logout all users
 const SIGNING_KEY = COOKIE_PRIVATE_KEY + PRIVATE_KEY_SALT;
 
 export default class Auth {
