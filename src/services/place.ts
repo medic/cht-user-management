@@ -133,10 +133,10 @@ export default class Place {
     };
   }
 
-  public asChtPayload(username: string): PlacePayload {
+  public asChtPayload(creator: string): PlacePayload {
     const user_attribution = {
       tool: `cht-user-management-${appVersion}`,
-      username,
+      username: creator,
       created_time: Date.now(),
       replacement: this.resolvedHierarchy[0],
     };
