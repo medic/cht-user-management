@@ -16,7 +16,6 @@ type SessionCreationDetails = {
   authInfo: AuthenticationInfo;
   username: string;
   sessionToken: string;
-
   facilityId: string;
   chtCoreVersion: string;
 };
@@ -99,8 +98,9 @@ export default class ChtSession {
   }
   
   private static async fetchCreationDetails(authInfo: AuthenticationInfo, username: string, sessionToken: string): Promise<SessionCreationDetails> {
-    // would prefer to use the _users/org.couchdb.user:username doc
-    // only admins have access + GET api/v2/users returns all users and cant return just one
+    // api/v2/users returns all users prior to 4.6
+    // only admins have access to _users database after 4.4
+    // we don't know what version of cht-core is running, so we do the only thing supported by all versions
     const paths = [`medic/org.couchdb.user:${username}`, 'api/v2/monitoring'];
     const fetches = paths.map(path => {
       const url = ChtSession.createUrl(authInfo, path);
