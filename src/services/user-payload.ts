@@ -12,7 +12,7 @@ export class UserPayload {
 
   constructor(place: Place, placeId: string, contactId: string) {
     this.username = place.generateUsername();
-    this.password = this.generatePassword();
+    this.password = generatePassword();
     this.roles = place.userRoles;
     this.place = placeId;
     this.contact = contactId;
@@ -21,15 +21,20 @@ export class UserPayload {
   }
 
   public regeneratePassword(): void {
-    this.password = this.generatePassword();
+    this.password = generatePassword();
   }
 
   public makeUsernameMoreComplex(): void {
-    const randomNumber = crypto.randomInt(0, 100);
-    this.username =  `${this.username}${randomNumber.toString()}`;
+    this.username = makeUsernameMoreComplex(this.username);
   }
+}
 
-  private generatePassword(): string {
+export function makeUsernameMoreComplex(username: string): string {
+    const randomNumber = crypto.randomInt(0, 100);
+    return `${username}${randomNumber.toString()}`;
+};
+
+export function generatePassword(): string {
     const LENGTH = 9; // CHT requires 8 minimum + special characters
     const ELIGIBLE_CHARACTERS =
       'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.,';
@@ -39,5 +44,4 @@ export class UserPayload {
     );
     const characters = Array(LENGTH).fill('').map(pickRandomCharacter);
     return characters.join('');
-  }
-}
+};

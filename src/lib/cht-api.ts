@@ -8,7 +8,7 @@ export type PlacePayload = {
   name: string;
   type: string;
   contact_type: string;
-  contact: {
+  contact?: {
     name: string;
     type: string;
     contact_type: string;
@@ -105,6 +105,15 @@ export class ChtApi {
     return doc;
   };
 
+  bulkCreate = async (places: any[]): Promise<any[]> => {
+    const resp = await this.axiosInstance.post('/medic/_bulk_docs', JSON.stringify({docs: places}), {
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+    return resp.data;
+  }
+
   deleteDoc = async (docId: string): Promise<void> => {
     const doc: any = await this.getDoc(docId);
 
@@ -154,6 +163,13 @@ export class ChtApi {
       'axios-retry': { retries: 0 }, // upload-manager handles retries for this
     };
     await this.axiosInstance.post(url, user, axiosRequestionConfig);
+  };
+  
+  createUsers = async (users: UserPayload[]): Promise<any[]> => {
+    const url = `api/v1/users`;
+    console.log('axios.post', url);
+    const resp = await this.axiosInstance.post(url, users);
+    return resp.data;
   };
 
   getParentAndSibling = async (parentId: string, contactType: ContactType): Promise<{ parent: any; sibling: any }> => {
