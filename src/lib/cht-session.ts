@@ -57,10 +57,6 @@ export default class ChtSession {
     return new ChtSession(parsed.authInfo, parsed.sessionToken, parsed.username, parsed.facilityId);
   }
 
-  clone(): ChtSession {
-    return new ChtSession(this.authInfo, this.sessionToken, this.username, this.facilityId);
-  }
-
   isPlaceAuthorized(remotePlace: RemotePlace): boolean {
     return !!this.facilityId &&
       (
