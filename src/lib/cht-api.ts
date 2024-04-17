@@ -30,16 +30,12 @@ export type RemotePlace = {
 };
 
 export class ChtApi {
-  private session: ChtSession;
+  public readonly chtSession: ChtSession;
   private axiosInstance: AxiosInstance;
 
   constructor(session: ChtSession) {
-    this.session = session;
+    this.chtSession = session;
     this.axiosInstance = session.axiosInstance;
-  }
-
-  public get chtSession(): ChtSession {
-    return this.session.clone();
   }
 
   // workaround https://github.com/medic/cht-core/issues/8674
