@@ -212,7 +212,6 @@ function addKeyToMap(map: RemotePlaceMap, key: string, value: RemotePlace) {
   const lowercaseKey = key.toLowerCase();
   const existing = map[lowercaseKey];
   if (existing && existing.id !== value.id) {
-    console.warn(`Found multiple known places for name "${value.name}"`);
     if (existing.id !== RemotePlaceResolver.Multiple.id) {
       map[lowercaseKey] = {
         ...RemotePlaceResolver.Multiple,
