@@ -198,7 +198,6 @@ function findLocalPlaces(
   }
 
   if (places.length > 1) {
-    console.warn(`Found multiple known places for name "${name}"`);
     return {
       ...RemotePlaceResolver.Multiple,
       ambiguities: places.map(p => p.asRemotePlace()),
