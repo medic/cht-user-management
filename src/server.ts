@@ -22,7 +22,7 @@ const build = (opts: FastifyServerOptions): FastifyInstance => {
   fastify.register(fastifyCompress);
   fastify.register(view, {
     engine: {
-      liquid: new Liquid({ extname: '.html', root: 'src/liquid', jekyllInclude: true, dynamicPartials: true }),
+      liquid: new Liquid({ extname: '.html', root: 'src/liquid', cache: true, jekyllInclude: true, dynamicPartials: true }),
     },
   });
   fastify.register(autoload, {
