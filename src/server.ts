@@ -38,7 +38,7 @@ const build = (opts: FastifyServerOptions): FastifyInstance => {
   Auth.assertEnvironmentSetup();
 
   fastify.addHook('preValidation', async (req: FastifyRequest, reply: FastifyReply) => {
-    if (req.unauthenticated || req.routerPath === '/public/*') {
+    if (req.unauthenticated || req.routeOptions.url === '/public/*') {
       return;
     }
 
