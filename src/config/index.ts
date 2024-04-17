@@ -17,6 +17,7 @@ export type ContactType = {
   name: string;
   friendly: string;
   contact_type: string;
+  contact_friendly?: string;
   user_role: string[];
   username_from_place: boolean;
   hierarchy: HierarchyConstraint[];
