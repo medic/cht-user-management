@@ -4,8 +4,9 @@
     hx-encoding='multipart/form-data' 
     autocomplete="off"
     hx-post="/place?op=bulk&type={{contactType.name}}"
-    hx-target="this" 
-    hx-swap="outerHTML"
+    hx-disabled-elt="button#place_create_submit"
+    hx-target="div#place_bulk_create_controls" 
+    hx-swap="innerHTML"
   >
       <input name="place_type" value="{{contactType.name}}" hidden />
 
@@ -31,7 +32,7 @@
           </span>
         </label>
       </div><br/>
-      <div class="field is-grouped is-grouped-centered">
+      <div class="field is-grouped is-grouped-centered" id="place_bulk_create_controls">
         <div class="control">
             <button id="place_create_submit" class="button is-link">Add</button>
         </div>
@@ -110,6 +111,10 @@
             fileName.textContent = fileInput.files[0].name;
           }
         }
+        const form = document.querySelector("form#form_place_create");
+        form.addEventListener("GotoList", function(e) {
+          window.location.replace("/");
+        });
       </script>
   </form>
 </section>
