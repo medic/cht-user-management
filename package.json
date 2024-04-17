@@ -4,6 +4,7 @@
   "main": "dist/index.js",
   "dependencies": {
     "@fastify/autoload": "^5.8.0",
+    "@fastify/compress": "^7.0.3",
     "@fastify/cookie": "^9.2.0",
     "@fastify/env": "^4.2.0",
     "@fastify/formbody": "^7.4.0",
@@ -34,8 +35,8 @@
   "devDependencies": {
     "@medic/eslint-config": "^1.1.0",
     "@types/chai": "^4.3.11",
-    "@types/commander": "^2.12.2",
     "@types/chai-as-promised": "^7.1.8",
+    "@types/commander": "^2.12.2",
     "@types/mocha": "^10.0.6",
     "@types/rewire": "^2.5.30",
     "@types/sinon": "^17.0.2",
