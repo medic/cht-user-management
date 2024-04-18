@@ -5,8 +5,8 @@
     autocomplete="off"
     hx-post="/place?op=bulk&type={{contactType.name}}"
     hx-disabled-elt="button#place_create_submit"
-    hx-target="div#place_bulk_create_controls" 
-    hx-swap="innerHTML"
+    hx-indicator="#place_create_submit_progress"
+    hx-swap="none"
   >
       <input name="place_type" value="{{contactType.name}}" hidden />
 
@@ -39,6 +39,9 @@
         <div class="control">
             <a href="/" id="cancel" class="button">Cancel</a>
         </div>
+      </div>
+      <div>
+        <progress id="place_create_submit_progress" class="progress is-small is-primary htmx-indicator" max="100"></progress>
       </div>
 
       <div class="tile box">
@@ -111,10 +114,6 @@
             fileName.textContent = fileInput.files[0].name;
           }
         }
-        const form = document.querySelector("form#form_place_create");
-        form.addEventListener("GotoList", function(e) {
-          window.location.replace("/");
-        });
       </script>
   </form>
 </section>

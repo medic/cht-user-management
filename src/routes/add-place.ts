@@ -74,8 +74,8 @@ export default async function addPlace(fastify: FastifyInstance) {
           },
         });
       }
-      resp.header('HX-Trigger-After-Swap', `GotoList`);
-      return `<div class="control"><progress class="progress is-small is-primary" max="100"></progress></div><span><i>processing</i></span>`;
+      resp.header('HX-Redirect', '/');
+      return;
     }
 
     throw new Error('unknown op');
