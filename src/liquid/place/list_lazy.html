@@ -1,0 +1,37 @@
+<div id="place_list" hx-swap-oob="true" hx-trigger="load" hx-get="/app/list">
+  {% for contactType in contactTypes %}
+  <div id="{{contactType.name}}" class="mb-6">
+    <h2 class="title is-4">{{contactType.friendly}}</h2>
+    <div>
+      <table id="table_places" class="table is-fullwidth is-striped is-hoverable">
+        <thead>
+          <tr>
+            {% for hierarchy in contactType.hierarchy %}
+            <th id="hierarchy_{{ hierarchy.property_name }}">{{ hierarchy.friendly_name }}</th>
+            {% endfor %}
+            {% for property in contactType.place_properties %}
+            {% if property.type != 'generated' %}
+            <th id="place_{{property.property_name}}">{{property.friendly_name}}</th>
+            {% endif %}
+            {% endfor %}
+            {% for contact_property in contactType.contact_properties %}
+            {% if contact_property.type != 'generated' %}
+            <th id="contact_{{contact_property.property_name}}">{{contact_property.friendly_name}}</th>
+            {% endif %}
+            {% endfor %}
+            {% if contactType.user_role.size > 1 %}
+            <th id="{{userRoleProperty.property_name}}">{{ contactType.userRoleProperty.friendly_name }}</th>
+            {% endif %}
+            <th></th>
+            <th></th>
+          </tr>
+        </thead>
+      </table>
+      <div>
+        <progress class="progress is-small is-primary" max="100"></progress>
+        <p>Loading data</p>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>

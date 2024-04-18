@@ -44,6 +44,27 @@ export default async function sessionCache(fastify: FastifyInstance) {
 
     return resp.view('src/liquid/app/view.html', tmplData);
   });
+  
+  fastify.get('/app/list', async (req, resp) => {
+    const contactTypes = Config.contactTypes();
+    const sessionCache: SessionCache = req.sessionCache;
+    const directiveModel = new DirectiveModel(sessionCache, req.cookies.filter);
+    const placeData = contactTypes.map((item) => {
+      return {
+        ...item,
+        places: sessionCache.getPlaces({
+          type: item.name,
+          filter: directiveModel.filter,
+        }),
+        hierarchy: Config.getHierarchyWithReplacement(item, 'desc'),
+        userRoleProperty: Config.getUserRoleConfig(item),
+      };
+    });
+    const tmplData = {
+      contactTypes: placeData,
+    };
+    return resp.view('src/liquid/place/list.html', tmplData);
+  });
 
   fastify.post('/app/remove-all', async (req) => {
     const sessionCache: SessionCache = req.sessionCache;
