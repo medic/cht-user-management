@@ -224,10 +224,6 @@ export default class Place {
     Validation.format(this);
   }
 
-  public assertWarnings(): void {
-    this.warnings = WarningSystem.assertWarnings(this);
-  }
-
   public generateUsername(): string {
     const propertySource = this.type.username_from_place ? this.properties : this.contact.properties;
     let username = propertySource.name || this.hierarchyProperties.replacement; // if name is not present, it must be a replacement

@@ -5,6 +5,7 @@ import { Config, ContactType } from '../config';
 import Place from './place';
 import SessionCache from './session-cache';
 import RemotePlaceResolver from '../lib/remote-place-resolver';
+import WarningSystem from '../warnings';
 
 export default class PlaceFactory {
   public static async createFromCsv(csvBuffer: Buffer, contactType: ContactType, sessionCache: SessionCache, chtApi: ChtApi)
@@ -13,8 +14,9 @@ export default class PlaceFactory {
     await RemotePlaceResolver.resolve(places, sessionCache, chtApi, { fuzz: true });
     places.forEach(p => {
       p.validate();
-      p.assertWarnings();
     });
+
+    await WarningSystem.assertWarnings(contactType, chtApi, sessionCache);
     sessionCache.savePlaces(...places);
     return places;
   }
@@ -26,8 +28,8 @@ export default class PlaceFactory {
 
     await RemotePlaceResolver.resolveOne(place, sessionCache, chtApi, { fuzz: true });
     place.validate();
-    place.assertWarnings();
     sessionCache.savePlaces(place);
+    await WarningSystem.assertWarnings(contactType, chtApi, sessionCache);
     return place;
   };
 
@@ -41,7 +43,7 @@ export default class PlaceFactory {
     place.setPropertiesFromFormData(formData, 'hierarchy_');
     await RemotePlaceResolver.resolveOne(place, sessionCache, chtApi, { fuzz: true });
     place.validate();
-    place.assertWarnings();
+    await WarningSystem.assertWarnings(place.type, chtApi, sessionCache);
 
     return place;
   };

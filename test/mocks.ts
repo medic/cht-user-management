@@ -98,7 +98,7 @@ export const mockParentPlace = (parentPlaceType: ContactType, parentName: string
 };
 
 export const mockProperty = (type: string, parameter: string | string[] | undefined | object, property_name: string = 'prop'): ContactProperty => ({
-  friendly_name: 'csv',
+  friendly_name: `friendly ${property_name}`,
   property_name,
   type,
   parameter,
