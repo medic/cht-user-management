@@ -244,6 +244,10 @@ export default class Place {
 
     const userRoleConfig = Config.getUserRoleConfig(this.type);
     const roles = this.userRoleProperties[userRoleConfig.property_name];
+    if (!roles) {
+      throw Error(`Place role data is required when multiple roles are available.`);
+    }
+
     return roles.split(' ').map((role: string) => role.trim()).filter(Boolean);
   }
 
