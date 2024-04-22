@@ -237,7 +237,8 @@
           "property_name": "name",
           "type": "name",
           "parameter": ["\\sCommunity Health Unit", "\\sCommunity Unit", "\\sUnit", "\\sCU", "\\sCHU"],
-          "required": true
+          "required": true,
+          "unique": "parent"
         },
         {
           "friendly_name": "CHU Code",
@@ -245,7 +246,8 @@
           "type": "regex",
           "parameter": "^\\d{6}$",
           "errorDescription": "Expects a six digit number (eg. 123456)",
-          "required": true
+          "required": true,
+          "unique": "all"
         },
         {
           "friendly_name": "Link Facility Name",
@@ -318,7 +320,8 @@
           "property_name": "name",
           "type": "generated",
           "parameter": "{{ contact.name }} Area",
-          "required": true
+          "required": true,
+          "unique": "parent"
         }
       ],
       "contact_properties": [
@@ -333,7 +336,8 @@
           "property_name": "phone",
           "parameter": "KE",
           "type": "phone",
-          "required": true
+          "required": true,
+          "unique": "parent"
         }
       ]
     }

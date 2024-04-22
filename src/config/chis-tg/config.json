@@ -45,7 +45,8 @@
           "property_name": "name",
           "type": "generated",
           "parameter": "{{ contact.last_name }} {{ contact.first_name }} ({{ lineage.sanitary_training }})",
-          "required": false
+          "required": false,
+          "unique": "parent"
         }
       ],
       "contact_properties": [
@@ -85,7 +86,8 @@
           "property_name": "telephone",
           "type": "regex",
           "parameter": "^\\d{8}$",
-          "required": true
+          "required": true,
+          "unique": "parent"
         },
         {
           "friendly_name": "NGO/Provenance Structure",
