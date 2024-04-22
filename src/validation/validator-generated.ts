@@ -1,5 +1,5 @@
 import { Liquid } from 'liquidjs';
-import { IValidator } from './validation';
+import { IValidator } from '.';
 import { ContactProperty } from '../config';
 import Place from '../services/place';
 

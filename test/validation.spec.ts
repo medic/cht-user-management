@@ -1,9 +1,9 @@
 import { DateTime } from 'luxon';
 import { expect } from 'chai';
 
-import { Validation } from '../../src/lib/validation';
-import { mockSimpleContactType, mockPlace } from '../mocks';
-import RemotePlaceResolver from '../../src/lib/remote-place-resolver';
+import Validation from '../src/validation';
+import { mockSimpleContactType, mockPlace } from './mocks';
+import RemotePlaceResolver from '../src/lib/remote-place-resolver';
 
 type Scenario = {
   type: string;
@@ -84,7 +84,7 @@ const scenarios: Scenario[] = [
   { type: 'generated', prop: 'b', propertyParameter: 'x {{ contact.dne }}', isValid: true, altered: 'x ' },
 ];
 
-describe('lib/validation.ts', () => {
+describe('validation', () => {
   for (const scenario of scenarios) {
     it(`scenario: ${JSON.stringify(scenario)}`, () => {
       const contactType = mockSimpleContactType(scenario.type, scenario.propertyParameter, scenario.propertyErrorDescription);

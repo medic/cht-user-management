@@ -1,5 +1,5 @@
 import { ContactProperty } from '../config';
-import { IValidator } from './validation';
+import { IValidator } from '.';
 
 import ValidatorString from './validator-string';
 

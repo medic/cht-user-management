@@ -1,8 +1,9 @@
 import _ from 'lodash';
 import { Config, ContactProperty } from '../config';
+import { IValidator, ValidationError } from '.';
 import Place from '../services/place';
-import RemotePlaceResolver from './remote-place-resolver';
-import { RemotePlace } from './cht-api';
+import RemotePlaceResolver from '../lib/remote-place-resolver';
+import { RemotePlace } from '../lib/cht-api';
 
 import ValidatorDateOfBirth from './validator-dob';
 import ValidatorGenerated from './validator-generated';
@@ -13,17 +14,6 @@ import ValidatorSelectMultiple from './validator-select-multiple';
 import ValidatorSelectOne from './validator-select-one';
 import ValidatorSkip from './validator-skip';
 import ValidatorString from './validator-string';
-
-export type ValidationError = {
-  property_name: string;
-  description: string;
-};
-
-export interface IValidator {
-  isValid(input: string, property? : ContactProperty) : boolean | string;
-  format(input : string, property? : ContactProperty) : string;
-  get defaultError(): string;
-}
 
 type ValidatorMap = {
   [key: string]: IValidator;
