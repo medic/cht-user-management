@@ -127,11 +127,21 @@ export class Validation {
       const value = obj[property.property_name];
 
       const isRequired = requiredProperties.some((prop) => _.isEqual(prop, property));
+      const errorPropertyName = `${prefix}${property.property_name}`;
+      if (value === undefined && isRequired) {
+        invalid.push({
+          property_name: errorPropertyName,
+          description: 'Is Required',
+        });
+
+        continue;
+      }
+
       if (value || isRequired) {
         const isValid = Validation.isValid(property, value);
         if (isValid === false || typeof isValid === 'string') {
           invalid.push({
-            property_name: `${prefix}${property.property_name}`,
+            property_name: errorPropertyName,
             description: isValid === false ? 'Value is invalid' : isValid as string,
           });
         }
