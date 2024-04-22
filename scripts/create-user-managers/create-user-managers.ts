@@ -54,6 +54,7 @@ export default async function createUserManagers(argv: string[]) {
 async function createUserManager(username: string, placeDocId: string, chtApi: typeof ChtApi, adminUsername: string, passwordOverride?: string) {
   const place = new Place(UserManagerContactType);
   place.contact.properties.name = `${username} (User Manager)`;
+  place.userRoleProperties.role = UserManagerContactType.user_role.join(' ');
 
   const chtPayload = place.asChtPayload(adminUsername);
   chtPayload.contact.role = 'user_manager';
