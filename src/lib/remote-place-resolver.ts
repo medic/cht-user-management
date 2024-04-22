@@ -3,7 +3,7 @@ import Place from '../services/place';
 import SessionCache from '../services/session-cache';
 import { RemotePlace, ChtApi } from './cht-api';
 import { Config, ContactType, HierarchyConstraint } from '../config';
-import { Validation } from './validation';
+import Validation from '../validation';
 import RemotePlaceCache from './remote-place-cache';
 
 type RemotePlaceMap = { [key: string]: RemotePlace };

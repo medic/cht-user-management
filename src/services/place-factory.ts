@@ -10,10 +10,11 @@ export default class PlaceFactory {
   public static async createFromCsv(csvBuffer: Buffer, contactType: ContactType, sessionCache: SessionCache, chtApi: ChtApi)
     : Promise<Place[]> {
     const places = await PlaceFactory.loadPlacesFromCsv(csvBuffer, contactType);
-    const validateAll = () => places.forEach(p => p.validate());
-
     await RemotePlaceResolver.resolve(places, sessionCache, chtApi, { fuzz: true });
-    validateAll();
+    places.forEach(p => {
+      p.validate();
+      p.assertWarnings();
+    });
     sessionCache.savePlaces(...places);
     return places;
   }
@@ -25,6 +26,7 @@ export default class PlaceFactory {
 
     await RemotePlaceResolver.resolveOne(place, sessionCache, chtApi, { fuzz: true });
     place.validate();
+    place.assertWarnings();
     sessionCache.savePlaces(place);
     return place;
   };
@@ -39,6 +41,7 @@ export default class PlaceFactory {
     place.setPropertiesFromFormData(formData, 'hierarchy_');
     await RemotePlaceResolver.resolveOne(place, sessionCache, chtApi, { fuzz: true });
     place.validate();
+    place.assertWarnings();
 
     return place;
   };

@@ -66,11 +66,13 @@ export default async function sessionCache(fastify: FastifyInstance) {
 
   // initiates place creation via the job manager
   fastify.post('/app/apply-changes', async (req) => {
+    const { ignoreWarnings } = req.query as any;
+    
     const uploadManager: UploadManager = fastify.uploadManager;
     const sessionCache: SessionCache = req.sessionCache;
 
     const chtApi = new ChtApi(req.chtSession);
-    uploadManager.doUpload(sessionCache.getPlaces(), chtApi);
+    uploadManager.doUpload(sessionCache.getPlaces(), chtApi, ignoreWarnings === 'true');
   });
 
   fastify.post('/app/set-filter/:filter', async (req, resp) => {

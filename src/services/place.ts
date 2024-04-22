@@ -4,10 +4,11 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { Config, ContactProperty, ContactType } from '../config';
 import { PlacePayload, RemotePlace } from '../lib/cht-api';
-import { Validation } from '../lib/validation';
+import Validation from '../validation';
 // can't use package.json because of rootDir in ts
 import { version as appVersion } from '../package.json';
 import RemotePlaceResolver from '../lib/remote-place-resolver';
+import WarningSystem from '../warnings';
 
 export type UserCreationDetails = {
   username?: string;
@@ -54,6 +55,7 @@ export default class Place {
   public state : PlaceUploadState;
 
   public validationErrors?: { [key: string]: string };
+  public warnings: string[];
   public uploadError? : string;
 
   constructor(type: ContactType) {
@@ -64,6 +66,7 @@ export default class Place {
     this.hierarchyProperties = {};
     this.state = PlaceUploadState.STAGED;
     this.resolvedHierarchy = [];
+    this.warnings = [];
     this.userRoleProperties = {};
   }
 
@@ -219,6 +222,10 @@ export default class Place {
     }
     
     Validation.format(this);
+  }
+
+  public assertWarnings(): void {
+    this.warnings = WarningSystem.assertWarnings(this);
   }
 
   public generateUsername(): string {
