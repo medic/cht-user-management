@@ -206,8 +206,8 @@ describe('services/place-factory.ts', () => {
 
     const place: Place = await PlaceFactory.createOne(fakeFormData, contactType, sessionCache, chtApi);
     expect(place.validationErrors).to.be.empty;
-    expect(place.resolvedHierarchy[3]?.id).to.eq(greatParent.id);
-    expect(place.resolvedHierarchy[1]?.id).to.eq(chtPlace.id);
+    expect(place.resolvedHierarchy[3]?.id).to.eq(greatParent._id);
+    expect(place.resolvedHierarchy[1]?.id).to.eq(chtPlace._id);
   });
 
   it('ambiguous parent disambiguated by grandparent', async () => {
