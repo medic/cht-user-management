@@ -1,10 +1,16 @@
 import { expect } from 'chai';
 import Sinon from 'sinon';
 
-import { ChtApi, RemotePlace } from '../src/lib/cht-api';
+import { ChtApi } from '../src/lib/cht-api';
 import ChtSession from '../src/lib/cht-session';
 import { ContactProperty, ContactType } from '../src/config';
 import Place from '../src/services/place';
+
+export type ChtDoc = {
+  _id: string;
+  name: string;
+  [key: string]: string | Object;
+};
 
 export const mockPlace = (type: ContactType, prop: any) : Place => {
   const result = new Place(type);
@@ -26,7 +32,7 @@ export const mockPlace = (type: ContactType, prop: any) : Place => {
   return result;
 };
 
-export const mockChtApi: ChtApi = (first: RemotePlace[] = [], second: RemotePlace[] = []) => ({
+export const mockChtApi: ChtApi = (first: ChtDoc[] = [], second: ChtDoc[] = []) => ({
   chtSession: mockChtSession(),
   getPlacesWithType: Sinon.stub().resolves(first).onSecondCall().resolves(second),
 });

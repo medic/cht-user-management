@@ -18,17 +18,6 @@ export type PlacePayload = {
   [key: string]: any;
 };
 
-export type RemotePlace = {
-  id: string;
-  name: string;
-  lineage: string[];
-  ambiguities?: RemotePlace[];
-
-  // sadly, sometimes invalid or uncreated objects "pretend" to be remote
-  // should reconsider this naming
-  type: 'remote' | 'local' | 'invalid';
-};
-
 export class ChtApi {
   public readonly chtSession: ChtSession;
   private axiosInstance: AxiosInstance;
@@ -172,26 +161,15 @@ export class ChtApi {
   };
 
   getPlacesWithType = async (placeType: string)
-    : Promise<RemotePlace[]> => {
-    const url = `medic/_design/medic-client/_view/contacts_by_type_freetext`;
+    : Promise<any[]> => {
+    const url = `medic/_design/medic-client/_view/contacts_by_type`;
     const params = {
-      startkey: JSON.stringify([ placeType, 'name:']),
-      endkey: JSON.stringify([ placeType, 'name:\ufff0']),
+      key: JSON.stringify([placeType]),
       include_docs: true,
     };
     console.log('axios.get', url, params);
     const resp = await this.axiosInstance.get(url, { params });
-
-    return resp.data.rows
-      .map((row: any): RemotePlace => {
-        const nameData = row.key[1];
-        return {
-          id: row.id,
-          name: nameData.substring('name:'.length),
-          lineage: extractLineage(row.doc),
-          type: 'remote',
-        };
-      });
+    return resp.data.rows.map((row: any) => row.doc);
   };
 
   getDoc = async (id: string): Promise<any> => {
@@ -226,10 +204,3 @@ function minify(doc: any): any {
   };
 }
 
-function extractLineage(doc: any): string[] {
-  if (doc?.parent?._id) {
-    return [doc.parent._id, ...extractLineage(doc.parent)];
-  }
-
-  return [];
-}

@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import SessionCache from '../services/session-cache';
-import { ChtApi, RemotePlace } from './cht-api';
-import RemotePlaceCache from './remote-place-cache';
+import { ChtApi } from './cht-api';
+import RemotePlaceCache, { RemotePlace } from './remote-place-cache';
 import RemotePlaceResolver from './remote-place-resolver';
 import { Config, ContactType, HierarchyConstraint } from '../config';
 import Place from '../services/place';

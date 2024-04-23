@@ -121,6 +121,15 @@ export class Config {
     };
   }
 
+  public static getUniqueProperties(name: string): ContactProperty[] {
+    const contactMatch = config.contact_types.find(c => c.name === name);
+    if (!contactMatch) {
+      return [];
+    }
+
+    return contactMatch.place_properties.filter(prop => prop.unique);
+  }
+
   public static hasMultipleRoles(contactType: ContactType): boolean {
     if (!contactType.user_role.length || contactType.user_role.some(role => !role.trim())) {
       throw Error(`unvalidatable config: 'user_role' property is empty or contains empty strings`);

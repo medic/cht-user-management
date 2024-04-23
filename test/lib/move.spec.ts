@@ -12,10 +12,10 @@ const { expect } = Chai;
 describe('lib/move.ts', () => {
   const chtApi = () => mockChtApi(
     [
-      { id: 'from-sub', name: 'From Sub', lineage: [], type: 'remote' },
-      { id: 'to-sub', name: 'To Sub', lineage: [], type: 'remote' }
+      { _id: 'from-sub', name: 'From Sub' },
+      { _id: 'to-sub', name: 'To Sub' }
     ],
-    [{ id: 'chu-id', name: 'c-h-u', lineage: ['from-sub'], type: 'remote' }],
+    [{ _id: 'chu-id', name: 'c-h-u', parent: { _id: 'from-sub' } }],
   );
 
   it('move CHU: success', async () => {
@@ -58,7 +58,7 @@ describe('lib/move.ts', () => {
     const sessionCache = new SessionCache();
 
     const actual = MoveLib.move(formData, contactType, sessionCache, chtApi());
-    await expect(actual).to.eventually.be.rejectedWith('Place "c-h-u" already has "From Sub" as parent');
+    await expect(actual).to.eventually.be.rejectedWith('Place "c-h-u" already has "from sub" as parent');
   });
 
   it('move CHU: fail to resolve parent', async () => {

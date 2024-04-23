@@ -1,8 +1,8 @@
 import _ from 'lodash';
 
 import { ContactProperty, ContactType } from '../config';
-import { ChtApi, RemotePlace } from '../lib/cht-api';
-import RemotePlaceCache from '../lib/remote-place-cache';
+import { ChtApi } from '../lib/cht-api';
+import RemotePlaceCache, { RemotePlace } from '../lib/remote-place-cache';
 import Place from '../services/place';
 import SessionCache from '../services/session-cache';
 

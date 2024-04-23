@@ -3,12 +3,12 @@ import Contact from './contact';
 import { v4 as uuidv4 } from 'uuid';
 
 import { Config, ContactProperty, ContactType } from '../config';
-import { PlacePayload, RemotePlace } from '../lib/cht-api';
+import { PlacePayload } from '../lib/cht-api';
 import Validation from '../validation';
 // can't use package.json because of rootDir in ts
 import { version as appVersion } from '../package.json';
 import RemotePlaceResolver from '../lib/remote-place-resolver';
-import WarningSystem from '../warnings';
+import RemotePlaceCache, { RemotePlace } from '../lib/remote-place-cache';
 
 export type UserCreationDetails = {
   username?: string;
@@ -210,6 +210,7 @@ export default class Place {
       id: this.id,
       name: this.name,
       type: this.isCreated ? 'remote' : 'local',
+      uniqueKeys: RemotePlaceCache.extractUniqueKeys(this.type.name, this.properties),
       lineage,
     };
   }

@@ -3,7 +3,6 @@ import { Config, ContactProperty } from '../config';
 import { IValidator, ValidationError } from '.';
 import Place from '../services/place';
 import RemotePlaceResolver from '../lib/remote-place-resolver';
-import { RemotePlace } from '../lib/cht-api';
 
 import ValidatorDateOfBirth from './validator-dob';
 import ValidatorGenerated from './validator-generated';
@@ -14,6 +13,7 @@ import ValidatorSelectMultiple from './validator-select-multiple';
 import ValidatorSelectOne from './validator-select-one';
 import ValidatorSkip from './validator-skip';
 import ValidatorString from './validator-string';
+import { RemotePlace } from '../lib/remote-place-cache';
 
 type ValidatorMap = {
   [key: string]: IValidator;

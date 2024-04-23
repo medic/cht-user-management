@@ -1,10 +1,10 @@
 import _ from 'lodash';
 import Place from '../services/place';
 import SessionCache from '../services/session-cache';
-import { RemotePlace, ChtApi } from './cht-api';
+import { ChtApi } from './cht-api';
 import { Config, ContactType, HierarchyConstraint } from '../config';
 import Validation from '../validation';
-import RemotePlaceCache from './remote-place-cache';
+import RemotePlaceCache, { RemotePlace } from './remote-place-cache';
 
 type RemotePlaceMap = { [key: string]: RemotePlace };
 
@@ -13,8 +13,8 @@ export type PlaceResolverOptions = {
 };
 
 export default class RemotePlaceResolver {
-  public static readonly NoResult: RemotePlace = { id: 'na', name: 'Place Not Found', type: 'invalid', lineage: [] };
-  public static readonly Multiple: RemotePlace = { id: 'multiple', name: 'multiple places', type: 'invalid', lineage: [] };
+  public static readonly NoResult: RemotePlace = { id: 'na', name: 'Place Not Found', type: 'invalid', uniqueKeys: {}, lineage: [] };
+  public static readonly Multiple: RemotePlace = { id: 'multiple', name: 'multiple places', type: 'invalid', uniqueKeys: {}, lineage: [] };
 
   public static resolve = async (
     places: Place[],

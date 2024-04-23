@@ -1,5 +1,7 @@
+import _ from 'lodash';
+import { Config } from '../config';
 import Place from '../services/place';
-import { ChtApi, RemotePlace } from './cht-api';
+import { ChtApi } from './cht-api';
 
 type RemotePlacesByType = {
   [key: string]: RemotePlace[];
@@ -9,6 +11,22 @@ type RemotePlaceDatastore = {
   [key: string]: RemotePlacesByType;
 };
 
+type UniqueKeys = {
+  [key: string]: string;
+};
+
+export type RemotePlace = {
+  id: string;
+  name: string;
+  lineage: string[];
+  uniqueKeys: UniqueKeys;
+  ambiguities?: RemotePlace[];
+
+  // sadly, sometimes invalid or uncreated objects "pretend" to be remote
+  // should reconsider this naming
+  type: 'remote' | 'local' | 'invalid';
+};
+
 export default class RemotePlaceCache {
   private static cache: RemotePlaceDatastore = {};
 
@@ -16,6 +34,12 @@ export default class RemotePlaceCache {
     : Promise<RemotePlace[]> {
     const domainStore = await RemotePlaceCache.getDomainStore(chtApi, placeType);
     return domainStore;
+  }
+
+  public static extractUniqueKeys(placeType: string, doc: any): UniqueKeys {
+    const uniqueProperties = Config.getUniqueProperties(placeType);
+    const toPick = uniqueProperties.map(prop => prop.property_name);
+    return _.pick(doc, toPick);
   }
 
   public static async add(place: Place, chtApi: ChtApi): Promise<void> {
@@ -41,7 +65,7 @@ export default class RemotePlaceCache {
 
     const places = domainCache[domain]?.[placeType];
     if (!places) {
-      const fetchPlacesWithType = chtApi.getPlacesWithType(placeType);
+      const fetchPlacesWithType = RemotePlaceCache.getRemotePlacesWithType(chtApi, placeType);
       domainCache[domain] = {
         ...domainCache[domain],
         [placeType]: await fetchPlacesWithType,
@@ -49,5 +73,24 @@ export default class RemotePlaceCache {
     }
 
     return domainCache[domain][placeType];
+  }
+
+  private static async getRemotePlacesWithType(chtApi: ChtApi, placeType: string): Promise<RemotePlace[]> {
+    function extractLineage(doc: any): string[] {
+      if (doc?.parent) {
+        return [doc.parent._id, ...extractLineage(doc.parent)];
+      }
+    
+      return [];
+    }
+
+    const docs = await chtApi.getPlacesWithType(placeType);
+    return docs.map((doc: any): RemotePlace => ({
+      id: doc._id,
+      name: doc.name?.toLowerCase(),
+      lineage: extractLineage(doc),
+      uniqueKeys: RemotePlaceCache.extractUniqueKeys(placeType, doc),
+      type: 'remote',
+    }));
   }
 }
