@@ -6,6 +6,7 @@ import { mockChtSession } from './mocks';
 const createUserManagers = rewire('../scripts/create-user-managers/create-user-managers');
 
 import chaiAsPromised from 'chai-as-promised';
+import RemotePlaceCache from '../src/lib/remote-place-cache';
 Chai.use(chaiAsPromised);
 
 const { expect } = Chai;
@@ -18,16 +19,17 @@ const StandardArgv = [
 let fakeGetPlacesWithType;
 describe('scripts/create-user-managers.ts', () => {
   beforeEach(() => {
+    RemotePlaceCache.clear();
+    const sessy = mockChtSession('abc');
     const mockSession = {
-      create: sinon.stub().resolves(mockChtSession('abc')),
+      create: sinon.stub().resolves(sessy),
     };
     fakeGetPlacesWithType = sinon.stub().resolves([{
-      id: 'county_id',
+      _id: 'county_id',
       name: 'vihiga',
-      lineage: [],
-      type: 'remote',
     }]);
     const mockChtApi = class MockChtApi {
+      public chtSession = sessy;
       public getPlacesWithType = fakeGetPlacesWithType;
 
       public createContact = sinon.stub().resolves({});
@@ -74,16 +76,12 @@ describe('scripts/create-user-managers.ts', () => {
 
     fakeGetPlacesWithType.resolves([
       {
-        id: 'county_id',
+        _id: 'county_id',
         name: 'vihiga',
-        lineage: [],
-        type: 'remote',
       },
       {
-        id: 'county_id2',
+        _id: 'county_id2',
         name: 'kakamega',
-        lineage: [],
-        type: 'remote',
       }
     ]);
 

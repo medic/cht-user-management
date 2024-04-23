@@ -5,6 +5,7 @@ import { createUserWithRetries } from '../../src/lib/retry-logic';
 import Place from '../../src/services/place';
 import { UserPayload } from '../../src/services/user-payload';
 import UserManager from './ke_user_manager.json';
+import RemotePlaceCache from '../../src/lib/remote-place-cache';
 
 const { ChtApi } = require('../../src/lib/cht-api'); // require is needed for rewire
 const ChtSession = require('../../src/lib/cht-session').default; // require is needed for rewire
@@ -95,7 +96,7 @@ function parseCommandlineArguments(argv: string[]): CommandLineArgs {
 }
 
 async function getPlaceDocId(county: string | undefined, chtApi: typeof ChtApi) {
-  const counties = await chtApi.getPlacesWithType('a_county');
+  const counties = await RemotePlaceCache.getPlacesWithType(chtApi, 'a_county');
   const countyMatches = counties.filter((c: any) => !county || c.name === county.toLowerCase());
   if (countyMatches.length < 1) {
     throw Error(`Could not find county "${county}"`);
