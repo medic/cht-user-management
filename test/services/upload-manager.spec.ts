@@ -184,8 +184,9 @@ describe('services/upload-manager.ts', () => {
 
     chtApi.getPlacesWithType
       .resolves([])                             // parent of chp
-      .onSecondCall().resolves([chtPlace])      // grandparent of chp (subcounty)
-      .onThirdCall().resolves([]);              // chp replacements
+                                                // 2nd is chp areas in warning system
+      .onThirdCall().resolves([chtPlace])       // grandparent of chp (subcounty)
+      .onCall(4).resolves([]);                  // chp replacements
 
     const chu_name = 'new chu';
     const chpType = Config.getContactType('d_community_health_volunteer_area');
