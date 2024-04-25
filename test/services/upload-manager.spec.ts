@@ -267,6 +267,22 @@ describe('services/upload-manager.ts', () => {
     expect(chtApi.disableUsersWithPlace.called).to.be.false;
   });
 
+  it('#146 - error details are clear when CHT returns a string', async () => {
+    const { remotePlace, sessionCache, chtApi } = await createMocks();
+    const errorString = 'foo';
+
+    chtApi.createPlace.throws({ response: { data: errorString } });
+
+    const chu_name = 'new chu';
+    const chu = await createChu(remotePlace, chu_name, sessionCache, chtApi);
+
+    const uploadManager = new UploadManager();
+    await uploadManager.doUpload(sessionCache.getPlaces(), chtApi);
+    expect(chu.isCreated).to.be.false;
+    expect(chtApi.createUser.called).to.be.false;
+    expect(chu.uploadError).to.include(errorString);
+  });
+
   it(`createUser is retried`, async() => {
     const { remotePlace, sessionCache, chtApi } = await createMocks();
 
