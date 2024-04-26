@@ -80,7 +80,30 @@ describe('warnings', () => {
       expect(first.warnings).to.deep.eq(second.warnings);
     });
 
-    it('duplicate CHU Code', async () => {
+    it('duplicate names but only after fuzzing', async () => {
+      const sessionCache = new SessionCache();
+      const chtApi = mockChtApi([subcounty], []);
+      const first = await createChu(subcounty, 'ABC Community Health Unit', sessionCache, chtApi);
+      const second = await createChu(subcounty, 'abc', sessionCache, chtApi, { place_code: '121212' });
+
+      expect(first.warnings).to.have.property('length', 1);
+      expect(first.warnings[0]).to.include('Another "Community Health Unit" with same "CHU Name"');
+      expect(first.warnings).to.deep.eq(second.warnings);
+    });
+
+    it('CHU is duplicate of remote place after fuzzing', async () => {
+      const remotePlace: ChtDoc = { _id: 'remote-chu', name: 'Abc Community Health Unit', parent: { _id: subcounty._id } };
+      
+      const sessionCache = new SessionCache();
+      const chtApi = mockChtApi([subcounty], [remotePlace]);
+      const first = await createChu(subcounty, 'abc', sessionCache, chtApi);
+
+      expect(first.warnings).to.have.property('length', 1);
+      expect(first.warnings[0]).to.include('Another "Community Health Unit" with same "CHU Name"');
+      expect(first.warnings).to.deep.eq(first.warnings);
+    });
+
+    it('two local places with duplicate CHU Code', async () => {
       const sessionCache = new SessionCache();
       const chtApi = mockChtApi([subcounty, subcounty2], []);
       const first = await createChu(subcounty, 'chu-1', sessionCache, chtApi);
@@ -89,6 +112,18 @@ describe('warnings', () => {
       expect(first.warnings).to.have.property('length', 1);
       expect(first.warnings[0]).to.include('Another "Community Health Unit" with same "CHU Code"');
       expect(first.warnings).to.deep.eq(second.warnings);
+    });
+
+    it('local and remote places with duplicate CHU Code', async () => {
+      const chuCode = '111111';
+      const remotePlace: ChtDoc = { _id: 'remote', name: 'remote', parent: { _id: subcounty._id }, code: chuCode };
+      
+      const sessionCache = new SessionCache();
+      const chtApi = mockChtApi([subcounty], [remotePlace]);
+      const first = await createChu(subcounty, 'abc', sessionCache, chtApi, { place_code: chuCode });
+
+      expect(first.warnings).to.have.property('length', 1);
+      expect(first.warnings[0]).to.include('Another "Community Health Unit" with same "CHU Code"');
     });
 
     it('local place and remote place share same name but different parents', async () => {
