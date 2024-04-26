@@ -2,8 +2,8 @@ import { expect } from 'chai';
 
 import PlaceFactory from '../src/services/place-factory';
 import SessionCache from '../src/services/session-cache';
-import { mockChtApi, mockValidContactType } from './mocks';
-import RemotePlaceCache from '../src/lib/remote-place-cache';
+import { ChtDoc, createChu, mockChtApi, mockValidContactType } from './mocks';
+import RemotePlaceCache, { RemotePlace } from '../src/lib/remote-place-cache';
 
 
 describe('warnings', () => {
@@ -16,7 +16,7 @@ describe('warnings', () => {
       const contactType = mockValidContactType('string', undefined);
       contactType.place_properties[0].unique = 'all';
 
-      const remotePlace = { id: 'remote', name: 'CHU', type: 'remote' };
+      const remotePlace: ChtDoc = { _id: 'remote', name: 'CHU' };
       const chtApi = mockChtApi([remotePlace]);
       const fakeFormData:any = {
         place_name: 'CHU',
@@ -46,15 +46,30 @@ describe('warnings', () => {
       expect(first.warnings).to.have.property('length', 0);
       const second = await PlaceFactory.createOne(fakeFormData, contactType, sessionCache, chtApi);
       expect(first.warnings).to.have.property('length', 1);
-      expect(second.warnings).to.have.property('length', 1);
       expect(first.warnings[0]).to.include('staged');
-      expect(first.warnings[0]).to.eq(second.warnings[0]);
+      expect(first.warnings).to.deep.eq(second.warnings);
     });
   });
 
   describe('unique: "parent"', () => {
-    it('hi', () => {
+    it('two local places share same name and same parent', async () => {
+      const sessionCache = new SessionCache();
+      const subcounty: ChtDoc = {
+        _id: 'subcounty-id',
+        name: 'subcounty-name',
+      };
+      const chtApi = mockChtApi([subcounty], []);
+      const first = await createChu(subcounty, 'chu', sessionCache, chtApi);
+      const second = await createChu(subcounty, 'chu', sessionCache, chtApi, { place_code: '121212' });
 
+      expect(first.warnings).to.have.property('length', 1);
+      console.log(first.warnings);
+      expect(first.warnings[0]).to.include('Another "Community Health Unit" with same "CHU Name"');
+      expect(first.warnings).to.deep.eq(second.warnings);
     });
+
+    // it('local place and remote place share same name but different parents', () => {
+
+    // });
   });
 });

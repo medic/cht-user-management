@@ -94,13 +94,6 @@ describe('services/place.ts', () => {
     });
   });
 
-  it('asRemotePlace throws if hierarchy is invalid', () => {
-    const contactType = mockSimpleContactType('string', undefined);
-    const place = new Place(contactType);
-    place.resolvedHierarchy[1] = RemotePlaceResolver.Multiple;
-    expect(() => place.asRemotePlace()).to.throw('invalid hierarchy');
-  });
-
   it('generateUsername shouldnt have double underscores', () => {
     const contactType = mockSimpleContactType('string', undefined);
     const place = new Place(contactType);

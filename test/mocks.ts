@@ -1,10 +1,11 @@
 import { expect } from 'chai';
-import Sinon from 'sinon';
+import sinon from 'sinon';
 
 import { ChtApi } from '../src/lib/cht-api';
 import ChtSession from '../src/lib/cht-session';
-import { ContactProperty, ContactType } from '../src/config';
+import { Config, ContactProperty, ContactType } from '../src/config';
 import Place from '../src/services/place';
+import PlaceFactory from '../src/services/place-factory';
 
 export type ChtDoc = {
   _id: string;
@@ -32,9 +33,9 @@ export const mockPlace = (type: ContactType, prop: any) : Place => {
   return result;
 };
 
-export const mockChtApi: ChtApi = (first: ChtDoc[] = [], second: ChtDoc[] = []) => ({
+export const mockChtApi = (first: ChtDoc[] = [], second: ChtDoc[] = []): ChtApi => ({
   chtSession: mockChtSession(),
-  getPlacesWithType: Sinon.stub().resolves(first).onSecondCall().resolves(second),
+  getPlacesWithType: sinon.stub().resolves(first).onSecondCall().resolves(second),
 });
 
 export const mockSimpleContactType = (
@@ -65,6 +66,22 @@ export const mockSimpleContactType = (
     ],
     contact_properties: [],
   };
+};
+
+export async function createChu(subcounty: ChtDoc, chu_name: string, sessionCache: any, chtApi: ChtApi, dataOverrides?: any): Promise<Place> {
+  const chuType = Config.getContactType('c_community_health_unit');
+  const chuData = Object.assign({
+    hierarchy_SUBCOUNTY: subcounty.name,
+    place_name: chu_name,
+    place_code: '676767',
+    place_link_facility_name: 'facility name',
+    place_link_facility_code: '23456',
+    contact_name: 'new cha',
+    contact_phone: '0712345678',
+  }, dataOverrides);
+  const chu = await PlaceFactory.createOne(chuData, chuType, sessionCache, chtApi);
+  expect(chu.validationErrors).to.be.empty;
+  return chu;
 };
 
 export const mockValidContactType = (propertyType: string, propertyValidator: string | string[] | undefined) : ContactType => ({

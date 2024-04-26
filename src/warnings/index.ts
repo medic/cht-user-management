@@ -2,8 +2,8 @@ import _ from 'lodash';
 
 import { ContactProperty, ContactType } from '../config';
 import { ChtApi } from '../lib/cht-api';
-import RemotePlaceCache, { RemotePlace } from '../lib/remote-place-cache';
 import Place from '../services/place';
+import RemotePlaceCache, { RemotePlace } from '../lib/remote-place-cache';
 import SessionCache from '../services/session-cache';
 
 export default class WarningSystem {
@@ -18,7 +18,7 @@ export default class WarningSystem {
       Object.entries(duplicateGroups).forEach(([duplicateString, duplicateGroup]) => {
         const duplicatePlaces: Place[] = duplicateGroup.filter((entry: any) => entry instanceof Place) as Place[];
         duplicatePlaces.forEach(duplicatePlace => {
-          const warningString = getWarningString(property, duplicateGroup, duplicatePlace);
+          const warningString = getWarningString(contactType, property, duplicateGroup, duplicatePlace);
           duplicatePlace.warnings.push(warningString);
         });
       });
@@ -26,7 +26,7 @@ export default class WarningSystem {
   }
 }
 
-function getWarningString(property: ContactProperty, duplicateGroup: (RemotePlace | Place)[], duplicatePlace: Place): string {
+function getWarningString(contactType: ContactType, property: ContactProperty, duplicateGroup: (RemotePlace | Place)[], duplicatePlace: Place): string {
   const [duplicate, multipleDuplicates] = duplicateGroup.filter(dupe => dupe.id !== duplicatePlace.id);
   if (multipleDuplicates) {
     return 'Multiple duplicates found';
@@ -34,26 +34,45 @@ function getWarningString(property: ContactProperty, duplicateGroup: (RemotePlac
 
   if (!(duplicate instanceof Place)) {
     if (duplicate.type === 'remote') {
-      return `"${property.type}" with same "${property.friendly_name}" already exists on the instance with id "${duplicate.id}"`;
+      return `Another "${contactType.friendly}" with same "${property.friendly_name}" already exists on the instance with id "${duplicate.id}"`;
     }
   } else {
-    return `"${property.type}" with same "${property.friendly_name}" is staged to be created`;
+    return `Another "${contactType.friendly}" with same "${property.friendly_name}" is staged to be created`;
   }
   
   throw 'nope';
 }
 
-function calcDuplicateGroups(property: ContactProperty, remotePlaces: RemotePlace[], localPlaces: Place[]) {
+function calcDuplicateGroups(property: ContactProperty, remotePlaces: RemotePlace[], localPlaces: Place[])
+  : { [key: string]: (RemotePlace | Place)[] } 
+{
   // todo: fuzzing
   // todo: parent scope
-  const allPlaces = [...remotePlaces, ...localPlaces];
-  const groupedByName = _.groupBy(allPlaces, place => {
-    const propertyValue = place.name?.toLowerCase();
-    return propertyValue;
-    // can ONLY do this on name... because other attributes aren't saved in the remoteplace object
+  
+  const relevantPlaces = [...remotePlaces, ...localPlaces.map(place => place.asRemotePlace())];
+  const groupedByProperty = _.groupBy(relevantPlaces, place => {
+    return place.uniqueKeys[property.property_name]?.toLowerCase();
   });
-  const duplicates = _.pickBy(groupedByName, group => group.length > 1);
-  return duplicates;
+  
+  const result: { [key: string]: (RemotePlace | Place)[] } = {};
+  const groupNamesWithDuplicates = Object.keys(groupedByProperty).filter(key => groupedByProperty[key].length > 1);
+  for (const groupName of groupNamesWithDuplicates) {
+    const groupWithLocalPlaces: (RemotePlace | Place)[] = groupedByProperty[groupName];
+    for (let i = 0; i < groupWithLocalPlaces.length; ++i) {
+      if (groupWithLocalPlaces[i].type === 'local') {
+        const localPlace = localPlaces.find(place => place.id === groupWithLocalPlaces[i].id);
+        if (!localPlace) {
+          throw 'foo';
+        }
+
+        groupWithLocalPlaces[i] = localPlace;
+      }
+    }
+
+    result[groupName] = groupWithLocalPlaces;
+  }
+  
+  return result;
 }
 
 // place already exists

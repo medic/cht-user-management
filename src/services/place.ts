@@ -186,11 +186,6 @@ export default class Place {
   }
 
   public asRemotePlace() : RemotePlace {
-    const isHierarchyValid = !this.resolvedHierarchy.find(h => h?.type === 'invalid');
-    if (!isHierarchyValid) {
-      throw Error('Cannot call asRemotePlace on place with invalid hierarchy');
-    }
-
     let lastKnownHierarchy = this.resolvedHierarchy.find(h => h) || RemotePlaceResolver.NoResult;
     let lastKnownIndex = 0;
 

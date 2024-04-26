@@ -3,10 +3,9 @@ import { expect } from 'chai';
 import sinon from 'sinon';
 
 import { UploadManager } from '../../src/services/upload-manager';
-import { mockValidContactType, mockParentPlace, mockChtSession, expectInvalidProperties, ChtDoc } from '../mocks';
+import { mockValidContactType, mockParentPlace, mockChtSession, expectInvalidProperties, ChtDoc, createChu } from '../mocks';
 import PlaceFactory from '../../src/services/place-factory';
 import SessionCache from '../../src/services/session-cache';
-import { ChtApi } from '../../src/lib/cht-api';
 import RemotePlaceCache from '../../src/lib/remote-place-cache';
 import { Config } from '../../src/config';
 import RemotePlaceResolver from '../../src/lib/remote-place-resolver';
@@ -18,7 +17,7 @@ describe('services/upload-manager.ts', () => {
   });
 
   it('mock data is properly sent to chtApi', async () => {
-    const { fakeFormData, contactType, chtApi, sessionCache, chtPlace } = await createMocks();
+    const { fakeFormData, contactType, chtApi, sessionCache, subcounty } = await createMocks();
     const place = await PlaceFactory.createOne(fakeFormData, contactType, sessionCache, chtApi);
 
     const uploadManager = new UploadManager();
@@ -31,7 +30,7 @@ describe('services/upload-manager.ts', () => {
       'contact.name': 'contact',
       prop: 'foo',
       name: 'Place Community Health Unit',
-      parent: chtPlace._id,
+      parent: subcounty._id,
       contact_type: contactType.name,
     });
     expect(chtApi.updateContactParent.calledOnce).to.be.true;
@@ -50,12 +49,12 @@ describe('services/upload-manager.ts', () => {
   });
 
   it('mock data is properly sent to chtApi (sessionCache cache)', async () => {
-    const { fakeFormData, contactType, sessionCache, chtApi, chtPlace } = await createMocks();
+    const { fakeFormData, contactType, sessionCache, chtApi, subcounty } = await createMocks();
 
     const parentContactType = mockValidContactType('string', undefined);
-    parentContactType.name = chtPlace.name;
+    parentContactType.name = subcounty.name;
 
-    const parentPlace = mockParentPlace(parentContactType, chtPlace.name);
+    const parentPlace = mockParentPlace(parentContactType, subcounty.name);
     sessionCache.savePlaces(parentPlace);
     const place = await PlaceFactory.createOne(fakeFormData, contactType, sessionCache, chtApi);
     const uploadManager = new UploadManager();
@@ -79,7 +78,7 @@ describe('services/upload-manager.ts', () => {
   });
 
   it('required attributes can be inherited during replacement', async () => {
-    const { chtPlace, sessionCache, contactType, fakeFormData, chtApi } = await createMocks();
+    const { subcounty, sessionCache, contactType, fakeFormData, chtApi } = await createMocks();
     fakeFormData.hierarchy_replacement = 'to-replace';
     fakeFormData.place_prop = ''; // required during creation, but can be empty (ui) or undefined (csv)
     fakeFormData.place_name = undefined;
@@ -87,11 +86,11 @@ describe('services/upload-manager.ts', () => {
     const toReplace: ChtDoc = {
       _id: 'id-replace',
       name: 'to-replace',
-      parent: { _id: chtPlace._id },
+      parent: { _id: subcounty._id },
     };
 
     chtApi.getPlacesWithType
-      .resolves([chtPlace])
+      .resolves([subcounty])
       .onSecondCall()
       .resolves([toReplace]);
 
@@ -108,7 +107,7 @@ describe('services/upload-manager.ts', () => {
   });
 
   it('contact_type replacement with username_from_place:true', async () => {
-    const { chtPlace, sessionCache, contactType, fakeFormData, chtApi } = await createMocks();
+    const { subcounty, sessionCache, contactType, fakeFormData, chtApi } = await createMocks();
     contactType.username_from_place = true;
 
     fakeFormData.hierarchy_replacement = 'replacement based username';
@@ -117,11 +116,11 @@ describe('services/upload-manager.ts', () => {
     const toReplace: ChtDoc = {
       _id: 'id-replace',
       name: 'replac"e$mENT baSed username',
-      parent: { _id: chtPlace._id },
+      parent: { _id: subcounty._id },
     };
 
     chtApi.getPlacesWithType
-      .resolves([chtPlace])
+      .resolves([subcounty])
       .onSecondCall()
       .resolves([toReplace]);
 
@@ -137,7 +136,7 @@ describe('services/upload-manager.ts', () => {
   });
 
   it('contact_type replacement with deactivate_users_on_replace:true', async () => {
-    const { chtPlace, sessionCache, contactType, fakeFormData, chtApi } = await createMocks();
+    const { subcounty, sessionCache, contactType, fakeFormData, chtApi } = await createMocks();
     contactType.deactivate_users_on_replace = true;
 
     fakeFormData.hierarchy_replacement = 'deactivate me';
@@ -146,11 +145,11 @@ describe('services/upload-manager.ts', () => {
     const toReplace: ChtDoc = {
       _id: 'id-replace',
       name: 'deactivate me',
-      parent: { _id: chtPlace._id },
+      parent: { _id: subcounty._id },
     };
 
     chtApi.getPlacesWithType
-      .resolves([chtPlace])
+      .resolves([subcounty])
       .onSecondCall()
       .resolves([toReplace]);
 
@@ -180,12 +179,12 @@ describe('services/upload-manager.ts', () => {
   });
 
   it('uploading a chu and dependant chp where chp is created first', async () => {
-    const { chtPlace, sessionCache, chtApi } = await createMocks();
+    const { subcounty, sessionCache, chtApi } = await createMocks();
 
     chtApi.getPlacesWithType
       .resolves([])                             // parent of chp
                                                 // 2nd is chp areas in warning system
-      .onThirdCall().resolves([chtPlace])       // grandparent of chp (subcounty)
+      .onThirdCall().resolves([subcounty])       // grandparent of chp (subcounty)
       .onCall(4).resolves([]);                  // chp replacements
 
     const chu_name = 'new chu';
@@ -201,7 +200,7 @@ describe('services/upload-manager.ts', () => {
     const chp = await PlaceFactory.createOne(chpData, chpType, sessionCache, chtApi);
     expectInvalidProperties(chp.validationErrors, ['hierarchy_CHU'], 'Cannot find');
 
-    const chu = await createChu(chtPlace, chu_name, sessionCache, chtApi);
+    const chu = await createChu(subcounty, chu_name, sessionCache, chtApi);
 
     // refresh the chp
     await RemotePlaceResolver.resolveOne(chp, sessionCache, chtApi, { fuzz: true });
@@ -226,14 +225,14 @@ describe('services/upload-manager.ts', () => {
   });
 
   it('failure to upload', async () => {
-    const { chtPlace, sessionCache, chtApi } = await createMocks();
+    const { subcounty, sessionCache, chtApi } = await createMocks();
 
     chtApi.createUser
       .throws({ response: { status: 404 }, toString: () => 'upload-error' })
       .onSecondCall().resolves();
 
     const chu_name = 'new chu';
-    const chu = await createChu(chtPlace, chu_name, sessionCache, chtApi);
+    const chu = await createChu(subcounty, chu_name, sessionCache, chtApi);
 
     const uploadManager = new UploadManager();
     await uploadManager.doUpload(sessionCache.getPlaces(), chtApi);
@@ -266,12 +265,12 @@ describe('services/upload-manager.ts', () => {
   });
 
   it(`createUser is retried`, async() => {
-    const { chtPlace, sessionCache, chtApi } = await createMocks();
+    const { subcounty, sessionCache, chtApi } = await createMocks();
 
     chtApi.createUser.throws(UploadManagerRetryScenario.axiosError);
 
     const chu_name = 'new chu';
-    const chu = await createChu(chtPlace, chu_name, sessionCache, chtApi);
+    const chu = await createChu(subcounty, chu_name, sessionCache, chtApi);
 
     const uploadManager = new UploadManager();
     await uploadManager.doUpload(sessionCache.getPlaces(), chtApi);
@@ -281,7 +280,7 @@ describe('services/upload-manager.ts', () => {
   });
 
   it('mock data is properly sent to chtApi (multiple roles)', async () => {
-    const { fakeFormData, contactType, chtApi, sessionCache, chtPlace } = await createMocks();
+    const { fakeFormData, contactType, chtApi, sessionCache, subcounty } = await createMocks();
 
     contactType.user_role = ['role1', 'role2'];
     fakeFormData.user_role = 'role1 role2';
@@ -298,7 +297,7 @@ describe('services/upload-manager.ts', () => {
       'contact.name': 'contact',
       prop: 'foo',
       name: 'Place Community Health Unit',
-      parent: chtPlace._id,
+      parent: subcounty._id,
       contact_type: contactType.name,
     });
     expect(chtApi.updateContactParent.calledOnce).to.be.true;
@@ -316,32 +315,16 @@ describe('services/upload-manager.ts', () => {
   });
 });
 
-async function createChu(chtPlace: ChtDoc, chu_name: string, sessionCache: any, chtApi: ChtApi) {
-  const chuType = Config.getContactType('c_community_health_unit');
-  const chuData = {
-    hierarchy_SUBCOUNTY: chtPlace.name,
-    place_name: chu_name,
-    place_code: '676767',
-    place_link_facility_name: 'facility name',
-    place_link_facility_code: '23456',
-    contact_name: 'new cha',
-    contact_phone: '0712345678',
-  };
-  const chu = await PlaceFactory.createOne(chuData, chuType, sessionCache, chtApi);
-  expect(chu.validationErrors).to.be.empty;
-  return chu;
-}
-
 async function createMocks() {
   const contactType = mockValidContactType('string', undefined);
-  const chtPlace: ChtDoc = {
+  const subcounty: ChtDoc = {
     _id: 'parent-id',
     name: 'parent-name',
   };
   const sessionCache = new SessionCache();
   const chtApi = {
     chtSession: mockChtSession(),
-    getPlacesWithType: sinon.stub().resolves([chtPlace]),
+    getPlacesWithType: sinon.stub().resolves([subcounty]),
     createPlace: sinon.stub().resolves('created-place-id'),
     updateContactParent: sinon.stub().resolves('created-contact-id'),
     createUser: sinon.stub().resolves(),
@@ -362,9 +345,9 @@ async function createMocks() {
   const fakeFormData: any = {
     place_name: 'place',
     place_prop: 'foo',
-    hierarchy_PARENT: chtPlace.name,
+    hierarchy_PARENT: subcounty.name,
     contact_name: 'contact'
   };
 
-  return { fakeFormData, contactType, sessionCache, chtApi, chtPlace };
+  return { fakeFormData, contactType, sessionCache, chtApi, subcounty };
 }
