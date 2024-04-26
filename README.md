@@ -58,7 +58,7 @@ property_name | string | Defines how the value will be stored on the object.
 type | ConfigPropertyType | Defines the validation rules, and auto-formatting rules. See [ConfigPropertyType](#ConfigPropertyType).
 parameter | any | See [ConfigPropertyType](#ConfigPropertyType).
 required | boolean | True if the object should not exist without this information.
-unique-within | string | Issues an error if a place already exists with this attribute. Values can be `all` (any place) or `parent` (any place with the same parent).
+unique | string? | Issues a dismissable warning if a place already exists with this attribute. Values can be `all` (warn if any place has a duplicate) or `parent` (warn if a place with the same parent has a duplicate). This can only be defined a `place_properties`.
 
 #### ConfigPropertyType
 The `ConfigPropertyType` defines a property's validation rules and auto-formatting rules. The optional `parameter` information alters the behavior of the `ConfigPropertyType`.

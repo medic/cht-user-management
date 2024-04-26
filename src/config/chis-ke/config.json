@@ -337,8 +337,7 @@
           "property_name": "phone",
           "parameter": "KE",
           "type": "phone",
-          "required": true,
-          "unique": "parent"
+          "required": true
         }
       ]
     }

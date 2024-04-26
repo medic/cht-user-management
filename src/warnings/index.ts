@@ -32,12 +32,13 @@ function getWarningString(contactType: ContactType, property: ContactProperty, d
     return 'Multiple duplicates found';
   }
 
+  const parentClause = property.unique === 'parent' ? ' and parent' : '';
   if (!(duplicate instanceof Place)) {
     if (duplicate.type === 'remote') {
-      return `Another "${contactType.friendly}" with same "${property.friendly_name}" already exists on the instance with id "${duplicate.id}"`;
+      return `Another "${contactType.friendly}" with same "${property.friendly_name}"${parentClause} already exists on the instance with id "${duplicate.id}"`;
     }
   } else {
-    return `Another "${contactType.friendly}" with same "${property.friendly_name}" is staged to be created`;
+    return `Another "${contactType.friendly}" with same "${property.friendly_name}"${parentClause} is staged to be created`;
   }
   
   throw 'nope';
@@ -47,29 +48,33 @@ function calcDuplicateGroups(property: ContactProperty, remotePlaces: RemotePlac
   : { [key: string]: (RemotePlace | Place)[] } 
 {
   // todo: fuzzing
-  // todo: parent scope
-  
-  const relevantPlaces = [...remotePlaces, ...localPlaces.map(place => place.asRemotePlace())];
-  const groupedByProperty = _.groupBy(relevantPlaces, place => {
-    return place.uniqueKeys[property.property_name]?.toLowerCase();
+  const propertyHasParentScope = property.unique === 'parent';
+  const localPlacesAsRemotePlace = localPlaces.map(place => place.asRemotePlace()); // lol. sorry
+  const relevantPlaces = [...remotePlaces, ...localPlacesAsRemotePlace]
+    .filter(remotePlace => !propertyHasParentScope || remotePlace.lineage[0]);
+
+  const placeGroupings = _.groupBy(relevantPlaces, place => {
+    const parent = propertyHasParentScope ? `|${place.lineage[0]}|` : '';
+    const propValue = place.uniqueKeys[property.property_name]?.toLowerCase();
+    return `${parent}${propValue}`; 
   });
   
   const result: { [key: string]: (RemotePlace | Place)[] } = {};
-  const groupNamesWithDuplicates = Object.keys(groupedByProperty).filter(key => groupedByProperty[key].length > 1);
+  const groupNamesWithDuplicates = Object.keys(placeGroupings).filter(key => placeGroupings[key].length > 1);
   for (const groupName of groupNamesWithDuplicates) {
-    const groupWithLocalPlaces: (RemotePlace | Place)[] = groupedByProperty[groupName];
-    for (let i = 0; i < groupWithLocalPlaces.length; ++i) {
-      if (groupWithLocalPlaces[i].type === 'local') {
-        const localPlace = localPlaces.find(place => place.id === groupWithLocalPlaces[i].id);
+    const typedGroupValue: (RemotePlace | Place)[] = placeGroupings[groupName];
+    for (let i = 0; i < typedGroupValue.length; ++i) {
+      if (typedGroupValue[i].type === 'local') {
+        const localPlace = localPlaces.find(place => place.id === typedGroupValue[i].id);
         if (!localPlace) {
-          throw 'foo';
+          throw Error('invalid program searching for local place');
         }
 
-        groupWithLocalPlaces[i] = localPlace;
+        typedGroupValue[i] = localPlace;
       }
     }
 
-    result[groupName] = groupWithLocalPlaces;
+    result[groupName] = typedGroupValue;
   }
   
   return result;
