@@ -4,28 +4,7 @@
     <h2 class="title is-4">{{contactType.friendly}}</h2>
     <div>
       <table id="table_places" class="table is-fullwidth is-striped is-hoverable">
-        <thead>
-          <tr>
-            {% for hierarchy in contactType.hierarchy %}
-            <th id="hierarchy_{{ hierarchy.property_name }}">{{ hierarchy.friendly_name }}</th>
-            {% endfor %}
-            {% for property in contactType.place_properties %}
-            {% if property.type != 'generated' %}
-            <th id="place_{{property.property_name}}">{{property.friendly_name}}</th>
-            {% endif %}
-            {% endfor %}
-            {% for contact_property in contactType.contact_properties %}
-            {% if contact_property.type != 'generated' %}
-            <th id="contact_{{contact_property.property_name}}">{{contact_property.friendly_name}}</th>
-            {% endif %}
-            {% endfor %}
-            {% if contactType.user_role.size > 1 %}
-            <th id="{{userRoleProperty.property_name}}">{{ contactType.userRoleProperty.friendly_name }}</th>
-            {% endif %}
-            <th></th>
-            <th></th>
-          </tr>
-        </thead>
+        {% include "components/table_header.html" contactType=contactType %}
       </table>
       <div class="container p-6 is-flex is-justify-content-center is-align-content-center">
         <img src="/public/spinner.gif" alt="Loading data" />

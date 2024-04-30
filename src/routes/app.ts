@@ -23,10 +23,6 @@ export default async function sessionCache(fastify: FastifyInstance) {
     const placeData = contactTypes.map((item) => {
       return {
         ...item,
-        places: sessionCache.getPlaces({
-          type: item.name,
-          filter: directiveModel.filter,
-        }),
         hierarchy: Config.getHierarchyWithReplacement(item, 'desc'),
         userRoleProperty: Config.getUserRoleConfig(item),
       };

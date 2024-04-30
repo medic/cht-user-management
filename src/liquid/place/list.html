@@ -7,28 +7,7 @@
         id="table_places"
         class="table is-fullwidth is-striped is-hoverable"
       >
-        <thead>
-          <tr>
-            {% for hierarchy in contactType.hierarchy %}
-              <th id="hierarchy_{{ hierarchy.property_name }}">{{ hierarchy.friendly_name }}</th>
-            {% endfor %}
-            {% for property in contactType.place_properties %}
-              {% if property.type != 'generated' %}
-                <th id="place_{{property.property_name}}">{{property.friendly_name}}</th>
-              {% endif %}
-            {% endfor %}
-            {% for contact_property in contactType.contact_properties %}
-              {% if contact_property.type != 'generated' %}
-                <th id="contact_{{contact_property.property_name}}">{{contact_property.friendly_name}}</th>
-              {% endif %}
-            {% endfor %}
-            {% if contactType.user_role.size > 1 %}
-              <th id="{{userRoleProperty.property_name}}">{{ contactType.userRoleProperty.friendly_name }}</th>
-            {% endif %}
-            <th></th>
-            <th></th>
-          </tr>
-        </thead>
+        {% include "components/table_header.html" contactType=contactType %}
         <tbody>
           {% for place in contactType.places %}
           <tr>
