@@ -5,18 +5,25 @@ import SessionCache from '../../src/services/session-cache';
 import { mockChtApi } from '../mocks';
 
 import chaiAsPromised from 'chai-as-promised';
+import RemotePlaceCache from '../../src/lib/remote-place-cache';
 Chai.use(chaiAsPromised);
 
 const { expect } = Chai;
 
 describe('lib/move.ts', () => {
-  const chtApi = () => mockChtApi(
-    [
-      { id: 'from-sub', name: 'From Sub', lineage: [], type: 'remote' },
-      { id: 'to-sub', name: 'To Sub', lineage: [], type: 'remote' }
-    ],
-    [{ id: 'chu-id', name: 'c-h-u', lineage: ['from-sub'], type: 'remote' }],
-  );
+  beforeEach(() => {
+    RemotePlaceCache.clear({});
+  });
+
+  const childDocs = [
+    { _id: 'from-sub', name: 'From Sub' },
+    { _id: 'to-sub', name: 'To Sub' }
+  ];
+  const subcountyDocs = [
+    { _id: 'chu-id', name: 'c-h-u', parent: { _id: 'from-sub' } },
+  ];
+
+  const chtApi = () => mockChtApi(childDocs, subcountyDocs);
 
   it('move CHU: success', async () => {
     const formData = {
@@ -44,7 +51,7 @@ describe('lib/move.ts', () => {
     const contactType = Config.getContactType('c_community_health_unit');
     const sessionCache = new SessionCache();
 
-    const actual = MoveLib.move(formData, contactType, sessionCache, chtApi());
+    const actual = MoveLib.move(formData, contactType, sessionCache, mockChtApi(subcountyDocs));
     await expect(actual).to.eventually.be.rejectedWith('search string is empty');
   });
 

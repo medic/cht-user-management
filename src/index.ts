@@ -8,13 +8,8 @@ const {
 const port: number = env.PORT ? parseInt(env.PORT) : 3000;
 
 (async () => {
-  const loggerConfig = {
-    transport: {
-      target: 'pino-pretty',
-    },
-  };
   const server = build({
-    logger: loggerConfig,
+    logger: false,
   });
 
   // in 1.1.0 we allowed INTERFACE to be declared in .env, but let's be

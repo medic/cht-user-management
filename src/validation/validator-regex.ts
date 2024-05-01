@@ -1,5 +1,5 @@
 import { ContactProperty } from '../config';
-import { IValidator } from './validation';
+import { IValidator } from '.';
 
 import ValidatorString from './validator-string';
 
@@ -15,8 +15,8 @@ export default class ValidatorRegex implements IValidator {
     
     const regex = new RegExp(property.parameter.toString());
     const validatorStr = new ValidatorString();
-    const altered = validatorStr.format(input);
-    const match = altered.match(regex);
+    const formatted = validatorStr.format(input);
+    const match = formatted.match(regex);
     return !!match && match.length > 0;
   }
 

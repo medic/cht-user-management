@@ -43,7 +43,7 @@ export class UploadManager extends EventEmitter {
     try {
       const uploader: Uploader = pickUploader(place, chtApi);
       const payload = place.asChtPayload(chtApi.chtSession.username);
-      await Config.mutate(payload, chtApi, !!place.properties.replacement);
+      await Config.mutate(payload, chtApi, place.isReplacement);
 
       if (!place.creationDetails.contactId) {
         const contactId = await uploader.handleContact(payload);
@@ -69,7 +69,7 @@ export class UploadManager extends EventEmitter {
         place.creationDetails.password = password;
       }
 
-      await RemotePlaceCache.add(place, chtApi);
+      RemotePlaceCache.add(place, chtApi);
       delete place.uploadError;
 
       console.log(`successfully created ${JSON.stringify(place.creationDetails)}`);
@@ -120,7 +120,7 @@ function getErrorDetails(err: any) {
 }
 
 function pickUploader(place: Place, chtApi: ChtApi): Uploader {
-  if (!place.hierarchyProperties.replacement) {
+  if (!place.hierarchyProperties.replacement.original) {
     return new UploadNewPlace(chtApi);
   }
 
