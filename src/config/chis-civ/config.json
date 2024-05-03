@@ -43,7 +43,7 @@
           "friendly_name": "Supervision Area Name",
           "property_name": "name",
           "type": "generated",
-          "parameter": "{{ contact.last_name }} {{ contact.first_name }} ({{ lineage.district }})",
+          "parameter": "Zone de supervision de: {{ contact.last_name }} {{ contact.first_name }}",
           "required": false
         }
       ],
@@ -68,13 +68,6 @@
           "type": "generated",
           "parameter": "{{ contact.last_name }} {{ contact.first_name }}",
           "required": false
-        },
-        {
-          "friendly_name": "Supervisor Type",
-          "property_name": "role",
-          "type": "string",
-          "parameter": ["\\(supervisor\\)", "\\(dedicated_supervisor\\)"],
-          "required": true
         },
         {
           "friendly_name": "Function",
@@ -158,9 +151,9 @@
         },
         {
           "friendly_name": "ASC Type",
-          "property_name": "role",
-          "type": "string",
-          "parameter": ["\\(chw_min_5km\\)", "\\(chw_max_5km\\)"],
+          "property_name": "chw_type",
+          "type": "select_one",
+          "parameter": { "min_5km": "ASC - 5km", "max_5km": "ASC + 5km" },
           "required": true
         },
         {
@@ -182,7 +175,7 @@
         },
         {
           "friendly_name": "Telephone",
-          "property_name": "telephone",
+          "property_name": "phone",
           "type": "regex",
           "parameter": "^\\d{10}$",
           "required": true
