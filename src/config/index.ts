@@ -38,6 +38,7 @@ export type HierarchyConstraint = {
   required: boolean;
   parameter? : string | string[] | object;
   errorDescription? : string;
+  unique?: string;
   
   contact_type: string;
   level: number;
@@ -50,6 +51,7 @@ export type ContactProperty = {
   required: boolean;
   parameter? : string | string[] | object;
   errorDescription? : string;
+  unique?: string;
 };
 
 export type AuthenticationInfo = {

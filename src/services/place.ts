@@ -1,7 +1,8 @@
-import Contact from './contact';
+import _ from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
 
 import { Config, ContactProperty, ContactType } from '../config';
+import Contact from './contact';
 import { IPropertyValue } from '../property-value';
 import { PlacePayload } from '../lib/cht-api';
 // can't use package.json because of rootDir in ts
@@ -45,6 +46,7 @@ export default class Place {
   public properties: FormattedPropertyCollection;
   public hierarchyProperties: FormattedPropertyCollection;
   public userRoleProperties: FormattedPropertyCollection;
+  public warnings: string[];
 
   public state : PlaceUploadState;
 
@@ -59,6 +61,7 @@ export default class Place {
     this.hierarchyProperties = {};
     this.state = PlaceUploadState.STAGED;
     this.resolvedHierarchy = [];
+    this.warnings = [];
     this.userRoleProperties = {};
   }
 
@@ -177,6 +180,20 @@ export default class Place {
   }
 
   public asRemotePlace() : RemotePlace {
+    function getUniqueKeys(properties: FormattedPropertyCollection, place_properties: ContactProperty[]) {
+      const uniquePropertyNames = place_properties
+        .filter(prop => prop.unique)
+        .map(prop => prop.property_name);
+      const propertyValues = Object.entries(properties)
+        .filter(([key]) => uniquePropertyNames.includes(key))
+        .reduce((agg: any, [key, val]) => {
+          agg[key] = val.formatted;
+          return agg;
+        }, {});
+
+      return propertyValues;
+    }
+
     let lastKnownHierarchy = this.resolvedHierarchy.find(h => h) || RemotePlaceResolver.NoResult;
     let lastKnownIndex = 0;
 
@@ -197,28 +214,20 @@ export default class Place {
       id: this.id,
       name: new NamePropertyValue(this.name, nameProperty),
       type: this.isCreated ? 'remote' : 'local',
+      uniqueKeys: getUniqueKeys(this.properties, this.type.place_properties),
       lineage,
     };
   }
 
   public validate(): void {
-    const validateCollection = (collection: FormattedPropertyCollection) => Object.values(collection).forEach(prop => prop.validate());
-    // hierarchy properties need to revalidation after resolution
-    validateCollection(this.hierarchyProperties);
-    // contact properties need to be revalidated after generation
-    validateCollection(this.properties);
-    validateCollection(this.contact.properties);
-    validateCollection(this.userRoleProperties);
-
-    const extractErrorsFromCollection = (properties: FormattedPropertyCollection) => Object.values(properties).filter(prop => prop.validationError);
-    const propertiesWithErrors: IPropertyValue[] = [
-      ...extractErrorsFromCollection(this.properties),
-      ...extractErrorsFromCollection(this.contact.properties),
-      ...extractErrorsFromCollection(this.userRoleProperties),
-      ...extractErrorsFromCollection(this.hierarchyProperties),
-    ];
+    const allCollections = [this.hierarchyProperties, this.properties, this.contact.properties, this.userRoleProperties];
+    allCollections.forEach(collection => 
+      Object.values(collection).forEach(prop => prop.validate())
+    );
 
     this.validationErrors = {};
+    const extractErrorsFromCollection = (collection: FormattedPropertyCollection) => Object.values(collection).filter(prop => prop.validationError);
+    const propertiesWithErrors: IPropertyValue[] = _.flatten(allCollections.map(collection => extractErrorsFromCollection(collection)));
     for (const property of propertiesWithErrors) {
       this.validationErrors[property.propertyNameWithPrefix] = property.validationError as string;
     }

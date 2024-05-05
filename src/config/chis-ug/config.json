@@ -46,7 +46,8 @@
           "property_name": "name",
           "type": "generated",
           "parameter": "{{ contact.name }} Area ({{ place.village }})",
-          "required": true
+          "required": true,
+          "unique": "parent"
         },
 
         {

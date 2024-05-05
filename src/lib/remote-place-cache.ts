@@ -1,3 +1,5 @@
+import _ from 'lodash';
+
 import Place from '../services/place';
 import { ChtApi } from './cht-api';
 import { IPropertyValue } from '../property-value';
@@ -12,11 +14,16 @@ type RemotePlaceDatastore = {
   [key: string]: RemotePlacesByType;
 };
 
+type UniqueKeys = {
+  [key: string]: string;
+};
+
 export type RemotePlace = {
   id: string;
   name: IPropertyValue;
   lineage: string[];
   ambiguities?: RemotePlace[];
+  uniqueKeys: UniqueKeys;
 
   // sadly, sometimes invalid or uncreated objects "pretend" to be remote
   // should reconsider this naming
@@ -26,10 +33,14 @@ export type RemotePlace = {
 export default class RemotePlaceCache {
   private static cache: RemotePlaceDatastore = {};
 
-  public static async getPlacesWithType(chtApi: ChtApi, contactType: ContactType, hierarchyLevel: HierarchyConstraint)
+  public static async getRemotePlacesAtLevel(chtApi: ChtApi, contactType: ContactType, hierarchyLevel: HierarchyConstraint)
     : Promise<RemotePlace[]> {
     const domainStore = await RemotePlaceCache.getDomainStore(chtApi, contactType, hierarchyLevel);
     return domainStore;
+  }
+
+  public static async getPlacesWithAllTypes(chtApi: ChtApi, contactType: ContactType) {
+
   }
 
   public static add(place: Place, chtApi: ChtApi): void {
@@ -81,11 +92,16 @@ export default class RemotePlaceCache {
       return [];
     }
 
+    const uniqueKeys = contactType.place_properties
+      .filter(prop => prop.unique)
+      .map(prop => prop.property_name);
+
     const docs = await chtApi.getPlacesWithType(hierarchyLevel.contact_type);
     return docs.map((doc: any): RemotePlace => ({
       id: doc._id,
       name: new NamePropertyValue(doc.name, hierarchyLevel),
       lineage: extractLineage(doc),
+      uniqueKeys: _.pick(doc, uniqueKeys),
       type: 'remote',
     }));
   }

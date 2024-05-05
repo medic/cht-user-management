@@ -79,6 +79,15 @@
             {% endif %}
 
             <td>
+              {% if place.warnings != empty %}
+              <span
+                class="material-symbols-outlined is-info has-tooltip-arrow has-tooltipl-multiline has-text-danger"
+                data-tooltip="{{ place.warnings | join: '\n' | escape }}"
+              >
+                warning
+              </span>
+              {% endif %}
+              
               {% capture tag_text %}{% if place.validationErrors == empty %}{{ place.state }}{% else %}invalid{% endif %}{% endcapture %}
               {% capture tag_class %}
                 {% if place.state == 'failure' %}is-danger

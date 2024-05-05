@@ -15,10 +15,10 @@ export type PlaceResolverOptions = {
 
 export default class RemotePlaceResolver {
   public static readonly NoResult: RemotePlace = 
-    { id: 'na', name: new UnvalidatedPropertyValue('Place Not Found'), type: 'invalid', lineage: [] };
+    { id: 'na', name: new UnvalidatedPropertyValue('Place Not Found'), type: 'invalid', uniqueKeys: {}, lineage: [] };
   
   public static readonly Multiple: RemotePlace = 
-    { id: 'multiple', name: new UnvalidatedPropertyValue('multiple places'), type: 'invalid', lineage: [] };
+    { id: 'multiple', name: new UnvalidatedPropertyValue('multiple places'), type: 'invalid', uniqueKeys: {}, lineage: [] };
 
   public static resolve = async (
     places: Place[],
@@ -116,7 +116,7 @@ async function findRemotePlacesInHierarchy(
   hierarchyLevel: HierarchyConstraint,
   chtApi: ChtApi
 ) : Promise<RemotePlace[]> {
-  let searchPool = await RemotePlaceCache.getPlacesWithType(chtApi, place.type, hierarchyLevel);
+  let searchPool = await RemotePlaceCache.getRemotePlacesAtLevel(chtApi, place.type, hierarchyLevel);
   searchPool = searchPool.filter(remotePlace => chtApi.chtSession.isPlaceAuthorized(remotePlace));
 
   const topDownHierarchy = Config.getHierarchyWithReplacement(place.type, 'desc');
