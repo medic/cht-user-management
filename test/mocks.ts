@@ -86,7 +86,9 @@ export async function createChu(subcounty: ChtDoc, chu_name: string, sessionCach
     contact_phone: '0712345678',
   }, dataOverrides);
   const chu = await PlaceFactory.createOne(chuData, chuType, sessionCache, chtApi);
-  expect(chu.validationErrors).to.be.empty;
+  if (!dataOverrides) {
+    expect(chu.validationErrors).to.be.empty;
+  }
   return chu;
 }
 

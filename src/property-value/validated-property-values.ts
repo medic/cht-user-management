@@ -9,7 +9,7 @@ abstract class AbstractPropertyValue implements IPropertyValue {
   protected readonly place: Place;
   protected readonly property: ContactProperty;
   private readonly propertyPrefix: string;
-  
+
   protected formattedValue: string;
   private validationErrorValue?: string;
 
@@ -49,7 +49,7 @@ export class ContactPropertyValue extends AbstractPropertyValue {
   constructor(place: Place, property: ContactProperty, prefix: string, value: string) {
     super(place, property, prefix, value);
   }
-  
+
   protected override doValidation(): string | undefined {
     const requiredProperties = Config.getRequiredColumns(this.place.type, this.place.isReplacement);
     const hasGeneratedProperty = this.property.type === 'generated';
@@ -59,7 +59,7 @@ export class ContactPropertyValue extends AbstractPropertyValue {
       this.formattedValue = Validation.generateAfterInitialization(this.place, this.property) || '';
       valueToValidate = this.formattedValue;
     }
-    
+
     return Validation.validateProperty(valueToValidate, this.property, requiredProperties);
   }
 }

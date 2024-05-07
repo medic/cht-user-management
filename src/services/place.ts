@@ -82,7 +82,7 @@ export default class Place {
       const hierarchyValue = formData[`${hierarchyPrefix}${propertyName}`] ?? '';
 
       // validation of hierachies requires RemotePlaceResolver to do its thing
-      // at this point; these may report errors but that's ok as long as hierarchy properties are revalidated later 
+      // at this point; these may report errors but that's ok as long as hierarchy properties are revalidated later
       this.hierarchyProperties[propertyName] = new HierarchyPropertyValue(this, hierarchyLevel, hierarchyPrefix, hierarchyValue);
     }
 
@@ -101,7 +101,7 @@ export default class Place {
       const userRoleConfig = Config.getUserRoleConfig(this.type);
       const propertyName = userRoleConfig.property_name;
       const roleFormData = formData[`${USER_PREFIX}${propertyName}`];
-      
+
       // When multiple are selected, the form data is an array
       const userRoleValue = Array.isArray(roleFormData) ? roleFormData.join(' ') : roleFormData;
       this.userRoleProperties[propertyName] = new ContactPropertyValue(this, userRoleConfig, USER_PREFIX, userRoleValue);
@@ -162,6 +162,7 @@ export default class Place {
         contact_type: contactType,
       };
     };
+
     return {
       ...filteredProperties(this.properties),
       ...contactAttributes(this.type.name),

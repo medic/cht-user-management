@@ -26,11 +26,13 @@ export default class WarningSystem {
   }
 }
 
-function calcWarningGroups(contactType: ContactType, remotePlaces: RemotePlace[], localPlaces: Place[])
-  : WarningGroup[] {
+function calcWarningGroups(contactType: ContactType, remotePlaces: RemotePlace[], localPlaces: Place[]): WarningGroup[] {
   const result: WarningGroup[] = [];
   const allPlaces = [...localPlaces.map(place => place.asRemotePlace()), ...remotePlaces];
   const propertiesWithUniqueness = contactType.place_properties.filter(prop => prop.unique);
+
+  const memory = new WarningGroupMemory();
+
   allPlaces.forEach((localPlace, i) => {
     if (localPlace.type !== 'local' || !localPlace.stagedPlace) {
       return;
@@ -39,8 +41,13 @@ function calcWarningGroups(contactType: ContactType, remotePlaces: RemotePlace[]
     for (const uniqueProperty of propertiesWithUniqueness) {
       const localValue = localPlace.uniqueKeys[uniqueProperty.property_name];
 
-      // properties with errors do not also have warnings
-      if (localValue.validationError) {
+      if (
+        // properties with errors do not also have warnings
+        localValue.validationError ||
+
+        // OR there is already a group tracking this place/property combo
+        memory.isKnown(localPlace.stagedPlace, uniqueProperty)
+      ) {
         continue;
       }
 
@@ -48,7 +55,7 @@ function calcWarningGroups(contactType: ContactType, remotePlaces: RemotePlace[]
       const confirmedDuplicates = allPlaces.slice(i + 1).filter(potential => {
         const potentialDupeValue = potential.uniqueKeys[uniqueProperty.property_name];
         return (!propertyHasParentScope || potential.lineage[0] === localPlace.lineage[0]) &&
-          PropertyValues.isMatch(localValue, potentialDupeValue); 
+          PropertyValues.isMatch(localValue, potentialDupeValue);
       });
 
       if (confirmedDuplicates.length) {
@@ -56,11 +63,14 @@ function calcWarningGroups(contactType: ContactType, remotePlaces: RemotePlace[]
           .filter(remotePlace => remotePlace.type === 'local' && remotePlace.stagedPlace)
           .map(remotePlace => remotePlace.stagedPlace) as Place[];
 
-        result.push({
+        const warningGroup: WarningGroup = {
           property: uniqueProperty,
           remotePlaces: confirmedDuplicates.filter(remotePlace => remotePlace.type === 'remote'),
           localPlaces: [localPlace.stagedPlace, ...localDuplicates],
-        });
+        };
+
+        result.push(warningGroup);
+        memory.remember(uniqueProperty, ...warningGroup.localPlaces);
       }
     }
   });
@@ -84,4 +94,24 @@ function getWarningString(remotePlaces: RemotePlace[], contactType: ContactType,
   }
 
   return `"${contactType.friendly}" with same "${property.friendly_name}"${parentClause} is staged to be created`;
+}
+
+class WarningGroupMemory {
+  private readonly memory: Set<string> = new Set<string>();
+
+  public remember(prop: ContactProperty, ...places: Place[]): void {
+    for (const place of places) {
+      const key = this.getKey(place, prop);
+      this.memory.add(key);
+    }
+  }
+
+  public isKnown(place: Place, prop: ContactProperty): boolean {
+    const key = this.getKey(place, prop);
+    return this.memory.has(key);
+  }
+
+  private getKey(place: Place, prop: ContactProperty): string {
+    return `${prop.property_name}~${place.id}`;
+  }
 }

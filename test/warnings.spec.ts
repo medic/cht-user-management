@@ -3,6 +3,8 @@ import { expect } from 'chai';
 import SessionCache from '../src/services/session-cache';
 import { ChtDoc, createChu, mockChtApi } from './mocks';
 import RemotePlaceCache from '../src/lib/remote-place-cache';
+import { Config } from '../src/config';
+import PlaceFactory from '../src/services/place-factory';
 
 const subcounty: ChtDoc = {
   _id: 'subcounty1-id',
@@ -11,6 +13,16 @@ const subcounty: ChtDoc = {
 const subcounty2: ChtDoc = {
   _id: 'subcounty2-id',
   name: 'subcounty2',
+};
+const chuDoc: ChtDoc = {
+  _id: 'chu',
+  name: 'Abc CHU',
+  parent: { _id: subcounty._id },
+};
+const chpDoc: ChtDoc = {
+  _id: 'chp',
+  name: 'Able Johnson Area',
+  parent: { _id: chuDoc._id, parent: { _id: subcounty._id } },
 };
 
 /*
@@ -56,6 +68,40 @@ describe('warnings', () => {
     expect(second.warnings).to.deep.eq(first.warnings);
   });
 
+  it('name warning after fuzzing of generated name on remote property', async () => {
+    const sessionCache = new SessionCache();
+    const chtApi = mockChtApi([subcounty], [chuDoc], [chpDoc]);
+
+    const chuType = Config.getContactType('d_community_health_volunteer_area');
+    const chuData = {
+      hierarchy_SUBCOUNTY: subcounty.name,
+      hierarchy_CHU: chuDoc.name,
+      contact_name: 'able . johnson',
+      contact_phone: '0712345678',
+    };
+    const chp = await PlaceFactory.createOne(chuData, chuType, sessionCache, chtApi);
+    expect(chp.validationErrors).to.be.empty;
+
+    expect(chp.warnings).to.have.property('length', 1);
+    expect(chp.warnings[0]).to.include('"Community Health Promoter" with same "CHP Area Name"');
+  });
+
+  it('no name warning for generated names', async () => {
+    const sessionCache = new SessionCache();
+    const chtApi = mockChtApi([subcounty], [chuDoc], [chpDoc]);
+
+    const chuType = Config.getContactType('d_community_health_volunteer_area');
+    const chuData = {
+      hierarchy_SUBCOUNTY: subcounty.name,
+      hierarchy_CHU: chuDoc.name,
+      contact_name: 'different name',
+      contact_phone: '0712345678',
+    };
+    const chp = await PlaceFactory.createOne(chuData, chuType, sessionCache, chtApi);
+    expect(chp.validationErrors).to.be.empty;
+    expect(chp.warnings).to.be.empty;
+  });
+
   it('CHU is duplicate of remote place after fuzzing', async () => {
     const remotePlace: ChtDoc = { _id: 'remote-chu', name: 'Abc Community Health Unit', parent: { _id: subcounty._id } };
 
@@ -99,5 +145,36 @@ describe('warnings', () => {
 
     expect(first.warnings).to.have.property('length', 0);
     expect(second.warnings).to.deep.eq(first.warnings);
+  });
+
+  it('no warning when input is invalid', async () => {
+    const chuCode = 'invalid';
+    const remotePlace: ChtDoc = { _id: 'remote', name: 'remote', parent: { _id: subcounty._id }, code: chuCode };
+
+    const sessionCache = new SessionCache();
+    const chtApi = mockChtApi([subcounty], [remotePlace]);
+    const first = await createChu(subcounty, 'abc', sessionCache, chtApi, { place_code: chuCode });
+
+    expect(first.warnings).to.be.empty;
+  });
+
+  it('redundant warnings are not repeated', async () => {
+    const chuCode = '111111';
+    const chuName = 'abc';
+    const remotePlace: ChtDoc = { _id: 'remote', name: chuName, parent: { _id: subcounty._id }, code: chuCode };
+
+    const sessionCache = new SessionCache();
+    const chtApi = mockChtApi([subcounty], [remotePlace]);
+    const createIdenticalChu = async () => createChu(subcounty, chuName, sessionCache, chtApi, { place_code: chuCode });
+
+    const first = await createIdenticalChu();
+    const second = await createIdenticalChu();
+    const third = await createIdenticalChu();
+    const fourth = await createIdenticalChu();
+
+    expect(first.warnings.length).to.eq(2);
+    expect(second.warnings).to.deep.eq(first.warnings);
+    expect(third.warnings).to.deep.eq(first.warnings);
+    expect(fourth.warnings).to.deep.eq(first.warnings);
   });
 });

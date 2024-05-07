@@ -91,7 +91,7 @@ export default class PlaceFactory {
           const createFromValue = (value: string) => new ContactPropertyValue(place, userRoleProperty, 'user_', value);
           lookupPropertyAndCreateValue(place.userRoleProperties, userRoleProperty, createFromValue);
         }
-        
+
         places.push(place);
       }
       count++;

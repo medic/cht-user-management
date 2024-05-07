@@ -22,7 +22,7 @@ export class PropertyValues {
       return false;
     }
 
-    // ignore the original value when isGenerated 
+    // ignore the original value when isGenerated
     if ((a as IPropertyValue).isGenerated) {
       return PropertyValues.compare(comparator, (a as IPropertyValue).formatted, b);
     }
@@ -40,7 +40,7 @@ export class PropertyValues {
     const withinArray: string[] = valueAsArray(a);
     const forArray: string[] = valueAsArray(b);
 
-    
+  
     return withinArray.some(within => forArray.some(forX => comparator(within, forX)));
   }
 }

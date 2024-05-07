@@ -37,7 +37,7 @@ export default class RemotePlaceCache {
     if (!atHierarchyLevel) {
       return allRemotePlaces;
     }
-    
+
     return allRemotePlaces.filter(remotePlace => remotePlace.placeType === atHierarchyLevel.contact_type);
   }
 
@@ -86,7 +86,7 @@ export default class RemotePlaceCache {
       if (doc?.parent) {
         return [doc.parent._id, ...extractLineage(doc.parent)];
       }
-    
+
       return [];
     }
 
