@@ -30,10 +30,7 @@ describe('lib/remote-place-cache.ts', () => {
     const formData = {
       hierarchy_replacement: 'me',
     };
-    const chtApi = mockChtApi();
-    chtApi.getPlacesWithType.resolves([toReplacePlace])
-      .onSecondCall().resolves([parentPlace]);
-
+    const chtApi = mockChtApi([], [parentPlace], [toReplacePlace]);
     const [replacementLevel] = Config.getHierarchyWithReplacement(contactType);
     const actual = await SearchLib.search(contactType, formData, 'hierarchy_', replacementLevel, chtApi, sessionCache);
     assertPlaceMatchesDoc(actual, [toReplacePlace]);
@@ -45,9 +42,7 @@ describe('lib/remote-place-cache.ts', () => {
     const formData = {
       prefix_replacement: 'me',
     };
-    const chtApi = mockChtApi();
-    chtApi.getPlacesWithType.resolves([toReplacePlace])
-      .onSecondCall().resolves([parentPlace]);
+    const chtApi = mockChtApi([], [parentPlace], [toReplacePlace]);
 
     const [replacementLevel] = Config.getHierarchyWithReplacement(contactType);
     const actual = await SearchLib.search(contactType, formData, 'prefix_', replacementLevel, chtApi, sessionCache);
@@ -67,10 +62,7 @@ describe('lib/remote-place-cache.ts', () => {
       hierarchy_replacement: 'me',
       hierarchy_PARENT: 'paRent',
     };
-    const chtApi = mockChtApi();
-    chtApi.getPlacesWithType.resolves([toReplacePlace, ambiguity])
-      .onSecondCall().resolves([parentPlace]);
-
+    const chtApi = mockChtApi([], [parentPlace], [toReplacePlace, ambiguity]);
     const [replacementLevel] = Config.getHierarchyWithReplacement(contactType);
     const actual = await SearchLib.search(contactType, formData, 'hierarchy_', replacementLevel, chtApi, sessionCache);
     assertPlaceMatchesDoc(actual, [toReplacePlace]);
@@ -82,9 +74,7 @@ describe('lib/remote-place-cache.ts', () => {
     const formData = {
       hierarchy_replacement: 'plÀce',
     };
-    const chtApi = mockChtApi();
-    chtApi.getPlacesWithType.resolves([toReplacePlace])
-      .onSecondCall().resolves([parentPlace]);
+    const chtApi = mockChtApi([], [parentPlace], [toReplacePlace]);
 
     const [replacementLevel] = Config.getHierarchyWithReplacement(contactType);
     const actual = await SearchLib.search(contactType, formData, 'hierarchy_', replacementLevel, chtApi, sessionCache);
@@ -97,10 +87,8 @@ describe('lib/remote-place-cache.ts', () => {
     const formData = {
       hierarchy_replacement: 'me',
     };
-    const chtApi = mockChtApi();
+    const chtApi = mockChtApi([], [parentPlace], [toReplacePlace]);
     chtApi.chtSession = mockChtSession('other');
-    chtApi.getPlacesWithType.resolves([toReplacePlace])
-      .onSecondCall().resolves([parentPlace]);
 
     const [replacementLevel] = Config.getHierarchyWithReplacement(contactType);
     const actual = await SearchLib.search(contactType, formData, 'hierarchy_', replacementLevel, chtApi, sessionCache);

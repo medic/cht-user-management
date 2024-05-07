@@ -1,10 +1,9 @@
 import _ from 'lodash';
 
-import Place from '../services/place';
+import Place, { FormattedPropertyCollection } from '../services/place';
 import { ChtApi } from './cht-api';
-import { IPropertyValue } from '../property-value';
-import { ContactType, HierarchyConstraint } from '../config';
-import { NamePropertyValue } from '../property-value/name-property-value';
+import { IPropertyValue, RemotePlacePropertyValue } from '../property-value';
+import { Config, ContactType, HierarchyConstraint } from '../config';
 
 type RemotePlacesByType = {
   [key: string]: RemotePlace[];
@@ -14,33 +13,32 @@ type RemotePlaceDatastore = {
   [key: string]: RemotePlacesByType;
 };
 
-type UniqueKeys = {
-  [key: string]: string;
-};
-
 export type RemotePlace = {
   id: string;
   name: IPropertyValue;
   lineage: string[];
   ambiguities?: RemotePlace[];
-  uniqueKeys: UniqueKeys;
+  placeType: string;
+  uniqueKeys: FormattedPropertyCollection;
 
   // sadly, sometimes invalid or uncreated objects "pretend" to be remote
   // should reconsider this naming
   type: 'remote' | 'local' | 'invalid';
+  stagedPlace?: Place;
 };
 
 export default class RemotePlaceCache {
   private static cache: RemotePlaceDatastore = {};
 
-  public static async getRemotePlacesAtLevel(chtApi: ChtApi, contactType: ContactType, hierarchyLevel: HierarchyConstraint)
-    : Promise<RemotePlace[]> {
-    const domainStore = await RemotePlaceCache.getDomainStore(chtApi, contactType, hierarchyLevel);
-    return domainStore;
-  }
-
-  public static async getPlacesWithAllTypes(chtApi: ChtApi, contactType: ContactType) {
-
+  public static async getRemotePlaces(chtApi: ChtApi, contactType: ContactType, atHierarchyLevel?: HierarchyConstraint): Promise<RemotePlace[]> {
+    const hierarchyLevels = Config.getHierarchyWithReplacement(contactType, 'desc');
+    const fetchAll = hierarchyLevels.map(hierarchyLevel => RemotePlaceCache.fetchAndCacheRemotePlaces(chtApi, hierarchyLevel));
+    const allRemotePlaces = _.flatten(await Promise.all(fetchAll));
+    if (!atHierarchyLevel) {
+      return allRemotePlaces;
+    }
+    
+    return allRemotePlaces.filter(remotePlace => remotePlace.placeType === atHierarchyLevel.contact_type);
   }
 
   public static add(place: Place, chtApi: ChtApi): void {
@@ -66,24 +64,24 @@ export default class RemotePlaceCache {
     }
   }
 
-  private static async getDomainStore(chtApi: ChtApi, contactType: ContactType, hierarchyLevel: HierarchyConstraint)
+  private static async fetchAndCacheRemotePlaces(chtApi: ChtApi, hierarchyLevel: HierarchyConstraint)
     : Promise<RemotePlace[]> {
     const { domain } = chtApi.chtSession.authInfo;
     const placeType = hierarchyLevel.contact_type;
     const { cache: domainCache } = RemotePlaceCache;
     const places = domainCache[domain]?.[placeType];
     if (!places) {
-      const fetchPlacesWithType = RemotePlaceCache.fetchRemotePlaces(chtApi, contactType, hierarchyLevel);
-      domainCache[domain] = {
-        ...domainCache[domain],
-        [placeType]: await fetchPlacesWithType,
-      };
+      const fetchPlacesWithType = RemotePlaceCache.fetchRemotePlacesAtLevel(chtApi, hierarchyLevel);
+      if (!domainCache[domain]) {
+        domainCache[domain] = {};
+      }
+      domainCache[domain][placeType] = await fetchPlacesWithType;
     }
 
     return domainCache[domain][placeType];
   }
 
-  private static async fetchRemotePlaces(chtApi: ChtApi, contactType: ContactType, hierarchyLevel: HierarchyConstraint): Promise<RemotePlace[]> {
+  private static async fetchRemotePlacesAtLevel(chtApi: ChtApi, hierarchyLevel: HierarchyConstraint): Promise<RemotePlace[]> {
     function extractLineage(doc: any): string[] {
       if (doc?.parent) {
         return [doc.parent._id, ...extractLineage(doc.parent)];
@@ -92,17 +90,25 @@ export default class RemotePlaceCache {
       return [];
     }
 
-    const uniqueKeys = contactType.place_properties
-      .filter(prop => prop.unique)
-      .map(prop => prop.property_name);
-
+    const uniqueKeyproperties = Config.getUniqueProperties(hierarchyLevel.contact_type);
     const docs = await chtApi.getPlacesWithType(hierarchyLevel.contact_type);
-    return docs.map((doc: any): RemotePlace => ({
-      id: doc._id,
-      name: new NamePropertyValue(doc.name, hierarchyLevel),
-      lineage: extractLineage(doc),
-      uniqueKeys: _.pick(doc, uniqueKeys),
-      type: 'remote',
-    }));
+    return docs.map((doc: any): RemotePlace => {
+      const uniqueKeyStringValues: FormattedPropertyCollection = {};
+      for (const property of uniqueKeyproperties) {
+        const value = doc[property.property_name];
+        if (value) {
+          uniqueKeyStringValues[property.property_name] = new RemotePlacePropertyValue(value, property);
+        }
+      }
+
+      return {
+        id: doc._id,
+        name: new RemotePlacePropertyValue(doc.name, hierarchyLevel),
+        placeType: hierarchyLevel.contact_type,
+        lineage: extractLineage(doc),
+        uniqueKeys: uniqueKeyStringValues,
+        type: 'remote',
+      };
+    });
   }
 }

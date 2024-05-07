@@ -3,14 +3,12 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { Config, ContactProperty, ContactType } from '../config';
 import Contact from './contact';
-import { IPropertyValue } from '../property-value';
+import { IPropertyValue, ContactPropertyValue, HierarchyPropertyValue, RemotePlacePropertyValue } from '../property-value';
 import { PlacePayload } from '../lib/cht-api';
+import { RemotePlace } from '../lib/remote-place-cache';
+import RemotePlaceResolver from '../lib/remote-place-resolver';
 // can't use package.json because of rootDir in ts
 import { version as appVersion } from '../package.json';
-import RemotePlaceResolver from '../lib/remote-place-resolver';
-import { HierarchyPropertyValue, ContactPropertyValue } from '../property-value';
-import { RemotePlace } from '../lib/remote-place-cache';
-import { NamePropertyValue } from '../property-value/name-property-value';
 
 export type FormattedPropertyCollection = {
   [key: string]: IPropertyValue;
@@ -180,24 +178,18 @@ export default class Place {
   }
 
   public asRemotePlace() : RemotePlace {
-    function getUniqueKeys(properties: FormattedPropertyCollection, place_properties: ContactProperty[]) {
+    function getUniqueKeys(properties: FormattedPropertyCollection, place_properties: ContactProperty[]): FormattedPropertyCollection {
       const uniquePropertyNames = place_properties
         .filter(prop => prop.unique)
         .map(prop => prop.property_name);
-      const propertyValues = Object.entries(properties)
-        .filter(([key]) => uniquePropertyNames.includes(key))
-        .reduce((agg: any, [key, val]) => {
-          agg[key] = val.formatted;
-          return agg;
-        }, {});
 
-      return propertyValues;
+      return _.pick(properties, uniquePropertyNames);
     }
 
     let lastKnownHierarchy = this.resolvedHierarchy.find(h => h) || RemotePlaceResolver.NoResult;
     let lastKnownIndex = 0;
 
-    const lineage:string[] = [];
+    const lineage: string[] = [];
     for (let i = 1; i < this.resolvedHierarchy.length; i++) {
       const current = this.resolvedHierarchy[i];
       if (current) {
@@ -212,18 +204,20 @@ export default class Place {
     const nameProperty = Config.getPropertyWithName(this.type.place_properties, 'name');
     return {
       id: this.id,
-      name: new NamePropertyValue(this.name, nameProperty),
+      name: new RemotePlacePropertyValue(this.name, nameProperty),
+      placeType: this.type.name,
       type: this.isCreated ? 'remote' : 'local',
       uniqueKeys: getUniqueKeys(this.properties, this.type.place_properties),
+      stagedPlace: this,
       lineage,
     };
   }
 
   public validate(): void {
     const allCollections = [this.hierarchyProperties, this.properties, this.contact.properties, this.userRoleProperties];
-    allCollections.forEach(collection => 
-      Object.values(collection).forEach(prop => prop.validate())
-    );
+    allCollections.forEach(collection => {
+      Object.values(collection).forEach(prop => prop.validate());
+    });
 
     this.validationErrors = {};
     const extractErrorsFromCollection = (collection: FormattedPropertyCollection) => Object.values(collection).filter(prop => prop.validationError);

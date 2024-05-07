@@ -1,19 +1,19 @@
 import { HierarchyPropertyValue, ContactPropertyValue } from './validated-property-values';
-import { NamePropertyValue } from './name-property-value';
+import { RemotePlacePropertyValue } from './remote-place-property-value';
 import UnvalidatedPropertyValue from './unvalidated-property-value';
 
 export class PropertyValues {
   public static includes(searchWithin?: string | IPropertyValue, searchFor?: string | IPropertyValue): boolean {
     const insensitiveMatch = (within: string, toFind: string) => within.includes(toFind);
-    return PropertyValues.doIt(insensitiveMatch, searchWithin, searchFor);
+    return PropertyValues.compare(insensitiveMatch, searchWithin, searchFor);
   }
 
-  public static isMatch(searchWithin?: string | IPropertyValue, searchFor?: string | IPropertyValue): boolean {
+  public static isMatch(a?: string | IPropertyValue, b?: string | IPropertyValue): boolean {
     const insensitiveMatch = (within: string, toFind: string) => within === toFind;
-    return PropertyValues.doIt(insensitiveMatch, searchWithin, searchFor);
+    return PropertyValues.compare(insensitiveMatch, a, b);
   }
 
-  private static doIt(
+  private static compare(
     comparator: (a: string, b: string) => boolean,
     a?: string | IPropertyValue,
     b?: string | IPropertyValue,
@@ -22,10 +22,19 @@ export class PropertyValues {
       return false;
     }
 
+    // ignore the original value when isGenerated 
+    if ((a as IPropertyValue).isGenerated) {
+      return PropertyValues.compare(comparator, (a as IPropertyValue).formatted, b);
+    }
+
+    if ((b as IPropertyValue).isGenerated) {
+      return PropertyValues.compare(comparator, a, (b as IPropertyValue).formatted);
+    }
+
     const normalize = (str: string) => str.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase();
     const valueAsArray = (val: string | IPropertyValue): string[] => {
       const values = typeof val === 'string' ? [val] : [val.formatted, val.original];
-      return values.map(normalize);
+      return values.filter(value => value !== undefined).map(normalize);
     };
 
     const withinArray: string[] = valueAsArray(a);
@@ -42,6 +51,7 @@ export interface IPropertyValue {
   get propertyNameWithPrefix(): string;
 
   validationError?: string;
+  isGenerated: boolean;
 
   validate(): void;
   toString(): string;
@@ -60,7 +70,7 @@ export { ContactPropertyValue };
 /**
  * When storing a Name, and don't need access to an underlying Place
  */
-export { NamePropertyValue };
+export { RemotePlacePropertyValue };
 
 /**
  * When storing something that doesn't need validation

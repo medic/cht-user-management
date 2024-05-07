@@ -193,6 +193,16 @@ export class Config {
     return _.sortBy(domains, 'friendly');
   }
 
+  public static getUniqueProperties(contactTypeName: string): ContactProperty[] {
+    const contactMatch = config.contact_types.find(c => c.name === contactTypeName);
+    if (!contactMatch) {
+      return [];
+    }
+
+    return contactMatch.place_properties
+      .filter(prop => prop.unique);
+  }
+
   // TODO: Joi? Chai?
   public static assertIfInvalid({ config }: PartnerConfig = partnerConfig) {
     for (const contactType of config.contact_types) {
@@ -206,6 +216,12 @@ export class Config {
       
       Config.getPropertyWithName(contactType.place_properties, 'name');
       Config.getPropertyWithName(contactType.contact_properties, 'name');
+
+      const invalidPropsWithUnique = allProperties.filter(prop => prop.unique)
+        .filter(prop => !contactType.place_properties.includes(prop));
+      if (invalidPropsWithUnique.length) {
+        throw Error(`Only place_properties can have properties with "unique" values`);
+      }
 
       allProperties.forEach(property => {
         if (!KnownContactPropertyTypes.includes(property.type)) {

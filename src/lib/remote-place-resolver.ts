@@ -14,11 +14,23 @@ export type PlaceResolverOptions = {
 };
 
 export default class RemotePlaceResolver {
-  public static readonly NoResult: RemotePlace = 
-    { id: 'na', name: new UnvalidatedPropertyValue('Place Not Found'), type: 'invalid', uniqueKeys: {}, lineage: [] };
+  public static readonly NoResult: RemotePlace = {
+    id: 'na',
+    name: new UnvalidatedPropertyValue('Place Not Found'),
+    placeType: 'invalid',
+    type: 'invalid',
+    uniqueKeys: {},
+    lineage: []
+  };
   
-  public static readonly Multiple: RemotePlace = 
-    { id: 'multiple', name: new UnvalidatedPropertyValue('multiple places'), type: 'invalid', uniqueKeys: {}, lineage: [] };
+  public static readonly Multiple: RemotePlace = {
+    id: 'multiple',
+    name: new UnvalidatedPropertyValue('multiple places'),
+    placeType: 'invalid',
+    type: 'invalid',
+    uniqueKeys: {},
+    lineage: []
+  };
 
   public static resolve = async (
     places: Place[],
@@ -38,6 +50,7 @@ export default class RemotePlaceResolver {
     options?: PlaceResolverOptions
   ) : Promise<void> => {
     const topDownHierarchy = Config.getHierarchyWithReplacement(place.type, 'desc');
+    const allRemotePlaces = await RemotePlaceCache.getRemotePlaces(chtApi, place.type);
     for (const hierarchyLevel of topDownHierarchy) {
       // #91 - for editing: forget previous resolution
       delete place.resolvedHierarchy[hierarchyLevel.level];
@@ -57,7 +70,7 @@ export default class RemotePlaceResolver {
         }
       }
 
-      const placesFoundRemote = await findRemotePlacesInHierarchy(place, hierarchyLevel, chtApi);
+      const placesFoundRemote = await findRemotePlacesInHierarchy(place, allRemotePlaces, hierarchyLevel, chtApi);
       placesFoundRemote.forEach(remotePlace => {
         addKeyToMap(mapIdToDetails, remotePlace.name.original, remotePlace);
 
@@ -113,11 +126,13 @@ export default class RemotePlaceResolver {
 
 async function findRemotePlacesInHierarchy(
   place: Place,
+  remotePlaces: RemotePlace[],
   hierarchyLevel: HierarchyConstraint,
   chtApi: ChtApi
 ) : Promise<RemotePlace[]> {
-  let searchPool = await RemotePlaceCache.getRemotePlacesAtLevel(chtApi, place.type, hierarchyLevel);
-  searchPool = searchPool.filter(remotePlace => chtApi.chtSession.isPlaceAuthorized(remotePlace));
+  let searchPool = remotePlaces
+    .filter(remotePlace => remotePlace.placeType === hierarchyLevel.contact_type)
+    .filter(remotePlace => chtApi.chtSession.isPlaceAuthorized(remotePlace));
 
   const topDownHierarchy = Config.getHierarchyWithReplacement(place.type, 'desc');
   for (const { level } of topDownHierarchy) {

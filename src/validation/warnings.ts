@@ -1,83 +1,87 @@
-import _ from 'lodash';
-
 import { ContactProperty, ContactType } from '../config';
 import { ChtApi } from '../lib/cht-api';
 import Place from '../services/place';
 import RemotePlaceCache, { RemotePlace } from '../lib/remote-place-cache';
 import SessionCache from '../services/session-cache';
+import { PropertyValues } from '../property-value';
+
+type WarningGroup = {
+  property: ContactProperty;
+  remotePlaces: RemotePlace[];
+  localPlaces: Place[];
+};
 
 export default class WarningSystem {
-  public static async assertWarnings(contactType: ContactType, chtApi: ChtApi, sessionCache: SessionCache): Promise<void> {
-    const remotePlaces = await RemotePlaceCache.getPlacesWithAllTypes(chtApi, contactType);
-    const localPlaces = sessionCache.getPlaces({ type: contactType.name });
-    const propertiesWithUniqueness = contactType.place_properties.filter(prop => prop.unique);
+  public static async setWarnings(contactType: ContactType, chtApi: ChtApi, sessionCache: SessionCache): Promise<void> {
+    const allRemotePlaces = await RemotePlaceCache.getRemotePlaces(chtApi, contactType);
+    const remotePlacesWithType = allRemotePlaces.filter(remotePlace => remotePlace.placeType === contactType.name);
+    const localPlacesWithType = sessionCache.getPlaces({ type: contactType.name });
 
-    localPlaces.forEach(place => place.warnings = []);
-    for (const property of propertiesWithUniqueness) {
-      const duplicateGroups = calcDuplicateGroups(property, remotePlaces, localPlaces);
-      Object.entries(duplicateGroups).forEach(([duplicateString, duplicateGroup]) => {
-        const duplicatePlaces: Place[] = duplicateGroup.filter((entry: any) => entry instanceof Place) as Place[];
-        duplicatePlaces.forEach(duplicatePlace => {
-          const warningString = getWarningString(contactType, property, duplicateGroup, duplicatePlace);
-          duplicatePlace.warnings.push(warningString);
-        });
+    localPlacesWithType.forEach(place => place.warnings = []);
+
+    const warningGroups = calcWarningGroups(contactType, remotePlacesWithType, localPlacesWithType);
+    warningGroups.forEach((duplicateGroup) => {
+      setWarningsOnGroup(duplicateGroup, contactType);
+    });
+  }
+}
+
+function calcWarningGroups(contactType: ContactType, remotePlaces: RemotePlace[], localPlaces: Place[])
+  : WarningGroup[] {
+  const result: WarningGroup[] = [];
+  const allPlaces = [...localPlaces.map(place => place.asRemotePlace()), ...remotePlaces];
+  const propertiesWithUniqueness = contactType.place_properties.filter(prop => prop.unique);
+  allPlaces.forEach((localPlace, i) => {
+    if (localPlace.type !== 'local' || !localPlace.stagedPlace) {
+      return;
+    }
+
+    for (const uniqueProperty of propertiesWithUniqueness) {
+      const localValue = localPlace.uniqueKeys[uniqueProperty.property_name];
+
+      // properties with errors do not also have warnings
+      if (localValue.validationError) {
+        continue;
+      }
+
+      const propertyHasParentScope = uniqueProperty.unique === 'parent';
+      const confirmedDuplicates = allPlaces.slice(i + 1).filter(potential => {
+        const potentialDupeValue = potential.uniqueKeys[uniqueProperty.property_name];
+        return (!propertyHasParentScope || potential.lineage[0] === localPlace.lineage[0]) &&
+          PropertyValues.isMatch(localValue, potentialDupeValue); 
       });
-    }
-  }
-}
 
-function getWarningString(contactType: ContactType, property: ContactProperty, duplicateGroup: (RemotePlace | Place)[], duplicatePlace: Place): string {
-  const [duplicate, multipleDuplicates] = duplicateGroup.filter(dupe => dupe.id !== duplicatePlace.id);
-  if (multipleDuplicates) {
-    return 'Multiple duplicates found';
-  }
+      if (confirmedDuplicates.length) {
+        const localDuplicates = confirmedDuplicates
+          .filter(remotePlace => remotePlace.type === 'local' && remotePlace.stagedPlace)
+          .map(remotePlace => remotePlace.stagedPlace) as Place[];
 
-  const parentClause = property.unique === 'parent' ? ' and parent' : '';
-  if (!(duplicate instanceof Place)) {
-    if (duplicate.type === 'remote') {
-      return `Another "${contactType.friendly}" with same "${property.friendly_name}"${parentClause} already exists on the instance with id "${duplicate.id}"`;
-    }
-  } else {
-    return `Another "${contactType.friendly}" with same "${property.friendly_name}"${parentClause} is staged to be created`;
-  }
-
-  throw 'nope';
-}
-
-function calcDuplicateGroups(property: ContactProperty, remotePlaces: RemotePlace[], localPlaces: Place[])
-  : { [key: string]: (RemotePlace | Place)[] } 
-{
-  // todo: fuzzing
-  const propertyHasParentScope = property.unique === 'parent';
-  const localPlacesAsRemotePlace = localPlaces.map(place => place.asRemotePlace()); // lol. sorry
-  const relevantPlaces = [...remotePlaces, ...localPlacesAsRemotePlace]
-    .filter(remotePlace => !propertyHasParentScope || remotePlace.lineage[0]);
-
-  const placeGroupings = _.groupBy(relevantPlaces, place => {
-    const parent = propertyHasParentScope ? `|${place.lineage[0]}|` : '';
-    const propValue = place.uniqueKeys[property.property_name]?.toLowerCase();
-    return `${parent}${propValue}`; 
-  });
-
-  const result: { [key: string]: (RemotePlace | Place)[] } = {};
-  const groupNamesWithDuplicates = Object.keys(placeGroupings).filter(key => placeGroupings[key].length > 1);
-  for (const groupName of groupNamesWithDuplicates) {
-    const typedGroupValue: (RemotePlace | Place)[] = placeGroupings[groupName];
-    for (let i = 0; i < typedGroupValue.length; ++i) {
-      if (typedGroupValue[i].type === 'local') {
-        const localPlace = localPlaces.find(place => place.id === typedGroupValue[i].id);
-        if (!localPlace) {
-          throw Error('invalid program searching for local place');
-        }
-
-        typedGroupValue[i] = localPlace;
+        result.push({
+          property: uniqueProperty,
+          remotePlaces: confirmedDuplicates.filter(remotePlace => remotePlace.type === 'remote'),
+          localPlaces: [localPlace.stagedPlace, ...localDuplicates],
+        });
       }
     }
-
-    result[groupName] = typedGroupValue;
-  }
+  });
 
   return result;
 }
 
-// place already exists
+function setWarningsOnGroup(warningGroup: WarningGroup, contactType: ContactType): void {
+  const warningString = getWarningString(warningGroup.remotePlaces, contactType, warningGroup.property);
+  for (const localPlace of warningGroup.localPlaces) {
+    localPlace.warnings.push(warningString);
+  }
+}
+
+function getWarningString(remotePlaces: RemotePlace[], contactType: ContactType, property: ContactProperty): string {
+  const parentClause = property.unique === 'parent' ? ' and same parent' : '';
+  const remoteDuplicateIds = remotePlaces.map(remotePlace => remotePlace.id);
+  if (remoteDuplicateIds.length) {
+    const idString = JSON.stringify(remoteDuplicateIds);
+    return `"${contactType.friendly}" with same "${property.friendly_name}"${parentClause} exists on the instance. ID "${idString}"`;
+  }
+
+  return `"${contactType.friendly}" with same "${property.friendly_name}"${parentClause} is staged to be created`;
+}

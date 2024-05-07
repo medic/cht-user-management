@@ -15,15 +15,15 @@ describe('lib/move.ts', () => {
     RemotePlaceCache.clear({});
   });
 
-  const childDocs = [
+  const subcountyDocs = [
     { _id: 'from-sub', name: 'From Sub' },
     { _id: 'to-sub', name: 'To Sub' }
   ];
-  const subcountyDocs = [
+  const chuDocs = [
     { _id: 'chu-id', name: 'c-h-u', parent: { _id: 'from-sub' } },
   ];
 
-  const chtApi = () => mockChtApi(childDocs, subcountyDocs);
+  const chtApi = () => mockChtApi(subcountyDocs, chuDocs);
 
   it('move CHU: success', async () => {
     const formData = {
@@ -51,7 +51,7 @@ describe('lib/move.ts', () => {
     const contactType = Config.getContactType('c_community_health_unit');
     const sessionCache = new SessionCache();
 
-    const actual = MoveLib.move(formData, contactType, sessionCache, mockChtApi(subcountyDocs));
+    const actual = MoveLib.move(formData, contactType, sessionCache, mockChtApi([], chuDocs));
     await expect(actual).to.eventually.be.rejectedWith('search string is empty');
   });
 

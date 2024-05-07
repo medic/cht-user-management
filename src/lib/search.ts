@@ -57,7 +57,8 @@ async function getRemoteResults(
   chtApi: ChtApi,
   dataPrefix: string
 ) : Promise<RemotePlace[]> {
-  let remoteResults = (await RemotePlaceCache.getRemotePlacesAtLevel(chtApi, contactType, hierarchyLevel))
+  const allRemotePlaces = await RemotePlaceCache.getRemotePlaces(chtApi, contactType);
+  let remoteResults = allRemotePlaces.filter(remotePlace => remotePlace.placeType === hierarchyLevel.contact_type)
     .filter(remotePlace => chtApi.chtSession.isPlaceAuthorized(remotePlace))
     .filter(place => PropertyValues.includes(place.name, searchString));
 
@@ -72,7 +73,7 @@ async function getRemoteResults(
       continue;
     }
 
-    const placesAtLevel = await RemotePlaceCache.getRemotePlacesAtLevel(chtApi, contactType, constrainingHierarchy);
+    const placesAtLevel = allRemotePlaces.filter(remotePlace => remotePlace.placeType === constrainingHierarchy.contact_type);
     const relevantPlaceIds = placesAtLevel
       .filter(remotePlace => PropertyValues.includes(remotePlace.name, searchStringAtLevel))
       .map(remotePlace => remotePlace.id);

@@ -8,6 +8,7 @@ import RemotePlaceCache from '../lib/remote-place-cache';
 import RemotePlaceResolver from '../lib/remote-place-resolver';
 import SessionCache from '../services/session-cache';
 import { UploadManager } from '../services/upload-manager';
+import WarningSystem from '../validation/warnings';
 
 export default async function sessionCache(fastify: FastifyInstance) {
   fastify.get('/', async (req, resp) => {
@@ -60,6 +61,9 @@ export default async function sessionCache(fastify: FastifyInstance) {
     const places = sessionCache.getPlaces({ created: false });
     await RemotePlaceResolver.resolve(places, sessionCache, chtApi, { fuzz: true });
     places.forEach(p => p.validate());
+    for (const contactType of Config.contactTypes()) {
+      await WarningSystem.setWarnings(contactType, chtApi, sessionCache);
+    }
 
     fastify.uploadManager.triggerRefresh(undefined);
   });

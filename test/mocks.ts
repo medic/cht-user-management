@@ -34,9 +34,12 @@ export const mockPlace = (contactType: ContactType, formDataOverride?: any) : Pl
   return place;
 };
 
-export const mockChtApi = (first: ChtDoc[] = [], second: ChtDoc[] = []): any => ({
+export const mockChtApi = (first: ChtDoc[] = [], second: ChtDoc[] = [], third: ChtDoc[] = []): any => ({
   chtSession: mockChtSession(),
-  getPlacesWithType: sinon.stub().resolves(first).onSecondCall().resolves(second),
+  getPlacesWithType: sinon.stub()
+    .onFirstCall().resolves(first)
+    .onSecondCall().resolves(second)
+    .onThirdCall().resolves(third),
 });
 
 export const mockSimpleContactType = (
