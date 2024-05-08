@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 
 import SessionCache from '../src/services/session-cache';
-import { ChtDoc, createChu, mockChtApi } from './mocks';
+import { ChtDoc, createChu, expectInvalidProperties, mockChtApi } from './mocks';
 import RemotePlaceCache from '../src/lib/remote-place-cache';
 import { Config } from '../src/config';
 import PlaceFactory from '../src/services/place-factory';
@@ -137,6 +137,33 @@ describe('warnings', () => {
     expect(replacementChp.warnings[0]).to.include('same "CHP Area Name"');
     expect(newChp.warnings).to.deep.eq(replacementChp.warnings);
   });
+
+  it('no name warnings when there are multiple invalid replacements', async () => {
+    const sessionCache = new SessionCache();
+    const chtApi = mockChtApi([subcounty], [chuDoc], [chpDoc]);
+
+    const chuType = Config.getContactType('d_community_health_volunteer_area');
+    const chpData: any = {
+      hierarchy_SUBCOUNTY: subcounty.name,
+      hierarchy_CHU: chuDoc.name,
+      hierarchy_replacement: 'dne1',
+      contact_name: 'new',
+      contact_phone: '0712345678',
+    };
+
+    const replacement1 = await PlaceFactory.createOne(chpData, chuType, sessionCache, chtApi);
+    expectInvalidProperties(replacement1.validationErrors, ['hierarchy_replacement']);
+    
+    chpData.contact_name = 'other';
+    chpData.contact_phone = '0787654321';
+    chpData.hierarchy_replacement = 'dne2';
+    const replacement2 = await PlaceFactory.createOne(chpData, chuType, sessionCache, chtApi);
+    expectInvalidProperties(replacement2.validationErrors, ['hierarchy_replacement']);
+
+    expect(replacement1.warnings).to.be.empty;
+    expect(replacement2.warnings).to.be.empty;
+  });
+
 
   it('warn if two local try to replace the same remote', async () => {
     const sessionCache = new SessionCache();
