@@ -9,8 +9,6 @@ export default class MoveLib {
 
   public static async move(formData: any, contactType: ContactType, sessionCache: SessionCache, chtApi: ChtApi) {
     const fromLineage = await resolve('from_', formData, contactType, sessionCache, chtApi);
-    fromLineage.reverse(); // ordered from big to small
-
     const toLineage = await resolve('to_', formData, contactType, sessionCache, chtApi);
 
     const toId = toLineage[1]?.id;
@@ -25,6 +23,8 @@ export default class MoveLib {
     
     const { authInfo } = chtApi.chtSession;
     const url = `http${authInfo.useHttp ? '' : 's'}://${chtApi.chtSession.username}:password@${authInfo.domain}`;
+
+    fromLineage.reverse(); // ordered from big to small for UI
     return {
       command: `npx cht --url=${url} move-contacts upload-docs -- --contacts=${fromId} --parent=${toId}`,
       fromLineage,
