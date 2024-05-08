@@ -92,12 +92,13 @@
               {% capture tag_class %}
                 {% if place.state == 'failure' %}is-danger
                 {% elsif place.state == 'success' %}is-success
-                {% elsif place.validationErrors != empty %}is-warning
+                {% elsif place.validationErrors != empty %}is-danger is-outlined
+                {% else %}is-info
                 {% endif %}
                 {% if place.uploadError %}has-tooltip-arrow has-tooltipl-multiline{% endif %}
               {% endcapture %}
               <span
-                class="tag is-info {{ tag_class }}"
+                class="tag {{ tag_class }}"
                 {% if place.uploadError %}data-tooltip="{{ place.uploadError | escape }}"{% endif %}
               >
                 {{ tag_text }}
