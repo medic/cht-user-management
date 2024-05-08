@@ -51,6 +51,13 @@ describe('config', () => {
     const assertion = () => Config.assertIfInvalid(mockConfig);
     expect(assertion).to.throw('with "unique" values');
   });
+
+  it('parent hierarchy level is required', () => {
+    const mockConfig = mockPartnerConfig();
+    mockConfig.config.contact_types[0].hierarchy[0].level = 2;
+    const assertion = () => Config.assertIfInvalid(mockConfig);
+    expect(assertion).to.throw('with parent level');
+  });
   
   it('#124 - cannot have generated property in hierarchy', () => {
     const mockConfig = mockPartnerConfig();

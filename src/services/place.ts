@@ -187,21 +187,6 @@ export default class Place {
       return _.pick(properties, uniquePropertyNames);
     }
 
-    let lastKnownHierarchy = this.resolvedHierarchy.find(h => h) || RemotePlaceResolver.NoResult;
-    let lastKnownIndex = 0;
-
-    const lineage: string[] = [];
-    for (let i = 1; i < this.resolvedHierarchy.length; i++) {
-      const current = this.resolvedHierarchy[i];
-      if (current) {
-        lineage[i-1] = current.id;
-        lastKnownHierarchy = current;
-        lastKnownIndex = i;
-      } else {
-        lineage[i-1] = lastKnownHierarchy.lineage[i - lastKnownIndex - 1];
-      }
-    }
-
     const nameProperty = Config.getPropertyWithName(this.type.place_properties, 'name');
     return {
       id: this.id,
@@ -211,7 +196,7 @@ export default class Place {
       uniquePlaceValues: getUniqueKeys(this.properties, this.type.place_properties),
       uniqueContactValues: getUniqueKeys(this.contact.properties, this.type.contact_properties),
       stagedPlace: this,
-      lineage,
+      lineage: this.buildLineage(),
     };
   }
 
@@ -275,9 +260,28 @@ export default class Place {
 
   public get isReplacement(): boolean {
     return !!this.hierarchyProperties.replacement?.original;
-  }
+  } 
 
   public get isCreated(): boolean {
     return !!this.creationDetails.password;
+  }
+
+  private buildLineage() {
+    let lastKnownHierarchy = this.resolvedHierarchy.find(h => h) || RemotePlaceResolver.NoResult;
+    let lastKnownIndex = 0;
+
+    const lineage: string[] = [];
+    for (let i = 1; i < this.resolvedHierarchy.length; i++) {
+      const current = this.resolvedHierarchy[i];
+      if (current && current.type !== 'invalid') {
+        lineage[i - 1] = current.id;
+        lastKnownHierarchy = current;
+        lastKnownIndex = i;
+      } else {
+        lineage[i - 1] = lastKnownHierarchy.lineage[i - lastKnownIndex - 1];
+      }
+    }
+
+    return lineage;
   }
 }

@@ -166,6 +166,30 @@ describe('warnings', () => {
     expect(replacement2.warnings).to.be.empty;
   });
 
+  it('no name warning when local names match but parent is invalid', async () => {
+    const sessionCache = new SessionCache();
+    const chtApi = mockChtApi([subcounty], [chuDoc], [chpDoc]);
+
+    const chuType = Config.getContactType('d_community_health_volunteer_area');
+    const chpData: any = {
+      hierarchy_SUBCOUNTY: subcounty.name,
+      hierarchy_CHU: 'dne1',
+      contact_name: 'new',
+      contact_phone: '0712345678',
+    };
+
+    const replacement1 = await PlaceFactory.createOne(chpData, chuType, sessionCache, chtApi);
+    expectInvalidProperties(replacement1.validationErrors, ['hierarchy_CHU']);
+    
+    chpData.hierarchy_CHU = 'dne2';
+    chpData.contact_phone = '0787654321';
+    const replacement2 = await PlaceFactory.createOne(chpData, chuType, sessionCache, chtApi);
+    expectInvalidProperties(replacement2.validationErrors, ['hierarchy_CHU']);
+
+    expect(replacement1.warnings).to.be.empty;
+    expect(replacement2.warnings).to.be.empty;
+  });
+  
   it('csv import of multiple.csv', async () => {
     const sessionCache = new SessionCache();
     const chtApi = mockChtApi([subcounty], [chuDoc], []);

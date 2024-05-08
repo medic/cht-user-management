@@ -25,12 +25,11 @@ export default class UniquePropertyClassifier implements IWarningClassifier {
       return;
     }
     
-    const propertyHasParentScope = this.property.unique === 'parent';
     return placesToCompare
       .filter(place => {
         const placeValue = this.getPropertyValue(place);
         return !this.shouldSkip(place, placeValue) && 
-          (!propertyHasParentScope || place.lineage[0] === basePlace.lineage[0]) &&
+          this.checkParentConstraint(place, basePlace) &&
           PropertyValues.isMatch(baseValue, placeValue);
       });
   }
@@ -66,5 +65,14 @@ export default class UniquePropertyClassifier implements IWarningClassifier {
   private getPropertyValue(remotePlace: RemotePlace): IPropertyValue | undefined {
     const source = this.propertyType === 'place' ? remotePlace.uniquePlaceValues : remotePlace.uniqueContactValues;
     return source?.[this.property.property_name];
+  }
+
+  private checkParentConstraint(place: RemotePlace, basePlace: RemotePlace) {
+    const propertyHasParentScope = this.property.unique === 'parent';
+    if (!propertyHasParentScope) {
+      return true;
+    }
+
+    return place.lineage[0] && place.lineage[0] === basePlace.lineage[0];
   }
 }

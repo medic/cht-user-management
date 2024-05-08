@@ -217,6 +217,11 @@ export class Config {
       Config.getPropertyWithName(contactType.place_properties, 'name');
       Config.getPropertyWithName(contactType.contact_properties, 'name');
 
+      const parentLevel = contactType.hierarchy.find(hierarchy => hierarchy.level === 1);
+      if (!parentLevel) {
+        throw Error(`Must have a hierarchy with parent level (level: 1)`);
+      }
+
       const invalidPropsWithUnique = allHierarchyProperties.filter(prop => prop.unique);
       if (invalidPropsWithUnique.length) {
         throw Error(`Only place_properties and contact_properties can have properties with "unique" values`);
