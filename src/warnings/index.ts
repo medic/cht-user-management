@@ -39,10 +39,10 @@ export default class WarningSystem {
     const result: Warning[] = [];
     const knownWarnings = new Set<string>();
     
-    const remainingPlaces = [
+    const remainingPlaces = _.uniqBy([
       ...localPlaces.map(place => place.asRemotePlace()),
-      ...remotePlaces.filter(remotePlace => !remotePlace.stagedPlace),
-    ];
+      ...remotePlaces,
+    ], 'id');
 
     while (remainingPlaces.length) {
       const localPlace = remainingPlaces.shift();
