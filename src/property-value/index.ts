@@ -22,15 +22,6 @@ export class PropertyValues {
       return false;
     }
 
-    // ignore the original value when isGenerated
-    if ((a as IPropertyValue).isGenerated) {
-      return PropertyValues.compare(comparator, (a as IPropertyValue).formatted, b);
-    }
-
-    if ((b as IPropertyValue).isGenerated) {
-      return PropertyValues.compare(comparator, a, (b as IPropertyValue).formatted);
-    }
-
     const normalize = (str: string) => str.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase();
     const valueAsArray = (val: string | IPropertyValue): string[] => {
       const values = typeof val === 'string' ? [val] : [val.formatted, val.original];
@@ -51,7 +42,6 @@ export interface IPropertyValue {
   get propertyNameWithPrefix(): string;
 
   validationError?: string;
-  isGenerated: boolean;
 
   validate(): void;
   toString(): string;

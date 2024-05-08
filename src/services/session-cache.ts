@@ -70,6 +70,7 @@ function getFilterFunction(directiveFilter: DirectiveFilter) {
     success: (place: Place) => place.state === PlaceUploadState.SUCCESS,
     failure: (place: Place) => place.state === PlaceUploadState.FAILURE,
     invalid: (place: Place) => place.hasValidationErrors,
+    warning: (place: Place) => place.warnings?.length,
     staged: (place: Place) => !place.hasValidationErrors && ![PlaceUploadState.SUCCESS, PlaceUploadState.FAILURE].includes(place.state),
   };
   return filterFuncs[directiveFilter];

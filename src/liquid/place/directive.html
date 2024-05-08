@@ -38,6 +38,14 @@
 
           <li>
             {% include "components/filter_tag.html"
+              class="is-warning"
+              filterName="warning"
+              count=directiveModel.warningCount
+            %}
+          </li>
+
+          <li>
+            {% include "components/filter_tag.html"
               class="is-success"
               filterName="success"
               count=directiveModel.successCount

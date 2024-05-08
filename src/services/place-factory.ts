@@ -12,10 +12,7 @@ export default class PlaceFactory {
   public static async createFromCsv(csvBuffer: Buffer, contactType: ContactType, sessionCache: SessionCache, chtApi: ChtApi)
     : Promise<Place[]> {
     const places = await PlaceFactory.loadPlacesFromCsv(csvBuffer, contactType);
-    await RemotePlaceResolver.resolve(places, sessionCache, chtApi, { fuzz: true });
-    places.forEach(place => place.validate());
-    sessionCache.savePlaces(...places);
-    await WarningSystem.setWarnings(contactType, chtApi, sessionCache);
+    await PlaceFactory.finalizePlaces(places, sessionCache, chtApi, contactType);
     return places;
   }
 
@@ -23,10 +20,7 @@ export default class PlaceFactory {
     : Promise<Place> => {
     const place = new Place(contactType);
     place.setPropertiesFromFormData(formData, 'hierarchy_');
-    await RemotePlaceResolver.resolveOne(place, sessionCache, chtApi, { fuzz: true });
-    place.validate();
-    sessionCache.savePlaces(place);
-    await WarningSystem.setWarnings(contactType, chtApi, sessionCache);
+    await PlaceFactory.finalizePlaces([place], sessionCache, chtApi, contactType);
     return place;
   };
 
@@ -36,14 +30,18 @@ export default class PlaceFactory {
     if (!place || place.isCreated) {
       throw new Error('unknown place or place has already been created');
     }
-
     place.setPropertiesFromFormData(formData, 'hierarchy_');
-    await RemotePlaceResolver.resolveOne(place, sessionCache, chtApi, { fuzz: true });
-    place.validate();
-    await WarningSystem.setWarnings(place.type, chtApi, sessionCache);
 
+    await PlaceFactory.finalizePlaces([place], sessionCache, chtApi, place.type);
     return place;
   };
+
+  private static async finalizePlaces(places: Place[], sessionCache: SessionCache, chtApi: ChtApi, contactType: ContactType) {
+    await RemotePlaceResolver.resolve(places, sessionCache, chtApi, { fuzz: true });
+    places.forEach(place => place.validate());
+    sessionCache.savePlaces(...places);
+    await WarningSystem.setWarnings(contactType, chtApi, sessionCache);
+  }
 
   private static async loadPlacesFromCsv(csvBuffer: Buffer, contactType: ContactType) : Promise<Place[]> {
     const csvColumns: string[] = [];

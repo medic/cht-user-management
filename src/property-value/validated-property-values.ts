@@ -5,7 +5,6 @@ import Validation from '../validation';
 
 abstract class AbstractPropertyValue implements IPropertyValue {
   public readonly original: string;
-  public readonly isGenerated: boolean;
   protected readonly place: Place;
   protected readonly property: ContactProperty;
   private readonly propertyPrefix: string;
@@ -18,7 +17,6 @@ abstract class AbstractPropertyValue implements IPropertyValue {
     this.place = place;
     this.property = property;
     this.propertyPrefix = prefix;
-    this.isGenerated = property.type === 'generated';
     this.formattedValue = Validation.formatDuringInitialization(this.property, value);
   }
 

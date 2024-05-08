@@ -142,7 +142,6 @@ describe('services/place-factory.ts', () => {
           name: {
             formatted: 'Bob',
             original: 'bob',
-            isGenerated: false,
             propertyNameWithPrefix: 'place_replacement',
           },
           lineage: ['parent-id'],
@@ -152,7 +151,6 @@ describe('services/place-factory.ts', () => {
             name: {
               original: 'bob',
               formatted: 'bob',
-              isGenerated: true,
               propertyNameWithPrefix: 'place_name',
             }
           },
@@ -162,7 +160,6 @@ describe('services/place-factory.ts', () => {
           name: {
             formatted: 'Chepalungu',
             original: parentDoc.name,
-            isGenerated: false,
             propertyNameWithPrefix: 'place_CHU',
           },
           placeType: 'c_community_health_unit',
@@ -172,7 +169,6 @@ describe('services/place-factory.ts', () => {
             name: {
               original: 'Chepalungu CHU',
               formatted: 'Chepalungu',
-              isGenerated: false,
               propertyNameWithPrefix: 'place_name',
             }
           },
