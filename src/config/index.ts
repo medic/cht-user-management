@@ -234,24 +234,6 @@ export class Config {
       }
     }
   }
-
-  public static getCsvTemplateColumns(placeType: string) {
-    const placeTypeConfig = Config.getContactType(placeType);
-    const hierarchy = Config.getHierarchyWithReplacement(placeTypeConfig);
-    const userRoleConfig = Config.getUserRoleConfig(placeTypeConfig);
-
-    const extractColumns = (properties: ContactProperty[]) => properties
-      .filter(p => p.type !== 'generated')
-      .map(p => p.friendly_name);
-
-    const columns = _.uniq([
-      ...hierarchy.map(p => p.friendly_name),
-      ...extractColumns(placeTypeConfig.place_properties),
-      ...extractColumns(placeTypeConfig.contact_properties),
-      ...(Config.hasMultipleRoles(placeTypeConfig) ? [userRoleConfig.friendly_name] : []),
-    ]);
-    return columns;
-  }
 }
 
 Config.assertIfInvalid();
