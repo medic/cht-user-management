@@ -217,10 +217,9 @@ export class Config {
       Config.getPropertyWithName(contactType.place_properties, 'name');
       Config.getPropertyWithName(contactType.contact_properties, 'name');
 
-      const invalidPropsWithUnique = allProperties.filter(prop => prop.unique)
-        .filter(prop => !contactType.place_properties.includes(prop));
+      const invalidPropsWithUnique = allHierarchyProperties.filter(prop => prop.unique);
       if (invalidPropsWithUnique.length) {
-        throw Error(`Only place_properties can have properties with "unique" values`);
+        throw Error(`Only place_properties and contact_properties can have properties with "unique" values`);
       }
 
       allProperties.forEach(property => {

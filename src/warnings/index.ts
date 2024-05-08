@@ -1,4 +1,4 @@
-import { ContactType } from '../config';
+import { ContactProperty, ContactType } from '../config';
 import { ChtApi } from '../lib/cht-api';
 import Place from '../services/place';
 import RedundantReplaceClassifier from './redundant-replace-classifier';
@@ -7,7 +7,7 @@ import SessionCache from '../services/session-cache';
 import UniquePropertyClassifier from './unique-property-classifier';
 
 type Warning = {
-  triggeredPlace: Place;
+  place: Place;
   uniqueKey: string;
   warningString: string;
 };
@@ -26,57 +26,71 @@ export default class WarningSystem {
 
     localPlacesWithType.forEach(place => place.warnings = []);
 
-    const uniquePropertyClassifiers = contactType.place_properties
-      .filter(prop => prop.unique)
-      .map(prop => new UniquePropertyClassifier(contactType, prop));
-    const classifiers = [
-      ...uniquePropertyClassifiers,
-      new RedundantReplaceClassifier(contactType)
-    ];
-    const warnings = WarningSystem.runClassifiers(classifiers, remotePlacesWithType, localPlacesWithType);
+    const warningClassifiers = WarningSystem.createClassifiers(contactType);
+    const warnings = WarningSystem.runClassifiers(warningClassifiers, remotePlacesWithType, localPlacesWithType);
     warnings.forEach(warning => {
-      warning.triggeredPlace.warnings.push(warning.warningString);
+      warning.place.warnings.push(warning.warningString);
     });
   }
 
-  private static runClassifiers(classifiers: IWarningClassifier[], remotePlaces: RemotePlace[], localPlaces: Place[]): Warning[] {
+  private static runClassifiers(warningClassifiers: IWarningClassifier[], remotePlaces: RemotePlace[], localPlaces: Place[]): Warning[] {
     const result: Warning[] = [];
-    const allPlaces = [...localPlaces.map(place => place.asRemotePlace()), ...remotePlaces];
-    const memory = new Set<string>();
-  
-    allPlaces.forEach((localPlace, i) => {
-      if (localPlace.type !== 'local' || !localPlace.stagedPlace) {
-        return;
+    const knownWarnings = new Set<string>();
+    
+    const remainingPlaces = [...localPlaces.map(place => place.asRemotePlace()), ...remotePlaces];
+    while (remainingPlaces.length) {
+      const localPlace = remainingPlaces.shift();
+      if (localPlace?.type !== 'local' || !localPlace.stagedPlace) {
+        continue;
       }
   
-      const remainingPlaces = allPlaces.slice(i + 1);
-      for (const classifier of classifiers) {
+      for (const classifier of warningClassifiers) {
         const classifierKey = classifier.uniqueKey(localPlace.stagedPlace);
-  
-        if (memory.has(classifierKey)) {
-          return;
+        if (knownWarnings.has(classifierKey)) {
+          continue;
         }
   
-        const implicatedPlaces = classifier.triggerWarningForPlaces(localPlace, remainingPlaces);
-        if (implicatedPlaces?.length) {
-          const affectedLocalPlaces = implicatedPlaces
-            .filter(remotePlace => remotePlace.type === 'local' && remotePlace.stagedPlace)
-            .map(remotePlace => remotePlace.stagedPlace) as Place[];
-
-          const implicatedRemotePlaces = implicatedPlaces.filter(remotePlace => remotePlace.type === 'remote');
-          const triggeredPlaces = [localPlace.stagedPlace, ...affectedLocalPlaces];
-          const warnings = triggeredPlaces.map(triggeredPlace => ({
-            triggeredPlace,
-            warningString: classifier.getWarningString(implicatedRemotePlaces),
-            uniqueKey: classifier.uniqueKey(triggeredPlace),
-          }));
-
+        const warnings = WarningSystem.runClassifer(classifier, localPlace, remainingPlaces);
+        if (warnings?.length) {
           result.push(...warnings);
-          warnings.forEach(warning => memory.add(warning.uniqueKey));
+          warnings.forEach(warning => knownWarnings.add(warning.uniqueKey));
         }
       }
-    });
+    }
   
     return result;
+  }
+
+  private static runClassifer(classifier: IWarningClassifier, basePlace: RemotePlace, otherPlaces: RemotePlace[]): Warning[] | undefined {
+    const implicatedPlaces = classifier.triggerWarningForPlaces(basePlace, otherPlaces);
+    if (!basePlace.stagedPlace || !implicatedPlaces?.length) {
+      return;
+    }
+
+    const implicatedLocalPlacesWithoutBase = implicatedPlaces
+      .filter(remotePlace => remotePlace.type === 'local' && remotePlace.stagedPlace)
+      .map(remotePlace => remotePlace.stagedPlace) as Place[];
+    const implicatedLocalPlaces = [basePlace.stagedPlace, ...implicatedLocalPlacesWithoutBase];
+
+    const implicatedRemotePlaces = implicatedPlaces.filter(remotePlace => remotePlace.type === 'remote');
+    return implicatedLocalPlaces.map(place => ({
+      place,
+      warningString: classifier.getWarningString(implicatedRemotePlaces),
+      uniqueKey: classifier.uniqueKey(place),
+    }));
+  }
+
+  private static createClassifiers(contactType: ContactType): IWarningClassifier[] {
+    const createUniquePropertyClassifiers = (properties: ContactProperty[], propertyType: 'place' | 'contact') => properties
+      .filter(prop => prop.unique)
+      .map(prop => new UniquePropertyClassifier(contactType.friendly, propertyType, prop));
+
+    const classifiers = [
+      ...createUniquePropertyClassifiers(contactType.place_properties, 'place'),
+      ...createUniquePropertyClassifiers(contactType.contact_properties, 'contact'),
+      new RedundantReplaceClassifier(contactType),
+    ];
+
+    return classifiers;
   }
 }

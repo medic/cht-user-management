@@ -86,6 +86,57 @@ describe('warnings', () => {
     expect(chp.warnings[0]).to.include('"Community Health Promoter" with same "CHP Area Name"');
   });
 
+  it('name warning for conflicting new and replacement CHP (replace first)', async () => {
+    const sessionCache = new SessionCache();
+    const chtApi = mockChtApi([subcounty], [chuDoc], [chpDoc]);
+
+    const chuType = Config.getContactType('d_community_health_volunteer_area');
+    const chpData: any = {
+      hierarchy_SUBCOUNTY: subcounty.name,
+      hierarchy_CHU: chuDoc.name,
+      hierarchy_replacement: chpDoc.name,
+      contact_name: 'new',
+      contact_phone: '0712345678',
+    };
+
+    const replacementChp = await PlaceFactory.createOne(chpData, chuType, sessionCache, chtApi);
+    expect(replacementChp.validationErrors).to.be.empty;
+    
+    chpData.contact_phone = '0787654321';
+    delete chpData.hierarchy_replacement;
+    const newChp = await PlaceFactory.createOne(chpData, chuType, sessionCache, chtApi);
+    expect(newChp.validationErrors).to.be.empty;
+
+    expect(newChp.warnings).to.have.property('length', 1);
+    expect(newChp.warnings[0]).to.include('"Community Health Promoter" with same "CHP Area Name"');
+    expect(replacementChp.warnings).to.deep.eq(newChp.warnings);
+  });
+
+  it('name warning for conflicting new and replacement CHP (new first)', async () => {
+    const sessionCache = new SessionCache();
+    const chtApi = mockChtApi([subcounty], [chuDoc], [chpDoc]);
+
+    const chuType = Config.getContactType('d_community_health_volunteer_area');
+    const chpData: any = {
+      hierarchy_SUBCOUNTY: subcounty.name,
+      hierarchy_CHU: chuDoc.name,
+      contact_name: 'new',
+      contact_phone: '0712345678',
+    };
+
+    const newChp = await PlaceFactory.createOne(chpData, chuType, sessionCache, chtApi);
+    expect(newChp.validationErrors).to.be.empty;
+    
+    chpData.contact_phone = '0787654321';
+    chpData.hierarchy_replacement = chpDoc.name;
+    const replacementChp = await PlaceFactory.createOne(chpData, chuType, sessionCache, chtApi);
+    expect(replacementChp.validationErrors).to.be.empty;
+
+    expect(replacementChp.warnings).to.have.property('length', 1);
+    expect(replacementChp.warnings[0]).to.include('"Community Health Promoter" with same "CHP Area Name"');
+    expect(newChp.warnings).to.deep.eq(replacementChp.warnings);
+  });
+
   it('warn if two local try to replace the same remote', async () => {
     const sessionCache = new SessionCache();
     const chtApi = mockChtApi([subcounty], [chuDoc], [chpDoc]);
@@ -108,6 +159,29 @@ describe('warnings', () => {
 
     expect(first.warnings).to.have.property('length', 1);
     expect(first.warnings[0]).to.include('Multiple entries are replacing the same "Community Health Promoter"');
+    expect(second.warnings).to.deep.eq(first.warnings);
+  });
+
+  it('warn if two local places have the same phone number', async () => {
+    const sessionCache = new SessionCache();
+    const chtApi = mockChtApi([subcounty], [chuDoc], [chpDoc]);
+
+    const chuType = Config.getContactType('d_community_health_volunteer_area');
+    const chpData = {
+      hierarchy_SUBCOUNTY: subcounty.name,
+      hierarchy_CHU: chuDoc.name,
+      contact_name: 'new chp',
+      contact_phone: '0712345678',
+    };
+    const first = await PlaceFactory.createOne(chpData, chuType, sessionCache, chtApi);
+    expect(first.validationErrors).to.be.empty;
+
+    chpData.contact_name = 'other chp';
+    const second = await PlaceFactory.createOne(chpData, chuType, sessionCache, chtApi);
+    expect(second.validationErrors).to.be.empty;
+
+    expect(first.warnings).to.have.property('length', 1);
+    expect(first.warnings[0]).to.include('Multiple "Community Health Promoter" with same "CHP Phone"');
     expect(second.warnings).to.deep.eq(first.warnings);
   });
 

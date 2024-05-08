@@ -147,7 +147,7 @@ describe('services/place-factory.ts', () => {
           lineage: ['parent-id'],
           placeType: 'd_community_health_volunteer_area',
           type: 'remote',
-          uniqueKeys: {
+          uniquePlaceValues: {
             name: {
               original: 'bob',
               formatted: 'bob',
@@ -165,7 +165,7 @@ describe('services/place-factory.ts', () => {
           placeType: 'c_community_health_unit',
           type: 'remote',
           lineage: [],
-          uniqueKeys: {
+          uniquePlaceValues: {
             name: {
               original: 'Chepalungu CHU',
               formatted: 'Chepalungu',

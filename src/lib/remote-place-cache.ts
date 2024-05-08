@@ -19,7 +19,10 @@ export type RemotePlace = {
   lineage: string[];
   ambiguities?: RemotePlace[];
   placeType: string;
-  uniqueKeys: FormattedPropertyCollection;
+  uniquePlaceValues: FormattedPropertyCollection;
+
+  // these are very expensive to fetch on remote places; but are available for staged places
+  uniqueContactValues?: FormattedPropertyCollection;
 
   // sadly, sometimes invalid or uncreated objects "pretend" to be remote
   // should reconsider this naming
@@ -106,7 +109,7 @@ export default class RemotePlaceCache {
         name: new RemotePlacePropertyValue(doc.name, hierarchyLevel),
         placeType: hierarchyLevel.contact_type,
         lineage: extractLineage(doc),
-        uniqueKeys: uniqueKeyStringValues,
+        uniquePlaceValues: uniqueKeyStringValues,
         type: 'remote',
       };
     });

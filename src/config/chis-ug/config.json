@@ -105,7 +105,8 @@
           "property_name": "phone",
           "type": "phone",
           "parameter": "UG",
-          "required": true
+          "required": true,
+          "unique": "all"
         },
         {
           "friendly_name": "Date of Birth",

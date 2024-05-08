@@ -39,11 +39,10 @@ describe('config', () => {
     expect(assertion).to.throw('"name"');
   });
 
-  it('contact_properties cannot have unique attributes', () => {
+  it('contact_properties can have unique attributes', () => {
     const mockConfig = mockPartnerConfig();
     mockConfig.config.contact_types[0].contact_properties[0].unique = 'parent';
-    const assertion = () => Config.assertIfInvalid(mockConfig);
-    expect(assertion).to.throw('with "unique" values');
+    Config.assertIfInvalid(mockConfig);
   });
 
   it('hierarchy properties cannot have unique attributes', () => {
