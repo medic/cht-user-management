@@ -1,4 +1,4 @@
-import { ContactProperty, ContactType } from '../config';
+import { ContactProperty } from '../config';
 import { IWarningClassifier } from '.';
 import Place from '../services/place';
 import { IPropertyValue, PropertyValues } from '../property-value';
@@ -7,17 +7,15 @@ import { RemotePlace } from '../lib/remote-place-cache';
 type PropertyType = 'place' | 'contact';
 
 export default class UniquePropertyClassifier implements IWarningClassifier {
-  private readonly friendlyContactName: string;
   private readonly propertyType: PropertyType;
   private readonly property: ContactProperty;
 
-  constructor(friendlyContactName: string, propertyType: PropertyType, property: ContactProperty) {
-    this.friendlyContactName = friendlyContactName;
+  constructor(propertyType: PropertyType, property: ContactProperty) {
     this.propertyType = propertyType;
     this.property = property;
   }
 
-  triggerWarningForPlaces(basePlace: RemotePlace, remainingPlaces: RemotePlace[]): RemotePlace[] | undefined {
+  triggerWarningForPlaces(basePlace: RemotePlace, placesToCompare: RemotePlace[]): RemotePlace[] | undefined {
     const getPropertyValue = (remotePlace: RemotePlace): IPropertyValue | undefined => {
       const source = this.propertyType === 'place' ? remotePlace.uniquePlaceValues : remotePlace.uniqueContactValues;
       return source?.[this.property.property_name];
@@ -45,7 +43,7 @@ export default class UniquePropertyClassifier implements IWarningClassifier {
     }
     
     const propertyHasParentScope = this.property.unique === 'parent';
-    return remainingPlaces
+    return placesToCompare
       .filter(place => {
         const placeValue = getPropertyValue(place);
         return !isSkipable(place, placeValue) && 

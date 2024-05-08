@@ -15,7 +15,7 @@ type Warning = {
 };
 
 export interface IWarningClassifier {
-  triggerWarningForPlaces(localPlace: RemotePlace, remainingPlaces: RemotePlace[]): RemotePlace[] | undefined;
+  triggerWarningForPlaces(basePlace: RemotePlace, placesToCompare: RemotePlace[]): RemotePlace[] | undefined;
   uniqueKey(place: Place): string;
   getWarningString(remotePlaces: RemotePlace[]): string;
 }
@@ -39,24 +39,24 @@ export default class WarningSystem {
     const result: Warning[] = [];
     const knownWarnings = new Set<string>();
     
-    const remainingPlaces = _.uniqBy([
+    const placesToCompare = _.uniqBy([
       ...localPlaces.map(place => place.asRemotePlace()),
       ...remotePlaces,
     ], 'id');
 
-    while (remainingPlaces.length) {
-      const localPlace = remainingPlaces.shift();
-      if (!localPlace?.stagedPlace) {
+    while (placesToCompare.length) {
+      const basePlace = placesToCompare.shift();
+      if (!basePlace?.stagedPlace) {
         continue;
       }
   
       for (const classifier of warningClassifiers) {
-        const classifierKey = classifier.uniqueKey(localPlace.stagedPlace);
+        const classifierKey = classifier.uniqueKey(basePlace.stagedPlace);
         if (knownWarnings.has(classifierKey)) {
           continue;
         }
   
-        const warnings = WarningSystem.runClassifer(classifier, localPlace, remainingPlaces);
+        const warnings = WarningSystem.runClassifer(classifier, basePlace, placesToCompare);
         if (warnings?.length) {
           result.push(...warnings);
           warnings.forEach(warning => knownWarnings.add(warning.uniqueKey));
@@ -89,7 +89,7 @@ export default class WarningSystem {
   private static createClassifiers(contactType: ContactType): IWarningClassifier[] {
     const createUniquePropertyClassifiers = (properties: ContactProperty[], propertyType: 'place' | 'contact') => properties
       .filter(prop => prop.unique)
-      .map(prop => new UniquePropertyClassifier(contactType.friendly, propertyType, prop));
+      .map(prop => new UniquePropertyClassifier(propertyType, prop));
 
     const classifiers = [
       ...createUniquePropertyClassifiers(contactType.place_properties, 'place'),

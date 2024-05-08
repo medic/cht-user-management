@@ -43,4 +43,4 @@ export default function createZip(sessionCache: SessionCache): JSZip {
   }
 
   return zip;
-};
+}

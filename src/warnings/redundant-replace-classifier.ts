@@ -10,13 +10,13 @@ export default class RedundantReplaceClassifier implements IWarningClassifier {
     this.contactType = contactType;
   }
 
-  triggerWarningForPlaces(localPlace: RemotePlace, remainingPlaces: RemotePlace[]): RemotePlace[] | undefined {
-    const replacementId = localPlace.stagedPlace?.resolvedHierarchy[0]?.id;
-    if (!localPlace.stagedPlace || !replacementId) {
+  triggerWarningForPlaces(basePlace: RemotePlace, placesToCompare: RemotePlace[]): RemotePlace[] | undefined {
+    const replacementId = basePlace.stagedPlace?.resolvedHierarchy[0]?.id;
+    if (!basePlace.stagedPlace || !replacementId) {
       return;
     }
     
-    const confirmedDuplicates = remainingPlaces
+    const confirmedDuplicates = placesToCompare
       .filter(remaining => remaining.stagedPlace && remaining.stagedPlace?.resolvedHierarchy[0]?.id === replacementId);
     
     if (confirmedDuplicates.length) {
