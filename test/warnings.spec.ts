@@ -5,6 +5,7 @@ import { ChtDoc, createChu, mockChtApi } from './mocks';
 import RemotePlaceCache from '../src/lib/remote-place-cache';
 import { Config } from '../src/config';
 import PlaceFactory from '../src/services/place-factory';
+import { UploadManager } from '../src/services/upload-manager';
 
 const subcounty: ChtDoc = {
   _id: 'subcounty1-id',
@@ -53,7 +54,7 @@ describe('warnings', () => {
     const second = await createChu(subcounty, 'chu', sessionCache, chtApi, { place_code: '121212' });
 
     expect(first.warnings).to.have.property('length', 1);
-    expect(first.warnings[0]).to.include('"Community Health Unit" with same "CHU Name"');
+    expect(first.warnings[0]).to.include('same "CHU Name"');
     expect(second.warnings).to.deep.eq(first.warnings);
   });
 
@@ -64,7 +65,7 @@ describe('warnings', () => {
     const second = await createChu(subcounty, 'abc', sessionCache, chtApi, { place_code: '121212' });
 
     expect(first.warnings).to.have.property('length', 1);
-    expect(first.warnings[0]).to.include('"Community Health Unit" with same "CHU Name"');
+    expect(first.warnings[0]).to.include('same "CHU Name"');
     expect(second.warnings).to.deep.eq(first.warnings);
   });
 
@@ -83,7 +84,7 @@ describe('warnings', () => {
     expect(chp.validationErrors).to.be.empty;
 
     expect(chp.warnings).to.have.property('length', 1);
-    expect(chp.warnings[0]).to.include('"Community Health Promoter" with same "CHP Area Name"');
+    expect(chp.warnings[0]).to.include('same "CHP Area Name"');
   });
 
   it('name warning for conflicting new and replacement CHP (replace first)', async () => {
@@ -108,7 +109,7 @@ describe('warnings', () => {
     expect(newChp.validationErrors).to.be.empty;
 
     expect(newChp.warnings).to.have.property('length', 1);
-    expect(newChp.warnings[0]).to.include('"Community Health Promoter" with same "CHP Area Name"');
+    expect(newChp.warnings[0]).to.include('same "CHP Area Name"');
     expect(replacementChp.warnings).to.deep.eq(newChp.warnings);
   });
 
@@ -133,7 +134,7 @@ describe('warnings', () => {
     expect(replacementChp.validationErrors).to.be.empty;
 
     expect(replacementChp.warnings).to.have.property('length', 1);
-    expect(replacementChp.warnings[0]).to.include('"Community Health Promoter" with same "CHP Area Name"');
+    expect(replacementChp.warnings[0]).to.include('same "CHP Area Name"');
     expect(newChp.warnings).to.deep.eq(replacementChp.warnings);
   });
 
@@ -181,7 +182,34 @@ describe('warnings', () => {
     expect(second.validationErrors).to.be.empty;
 
     expect(first.warnings).to.have.property('length', 1);
-    expect(first.warnings[0]).to.include('Multiple "Community Health Promoter" with same "CHP Phone"');
+    expect(first.warnings[0]).to.include('same "CHP Phone"');
+    expect(second.warnings).to.deep.eq(first.warnings);
+  });
+
+  it('warn if a created place has same phone number as staged place', async () => {
+    const sessionCache = new SessionCache();
+    const chtApi = mockChtApi([subcounty], [chuDoc], []);
+    const chuType = Config.getContactType('d_community_health_volunteer_area');
+    const chpData = {
+      hierarchy_SUBCOUNTY: subcounty.name,
+      hierarchy_CHU: chuDoc.name,
+      contact_name: 'new chp',
+      contact_phone: '0712345678',
+    };
+    const first = await PlaceFactory.createOne(chpData, chuType, sessionCache, chtApi);
+    expect(first.validationErrors).to.be.empty;
+    expect(first.warnings).to.be.empty;
+
+    const uploadManager = new UploadManager();
+    await uploadManager.doUpload([first], chtApi, false);
+    expect(first.isCreated).to.be.true;
+
+    chpData.contact_name = 'other chp';
+    const second = await PlaceFactory.createOne(chpData, chuType, sessionCache, chtApi);
+    expect(second.validationErrors).to.be.empty;
+
+    expect(first.warnings).to.have.property('length', 1);
+    expect(first.warnings[0]).to.include('same "CHP Phone"');
     expect(second.warnings).to.deep.eq(first.warnings);
   });
 
@@ -249,7 +277,7 @@ describe('warnings', () => {
     const first = await createChu(subcounty, 'abc', sessionCache, chtApi);
 
     expect(first.warnings).to.have.property('length', 1);
-    expect(first.warnings[0]).to.include('"Community Health Unit" with same "CHU Name"');
+    expect(first.warnings[0]).to.include('same "CHU Name"');
     expect(first.warnings).to.deep.eq(first.warnings);
   });
 
@@ -260,7 +288,7 @@ describe('warnings', () => {
     const second = await createChu(subcounty2, 'chu-2', sessionCache, chtApi);
 
     expect(first.warnings).to.have.property('length', 1);
-    expect(first.warnings[0]).to.include('"Community Health Unit" with same "CHU Code"');
+    expect(first.warnings[0]).to.include('same "CHU Code"');
     expect(first.warnings).to.deep.eq(second.warnings);
   });
 
@@ -273,7 +301,7 @@ describe('warnings', () => {
     const first = await createChu(subcounty, 'abc', sessionCache, chtApi, { place_code: chuCode });
 
     expect(first.warnings).to.have.property('length', 1);
-    expect(first.warnings[0]).to.include('"Community Health Unit" with same "CHU Code"');
+    expect(first.warnings[0]).to.include('same "CHU Code"');
   });
 
   it('no warning when local place and remote place share same name but different parents', async () => {

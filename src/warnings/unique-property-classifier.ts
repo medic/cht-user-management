@@ -25,7 +25,7 @@ export default class UniquePropertyClassifier implements IWarningClassifier {
 
     const baseValue = getPropertyValue(basePlace);
     const isSkipable = (remotePlace: RemotePlace, value?: IPropertyValue): boolean => {
-      if (remotePlace.type === 'local') {
+      if (remotePlace.stagedPlace) {
         return !!(
           value?.validationError?.length || // warnings are not shown when there are errors
           (remotePlace?.stagedPlace?.isReplacement && !value?.formatted) // falsy properties should be skipped during replacement
@@ -33,12 +33,7 @@ export default class UniquePropertyClassifier implements IWarningClassifier {
       }
 
       // the remote places are of the type of the place, not of the type of the contact
-      if (remotePlace.type === 'remote') {
-        return this.propertyType === 'contact';
-      }
-
-      // do not look at invalid remote place types
-      return true;
+      return this.propertyType === 'contact';
     };
 
     if (
@@ -68,9 +63,9 @@ export default class UniquePropertyClassifier implements IWarningClassifier {
     const remoteDuplicateIds = remotePlaces.map(remotePlace => remotePlace.id);
     if (remoteDuplicateIds.length) {
       const idString = JSON.stringify(remoteDuplicateIds);
-      return `"${this.friendlyContactName}" with same "${this.property.friendly_name}"${parentClause} exist on the instance. ID "${idString}"`;
+      return `A place with the same "${this.property.friendly_name}"${parentClause} exists on the instance. ID "${idString}"`;
     }
   
-    return `Multiple "${this.friendlyContactName}" with same "${this.property.friendly_name}"${parentClause} are staged to be created`;
+    return `Multiple staged entries have the same "${this.property.friendly_name}"${parentClause}`;
   }
 }

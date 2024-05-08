@@ -1,3 +1,5 @@
+import _ from 'lodash';
+
 import { ContactProperty, ContactType } from '../config';
 import { ChtApi } from '../lib/cht-api';
 import Place from '../services/place';
@@ -37,10 +39,14 @@ export default class WarningSystem {
     const result: Warning[] = [];
     const knownWarnings = new Set<string>();
     
-    const remainingPlaces = [...localPlaces.map(place => place.asRemotePlace()), ...remotePlaces];
+    const remainingPlaces = [
+      ...localPlaces.map(place => place.asRemotePlace()),
+      ...remotePlaces.filter(remotePlace => !remotePlace.stagedPlace),
+    ];
+
     while (remainingPlaces.length) {
       const localPlace = remainingPlaces.shift();
-      if (localPlace?.type !== 'local' || !localPlace.stagedPlace) {
+      if (!localPlace?.stagedPlace) {
         continue;
       }
   
@@ -68,11 +74,11 @@ export default class WarningSystem {
     }
 
     const implicatedLocalPlacesWithoutBase = implicatedPlaces
-      .filter(remotePlace => remotePlace.type === 'local' && remotePlace.stagedPlace)
+      .filter(remotePlace => remotePlace.stagedPlace)
       .map(remotePlace => remotePlace.stagedPlace) as Place[];
     const implicatedLocalPlaces = [basePlace.stagedPlace, ...implicatedLocalPlacesWithoutBase];
 
-    const implicatedRemotePlaces = implicatedPlaces.filter(remotePlace => remotePlace.type === 'remote');
+    const implicatedRemotePlaces = implicatedPlaces.filter(remotePlace => !remotePlace.stagedPlace);
     return implicatedLocalPlaces.map(place => ({
       place,
       warningString: classifier.getWarningString(implicatedRemotePlaces),

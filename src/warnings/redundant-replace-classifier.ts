@@ -12,12 +12,12 @@ export default class RedundantReplaceClassifier implements IWarningClassifier {
 
   triggerWarningForPlaces(localPlace: RemotePlace, remainingPlaces: RemotePlace[]): RemotePlace[] | undefined {
     const replacementId = localPlace.stagedPlace?.resolvedHierarchy[0]?.id;
-    if (localPlace.type !== 'local' || !localPlace.stagedPlace || !replacementId) {
+    if (!localPlace.stagedPlace || !replacementId) {
       return;
     }
     
     const confirmedDuplicates = remainingPlaces
-      .filter(remaining => remaining.type === 'local' && remaining.stagedPlace?.resolvedHierarchy[0]?.id === replacementId);
+      .filter(remaining => remaining.stagedPlace && remaining.stagedPlace?.resolvedHierarchy[0]?.id === replacementId);
     
     if (confirmedDuplicates.length) {
       return confirmedDuplicates;

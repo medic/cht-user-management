@@ -40,6 +40,18 @@ export const mockChtApi = (first: ChtDoc[] = [], second: ChtDoc[] = [], third: C
     .onFirstCall().resolves(first)
     .onSecondCall().resolves(second)
     .onThirdCall().resolves(third),
+  createPlace: sinon.stub().resolves('created-place-id'),
+  updateContactParent: sinon.stub().resolves('created-contact-id'),
+  createUser: sinon.stub().resolves(),
+  getParentAndSibling: sinon.stub().resolves({
+    parent: {
+      link_facility_code: '12345',
+      link_facility_name: 'facility',
+      name: 'chu',
+      code: '123456',
+    },
+    sibling: undefined,
+  }),
 });
 
 export const mockSimpleContactType = (
