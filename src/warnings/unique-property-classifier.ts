@@ -16,28 +16,11 @@ export default class UniquePropertyClassifier implements IWarningClassifier {
   }
 
   triggerWarningForPlaces(basePlace: RemotePlace, placesToCompare: RemotePlace[]): RemotePlace[] | undefined {
-    const getPropertyValue = (remotePlace: RemotePlace): IPropertyValue | undefined => {
-      const source = this.propertyType === 'place' ? remotePlace.uniquePlaceValues : remotePlace.uniqueContactValues;
-      return source?.[this.property.property_name];
-    };
-
-    const baseValue = getPropertyValue(basePlace);
-    const isSkipable = (remotePlace: RemotePlace, value?: IPropertyValue): boolean => {
-      if (remotePlace.stagedPlace) {
-        return !!(
-          value?.validationError?.length || // warnings are not shown when there are errors
-          (remotePlace?.stagedPlace?.isReplacement && !value?.formatted) // falsy properties should be skipped during replacement
-        );
-      }
-
-      // the remote places are of the type of the place, not of the type of the contact
-      return this.propertyType === 'contact';
-    };
-
+    const baseValue = this.getPropertyValue(basePlace);
     if (
-      !baseValue || // base must have a value
-      !basePlace.stagedPlace || // base must be a local staged place
-      isSkipable(basePlace, baseValue)
+      !baseValue ||
+      !basePlace.stagedPlace ||
+      this.shouldSkip(basePlace, baseValue)
     ) {
       return;
     }
@@ -45,8 +28,8 @@ export default class UniquePropertyClassifier implements IWarningClassifier {
     const propertyHasParentScope = this.property.unique === 'parent';
     return placesToCompare
       .filter(place => {
-        const placeValue = getPropertyValue(place);
-        return !isSkipable(place, placeValue) && 
+        const placeValue = this.getPropertyValue(place);
+        return !this.shouldSkip(place, placeValue) && 
           (!propertyHasParentScope || place.lineage[0] === basePlace.lineage[0]) &&
           PropertyValues.isMatch(baseValue, placeValue);
       });
@@ -65,5 +48,23 @@ export default class UniquePropertyClassifier implements IWarningClassifier {
     }
   
     return `Multiple staged entries have the same "${this.property.friendly_name}"${parentClause}`;
+  }
+
+  private shouldSkip(remotePlace: RemotePlace, value?: IPropertyValue): boolean {
+    if (remotePlace.stagedPlace) {
+      return !!(
+        value?.validationError?.length || // warnings are not shown when there are errors
+        (remotePlace?.stagedPlace?.isReplacement && !value?.formatted) // falsy properties should be skipped during replacement
+      );
+    }
+  
+    // remote places are of the type of the place, not of the type of the contact
+    // therefore, they can be discarded when doing contact-based comparisons
+    return this.propertyType === 'contact';
+  }
+  
+  private getPropertyValue(remotePlace: RemotePlace): IPropertyValue | undefined {
+    const source = this.propertyType === 'place' ? remotePlace.uniquePlaceValues : remotePlace.uniqueContactValues;
+    return source?.[this.property.property_name];
   }
 }

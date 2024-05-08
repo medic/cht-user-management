@@ -12,13 +12,15 @@ export default class RedundantReplaceClassifier implements IWarningClassifier {
 
   triggerWarningForPlaces(basePlace: RemotePlace, placesToCompare: RemotePlace[]): RemotePlace[] | undefined {
     const replacementDetails = basePlace.stagedPlace?.resolvedHierarchy[0];
-    if (!basePlace.stagedPlace || !replacementDetails || replacementDetails.type === 'invalid') {
+    if (!replacementDetails || replacementDetails.type === 'invalid') {
       return;
     }
     
     const confirmedDuplicates = placesToCompare
-      .filter(place => place.type !== 'invalid' && place.stagedPlace && place.stagedPlace?.resolvedHierarchy[0]?.id === replacementDetails.id);
-    
+      .filter(place => place.type !== 'invalid' && 
+        place.stagedPlace && 
+        place.stagedPlace?.resolvedHierarchy[0]?.id === replacementDetails.id);
+
     if (confirmedDuplicates.length) {
       return confirmedDuplicates;
     }

@@ -36,9 +36,10 @@ export default class WarningSystem {
   }
 
   private static runClassifiers(warningClassifiers: IWarningClassifier[], remotePlaces: RemotePlace[], localPlaces: Place[]): Warning[] {
-    const result: Warning[] = [];
+    const warnings: Warning[] = [];
     const knownWarnings = new Set<string>();
     
+    // uniq is needed in rare refresh scenarios wherein a place is both local (in the list) and remote (fetched from CHT instance)
     const placesToCompare = _.uniqBy([
       ...localPlaces.map(place => place.asRemotePlace()),
       ...remotePlaces,
@@ -56,20 +57,23 @@ export default class WarningSystem {
           continue;
         }
   
-        const warnings = WarningSystem.runClassifer(classifier, basePlace, placesToCompare);
-        if (warnings?.length) {
-          result.push(...warnings);
-          warnings.forEach(warning => knownWarnings.add(warning.uniqueKey));
+        const classified = WarningSystem.runClassifier(classifier, basePlace, placesToCompare);
+        if (classified?.length) {
+          warnings.push(...classified);
+          classified.forEach(warning => knownWarnings.add(warning.uniqueKey));
         }
       }
     }
   
-    return result;
+    return warnings;
   }
 
-  private static runClassifer(classifier: IWarningClassifier, basePlace: RemotePlace, otherPlaces: RemotePlace[]): Warning[] | undefined {
-    const implicatedPlaces = classifier.triggerWarningForPlaces(basePlace, otherPlaces);
-    if (!basePlace.stagedPlace || !implicatedPlaces?.length) {
+  private static runClassifier(classifier: IWarningClassifier, basePlace: RemotePlace, placesToCompare: RemotePlace[]): Warning[] | undefined {
+    if (!basePlace.stagedPlace) {
+      return;
+    }
+    const implicatedPlaces = classifier.triggerWarningForPlaces(basePlace, placesToCompare);
+    if (!implicatedPlaces?.length) {
       return;
     }
 
