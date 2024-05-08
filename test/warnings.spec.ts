@@ -1,4 +1,5 @@
 import { expect } from 'chai';
+import fs from 'fs';
 
 import SessionCache from '../src/services/session-cache';
 import { ChtDoc, createChu, expectInvalidProperties, mockChtApi } from './mocks';
@@ -6,6 +7,7 @@ import RemotePlaceCache from '../src/lib/remote-place-cache';
 import { Config } from '../src/config';
 import PlaceFactory from '../src/services/place-factory';
 import { UploadManager } from '../src/services/upload-manager';
+import Place from '../src/services/place';
 
 const subcounty: ChtDoc = {
   _id: 'subcounty1-id',
@@ -164,6 +166,21 @@ describe('warnings', () => {
     expect(replacement2.warnings).to.be.empty;
   });
 
+  it('csv import of multiple.csv', async () => {
+    const sessionCache = new SessionCache();
+    const chtApi = mockChtApi([subcounty], [chuDoc], []);
+
+    const singleCsvBuffer = fs.readFileSync('./test/multiple.csv');
+    const chpType = Config.getContactType('d_community_health_volunteer_area');
+    
+    const places: Place[] = await PlaceFactory.createFromCsv(singleCsvBuffer, chpType, sessionCache, chtApi);
+    expect(places).to.have.property('length', 2);
+
+    expect(places[0].validationErrors).to.be.empty;
+    expect(places[0].warnings).to.be.empty;
+    expect(places[1].validationErrors).to.be.empty;
+    expect(places[1].warnings).to.be.empty;
+  });
 
   it('warn if two local try to replace the same remote', async () => {
     const sessionCache = new SessionCache();

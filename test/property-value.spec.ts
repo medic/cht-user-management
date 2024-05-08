@@ -30,6 +30,12 @@ describe('property-value', () => {
     },
   ];
 
+  const generatedScenario = (formattedValue: string) => {
+    const result = new UnvalidatedPropertyValue(formattedValue);
+    result.original = '';
+    return result;
+  };
+
   const matchScenarios = [
     { a: 'abc', b: 'abc', expected: true },
     { a: 'abc', b: 'AbC', expected: true },
@@ -40,6 +46,17 @@ describe('property-value', () => {
     { a: undefined, b: 'abc', expected: false },
     { a: 'abc', b: undefined, expected: false },
     { a: undefined, b: undefined, expected: false },
+
+    {
+      a: generatedScenario('iji'),
+      b: generatedScenario('iJI'),
+      expected: true
+    },
+    {
+      a: generatedScenario('abc'),
+      b: generatedScenario('efg'),
+      expected: false
+    },
   ];
 
   describe('include', () => {

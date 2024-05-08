@@ -22,6 +22,11 @@ export class PropertyValues {
       return false;
     }
 
+    // if both original values are empty, just look at the formatted values
+    if ((a as IPropertyValue).original === '' && (b as IPropertyValue).original === '') {
+      return PropertyValues.compare(comparator, a.toString(), b.toString());
+    }
+
     const normalize = (str: string) => str.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase();
     const valueAsArray = (val: string | IPropertyValue): string[] => {
       const values = typeof val === 'string' ? [val] : [val.formatted, val.original];

@@ -121,7 +121,7 @@ describe('services/place-factory.ts', () => {
       .onSecondCall().resolves([parentDoc])
       .onThirdCall().resolves([toReplace]);
 
-    const singleCsvBuffer = fs.readFileSync('./test/single.csv');
+    const singleCsvBuffer = fs.readFileSync('./test/single-replace.csv');
     const chpType = Config.getContactType('d_community_health_volunteer_area');
     
     const places: Place[] = await PlaceFactory.createFromCsv(singleCsvBuffer, chpType, sessionCache, chtApi);
