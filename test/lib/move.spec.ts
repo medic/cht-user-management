@@ -39,7 +39,7 @@ describe('lib/move.ts', () => {
     expect(actual.command).to.include('--parent=to-sub');
     expect(actual.command).to.include('--url=http://username:password@domain.com', actual.command);
 
-    expect(actual.fromLineage.map((l:any) => l.id)).to.deep.eq(['chu-id', 'from-sub']);
+    expect(actual.fromLineage.map((l:any) => l.id)).to.deep.eq(['from-sub', 'chu-id']);
     expect(actual.toLineage.map((l:any) => l.id)).to.deep.eq([undefined, 'to-sub']);
   });
 
