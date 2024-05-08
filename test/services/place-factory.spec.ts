@@ -177,6 +177,7 @@ describe('services/place-factory.ts', () => {
       validationErrors: {},
       userRoleProperties: {},
       state: 'staged',
+      warnings: [],
     });
   });
 

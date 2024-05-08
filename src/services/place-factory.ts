@@ -6,7 +6,7 @@ import Place, { FormattedPropertyCollection } from './place';
 import SessionCache from './session-cache';
 import RemotePlaceResolver from '../lib/remote-place-resolver';
 import { HierarchyPropertyValue, ContactPropertyValue, IPropertyValue } from '../property-value';
-import WarningSystem from '../validation/warnings';
+import WarningSystem from '../warnings';
 
 export default class PlaceFactory {
   public static async createFromCsv(csvBuffer: Buffer, contactType: ContactType, sessionCache: SessionCache, chtApi: ChtApi)

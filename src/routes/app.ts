@@ -8,7 +8,7 @@ import RemotePlaceCache from '../lib/remote-place-cache';
 import RemotePlaceResolver from '../lib/remote-place-resolver';
 import SessionCache from '../services/session-cache';
 import { UploadManager } from '../services/upload-manager';
-import WarningSystem from '../validation/warnings';
+import WarningSystem from '../warnings';
 
 export default async function sessionCache(fastify: FastifyInstance) {
   fastify.get('/', async (req, resp) => {
