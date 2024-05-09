@@ -7,27 +7,6 @@ import { UploadManager } from '../services/upload-manager';
 import { minify } from 'html-minifier';
 
 export default async function events(fastify: FastifyInstance) {
-  fastify.get('/events/places/all', async (req, resp) => {
-    const sessionCache: SessionCache = req.sessionCache;
-    const contactTypes = Config.contactTypes();
-    const directiveModel = new DirectiveModel(sessionCache, req.cookies.filter);
-    const placeData = contactTypes.map(item => ({
-      ...item,
-      places: sessionCache.getPlaces({
-        type: item.name,
-        filter: directiveModel.filter,
-      }),
-      hierarchy: Config.getHierarchyWithReplacement(item, 'desc'),
-      userRoleProperty: Config.getUserRoleConfig(item),
-    }));
-
-    return resp.view('src/liquid/place/list_event.html', {
-      contactTypes: placeData,
-      session: req.chtSession,
-      directiveModel,
-    });
-  });
-
   fastify.get('/events/connection', async (req, resp) => {
     const uploadManager: UploadManager = fastify.uploadManager;
     const sessionCache: SessionCache = req.sessionCache;
