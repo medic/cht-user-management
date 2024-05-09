@@ -44,7 +44,6 @@ export default async function events(fastify: FastifyInstance) {
               event: `update-${arg}`, data: minify(html, {
                 html5: true,
                 collapseWhitespace: true,
-                collapseInlineTagWhitespace: true,
               })
             });
           });
