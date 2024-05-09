@@ -62,13 +62,13 @@ export default async function sessionCache(fastify: FastifyInstance) {
     return resp.view('src/liquid/place/list.html', tmplData);
   });
 
-  fastify.post('/app/remove-all', async (req) => {
+  fastify.post('/app/remove-all', async (req, resp) => {
     const sessionCache: SessionCache = req.sessionCache;
     sessionCache.removeAll();
-    fastify.uploadManager.triggerRefresh(undefined);
+    resp.header('HX-Redirect', '/');
   });
 
-  fastify.post('/app/refresh-all', async (req) => {
+  fastify.post('/app/refresh-all', async (req, resp) => {
     const sessionCache: SessionCache = req.sessionCache;
     const chtApi = new ChtApi(req.chtSession);
 
@@ -77,8 +77,7 @@ export default async function sessionCache(fastify: FastifyInstance) {
     const places = sessionCache.getPlaces({ created: false });
     await RemotePlaceResolver.resolve(places, sessionCache, chtApi, { fuzz: true });
     places.forEach(p => p.validate());
-
-    fastify.uploadManager.triggerRefresh(undefined);
+    resp.header('HX-Redirect', '/');
   });
 
   // initiates place creation via the job manager
@@ -93,8 +92,6 @@ export default async function sessionCache(fastify: FastifyInstance) {
   });
 
   fastify.post('/app/set-filter/:filter', async (req, resp) => {
-    const uploadManager: UploadManager = fastify.uploadManager;
-
     const params: any = req.params;
     const filter = params.filter;
     resp.setCookie('filter', filter, {
@@ -105,6 +102,6 @@ export default async function sessionCache(fastify: FastifyInstance) {
       secure: true,
     });
 
-    uploadManager.triggerRefresh(undefined);
+    resp.header('HX-Redirect', '/');
   });
 }

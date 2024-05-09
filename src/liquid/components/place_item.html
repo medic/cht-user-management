@@ -1,5 +1,4 @@
-<tr id="{{place.id}}" hx-trigger="sse:update-{{place.id}}" hx-get="/events/place/{{place.id}}" hx-target="this"
-    hx-swap="outerHTML">
+<tr id="{{place.id}}" hx-sse="swap:update-{{place.id}}" hx-target="this" hx-swap="outerHTML">
     {% for hierarchy in contactType.hierarchy %}
     {% capture propertyName %}hierarchy_{{ hierarchy.property_name }}{% endcapture %}
     {%
@@ -64,8 +63,7 @@
 
     <td>
         {% if place.creationDetails.password %}
-        {% capture explanation %}Username: {{ place.creationDetails.username }}
-        Password: {{ place.creationDetails.password }}{% endcapture %}
+        {% capture explanation %}Username: {{ place.creationDetails.username }} Password: {{ place.creationDetails.password }}{% endcapture %}
         <span class="has-tooltip-arrow has-tooltipl-multiline material-symbols-outlined"
             data-tooltip="{{ explanation | escape }}"
             onclick="navigator.clipboard.writeText(`{{ explanation | escape }}`);">
