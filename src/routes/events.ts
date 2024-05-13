@@ -1,13 +1,13 @@
-import { FastifyInstance } from "fastify";
+import { FastifyInstance } from 'fastify';
 
-import { Config } from "../config";
-import DirectiveModel from "../services/directive-model";
-import SessionCache from "../services/session-cache";
-import { UploadManager } from "../services/upload-manager";
-import { minify } from "html-minifier";
+import { Config } from '../config';
+import DirectiveModel from '../services/directive-model';
+import SessionCache from '../services/session-cache';
+import { UploadManager } from '../services/upload-manager';
+import { minify } from 'html-minifier';
 
 export default async function events(fastify: FastifyInstance) {
-  fastify.get("/events/connection", async (req, resp) => {
+  fastify.get('/events/connection', async (req, resp) => {
     const uploadManager: UploadManager = fastify.uploadManager;
     const sessionCache: SessionCache = req.sessionCache;
 
@@ -18,7 +18,7 @@ export default async function events(fastify: FastifyInstance) {
         sessionCache,
         req.cookies.filter
       );
-      const html = await fastify.view("src/liquid/place/directive.html", {
+      const html = await fastify.view('src/liquid/place/directive.html', {
         directiveModel,
       });
       resp.sse({
@@ -33,19 +33,20 @@ export default async function events(fastify: FastifyInstance) {
     const placeChangeListener = async (arg: string) => {
       const place = sessionCache.getPlace(arg);
       if (!place) {
-        resp.sse({ event: `update-${arg}`, data: "<tr></tr>" });
+        resp.sse({ event: `update-${arg}`, data: '<tr></tr>' });
       } else {
         const html = await fastify.view(
-          "src/liquid/components/place_item.html",
+          'src/liquid/components/place_item.html',
           {
             contactType: {
               ...place.type,
-              hierarchy: Config.getHierarchyWithReplacement(place.type, "desc"),
+              hierarchy: Config.getHierarchyWithReplacement(place.type, 'desc'),
               userRoleProperty: Config.getUserRoleConfig(place.type),
             },
             place: place,
           }
         );
+
         resp.sse({
           event: `update-${arg}`,
           data: minify(html, {
@@ -57,10 +58,10 @@ export default async function events(fastify: FastifyInstance) {
       await updateDirective();
     };
 
-    uploadManager.on("refresh_table_row", placeChangeListener);
+    uploadManager.on('refresh_table_row', placeChangeListener);
 
-    req.socket.on("close", () => {
-      uploadManager.removeListener("refresh_table_row", placeChangeListener);
+    req.socket.on('close', () => {
+      uploadManager.removeListener('refresh_table_row', placeChangeListener);
     });
   });
 }
