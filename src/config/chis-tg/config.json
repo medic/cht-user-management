@@ -10,8 +10,8 @@
       "domain": "moh-togo-uat.dev.medicmobile.org"
     },
     {
-      "friendly": "MoH Togo PROD",
-      "domain": "moh-togo.app.medicmobile.org"
+      "friendly": "Local Dev Togo",
+      "domain": "127-0-0-1.local-ip.medicmobile.org:10443"
     }
   ],
   "contact_types": [

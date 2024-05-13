@@ -5,6 +5,7 @@ import { ChtApi } from '../lib/cht-api';
 import { FastifyInstance } from 'fastify';
 import MoveLib from '../lib/move';
 import SessionCache from '../services/session-cache';
+import { setRequestDataMetrics } from '../services/page-view';
 
 export default async function sessionCache(fastify: FastifyInstance) {
   fastify.get('/move/:placeType', async (req, resp) => {
@@ -22,6 +23,9 @@ export default async function sessionCache(fastify: FastifyInstance) {
       session: req.chtSession,
       ...moveViewModel(contactType),
     };
+
+    // Sending request and response data for page view
+    setRequestDataMetrics(req, resp);
 
     return resp.view('src/liquid/app/view.html', tmplData);
   });
@@ -47,6 +51,9 @@ export default async function sessionCache(fastify: FastifyInstance) {
         ...moveViewModel(contactType),
         error: e.toString(),
       };
+
+      // Sending request and response data for page view
+      setRequestDataMetrics(req, resp);
   
       return resp.view('src/liquid/place/move_form.html', tmplData);
     }

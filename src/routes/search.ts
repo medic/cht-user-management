@@ -7,6 +7,8 @@ import SearchLib from '../lib/search';
 
 import { moveViewModel } from './move';
 
+import { setRequestDataMetrics } from '../services/page-view';
+
 export default async function place(fastify: FastifyInstance) {
   // returns search results dropdown
   fastify.post('/search', async (req, resp) => {
@@ -34,6 +36,9 @@ export default async function place(fastify: FastifyInstance) {
       throw Error(`not hierarchy constraint at ${level}`);
     }
     const searchResults: RemotePlace[] = await SearchLib.search(contactType, data, dataPrefix, hierarchyLevel, chtApi, sessionCache);
+
+    //Sending request and response data for page view
+    setRequestDataMetrics(req, resp);
 
     return resp.view('src/liquid/components/search_results.html', {
       op,
@@ -89,6 +94,9 @@ export default async function place(fastify: FastifyInstance) {
     } else if (op === 'move') {
       tmplData.backend = `/move`;
     }
+
+    //Sending request and response data for page view
+    setRequestDataMetrics(req, resp);
 
     return resp.view('src/liquid/app/form_switch.html', tmplData);
   });

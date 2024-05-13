@@ -4,6 +4,8 @@ import Auth from '../lib/authentication';
 import { Config } from '../config';
 import { version as appVersion } from '../package.json';
 import ChtSession from '../lib/cht-session';
+import { loginMetricsData } from '../services/login-metrics';
+
 
 export default async function authentication(fastify: FastifyInstance) {
   const unauthenticatedOptions = {
@@ -34,7 +36,9 @@ export default async function authentication(fastify: FastifyInstance) {
     let chtSession;
     try {
       chtSession = await ChtSession.create(authInfo, username, password);
+      loginMetricsData.loginSuccessCount += 1;
     } catch (e: any) {
+      loginMetricsData.loginFailureCount += 1;
       return resp.view('src/liquid/auth/authentication_form.html', {
         domains: Config.getDomains(),
         errors: true,

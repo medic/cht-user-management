@@ -7,6 +7,7 @@ import SessionCache from '../services/session-cache';
 import RemotePlaceResolver from '../lib/remote-place-resolver';
 import { UploadManager } from '../services/upload-manager';
 import RemotePlaceCache from '../lib/remote-place-cache';
+import { setRequestDataMetrics } from '../services/page-view';
 
 export default async function addPlace(fastify: FastifyInstance) {
   fastify.get('/add-place', async (req, resp) => {
@@ -28,12 +29,19 @@ export default async function addPlace(fastify: FastifyInstance) {
       userRoleProperty: Config.getUserRoleConfig(contactType)
     };
 
+    // Sending request and response data for page view
+    setRequestDataMetrics(req, resp);
+
     return resp.view('src/liquid/app/view.html', tmplData);
   });
 
   fastify.post('/place/dob', async (req, resp) => {
     const { place_type, prefix, prop_type } = req.query as any;
     const contactType = Config.getContactType(place_type).contact_properties.find(prop => prop.type === prop_type);
+    
+    // Sending request and response data for page view
+    setRequestDataMetrics(req, resp);
+
     return resp.view('src/liquid/components/contact_type_property.html', {
       data: req.body,
       include: {
@@ -75,6 +83,9 @@ export default async function addPlace(fastify: FastifyInstance) {
         });
       }
 
+      // Sending request and response data for page view
+      setRequestDataMetrics(req, resp);
+
       // back to places list
       resp.header('HX-Redirect', `/`);
       return;
@@ -108,6 +119,9 @@ export default async function addPlace(fastify: FastifyInstance) {
       userRoleProperty: Config.getUserRoleConfig(place.type)
     };
 
+    // Sending request and response data for page view
+    setRequestDataMetrics(req, resp);
+
     resp.header('HX-Push-Url', `/place/edit/${id}`);
     return resp.view('src/liquid/app/view.html', tmplData);
   });
@@ -119,6 +133,9 @@ export default async function addPlace(fastify: FastifyInstance) {
     const chtApi = new ChtApi(req.chtSession);
 
     await PlaceFactory.editOne(id, data, sessionCache, chtApi);
+
+    // Sending request and response data for page view
+    setRequestDataMetrics(req, resp);
 
     // back to places list
     resp.header('HX-Redirect', `/`);
@@ -136,7 +153,6 @@ export default async function addPlace(fastify: FastifyInstance) {
     RemotePlaceCache.clear(chtApi, place.type.name);
     await RemotePlaceResolver.resolveOne(place, sessionCache, chtApi, { fuzz: true });
     place.validate();
-
     fastify.uploadManager.triggerRefresh(place.id);
   });
 
