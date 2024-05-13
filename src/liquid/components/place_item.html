@@ -1,48 +1,47 @@
 <tr id="{{place.id}}" hx-sse="swap:update-{{place.id}}" hx-target="this" hx-swap="outerHTML">
     {% for hierarchy in contactType.hierarchy %}
-    {% capture propertyName %}hierarchy_{{ hierarchy.property_name }}{% endcapture %}
-    {%
-    include "components/list_cell.html"
-    propertyName=propertyName
-    property=hierarchy
-    values=place.hierarchyProperties
-    linkTo=place.resolvedHierarchy[hierarchy.level]
-    %}
+        {% capture propertyName %}hierarchy_{{ hierarchy.property_name }}{% endcapture %}
+        {% 
+            include "components/list_cell.html"
+            propertyName=propertyName
+            property=hierarchy
+            values=place.hierarchyProperties
+            linkTo=place.resolvedHierarchy[hierarchy.level]
+        %}
     {% endfor %}
 
     {% for property in contactType.place_properties %}
-    {% if property.type != 'generated' %}
-    {% capture propertyName %}place_{{ property.property_name }}{% endcapture %}
-
-    {%
-    include "components/list_cell.html"
-    propertyName=propertyName
-    property=property
-    values=place.properties
-    %}
-    {% endif %}
+        {% if property.type != 'generated' %}
+            {% capture propertyName %}place_{{ property.property_name }}{% endcapture %}
+            {%
+                include "components/list_cell.html"
+                propertyName=propertyName
+                property=property
+                values=place.properties
+            %}
+        {% endif %}
     {% endfor %}
 
     {% for contact_property in contactType.contact_properties %}
-    {% if contact_property.type != 'generated' %}
-    {% capture propertyName %}contact_{{ contact_property.property_name }}{% endcapture %}
-    {%
-    include "components/list_cell.html"
-    propertyName=propertyName
-    property=contact_property
-    values=place.contact.properties
-    %}
-    {% endif %}
+        {% if contact_property.type != 'generated' %}
+            {% capture propertyName %}contact_{{ contact_property.property_name }}{% endcapture %}
+            {%
+                include "components/list_cell.html"
+                propertyName=propertyName
+                property=contact_property
+                values=place.contact.properties
+            %}
+        {% endif %}
     {% endfor %}
 
     {% if contactType.user_role.size > 1 %}
-    {% capture propertyName %}user_{{ contactType.userRoleProperty.property_name }}{% endcapture %}
-    {%
-    include "components/list_cell.html"
-    propertyName=propertyName
-    property=contactType.userRoleProperty
-    values=place.userRoleProperties
-    %}
+        {% capture propertyName %}user_{{ contactType.userRoleProperty.property_name }}{% endcapture %}
+        {%
+            include "components/list_cell.html"
+            propertyName=propertyName
+            property=contactType.userRoleProperty
+            values=place.userRoleProperties
+        %}
     {% endif %}
 
     <td>
