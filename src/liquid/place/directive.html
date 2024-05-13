@@ -1,7 +1,8 @@
-<div class="columns is-3 is-variable is-multiline" id="directive" hx-swap-oob="true">
+<div class="columns is-3 is-variable is-multiline" id="directive" hx-sse="swap:directive"
+  hx-target="this" hx-swap="outerHTML">
   <div class="column has-background-light is-9">
     <section class="hero is-small is-light">
-      <div class="hero-body">
+      <div class="hero-body" id="hero_directive_model">
         {% if directiveModel.inProgressCount > 0 %}
           {% include "place/directive_3_in_progress.html" %}
         {% elsif directiveModel.stagedCount > 0 %}
