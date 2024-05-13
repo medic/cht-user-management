@@ -4,6 +4,7 @@ import cookie from '@fastify/cookie';
 import formbody from '@fastify/formbody';
 import multipart from '@fastify/multipart';
 import fastifyStatic from '@fastify/static';
+import fastifyCompress from '@fastify/compress';
 import view from '@fastify/view';
 import { Liquid } from 'liquidjs';
 import { FastifySSEPlugin } from 'fastify-sse-v2';
@@ -18,9 +19,16 @@ const build = (opts: FastifyServerOptions): FastifyInstance => {
   fastify.register(multipart);
   fastify.register(FastifySSEPlugin);
   fastify.register(cookie);
+  fastify.register(fastifyCompress);
   fastify.register(view, {
     engine: {
-      liquid: new Liquid({ extname: '.html', root: 'src/liquid', jekyllInclude: true, dynamicPartials: true }),
+      liquid: new Liquid({ 
+        extname: '.html', 
+        root: 'src/liquid', 
+        cache: process.env.NODE_ENV === 'production', 
+        jekyllInclude: true, 
+        dynamicPartials: true 
+      }),
     },
   });
   fastify.register(autoload, {
