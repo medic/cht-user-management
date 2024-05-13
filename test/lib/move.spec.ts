@@ -71,7 +71,7 @@ describe('lib/move.ts', () => {
     const sessionCache = new SessionCache();
 
     const actual = MoveLib.move(formData, contactType, sessionCache, chtApi());
-    await expect(actual).to.eventually.be.rejectedWith('Cannot find \'b_sub_county\' matching \'invalid sub\'');
+    await expect(actual).to.eventually.be.rejectedWith('Cannot find \'b_sub_county\' matching \'Invalid Sub\'');
   });
 });
 

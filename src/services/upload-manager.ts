@@ -75,7 +75,7 @@ export class UploadManager extends EventEmitter {
       console.log(`successfully created ${JSON.stringify(place.creationDetails)}`);
       this.eventedPlaceStateChange(place, PlaceUploadState.SUCCESS);
     } catch (err: any) {
-      const errorDetails = err.response?.data?.error ? JSON.stringify(err.response.data.error) : err.toString();
+      const errorDetails = getErrorDetails(err);
       console.log('error when creating user', errorDetails);
       place.uploadError = errorDetails;
       this.eventedPlaceStateChange(place, PlaceUploadState.FAILURE);
@@ -95,6 +95,18 @@ export class UploadManager extends EventEmitter {
       this.triggerRefresh(place.id);
     });
   };
+}
+
+function getErrorDetails(err: any) {
+  if (typeof err.response?.data === 'string') {
+    return err.response.data;
+  }
+
+  if (err.response?.data?.error) {
+    return JSON.stringify(err.response.data.error);
+  }
+  
+  return err.toString();
 }
 
 function pickUploader(place: Place, chtApi: ChtApi): Uploader {
