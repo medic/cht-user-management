@@ -23,7 +23,7 @@
       "deactivate_users_on_replace": false,
       "hierarchy": [
         {
-          "friendly_name": "Disctrict",
+          "friendly_name": "District",
           "property_name": "district",
           "contact_type": "c30_district",
           "type": "name",
@@ -49,19 +49,20 @@
       ],
       "contact_properties": [
         {
-          "friendly_name": "Last Name",
-          "property_name": "last_name",
-          "type": "string",
-          "parameter": ["\\(*Last*\\)"],
-          "required": true
-        },
-        {
           "friendly_name": "First Name",
           "property_name": "first_name",
           "type": "string",
           "parameter": ["\\(*First*\\)"],
           "required": true
         },
+        {
+          "friendly_name": "Last Name",
+          "property_name": "last_name",
+          "type": "string",
+          "parameter": ["\\(*Last*\\)"],
+          "required": true
+        },
+
         {
           "friendly_name": "Full Name",
           "property_name": "name",
@@ -88,8 +89,8 @@
         {
           "friendly_name": "Telephone",
           "property_name": "phone",
-          "type": "regex",
-          "parameter": "^\\d{10}$",
+          "type": "phone",
+          "parameter": "CI",
           "required": true
         }
       ]
@@ -99,8 +100,8 @@
       "friendly": "CHW Site",
       "contact_type": "c72_chw_site",
       "user_role": ["chw_min_5km", "chw_max_5km"],
-      "username_from_place": true,
-      "deactivate_users_on_replace": true,
+      "username_from_place": false,
+      "deactivate_users_on_replace": false,
       "hierarchy": [
         {
           "friendly_name": "Locality",
@@ -153,7 +154,10 @@
           "friendly_name": "ASC Type",
           "property_name": "chw_type",
           "type": "select_one",
-          "parameter": { "min_5km": "ASC - 5km", "max_5km": "ASC + 5km" },
+          "parameter": {
+            "min_5km": "ASC - 5km",
+            "max_5km": "ASC + 5km"
+          },
           "required": true
         },
         {
