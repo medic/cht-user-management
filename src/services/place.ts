@@ -133,10 +133,10 @@ export default class Place {
     };
   }
 
-  public asChtPayload(username: string): PlacePayload {
+  public asChtPayload(creator: string): PlacePayload {
     const user_attribution = {
       tool: `cht-user-management-${appVersion}`,
-      username,
+      username: creator,
       created_time: Date.now(),
       replacement: this.resolvedHierarchy[0],
     };
@@ -212,13 +212,13 @@ export default class Place {
   }
 
   public validate(): void {
+    Validation.format(this);
+    
     const errors = Validation.getValidationErrors(this);
     this.validationErrors = {};
     for (const error of errors) {
       this.validationErrors[error.property_name] = error.description;
     }
-    
-    Validation.format(this);
   }
 
   public generateUsername(): string {
@@ -244,6 +244,10 @@ export default class Place {
 
     const userRoleConfig = Config.getUserRoleConfig(this.type);
     const roles = this.userRoleProperties[userRoleConfig.property_name];
+    if (!roles) {
+      throw Error(`Place role data is required when multiple roles are available.`);
+    }
+
     return roles.split(' ').map((role: string) => role.trim()).filter(Boolean);
   }
 

@@ -75,36 +75,38 @@ export class UploadManager extends EventEmitter {
       console.log(`successfully created ${JSON.stringify(place.creationDetails)}`);
       this.eventedPlaceStateChange(place, PlaceUploadState.SUCCESS);
     } catch (err: any) {
-      const errorDetails = err.response?.data?.error ? JSON.stringify(err.response.data.error) : err.toString();
+      const errorDetails = getErrorDetails(err);
       console.log('error when creating user', errorDetails);
       place.uploadError = errorDetails;
       this.eventedPlaceStateChange(place, PlaceUploadState.FAILURE);
     }
   }
 
-  public triggerRefresh(place_id: string | undefined) {
-    if (place_id) {
-      this.emit('refresh_table_row', place_id);
-    } else {
-      this.emit('refresh_table');
-    }
+  public triggerRefresh(place_id: string) {
+    this.emit('refresh_table_row', place_id);
   }
 
   private eventedPlaceStateChange = (subject: Place | Place[], state: PlaceUploadState) => {
     if (!Array.isArray(subject)) {
       subject = [subject];
     }
-    
-    if (subject.length > 1) {
-      this.triggerRefresh(undefined);
-      return;
-    }
-
     subject.forEach(place => {
       place.state = state;
       this.triggerRefresh(place.id);
     });
   };
+}
+
+function getErrorDetails(err: any) {
+  if (typeof err.response?.data === 'string') {
+    return err.response.data;
+  }
+
+  if (err.response?.data?.error) {
+    return JSON.stringify(err.response.data.error);
+  }
+  
+  return err.toString();
 }
 
 function pickUploader(place: Place, chtApi: ChtApi): Uploader {

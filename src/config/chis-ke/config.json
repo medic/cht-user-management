@@ -211,6 +211,7 @@
       "name": "c_community_health_unit",
       "friendly": "Community Health Unit",
       "contact_type": "person",
+      "contact_friendly": "Community Health Assistant",
       "user_role": ["community_health_assistant"],
       "username_from_place": true,
       "deactivate_users_on_replace": false,
@@ -309,6 +310,7 @@
         "friendly_name": "Outgoing CHP",
         "property_name": "replacement",
         "type": "name",
+        "parameter": ["\\sArea"],
         "required": true
       },
       "place_properties": [

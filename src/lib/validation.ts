@@ -5,14 +5,14 @@ import RemotePlaceResolver from './remote-place-resolver';
 import { RemotePlace } from './cht-api';
 
 import ValidatorDateOfBirth from './validator-dob';
-import ValidatorGender from './validator-gender';
 import ValidatorGenerated from './validator-generated';
 import ValidatorName from './validator-name';
 import ValidatorPhone from './validator-phone';
 import ValidatorRegex from './validator-regex';
+import ValidatorSelectMultiple from './validator-select-multiple';
+import ValidatorSelectOne from './validator-select-one';
 import ValidatorSkip from './validator-skip';
 import ValidatorString from './validator-string';
-import ValidatorRole from './validator-role';
 
 export type ValidationError = {
   property_name: string;
@@ -31,14 +31,14 @@ type ValidatorMap = {
 
 const TypeValidatorMap: ValidatorMap = {
   dob: new ValidatorDateOfBirth(),
-  gender: new ValidatorGender(),
   generated: new ValidatorGenerated(),
   name: new ValidatorName(),
   none: new ValidatorSkip(),
   phone: new ValidatorPhone(),
   regex: new ValidatorRegex(),
-  select_role: new ValidatorRole(),
   string: new ValidatorString(),
+  select_one: new ValidatorSelectOne(),
+  select_multiple: new ValidatorSelectMultiple(),
 };
 
 export class Validation {
@@ -127,11 +127,21 @@ export class Validation {
       const value = obj[property.property_name];
 
       const isRequired = requiredProperties.some((prop) => _.isEqual(prop, property));
+      const errorPropertyName = `${prefix}${property.property_name}`;
+      if (value === undefined && isRequired) {
+        invalid.push({
+          property_name: errorPropertyName,
+          description: 'Is Required',
+        });
+
+        continue;
+      }
+
       if (value || isRequired) {
         const isValid = Validation.isValid(property, value);
         if (isValid === false || typeof isValid === 'string') {
           invalid.push({
-            property_name: `${prefix}${property.property_name}`,
+            property_name: errorPropertyName,
             description: isValid === false ? 'Value is invalid' : isValid as string,
           });
         }

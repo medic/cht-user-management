@@ -30,16 +30,12 @@ export type RemotePlace = {
 };
 
 export class ChtApi {
-  private session: ChtSession;
+  public readonly chtSession: ChtSession;
   private axiosInstance: AxiosInstance;
 
   constructor(session: ChtSession) {
-    this.session = session;
+    this.chtSession = session;
     this.axiosInstance = session.axiosInstance;
-  }
-
-  public get chtSession(): ChtSession {
-    return this.session.clone();
   }
 
   // workaround https://github.com/medic/cht-core/issues/8674
@@ -206,16 +202,10 @@ export class ChtApi {
   };
 
   private async getUsersAtPlace(placeId: string): Promise<string[]> {
-    // #76 mm-online users cant query _users db after core4.4
-    const url = `medic/_find`;
+    const url = `_users/_find`;
     const payload = {
       selector: {
-        type: 'user-settings',
         facility_id: placeId,
-        $or: [
-          { inactive: false },
-          { inactive: { $exists: false } }
-        ]
       },
     };
 

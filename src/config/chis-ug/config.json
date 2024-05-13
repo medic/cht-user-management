@@ -29,6 +29,7 @@
           "contact_type": "district_hospital",
           "type": "name",
           "required": true,
+          "parameter": ["\\sH[ /]*C\\s"],
           "level": 1
         }
       ],
@@ -36,6 +37,7 @@
         "friendly_name": "Outgoing VHT",
         "property_name": "REPLACEMENT",
         "type": "name",
+        "parameter": ["\\sArea", "\\s\\(.*\\)"],
         "required": true
       },
       "place_properties": [
@@ -51,35 +53,41 @@
           "friendly_name": "District",
           "property_name": "district",
           "type": "name",
+          "parameter": ["\\sdistrict\\s"],
           "required": true
         },
         {
           "friendly_name": "Sub District",
           "property_name": "sub_district",
+          "parameter": ["\\ssub\\s", "\\sdistrict\\s"],
           "type": "name",
-          "required": true
+          "required": false
         },
         {
           "friendly_name": "County",
           "property_name": "county",
           "type": "name",
+          "parameter": ["\\scounty\\s"],
           "required": true
         },
         {
           "friendly_name": "Sub County",
           "property_name": "sub_county",
           "type": "name",
+          "parameter": ["\\ssub\\s", "\\scounty\\s"],
           "required": true
         },
         {
           "friendly_name": "Parish",
           "property_name": "parish",
+          "parameter": ["\\sparish\\s"],
           "type": "name",
           "required": true
         },
         {
           "friendly_name": "Village",
           "property_name": "village",
+          "parameter": ["\\svillage\\s"],
           "type": "name",
           "required": true
         }
@@ -107,7 +115,11 @@
         {
           "friendly_name": "Sex",
           "property_name": "sex",
-          "type": "gender",
+          "type": "select_one",
+          "parameter": {
+            "male": "Male",
+            "female": "Female"
+          },
           "required": true
         }
       ]
