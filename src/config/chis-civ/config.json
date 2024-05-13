@@ -130,6 +130,13 @@
       ],
       "contact_properties": [
         {
+          "friendly_name": "First Name",
+          "property_name": "first_name",
+          "type": "string",
+          "parameter": ["\\(*First*\\)"],
+          "required": true
+        },
+        {
           "friendly_name": "Last Name",
           "property_name": "last_name",
           "type": "string",
