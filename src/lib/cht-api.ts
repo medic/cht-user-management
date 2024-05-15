@@ -87,9 +87,9 @@ export class ChtApi {
 
     const previousPrimaryContact = doc.contact?._id;
     Object.assign(doc, payloadClone, { contact: { _id: contactId }});
+    doc.user_attribution ||= {};
+    doc.user_attribution.previousPrimaryContacts ||= [];
     if (previousPrimaryContact) {
-      doc.user_attribution ||= {};
-      doc.user_attribution.previousPrimaryContacts ||= [];
       doc.user_attribution.previousPrimaryContacts.push(previousPrimaryContact);
     }
 
