@@ -82,24 +82,14 @@ export class UploadManager extends EventEmitter {
     }
   }
 
-  public triggerRefresh(place_id: string | undefined) {
-    if (place_id) {
-      this.emit('refresh_table_row', place_id);
-    } else {
-      this.emit('refresh_table');
-    }
+  public triggerRefresh(place_id: string) {
+    this.emit('refresh_table_row', place_id);
   }
 
   private eventedPlaceStateChange = (subject: Place | Place[], state: PlaceUploadState) => {
     if (!Array.isArray(subject)) {
       subject = [subject];
     }
-    
-    if (subject.length > 1) {
-      this.triggerRefresh(undefined);
-      return;
-    }
-
     subject.forEach(place => {
       place.state = state;
       this.triggerRefresh(place.id);
