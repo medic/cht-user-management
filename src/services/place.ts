@@ -212,13 +212,13 @@ export default class Place {
   }
 
   public validate(): void {
+    Validation.format(this);
+    
     const errors = Validation.getValidationErrors(this);
     this.validationErrors = {};
     for (const error of errors) {
       this.validationErrors[error.property_name] = error.description;
     }
-    
-    Validation.format(this);
   }
 
   public generateUsername(): string {
