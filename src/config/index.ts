@@ -192,7 +192,7 @@ export class Config {
   }
 
   // TODO: Joi? Chai?
-  public static assertIfInvalid({ config }: PartnerConfig = partnerConfig) {
+  public static assertValid({ config }: PartnerConfig = partnerConfig) {
     for (const contactType of config.contact_types) {
       const allHierarchyProperties = [...contactType.hierarchy, contactType.replacement_property];
       const allProperties = [
@@ -237,4 +237,3 @@ export class Config {
   }
 }
 
-Config.assertIfInvalid();
