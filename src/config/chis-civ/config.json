@@ -87,7 +87,7 @@
           "required": true
         },
         {
-          "friendly_name": "Telephone",
+          "friendly_name": "Phone Number",
           "property_name": "phone",
           "type": "phone",
           "parameter": "CI",
@@ -185,11 +185,25 @@
           "required": false
         },
         {
-          "friendly_name": "Telephone",
+          "friendly_name": "Phone Number",
           "property_name": "phone",
-          "type": "regex",
-          "parameter": "^\\d{10}$",
+          "type": "phone",
+          "parameter": "CI",
           "required": true
+        },
+        {
+          "friendly_name": "Email",
+          "property_name": "email",
+          "type": "regex",
+          "parameter": "^.+\\@.+\\..+$",
+          "required": false
+        },
+        {
+          "friendly_name": "Username",
+          "property_name": "username",
+          "type": "string",
+          "parameter": "",
+          "required": false
         },
         {
           "friendly_name": "Education Level",
