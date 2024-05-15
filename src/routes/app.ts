@@ -23,10 +23,6 @@ export default async function sessionCache(fastify: FastifyInstance) {
     const placeData = contactTypes.map((item) => {
       return {
         ...item,
-        places: sessionCache.getPlaces({
-          type: item.name,
-          filter: directiveModel.filter,
-        }),
         hierarchy: Config.getHierarchyWithReplacement(item, 'desc'),
         userRoleProperty: Config.getUserRoleConfig(item),
       };
@@ -44,14 +40,35 @@ export default async function sessionCache(fastify: FastifyInstance) {
 
     return resp.view('src/liquid/app/view.html', tmplData);
   });
-
-  fastify.post('/app/remove-all', async (req) => {
+  
+  fastify.get('/app/list', async (req, resp) => {
+    const contactTypes = Config.contactTypes();
     const sessionCache: SessionCache = req.sessionCache;
-    sessionCache.removeAll();
-    fastify.uploadManager.triggerRefresh(undefined);
+    const directiveModel = new DirectiveModel(sessionCache, req.cookies.filter);
+    const placeData = contactTypes.map((item) => {
+      return {
+        ...item,
+        places: sessionCache.getPlaces({
+          type: item.name,
+          filter: directiveModel.filter,
+        }),
+        hierarchy: Config.getHierarchyWithReplacement(item, 'desc'),
+        userRoleProperty: Config.getUserRoleConfig(item),
+      };
+    });
+    const tmplData = {
+      contactTypes: placeData,
+    };
+    return resp.view('src/liquid/place/list.html', tmplData);
   });
 
-  fastify.post('/app/refresh-all', async (req) => {
+  fastify.post('/app/remove-all', async (req, resp) => {
+    const sessionCache: SessionCache = req.sessionCache;
+    sessionCache.removeAll();
+    resp.header('HX-Redirect', '/');
+  });
+
+  fastify.post('/app/refresh-all', async (req, resp) => {
     const sessionCache: SessionCache = req.sessionCache;
     const chtApi = new ChtApi(req.chtSession);
 
@@ -60,22 +77,24 @@ export default async function sessionCache(fastify: FastifyInstance) {
     const places = sessionCache.getPlaces({ created: false });
     await RemotePlaceResolver.resolve(places, sessionCache, chtApi, { fuzz: true });
     places.forEach(p => p.validate());
-
-    fastify.uploadManager.triggerRefresh(undefined);
+    resp.header('HX-Redirect', '/');
   });
 
   // initiates place creation via the job manager
-  fastify.post('/app/apply-changes', async (req) => {
+  fastify.post('/app/apply-changes', async (req, resp) => {
     const uploadManager: UploadManager = fastify.uploadManager;
     const sessionCache: SessionCache = req.sessionCache;
+    const directiveModel = new DirectiveModel(sessionCache, req.cookies.filter);
 
     const chtApi = new ChtApi(req.chtSession);
     uploadManager.doUpload(sessionCache.getPlaces(), chtApi);
+
+    return resp.view('src/liquid/place/directive.html', {
+      directiveModel
+    });
   });
 
   fastify.post('/app/set-filter/:filter', async (req, resp) => {
-    const uploadManager: UploadManager = fastify.uploadManager;
-
     const params: any = req.params;
     const filter = params.filter;
     resp.setCookie('filter', filter, {
@@ -86,6 +105,6 @@ export default async function sessionCache(fastify: FastifyInstance) {
       secure: true,
     });
 
-    uploadManager.triggerRefresh(undefined);
+    resp.header('HX-Redirect', '/');
   });
 }
