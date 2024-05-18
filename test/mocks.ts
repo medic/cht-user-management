@@ -5,6 +5,9 @@ import { ChtApi, RemotePlace } from '../src/lib/cht-api';
 import ChtSession from '../src/lib/cht-session';
 import { ContactProperty, ContactType } from '../src/config';
 import Place from '../src/services/place';
+import { v4 } from 'uuid';
+import { IQueueManager, BullMQQueueManager } from '../shared/queues';
+
 
 export const mockPlace = (type: ContactType, prop: any) : Place => {
   const result = new Place(type);
@@ -128,3 +131,12 @@ export function expectInvalidProperties(
     expect(Object.values(validationErrors as any)?.[0]).to.include(expectedError);
   }
 }
+
+export const mockQueueManager = (): IQueueManager => ({
+  addJob: Sinon.stub().resolves(v4()),
+  removeJob: Sinon.stub().resolves(undefined),
+  getQueue: Sinon.stub().returns({
+    add: Sinon.stub().resolves(v4()),
+    remove: Sinon.stub().resolves(undefined),
+  }),
+});

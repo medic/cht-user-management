@@ -2,7 +2,7 @@ import Chai from 'chai';
 import MoveLib from '../../src/lib/move';
 import { Config } from '../../src/config';
 import SessionCache from '../../src/services/session-cache';
-import { mockChtApi } from '../mocks';
+import { mockChtApi, mockQueueManager } from '../mocks';
 
 import chaiAsPromised from 'chai-as-promised';
 Chai.use(chaiAsPromised);
@@ -18,9 +18,8 @@ describe('lib/move.ts', () => {
     [{ id: 'chu-id', name: 'c-h-u', lineage: ['from-sub'], type: 'remote' }],
   );
 
-  it('move CHU: success', async () => {
-    process.env.ENCRYPTION_KEY = 'somesuperimportantkey';
-    
+  it('move CHU: success', async () => {    
+    process.env.ENCRYPTION_KEY = 'superimportantkey';
     const formData = {
       from_replacement: 'c-h-u',
       from_SUBCOUNTY: 'from sub',
@@ -29,7 +28,7 @@ describe('lib/move.ts', () => {
     const contactType = Config.getContactType('c_community_health_unit');
     const sessionCache = new SessionCache();
     
-    const actual = await MoveLib.move(formData, contactType, sessionCache, chtApi());
+    const actual = await MoveLib.move(formData, contactType, sessionCache, chtApi(), mockQueueManager());
     expect(actual.jobsBoardUrl).to.exist;
     expect(actual.fromLineage.map((l:any) => l.id)).to.deep.eq(['chu-id', 'from-sub']);
     expect(actual.toLineage.map((l:any) => l.id)).to.deep.eq([undefined, 'to-sub']);

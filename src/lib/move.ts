@@ -6,12 +6,12 @@ import Place from '../services/place';
 
 import { env } from 'process';
 import { encryptSessionToken } from '../../shared/encryption';
-import { queueManager, QUEUE_NAMES, JobParams } from '../../shared/queues';
+import { QUEUE_NAMES, JobParams, IQueueManager } from '../../shared/queues';
 
 export default class MoveLib {
   constructor() { }
 
-  public static async move(formData: any, contactType: ContactType, sessionCache: SessionCache, chtApi: ChtApi) {
+  public static async move(formData: any, contactType: ContactType, sessionCache: SessionCache, chtApi: ChtApi, queueManager: IQueueManager) {
     const fromLineage = await resolve('from_', formData, contactType, sessionCache, chtApi);
     const toLineage = await resolve('to_', formData, contactType, sessionCache, chtApi);
 

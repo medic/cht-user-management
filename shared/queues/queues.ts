@@ -30,7 +30,6 @@ export class BullMQQueueManager implements IQueueManager {
   }
 
   private getOrCreateQueue(queueName: string): Queue {
-    console.log(this.queues, redisConnection);
     if (!this.queues.has(queueName)) {
       this.queues.set(
         queueName, 
