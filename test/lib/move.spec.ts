@@ -19,6 +19,8 @@ describe('lib/move.ts', () => {
   );
 
   it('move CHU: success', async () => {
+    process.env.ENCRYPTION_KEY = 'somesuperimportantkey';
+    
     const formData = {
       from_replacement: 'c-h-u',
       from_SUBCOUNTY: 'from sub',
