@@ -1,16 +1,33 @@
-import { JobProcessor, ProcessResult } from '../../worker';
-import { MoveContactParams } from './move-contact.job';
-const { spawn } = require('child_process'); // Use spawn for more control
+import { env } from 'process'; 
+import { spawn } from 'child_process'; 
+
+import { JobProcessor, JobResult } from '../../worker';
+import { MoveContactParams } from './move-contact-job.worker';
+import { decryptSessionToken } from '../../../shared/encryption';
 
 
 export class MoveContactJobProcessor implements JobProcessor<MoveContactParams> {
-  async process(jobData: MoveContactParams): Promise<ProcessResult> {
-    const { contactId, parentId, instanceUrl, sessionCookie } = jobData;
 
+  readonly MAX_TIMEOUT = 180_000; // 30 minutes timeout?
+
+  async process(jobData: MoveContactParams): Promise<JobResult> {
     try {
+      const { contactId, parentId, instanceUrl, sessionToken } = jobData;
+      const { ENCRYPTION_KEY } = env;
+
+      if (!sessionToken) {
+        return { success: false, message: 'Missing session token' };
+      } else if (!ENCRYPTION_KEY) {
+        return { success: false, message: 'Missing ENCRYPTION_KEY' };
+      }
+
+      const decryptedSessionToken = decryptSessionToken(
+        sessionToken, ENCRYPTION_KEY
+      );
+
       const chtProcess = spawn('cht', [
         `--url=${instanceUrl}`,
-        `--session-token=${sessionCookie}`,
+        `--session-token=${decryptedSessionToken}`,
         `--force`,
         'move-contacts',
         'upload-docs',
@@ -28,7 +45,14 @@ export class MoveContactJobProcessor implements JobProcessor<MoveContactParams> 
       });
 
       await new Promise((resolve, reject) => {
+        // Worst cases: to ensure that child processes do not run indefinitely
+        const timeout = setTimeout(() => {
+          chtProcess.kill();
+          reject(new Error('Cht command timed out'));
+        }, this.MAX_TIMEOUT);
+
         chtProcess.on('close', (code: any) => {
+          clearTimeout(timeout);
           if (code === 0) {
             resolve(true);
           } else {
@@ -37,13 +61,14 @@ export class MoveContactJobProcessor implements JobProcessor<MoveContactParams> 
         });
 
         chtProcess.on('error', (error: any) => {
+          clearTimeout(timeout);
           reject(error);
         });
       });
 
       return { success: true, message: `Job processing completed.` };
     } catch (error) {
-      return { success: false, message: error };
+      return { success: false, message: error as string };
     }
   }
 }

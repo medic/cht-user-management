@@ -1,29 +1,31 @@
-import { redisConnection } from './config';
-import { MoveContactParams } from './jobs/move-contact/move-contact.job';
-import { BullMQQueue } from './queue';
 import { Worker, Job } from 'bullmq';
+import { redisConnection } from '../shared/config';
 
 export interface JobWorker {
   canProcess(job: any): Promise<boolean>;
+  postpone(job: any): Promise<boolean>;
   stop(): Promise<void>;
 }
 
-export type ProcessResult = { success: boolean; message: string };
-
 export interface JobProcessor<T> {
-  process(params: T): Promise<ProcessResult>;
+  process(params: T): Promise<JobResult>;
 }
 
+export type JobResult = { success: boolean; message: string };
+
+
 export abstract class BullMQWorker implements JobWorker {
-  readonly jobQueue: BullMQQueue;
-  private readonly processor: JobProcessor<MoveContactParams>;
+  readonly MAX_CONCURRENCY = 1; // Limit concurrency to 1 job at a time
+
+  readonly jobQueueName;
   private worker: Worker;
 
-  constructor(queueName: string, processor: JobProcessor<MoveContactParams>) {
-    this.jobQueue = new BullMQQueue(queueName);
+  constructor(queueName: string, private processor: JobProcessor<any>) {
     this.processor = processor;
-    this.worker = new Worker(this.jobQueue.getName(), async (job: Job) => {
+    this.jobQueueName = queueName;
+    this.worker = new Worker(this.jobQueueName, async (job: Job) => {
       if (!await this.canProcess(job)) {
+        await this.postpone(job);
         console.log(`Job skipped (not ready): ${job.id}`);
         return;
       }
@@ -37,7 +39,7 @@ export abstract class BullMQWorker implements JobWorker {
 
       console.log(`Job completed successfully: ${job.id}`);
       return true;
-    }, { connection: redisConnection });
+    }, { connection: redisConnection, concurrency: this.MAX_CONCURRENCY });
   }
 
   async stop(): Promise<void> {
@@ -45,4 +47,6 @@ export abstract class BullMQWorker implements JobWorker {
   }
 
   abstract canProcess(job: Job): Promise<boolean>;
+
+  abstract postpone(job: Job): Promise<boolean>;
 }

@@ -22,7 +22,8 @@
     "axios": "^1.5.1",
     "axios-retry": "^4.0.0",
     "bullmq": "^5.7.6",
-    "cht-conf": "github:paulpascal/cht-conf#paulpascal-feat-session-auth",
+    "cht-conf": "github:medic/cht-conf#session-token-auth",
+    "cryptr": "^6.3.0",
     "csv": "^6.3.5",
     "dotenv": "^16.3.1",
     "fastify": "^4.27.0",
@@ -67,10 +68,10 @@
     "test": "npx ts-mocha test/{,**}/*.spec.ts",
     "build": "npm run cp-package-json && npx tsc",
     "lint": "npx eslint --color --cache .",
-    "start": "node dist/index.js",
-    "dev": "tsc-watch --onSuccess \"node dist/index.js\"",
+    "start": "node dist/src/index.js",
+    "dev": "tsc-watch --onSuccess \"node dist/src/index.js\"",
     "publish": "node scripts/publish.js",
-    "start:worker": "npx ts-node worker/main.ts"
+    "start:worker": "node dist/worker/main.js"
   },
   "repository": {
     "type": "git",

@@ -1,7 +1,7 @@
 import chai from 'chai';
 import chaiExclude from 'chai-exclude';
 import { mockChtSession } from '../mocks';
-import Auth from '../../dist/lib/authentication';
+import Auth from '../../dist/src/lib/authentication';
 
 chai.use(chaiExclude);
 const { expect } = chai;

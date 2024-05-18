@@ -28,10 +28,7 @@ describe('lib/move.ts', () => {
     const sessionCache = new SessionCache();
     
     const actual = await MoveLib.move(formData, contactType, sessionCache, chtApi());
-    expect(actual.command).to.include('--contacts=chu-id');
-    expect(actual.command).to.include('--parent=to-sub');
-    expect(actual.command).to.include('--url=http://username:password@domain.com', actual.command);
-
+    expect(actual.jobsBoardUrl).to.exist;
     expect(actual.fromLineage.map((l:any) => l.id)).to.deep.eq(['chu-id', 'from-sub']);
     expect(actual.toLineage.map((l:any) => l.id)).to.deep.eq([undefined, 'to-sub']);
   });
