@@ -37,6 +37,7 @@ export abstract class BullMQWorker implements JobWorker {
         throw new Error();
       }
 
+      await job.updateProgress(100);
       console.log(`Job completed successfully: ${job.id}`);
       return true;
     }, { connection: redisConnection, concurrency: this.MAX_CONCURRENCY });

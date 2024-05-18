@@ -6,7 +6,7 @@ import ChtSession from '../src/lib/cht-session';
 import { ContactProperty, ContactType } from '../src/config';
 import Place from '../src/services/place';
 import { v4 } from 'uuid';
-import { IQueueManager, BullMQQueueManager } from '../shared/queues';
+import { IQueueManager } from '../shared/queues';
 
 
 export const mockPlace = (type: ContactType, prop: any) : Place => {

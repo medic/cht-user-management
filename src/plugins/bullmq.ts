@@ -19,7 +19,12 @@ async function bullMQBoardPlugin(fastify: FastifyInstance) {
         moveContactQueue
       ),
     ],
-    serverAdapter
+    serverAdapter,
+    options: {
+      uiConfig: {
+        boardTitle: 'Jobs Board',
+      },
+    },
   });
 
   serverAdapter.setBasePath('/board');
