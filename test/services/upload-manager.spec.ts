@@ -338,17 +338,21 @@ describe('services/upload-manager.ts', () => {
     const toReplace: ChtDoc = {
       _id: 'id-replace',
       name: 'to-replace',
+      parent: {
+        _id: subcounty._id,
+      }
     };
 
     chtApi.updatePlace.resolves({ _id: 'updated-place-id' });
     fakeFormData.hierarchy_replacement = toReplace.name;
     
     chtApi.getPlacesWithType
-      .resolves([subcounty])
-      .onSecondCall()
-      .resolves([toReplace]);
+      .onFirstCall().resolves([])
+      .onSecondCall().resolves([subcounty])
+      .onThirdCall().resolves([toReplace]);
 
     const place = await PlaceFactory.createOne(fakeFormData, contactType, sessionCache, chtApi);
+    console.log(place.validationErrors);
     expect(place.validationErrors).to.be.empty;
 
     const uploadManager = new UploadManager();
