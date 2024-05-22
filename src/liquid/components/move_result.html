@@ -3,7 +3,7 @@
     <li><span class="tag is-warning" style="margin: 0 10px;">Current</span></li>
     {% for lineage in fromLineage %}
     {% if lineage %}
-      <li><a href="https://{{ session.authInfo.domain }}/#/contacts/{{ lineage.id}}">{{ lineage.name }}</a></li>
+      <li><a href="https://{{ session.authInfo.domain }}/#/contacts/{{ lineage.id}}" target="_blank">{{ lineage.name }}</a></li>
     {% endif %}
     {% endfor %}
   </ul>
@@ -11,7 +11,7 @@
     <li><span class="tag is-success" style="margin: 0 10px;">After</span></li>
     {% for lineage in toLineage %}
     {% if lineage %}
-      <li><a href="https://{{ session.authInfo.domain }}/#/contacts/{{ lineage.id}}">{{ lineage.name }}</a></li>
+      <li><a href="https://{{ session.authInfo.domain }}/#/contacts/{{ lineage.id}}" target="_blank">{{ lineage.name }}</a></li>
     {% endif %}
     {% endfor %}
     <li><span style="margin: 0 10px;">{{ fromLineage.last.name }}</span></li>

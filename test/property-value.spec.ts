@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { NamePropertyValue, PropertyValues, UnvalidatedPropertyValue } from '../src/property-value';
+import { PropertyValues, RemotePlacePropertyValue, UnvalidatedPropertyValue } from '../src/property-value';
 import { ContactProperty } from '../src/config';
 import { mockProperty } from './mocks';
 
@@ -22,9 +22,19 @@ describe('property-value', () => {
     { searchWithin: new UnvalidatedPropertyValue('abc'), searchFor: 'a', expected: true },
     { searchWithin: new UnvalidatedPropertyValue('abc'), searchFor: 'a', expected: true },
 
-    { searchWithin: new NamePropertyValue('a.b.c', namePropertyValue), searchFor: 'a b c', expected: true },
-    { searchWithin: new NamePropertyValue('a.b.c', namePropertyValue), searchFor: new NamePropertyValue('a.b c', namePropertyValue), expected: true },
+    { searchWithin: new RemotePlacePropertyValue('a.b.c', namePropertyValue), searchFor: 'a b c', expected: true },
+    {
+      searchWithin: new RemotePlacePropertyValue('a.b.c', namePropertyValue),
+      searchFor: new RemotePlacePropertyValue('a.b c', namePropertyValue),
+      expected: true
+    },
   ];
+
+  const generatedScenario = (formattedValue: string) => {
+    const result = new UnvalidatedPropertyValue(formattedValue);
+    result.original = '';
+    return result;
+  };
 
   const matchScenarios = [
     { a: 'abc', b: 'abc', expected: true },
@@ -36,6 +46,17 @@ describe('property-value', () => {
     { a: undefined, b: 'abc', expected: false },
     { a: 'abc', b: undefined, expected: false },
     { a: undefined, b: undefined, expected: false },
+
+    {
+      a: generatedScenario('iji'),
+      b: generatedScenario('iJI'),
+      expected: true
+    },
+    {
+      a: generatedScenario('abc'),
+      b: generatedScenario('efg'),
+      expected: false
+    },
   ];
 
   describe('include', () => {

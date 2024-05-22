@@ -23,6 +23,8 @@ export default class MoveLib {
     
     const { authInfo } = chtApi.chtSession;
     const url = `http${authInfo.useHttp ? '' : 's'}://${chtApi.chtSession.username}:password@${authInfo.domain}`;
+
+    fromLineage.reverse(); // ordered from big to small for UI
     return {
       command: `npx cht --url=${url} move-contacts upload-docs -- --contacts=${fromId} --parent=${toId}`,
       fromLineage,

@@ -38,6 +38,26 @@ describe('config', () => {
     const assertion = () => Config.assertValid(mockConfig);
     expect(assertion).to.throw('"name"');
   });
+
+  it('contact_properties can have unique attributes', () => {
+    const mockConfig = mockPartnerConfig();
+    mockConfig.config.contact_types[0].contact_properties[0].unique = 'parent';
+    Config.assertValid(mockConfig);
+  });
+
+  it('hierarchy properties cannot have unique attributes', () => {
+    const mockConfig = mockPartnerConfig();
+    mockConfig.config.contact_types[0].hierarchy[0].unique = 'parent';
+    const assertion = () => Config.assertValid(mockConfig);
+    expect(assertion).to.throw('with "unique" values');
+  });
+
+  it('parent hierarchy level is required', () => {
+    const mockConfig = mockPartnerConfig();
+    mockConfig.config.contact_types[0].hierarchy[0].level = 2;
+    const assertion = () => Config.assertValid(mockConfig);
+    expect(assertion).to.throw('with parent level');
+  });
   
   it('#124 - cannot have generated property in hierarchy', () => {
     const mockConfig = mockPartnerConfig();

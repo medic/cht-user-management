@@ -98,7 +98,7 @@ function parseCommandlineArguments(argv: string[]): CommandLineArgs {
 }
 
 async function getPlaceDocId(county: string | undefined, chtApi: typeof ChtApi) {
-  const counties = await RemotePlaceCache.getPlacesWithType(chtApi, UserManagerContactType, UserManagerContactType.hierarchy[0]);
+  const counties = await RemotePlaceCache.getRemotePlaces(chtApi, UserManagerContactType, UserManagerContactType.hierarchy[0]);
   const countyMatches = counties.filter((c: RemotePlace) => !county || PropertyValues.isMatch(county, c.name));
   if (countyMatches.length < 1) {
     throw Error(`Could not find county "${county}"`);
