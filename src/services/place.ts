@@ -138,6 +138,7 @@ export default class Place {
       username: creator,
       created_time: Date.now(),
       replacement: this.resolvedHierarchy[0]?.name.formatted,
+      warnings: this.warnings,
     };
 
     const filteredProperties = (properties: FormattedPropertyCollection) => {
