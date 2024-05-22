@@ -325,19 +325,17 @@ describe('services/upload-manager.ts', () => {
   });
 
   it('#173 - replacement when place has no primary contact', async () => {
-    const { remotePlace, sessionCache, contactType, fakeFormData, chtApi } = await createMocks();
-    const toReplace: RemotePlace = {
-      id: 'id-replace',
+    const { subcounty, sessionCache, contactType, fakeFormData, chtApi } = await createMocks();
+    const toReplace: ChtDoc = {
+      _id: 'id-replace',
       name: 'to-replace',
-      lineage: [remotePlace.id],
-      type: 'remote',
     };
 
     chtApi.updatePlace.resolves({ _id: 'updated-place-id' });
     fakeFormData.hierarchy_replacement = toReplace.name;
     
     chtApi.getPlacesWithType
-      .resolves([remotePlace])
+      .resolves([subcounty])
       .onSecondCall()
       .resolves([toReplace]);
 
