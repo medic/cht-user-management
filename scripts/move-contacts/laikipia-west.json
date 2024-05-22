@@ -1,4 +1,4 @@
-export default [
+[
   ["Laikipia West", "KINAMBA", "Joyce Waruguru Macharia", "Laikipia West", "KINAMBA B"],
   ["Laikipia West", "KINAMBA", "Nancy Wamuyu Maina", "Laikipia West", "KINAMBA"],
   ["Laikipia West", "KINAMBA", "Mary Gachambi Kanyugo", "Laikipia West", "KINAMBA B"],
@@ -454,4 +454,4 @@ export default [
   ["laikipia west", "KAITI", "Simon Kibet Sambu", "Laikipia West", "KAITI B"],
   ["laikipia west", "KAITI", "Peter Gathitu", "Laikipia West", "KAITI"],
   ["laikipia west", "KAITI", "Mirriam Nyaguthii Wahome", "Laikipia West", "KAITI C"]
-];
+]
