@@ -75,9 +75,7 @@ export default async function addPlace(fastify: FastifyInstance) {
           },
         });
       }
-
-      // back to places list
-      resp.header('HX-Redirect', `/`);
+      resp.header('HX-Redirect', '/');
       return;
     }
 

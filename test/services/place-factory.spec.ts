@@ -498,6 +498,21 @@ describe('services/place-factory.ts', () => {
   });
 });
 
+it('#165 - create a place when generated property is required', async () => {
+  const { sessionCache, contactType, fakeFormData, chtApi } = mockScenario();
+  contactType.place_properties[0] = {
+    friendly_name: 'CHP Area Name',
+    property_name: 'name',
+    type: 'generated',
+    parameter: '{{ contact.name }} Area',
+    required: true
+  };
+  delete fakeFormData.place_name;
+
+  const place: Place = await PlaceFactory.createOne(fakeFormData, contactType, sessionCache, chtApi);
+  expect(place.validationErrors).to.be.empty;
+});
+
 function mockScenario() {
   const contactType = mockValidContactType('string', undefined);
   const parentDoc: ChtDoc = {
