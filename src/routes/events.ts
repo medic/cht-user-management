@@ -38,6 +38,7 @@ export default async function events(fastify: FastifyInstance) {
         const html = await fastify.view(
           'src/liquid/components/place_item.html',
           {
+            session: req.chtSession,
             contactType: {
               ...place.type,
               hierarchy: Config.getHierarchyWithReplacement(place.type, 'desc'),
