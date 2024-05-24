@@ -9,6 +9,7 @@ import view from '@fastify/view';
 import { Liquid } from 'liquidjs';
 import { FastifySSEPlugin } from 'fastify-sse-v2';
 import path from 'path';
+const metricsPlugin = require('fastify-metrics');
 
 import Auth from './lib/authentication';
 import SessionCache from './services/session-cache';
@@ -41,6 +42,16 @@ const build = (opts: FastifyServerOptions): FastifyInstance => {
     root: path.join(__dirname, '../src/public'),
     prefix: '/public/',
     serve: true,
+  });
+
+  fastify.register(metricsPlugin, {
+    endpoint: '/prometheus',
+    routeMetrics: {
+      enabled: {
+        histogram: true,
+        summary: false
+      }
+    }
   });
 
   Auth.assertEnvironmentSetup();

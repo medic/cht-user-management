@@ -5,7 +5,6 @@ import DirectiveModel from '../services/directive-model';
 import SessionCache from '../services/session-cache';
 import { UploadManager } from '../services/upload-manager';
 import { minify } from 'html-minifier';
-import { setRequestDataMetrics } from '../services/page-view';
 
 export default async function events(fastify: FastifyInstance) {
   fastify.get('/events/connection', async (req, resp) => {
@@ -13,8 +12,6 @@ export default async function events(fastify: FastifyInstance) {
     const sessionCache: SessionCache = req.sessionCache;
 
     resp.hijack();
-    // Sending request and response data for page view
-    setRequestDataMetrics(req, resp);
 
     const updateDirective = async () => {
       const directiveModel = new DirectiveModel(

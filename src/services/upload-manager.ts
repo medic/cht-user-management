@@ -9,10 +9,6 @@ import { UploadNewPlace } from './upload.new';
 import { UploadReplacementWithDeletion } from './upload.replacement';
 import { UploadReplacementWithDeactivation } from './upload.deactivate';
 import { UserPayload } from './user-payload';
-import { userMetricsData } from './user-metrics';
-//import { userMetricsData } from '../services/metrics';
-
-
 
 const UPLOAD_BATCH_SIZE = 15;
 
@@ -77,12 +73,10 @@ export class UploadManager extends EventEmitter {
       delete place.uploadError;
 
       console.log(`successfully created ${JSON.stringify(place.creationDetails)}`);
-      userMetricsData.createUserSuccessCount += 1;
       this.eventedPlaceStateChange(place, PlaceUploadState.SUCCESS);
     } catch (err: any) {
       const errorDetails = getErrorDetails(err);
       console.log('error when creating user', errorDetails);
-      userMetricsData.createUserFailureCount += 1;
       place.uploadError = errorDetails;
       this.eventedPlaceStateChange(place, PlaceUploadState.FAILURE);
     }
