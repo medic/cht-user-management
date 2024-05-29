@@ -1,32 +1,13 @@
-require('dotenv').config();
-import build from './server';
-import { env } from 'process';
-const {
-  INTERFACE
-} = process.env;
+import { Config } from './config';
+import { ChtApi } from './lib/cht-api';
+import ChtSession from './lib/cht-session';
+import RemotePlaceCache from './lib/remote-place-cache';
+import SessionCache from './services/session-cache';
 
-const port: number = env.PORT ? parseInt(env.PORT) : 3000;
-
-(async () => {
-  const loggerConfig = {
-    transport: {
-      target: 'pino-pretty',
-    },
-  };
-  const server = build({
-    logger: loggerConfig,
-  });
-
-  // in 1.1.0 we allowed INTERFACE to be declared in .env, but let's be
-  // backwards compatible to when it was undeclared and hard coded to
-  // be 0.0.0.0
-  let calculated_interface = '0.0.0.0';
-  if (INTERFACE) {
-    calculated_interface = INTERFACE;
-  }
-  server.listen({ host: calculated_interface, port }, (err) => {
-    if (err) {
-      throw err;
-    }
-  });
-})();
+export {
+  Config,
+  ChtApi,
+  ChtSession,
+  SessionCache,
+  RemotePlaceCache,
+};
