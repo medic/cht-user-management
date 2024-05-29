@@ -4,3 +4,11 @@ dist
 .env*
 src/package.json
 .eslintcache
+json_docs
+json_docs_processing
+upload-docs.*.json
+scripts/deploy/values/users-chis-ke.yaml
+scripts/deploy/values/users-chis-tg.yaml
+scripts/deploy/values/users-chis-ug.yaml
+nairobi-*.json
+migori-*.json
