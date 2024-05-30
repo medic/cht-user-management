@@ -1,0 +1,53 @@
+$_white: #FFFFFF;
+$_gray-ultra-light: #F2F2F2;
+$_gray-ultra-lighter: #F8F8F8;
+$_gray-light: #E0E0E0;
+$_gray-medium: #A0A0A0;
+$_gray-medium-dark: #BDBEBF;
+$_gray-dark: #777777;
+$_gray-ultra-dark: #333333;
+$_black: #000000;
+$_blue: #63A2C6;
+$_periwinkle: #7193EE;
+$_yellow: #E9AA22;
+$_pink: #F47B63;
+$_teal: #76B0B0;
+$_blue-highlight: #EFF5F9;
+$_periwinkle-highlight: #F0F4FD;
+$_yellow-highlight: #FCF6E7;
+$_pink-highlight: #FDF1EF;
+$_teal-highlight: #e4efef;
+$_red: #E33030;
+$_yellow-dark: #C78330;
+$_teal-dark: #218E7F;
+$_blue-dark: #007AC0;
+$_medic-grey: #323232;
+
+
+/* app colors */
+$theme-bg-color: white;
+$primary-color: #007AC0;
+$login-bg-color: $_gray-ultra-lighter;
+$element-border-color: #ccc;
+$input-placeholder-color: #999;
+$button-color: $primary-color;
+$default-text-color: #333333;
+$disabled-color: rgb(84, 84, 84);
+$warning-color: #ffe08a;
+$success-color: #48c78e;
+$failure-color: #f14668;
+
+/* font sizes */
+$font-extra-extra-extra-large: 1.75rem;
+$font-extra-extra-large: 1.5rem;
+$font-extra-large: 1.25rem;
+$font-large: 1.125rem;
+$font-medium: 1rem;
+$font-small: 0.875rem;
+$font-extra-small: 0.8125rem;
+$font-extra-extra-small: 0.625rem;
+
+$border-radius: 4px;
+$element-border-radius: 8px;
+//mobile phone, landscape and tablets
+$mobile-max-width: 1023px;

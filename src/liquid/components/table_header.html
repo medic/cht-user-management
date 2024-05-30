@@ -1,5 +1,6 @@
 <thead>
     <tr>
+        <th>#</th>
         {% for hierarchy in contactType.hierarchy %}
             <th id="hierarchy_{{ hierarchy.property_name }}">{{ hierarchy.friendly_name }}</th>
         {% endfor %}

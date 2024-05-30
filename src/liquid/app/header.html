@@ -1,0 +1,42 @@
+<nav class="navbar">
+    <div class="navbar-branding" id="logo">
+        <a href="/"><img src="{{ logo }}" /></a>
+    </div>
+    <div class="navbar-branding"><a>User Management</a></div>
+    <ul>
+        <li class="dropdown">
+            <div id="dropdown-btn">
+                <img src="/public/icons/cloud.svg" alt="dropdown-button">
+                <i>{{ session.authInfo.friendly }}</i>
+            </div>
+            <div class="hamburger-icon">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+            <ul class="dropdown-menu" id="dd-menu">
+                <a href="/logout">
+                    <li><img src="/public/icons/logout.svg">Logout</li>
+                </a>
+                <li><i>Logged in as {{ session.username }}</i></li>
+            </ul>
+        </li>
+    </ul>
+</nav>
+
+<script>
+    document.addEventListener('click', function () {
+        const dropDownMenu = document.getElementById('dd-menu');
+        if(dropDownMenu.classList.contains('active-dropdown')) {
+            document.querySelector('.dropdown-menu').classList.toggle('active-dropdown');
+            document.querySelector('.hamburger-icon').classList.toggle('open');
+        }
+    });
+
+    document.querySelector('.hamburger-icon')
+      .addEventListener('click', function(event){
+        event.stopPropagation();
+        document.querySelector('.dropdown-menu').classList.toggle('active-dropdown');
+        document.querySelector('.hamburger-icon').classList.toggle('open');
+      });
+</script>

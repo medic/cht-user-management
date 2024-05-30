@@ -1,6 +1,11 @@
-<div class="tile is-child" hx-ext="sse" sse-connect="/events/connection">
-  <div id="places_parent" class="tile is-child">
+<div hx-ext="sse" sse-connect="/events/connection">
+  <div id="places_parent">
+    {% capture totalCount %}{{directiveModel.totalCount}} {% endcapture %}
+    {%if totalCount > 0 %}
     {% include "place/directive.html" %}
     {% include "place/list_lazy.html" %}
+    {%else%}
+    {% include "place/directive_1_get_started.html" %}
+    {%endif%}
   </div>
 </div>

@@ -1,4 +1,27 @@
-<p class="title is-5">
+<div class="directive get-started">
+  <h1>
+    Getting Started
+  </h1>
+  <p>
+    To get started, add some users which you want to create on the <i>{{ session.authInfo.friendly }}</i> instance.
+  </p>
+
+  <div class="directive-dropdown">
+    {% for contactType in contactTypes %}
+    <div class="dropdown-button">
+      <button class="clear-btn"><img src="/public/icons/plus.svg"> {{contactType.friendly}}</button>
+      <div class="dropdown-content">
+        <a href="/add-place?type={{ contactType.name }}&op=new">Create New</a>
+        <a href="/add-place?type={{ contactType.name }}&op=replace">Replace Existing</a>
+        <a href="/add-place?type={{ contactType.name }}&op=bulk">Upload from CSV</a>
+      </div>
+    </div>
+    {% endfor %}
+
+  </div>
+</div>
+
+<!-- <p class="title is-5">
   Getting Started...
 </p>
 <p>
@@ -19,4 +42,4 @@
     </div>
   </div>
 </div>
-{% endfor %}
+{% endfor %} -->

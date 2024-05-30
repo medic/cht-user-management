@@ -1,0 +1,19 @@
+@mixin mobile-only {
+    @media (max-width: $mobile-max-width) {
+        @content;
+    }
+}
+
+@mixin web-only {
+    @media (min-width: $mobile-max-width) {
+        @content;
+    }
+}
+
+@mixin default-shadow {
+    box-shadow: 0 10px 20px 0 rgba(0,0,0,0.1);
+}
+
+@mixin card-shadow {
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+}

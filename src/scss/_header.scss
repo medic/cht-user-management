@@ -1,0 +1,138 @@
+$dropdown-bg-color: white;
+$dropdown-width: 200px;
+
+.navbar {
+    background-color: $_medic-grey;
+    color: white;
+    display: flex;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 3.5em;
+    align-items: center;
+    box-sizing: border-box;
+    padding: 10px 15px;
+    z-index: 1000;
+    @include mobile-only {
+        padding: 10px 10px;
+    }
+
+    .navbar-branding {
+        font-size: $font-extra-large;
+        font-weight: bold;
+        margin-right: 10px;
+        img {
+            width: 100%;
+            height: 1.5em;
+        }
+    }
+    #logo.navbar-branding {
+        @include mobile-only {
+            display: none;
+        }
+    }
+
+    //dropdown menu
+    ul {
+        list-style-type: none;
+        margin-left: auto;
+        padding: 0;
+        display: flex;
+        cursor: pointer;
+    }
+    a {
+        text-decoration: none;
+    }
+
+    .dropdown {
+        position: relative;
+        @include web-only {
+            &:hover .dropdown-menu {
+                display: block;
+                visibility: visible;
+            }
+        }
+        ul {
+            width: $dropdown-width;
+            @include mobile-only {
+                width: 300px;
+            }
+        }
+        img {
+            margin: auto 8px;
+            width: 20px;
+            height: 20px;
+        }
+        #dropdown-btn {
+            display: flex;
+            align-items: center;
+            @include mobile-only {
+                display: none;
+            }
+        }
+    }
+
+    .dropdown-menu {
+        @include default-shadow;
+        position: absolute;
+        border-radius: $border-radius;
+        top: 100%;
+        @include mobile-only {
+            top: 150%;
+        }
+        right: 0;
+        padding: 10px;
+        background-color: $dropdown-bg-color;
+        height: fit-content;
+        border: 1px solid $element-border-color;
+        display: none;
+        visibility: hidden;
+        li {
+            color: $default-text-color;
+            display: flex;
+            align-items: center;
+            height: 2em;
+        }
+        img {
+            margin: auto 6px auto 0px;
+        }
+    }
+
+    //mobile hamburger icon effect
+    .hamburger-icon {
+        display: none;
+        @include mobile-only {
+            width: 28px;
+            height: 28px;
+            display: flex;
+            padding: 0px;
+            flex-direction: column;
+            justify-content: space-around;
+            align-items: center;
+            cursor: pointer;
+            span {
+                width: 100%;
+                height: 2px;
+                background-color: white;
+                transition: 0.2s;
+            }
+        }
+    }
+    .open {
+        span:nth-child(1) {
+            transform: rotate(45deg) translate(6.5px, 6px);
+        }
+        span:nth-child(2) {
+            opacity: 0;
+        }
+        span:nth-child(3) {
+            transform: rotate(-45deg) translate(6.5px, -6px);
+        }
+    }
+    //toggle dropdown visibility
+    .active-dropdown {
+        display: block;
+        visibility: visible;
+    }
+}

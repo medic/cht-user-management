@@ -1,15 +1,13 @@
-<div id="place_list" hx-trigger="load" hx-get="/app/list" hx-target="this" hx-swap="outerHTML">
+<div id="place_list" hx-trigger="load" hx-get="/app/list/1/10" hx-target="this" hx-swap="outerHTML">
   {% for contactType in contactTypes %}
-  <div id="{{contactType.name}}" class="mb-6">
-    <h2 class="title is-4">{{contactType.friendly}}</h2>
-    <div>
-      <table id="table_places" class="table is-fullwidth is-striped is-hoverable">
+  <div id="{{contactType.name}}">
+    <h2>{{contactType.friendly}}</h2>
+    <div class="table-container">
+      <table id="table_places">
         {% include "components/table_header.html" contactType=contactType %}
       </table>
-      <div class="container p-6 is-flex is-justify-content-center is-align-content-center">
-        <img src="/public/spinner.gif" alt="Loading data" />
-      </div>
     </div>
+    <div id="spinner" class="spinner"></div>
     {% endfor %}
   </div>
 </div>

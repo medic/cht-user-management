@@ -8,6 +8,7 @@ import RemotePlaceCache from '../lib/remote-place-cache';
 import RemotePlaceResolver from '../lib/remote-place-resolver';
 import SessionCache from '../services/session-cache';
 import { UploadManager } from '../services/upload-manager';
+import Pagination from '../services/pagination';
 
 export default async function sessionCache(fastify: FastifyInstance) {
   fastify.get('/', async (req, resp) => {
@@ -41,21 +42,29 @@ export default async function sessionCache(fastify: FastifyInstance) {
     return resp.view('src/liquid/app/view.html', tmplData);
   });
   
-  fastify.get('/app/list', async (req, resp) => {
+  fastify.get('/app/list/:page/:pageSize?', async (req, resp) => {
+    const params: any = req.params;
+    const page = parseInt(params.page, 10);
+    const pageSize = parseInt(params.pageSize, 10) || 10;
+
+    const pagination = new Pagination({ page, pageSize });
     const contactTypes = Config.contactTypes();
     const sessionCache: SessionCache = req.sessionCache;
     const directiveModel = new DirectiveModel(sessionCache, req.cookies.filter);
     const placeData = contactTypes.map((item) => {
+      const itemPlacesData = sessionCache.getPlaces({
+        type: item.name,
+        filter: directiveModel.filter,
+      });
       return {
         ...item,
-        places: sessionCache.getPlaces({
-          type: item.name,
-          filter: directiveModel.filter,
-        }),
+        places: pagination.getPageData(itemPlacesData),
         hierarchy: Config.getHierarchyWithReplacement(item, 'desc'),
         userRoleProperty: Config.getUserRoleConfig(item),
       };
     });
+
+    console.log('xxxxxxxxxxxxxxxxxxxxxxxxx', placeData[0]);
     const tmplData = {
       session: req.chtSession,
       contactTypes: placeData,

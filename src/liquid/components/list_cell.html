@@ -1,10 +1,11 @@
 <td
   id="{{ include.propertyName }}"
   {% if place.validationErrors[include.propertyName] %} 
-    class="is-danger has-tooltip-arrow has-tooltipl-multiline"    
-    data-tooltip="{{ place.validationErrors[include.propertyName] | escape }}"
+    class="error-bg"
   {% endif %}
 >
+  <div data-toggle="tooltip" data-placement="top"
+  title="{{ place.validationErrors[include.propertyName] | escape }}">
   {% if include.values[include.property.property_name] != empty %}
     {% if include.linkTo and include.linkTo != empty and include.linkTo.type == 'remote' %}
       <a href="https://{{ session.authInfo.domain }}/#/contacts/{{ include.linkTo.id }}" target="_blank">
@@ -15,7 +16,8 @@
     {% endif %}
 
     {% if include.linkTo.type == 'local' %}
-      <span class="material-symbols-outlined">cloud_off</span>
+      <span>cloud_off</span>
     {% endif %}
   {% endif %}
+  </div>
 </td>

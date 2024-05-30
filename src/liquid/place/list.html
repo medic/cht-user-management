@@ -1,23 +1,22 @@
 <div id="place_list">
   {% for contactType in contactTypes %}
-  <div id="{{contactType.name}}" class="mb-6">
-    <h2 class="title is-4">{{contactType.friendly}}</h2>
-    {% if contactType.places.length > 0 %}
-      <table
-        id="table_places"
-        class="table is-fullwidth is-striped is-hoverable"
-      >
-        {% include "components/table_header.html" contactType=contactType %}
-        <tbody>
-          {% for place in contactType.places %}
-            {% include "components/place_item.html" %}
-          {% endfor%}
-        </tbody>
-      </table>
-    {% else %}
-      <div class="notification is-white">
-        <i>No Results</i>
-      </div>
-    {% endif %}
+  <h2>{{contactType.friendly}}</h2>
+  <div id="{{contactType.name}}" class="table-container">
+    {% if contactType.places.pagePlaces.length > 0 %}
+    <table id="table_places">
+      {% include "components/table_header.html" contactType=contactType %}
+      <tbody>
+        {% for place in contactType.places.pagePlaces %}
+        {% include "components/place_item.html" %}
+        {% endfor%}
+      </tbody>
+    </table>
+  </div>
+  {% include "components/pagination.html" contactType = contactType %}
+  {% else %}
+  <div>
+    <i>No Results</i>
+  </div>
+  {% endif %}
   {% endfor %}
 </div>

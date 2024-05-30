@@ -1,0 +1,159 @@
+@import "variables";
+@import "themes";
+@import "mixins";
+@import "buttons";
+@import "input-forms";
+@import "header";
+@import "spinner";
+@import "tables";
+@import "place-nav";
+@import "directives";
+
+body {
+    @extend .theme;
+}
+.login-page {
+    background-color: $login-bg-color;
+}
+
+.container {
+    margin: 0 auto;
+    padding-top: 0.4em;
+}
+.border {
+    border: 1px solid blue;
+}
+
+.actions {
+    display: flex;
+    justify-content: flex-end;
+    padding: 10px;
+
+    .top,
+    .bottom {
+        display: flex;
+        align-items: center;
+        width: fit-content;
+    }
+
+    @media (max-width: 600px) {
+        padding: 0;
+        flex-direction: column;
+        width: 100%;
+
+        button, a {
+            width: 14em;
+            margin: 2px;
+        }
+
+        .top {
+            order: 1;
+            width: inherit;
+            justify-content: center;
+            margin: 5px auto 3px auto;
+        }
+        .bottom {
+            order: 2;
+            width: inherit;
+            justify-content: center;
+        }
+    }
+}
+
+.content {
+    padding-top: 3em;
+    margin: auto;
+    width: 98%;
+}
+.center {
+    margin: 1em;
+}
+
+.hidden {
+    display: none;
+}
+
+.active {
+    display: block;
+}
+
+img {
+    vertical-align: middle;
+}
+.error {
+    color: #da4548;
+    text-align: center;
+    display: none;
+    font-size: $font-medium;
+}
+
+.error-text {
+    color: $failure-color;
+}
+.success-text {
+    color: $success-color;
+}
+.staging-text {
+    color: $primary-color
+}
+.warning-text {
+    color: $warning-color;
+}
+
+.error-bg {
+    background-color: $failure-color;
+}
+.success-bg {
+    background-color: $success-color;
+}
+.staging-bg {
+    background-color: $primary-color
+}
+.warning-bg {
+    background-color: $warning-color;
+    color: $default-text-color;
+}
+
+.logo {
+    width: 60%;
+    margin: 30px auto 40px auto;
+    display: block;
+}
+
+.login-branding {
+    width: 400px;
+    margin: 0 auto;
+    @include mobile-only {
+        width: 85%;
+    }
+    p {
+        text-align: center;
+        font-size: $font-extra-extra-large;
+        font-weight: bold;
+    }
+}
+
+progress {
+    width: 100%;
+    height: 15px;
+    margin: 10px auto;
+    background-color: white;
+    border-radius: 10px;
+    overflow: hidden;
+    
+    &::-webkit-progress-bar {
+      background-color: white;
+      border-radius: 10px;
+    }
+
+    &::-moz-progress-bar {
+        background-color: $primary-color;
+    }
+    
+    &::-webkit-progress-value {
+      background-color: $primary-color;
+      border-radius: 10px;
+      transition: width 1s ease;
+    }
+
+}

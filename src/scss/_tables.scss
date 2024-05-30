@@ -1,0 +1,166 @@
+$table-bg-color: #f2f2f2;
+$table-header-bg-color: rgba(#dcdcdc, 0.6);
+
+.table-container {
+    overflow-x: auto;
+    display: flex;
+    margin: 0.5em 5px 1em 5px;
+    width: auto;
+    border-radius: $element-border-radius;
+    @include card-shadow;
+
+    table {
+        border-collapse: collapse;
+        border-spacing: 0;
+        width: 100%;
+        max-width: 100%;
+        a {
+            color: #337ab7;
+            text-decoration: none;
+            &:hover,
+            &:focus {
+                color: #23527c;
+                text-decoration: underline;
+            }
+        }
+        td {
+            font-size: 0.95em;
+            &:last-child {
+                position: sticky;
+                position: -webkit-sticky;
+                right: 0;
+            }
+        }
+        th,
+        td {
+            text-align: left;
+            padding: 15px;
+        }
+        th {
+            font-size: $font-small;
+            background-color: $table-header-bg-color;
+            border-bottom: 1px solid $element-border-color;
+        }
+        tr:nth-child(even) {
+            background-color: $table-bg-color;
+        }
+
+        .action-link {
+            cursor: pointer;
+            z-index: -1;
+            &:hover,
+            &:focus {
+                filter: brightness(0);
+                text-decoration: none;
+            }
+        }
+    }
+}
+
+//collapse table
+@media (max-width: 600px) {
+    .table-container {
+        box-shadow: none;
+        table {
+            table-layout: fixed;
+            thead {
+                display: none;
+            }
+            tr {
+                &:nth-child(even) {
+                    background-color: white;
+                }
+            }
+            td {
+                border-left: 1px solid #ddd;
+                border-right: 1px solid #ddd;
+                background-color: $table-bg-color;
+                display: block;
+                text-align: right;
+                border-top: none;
+                .empty {
+                    padding: 15px;
+                }
+                &::before {
+                    content: attr(data-label);
+                    float: left;
+                }
+                &:last-child {
+                    margin-bottom: 1em;
+                    border-bottom: 1px solid #ddd;
+                    border-bottom-left-radius: $border-radius;
+                    border-bottom-right-radius: $border-radius;
+                }
+                &:first-child {
+                    border-top: 1px solid #ddd;
+                    border-top-left-radius: $border-radius;
+                    border-top-right-radius: $border-radius;
+
+                }
+            }
+        }
+    }
+}
+
+.pagination {
+    display: inline-flex;
+    font-size: $font-small;
+    width: 100%;
+    justify-content: center;
+    margin: 0 auto 70px auto;
+    button {
+        background-color: white;
+        border: none;
+        width: 40px;
+        font-size: $font-extra-large;
+        cursor: pointer;
+    }
+    a {
+        color: black;
+        float: left;
+        margin: auto 1px;
+        padding: 8px 16px;
+        text-decoration: none;
+        border-radius: 4px;
+        border: 1px solid $element-border-color;
+        cursor: pointer;
+        display: none;
+        &:nth-child(-n + 4), &.collapse {
+            display: block;
+        }
+        &:nth-last-child(-n + 3) {
+            display: block;
+        }
+        &.active {
+            background-color: $primary-color;
+            display: block;
+            color: white;
+            border: 1px solid $primary-color;
+        }
+
+        &:hover:not(.active) {
+            background-color: #f1f1f1;
+        }
+    }
+
+    .pager-control {
+        display: inline-flex;
+        justify-content: center;
+        align-items: center;
+        margin-left: 20px;
+        height: inherit;
+        font-size: $font-small;
+        float: right;
+        span {
+            margin-right: 5px;
+        }
+        select {
+           font-size: $font-small;
+           background-color: white;
+           border: 1px solid $element-border-color;
+           border-radius: $border-radius;
+           padding: auto;
+           height: inherit;
+        }
+    }    
+}

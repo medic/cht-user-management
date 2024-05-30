@@ -1,49 +1,49 @@
 <tr id="{{place.id}}" hx-sse="swap:update-{{place.id}}" hx-target="this" hx-swap="outerHTML">
+    <td>{{place.placeNumber}}</td>
     {% for hierarchy in contactType.hierarchy %}
-        {% capture propertyName %}hierarchy_{{ hierarchy.property_name }}{% endcapture %}
-        {% 
-            include "components/list_cell.html"
-            propertyName=propertyName
-            property=hierarchy
-            values=place.hierarchyProperties
-            linkTo=place.resolvedHierarchy[hierarchy.level]
-        %}
+    {% capture propertyName %}hierarchy_{{ hierarchy.property_name }}{% endcapture %}
+    {%
+    include "components/list_cell.html"
+    propertyName=propertyName
+    property=hierarchy
+    values=place.hierarchyProperties
+    linkTo=place.resolvedHierarchy[hierarchy.level]
+    %}
     {% endfor %}
 
     {% for property in contactType.place_properties %}
-        {% if property.type != 'generated' %}
-            {% capture propertyName %}place_{{ property.property_name }}{% endcapture %}
-            {%
-                include "components/list_cell.html"
-                propertyName=propertyName
-                property=property
-                values=place.properties
-            %}
-        {% endif %}
+    {% if property.type != 'generated' %}
+    {% capture propertyName %}place_{{ property.property_name }}{% endcapture %}
+    {%
+    include "components/list_cell.html"
+    propertyName=propertyName
+    property=property
+    values=place.properties
+    %}
+    {% endif %}
     {% endfor %}
 
     {% for contact_property in contactType.contact_properties %}
-        {% if contact_property.type != 'generated' %}
-            {% capture propertyName %}contact_{{ contact_property.property_name }}{% endcapture %}
-            {%
-                include "components/list_cell.html"
-                propertyName=propertyName
-                property=contact_property
-                values=place.contact.properties
-            %}
-        {% endif %}
+    {% if contact_property.type != 'generated' %}
+    {% capture propertyName %}contact_{{ contact_property.property_name }}{% endcapture %}
+    {%
+    include "components/list_cell.html"
+    propertyName=propertyName
+    property=contact_property
+    values=place.contact.properties
+    %}
+    {% endif %}
     {% endfor %}
 
     {% if contactType.user_role.size > 1 %}
-        {% capture propertyName %}user_{{ contactType.userRoleProperty.property_name }}{% endcapture %}
-        {%
-            include "components/list_cell.html"
-            propertyName=propertyName
-            property=contactType.userRoleProperty
-            values=place.userRoleProperties
-        %}
+    {% capture propertyName %}user_{{ contactType.userRoleProperty.property_name }}{% endcapture %}
+    {%
+    include "components/list_cell.html"
+    propertyName=propertyName
+    property=contactType.userRoleProperty
+    values=place.userRoleProperties
+    %}
     {% endif %}
-
     <td>
         {% capture tag_text %}{% if place.validationErrors == empty %}{{ place.state }}{% else %}invalid{% endif %}{%
         endcapture %}
@@ -62,27 +62,37 @@
 
     <td>
         {% if place.creationDetails.password %}
-        {% capture explanation %}Username: {{ place.creationDetails.username }} Password: {{ place.creationDetails.password }}{% endcapture %}
+        {% capture explanation %}Username: {{ place.creationDetails.username }} Password: {{
+        place.creationDetails.password }}{% endcapture %}
         <span class="has-tooltip-arrow has-tooltipl-multiline material-symbols-outlined"
             data-tooltip="{{ explanation | escape }}"
             onclick="navigator.clipboard.writeText(`{{ explanation | escape }}`);">
             key
         </span>
         {% else %}
-        <a href="/place/edit/{{place.id}}" data-tooltip="Edit">
-            <span class="material-symbols-outlined">edit</span>
+        <a class="action-link" href="/place/edit/{{place.id}}" data-toggle="tooltip" data-placement="bottom" title="Edit">
+            <img src="public/icons/edit.svg" alt="Edit">
         </a>
-        <a hx-post="/place/refresh/{{place.id}}" data-tooltip="Refresh" hx-target="this" hx-swap="none">
-            <span class="material-symbols-outlined">refresh</span>
+        <a class="action-link" hx-post="/place/refresh/{{place.id}}" data-toggle="tooltip" data-placement="bottom"
+        title="Refresh" hx-target="this" hx-swap="none">
+            <img src="public/icons/refresh.svg" alt="refresh">
         </a>
         {% if place.validationErrors == empty %}
         <a hx-post="/place/upload/{{place.id}}" hx-target="this" hx-swap="none" data-tooltip="Upload">
-            <span class="material-symbols-outlined">upload</span>
+            <img src="public/icons/upload.svg" alt="upload">
         </a>
         {%endif%}
         {%endif%}
 
-        <a class="material-symbols-outlined" data-tooltip="Forget" hx-post="/place/remove/{{place.id}}"
-            hx-swap="none">delete</a>
+        <a hx-post="/place/remove/{{place.id}}" class="action-link" data-toggle="tooltip" data-placement="bottom"
+            title="Forget" hx-confirm="Are you sure you want to delete this user?" hx-swap="none" hx-target="#place_list">
+            <img src="public/icons/delete.svg" alt="delete">
+        </a>
     </td>
 </tr>
+
+<script type="text/javascript">
+    $(function () {
+        $('[data-toggle="tooltip"]').tooltip()
+    })
+</script>
