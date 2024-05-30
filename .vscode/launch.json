@@ -12,7 +12,24 @@
         "<node_internals>/**"
       ],
       "program": "${workspaceFolder}/dist/index.js",
-      "envFile": "${workspaceFolder}/.env"
+      "envFile": "${workspaceFolder}/.env",
+      "runtimeExecutable": "/home/kenn/.nvm/versions/node/v16.20.2/bin/node"
+    },
+    {
+      "name": "Bulk Move Nairobi",
+      "type": "node",
+      "request": "launch",
+      "runtimeArgs": [
+        "${workspaceRoot}/node_modules/.bin/ts-node",
+        "--transpile-only",
+        // if you use esm
+        "--esm" 
+      ],
+      "program": "./index.ts",
+      "cwd": "${workspaceRoot}/scripts/bulk-rename",
+      "internalConsoleOptions": "openOnSessionStart",
+      "skipFiles": ["<node_internals>/**", "node_modules/**"],
+      "runtimeExecutable": "/home/kenn/.nvm/versions/node/v16.20.2/bin/node"
     },
     {
       "command": "npm test",

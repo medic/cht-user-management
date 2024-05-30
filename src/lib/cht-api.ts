@@ -31,7 +31,7 @@ export type RemotePlace = {
 
 export class ChtApi {
   public readonly chtSession: ChtSession;
-  private axiosInstance: AxiosInstance;
+  public axiosInstance: AxiosInstance;
 
   constructor(session: ChtSession) {
     this.chtSession = session;
