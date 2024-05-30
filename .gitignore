@@ -4,3 +4,5 @@ dist
 .env*
 src/package.json
 .eslintcache
+json_docs
+upload-docs.*.json
