@@ -7,7 +7,6 @@ $table-header-bg-color: rgba(#dcdcdc, 0.6);
     margin: 0.5em 5px 1em 5px;
     width: auto;
     border-radius: $element-border-radius;
-    @include card-shadow;
 
     table {
         border-collapse: collapse;
@@ -40,6 +39,16 @@ $table-header-bg-color: rgba(#dcdcdc, 0.6);
             font-size: $font-small;
             background-color: $table-header-bg-color;
             border-bottom: 1px solid $element-border-color;
+            a {
+                cursor: pointer;
+                &:hover,
+                &:focus {
+                    text-decoration: none;
+                }
+            }
+            &.header-actions {
+                text-align: right;
+            }
         }
         tr:nth-child(even) {
             background-color: $table-bg-color;
@@ -95,7 +104,6 @@ $table-header-bg-color: rgba(#dcdcdc, 0.6);
                     border-top: 1px solid #ddd;
                     border-top-left-radius: $border-radius;
                     border-top-right-radius: $border-radius;
-
                 }
             }
         }
@@ -125,7 +133,8 @@ $table-header-bg-color: rgba(#dcdcdc, 0.6);
         border: 1px solid $element-border-color;
         cursor: pointer;
         display: none;
-        &:nth-child(-n + 4), &.collapse {
+        &:nth-child(-n + 4),
+        &.collapse {
             display: block;
         }
         &:nth-last-child(-n + 3) {
@@ -155,12 +164,12 @@ $table-header-bg-color: rgba(#dcdcdc, 0.6);
             margin-right: 5px;
         }
         select {
-           font-size: $font-small;
-           background-color: white;
-           border: 1px solid $element-border-color;
-           border-radius: $border-radius;
-           padding: auto;
-           height: inherit;
+            font-size: $font-small;
+            background-color: white;
+            border: 1px solid $element-border-color;
+            border-radius: $border-radius;
+            padding: auto;
+            height: inherit;
         }
-    }    
+    }
 }

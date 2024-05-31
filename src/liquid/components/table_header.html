@@ -18,6 +18,16 @@
             <th id="{{userRoleProperty.property_name}}">{{ contactType.userRoleProperty.friendly_name }}</th>
         {% endif %}
         <th></th>
-        <th></th>
+        <th class="header-actions">
+            <a hx-post="/app/refresh-all" hx-swap="none"
+            data-toggle="tooltip" data-placement="bottom" title="refresh table">
+                <img src="public/icons/refresh.svg" alt="refresh">
+            </a>
+            <a hx-post="/app/remove-all/{{contactType.name}}" hx-swap="none" 
+            data-toggle="tooltip" data-placement="bottom" title="delete all"
+            hx-confirm="Are you sure you want to DELETE ALL USERS?">
+                <img src="public/icons/delete-all.svg" alt="refresh">
+            </a>
+        </th>
     </tr>
 </thead>

@@ -1,40 +1,46 @@
 <div class="pagination" id="pagination">
-    <button 
-    {%assign prevPage = include.contactType.places.page | minus: 1 %}
-    {% if prevPage == 0 %} disabled {%endif%}
-    hx-trigger="click" hx-get="/app/list/{{prevPage}}/{{include.contactType.places.pageSize}}" hx-target="#place_list" hx-swap="outerHTML"
-    id="prevbtn">&laquo;</button>
+    <button {%assign prevPage=include.contactType.places.page | minus: 1 %} {% if prevPage==0 %} disabled {%endif%}
+        hx-trigger="click"
+        hx-get="/app/list/{{prevPage}}/{{include.contactType.places.pageSize}}/{{ contactType.name }}"
+        hx-target="#place_list" hx-swap="outerHTML" id="prevbtn">&laquo;</button>
     <span id="pager">
         {% for pageNumber in (1..contactType.places.totalPages) %}
         {% assign collapseRightLimit = include.contactType.places.totalPages | minus: 3 %}
         {%assign collapseLeft = include.contactType.places.page >= 6 and pageNumber == 6 %}
-        {%assign collapseRight = include.contactType.places.page < collapseRightLimit and pageNumber == collapseRightLimit %}
-        {% if collapseLeft or collapseRight %}
-        <a class="collapse">...</a>
-        {%endif%}
-        <a
-        {% if pageNumber == include.contactType.places.page %}
-        class = "active"
-        {%else%}
-        hx-trigger="click" hx-get="/app/list/{{pageNumber}}/{{include.contactType.places.pageSize}}" hx-target="#place_list" hx-swap="outerHTML"
-        {%endif%}
-        >{{pageNumber}}</a>
-        {%endfor%}
+        {%assign collapseRight = include.contactType.places.page < collapseRightLimit and pageNumber==collapseRightLimit
+            %} {% if collapseLeft or collapseRight %} <a class="collapse">...</a>
+            {%endif%}
+            <a {% if pageNumber==include.contactType.places.page %} class="active" {%else%} hx-trigger="click"
+                hx-get="/app/list/{{pageNumber}}/{{include.contactType.places.pageSize}}/{{ contactType.name }}"
+                hx-target="#place_list" hx-swap="outerHTML" {%endif%}>{{pageNumber}}</a>
+            {%endfor%}
     </span>
-    <button  id="nextbtn_{{ contactType.name }}"
-    {%assign nextPage = include.contactType.places.page | plus: 1 %}
-    {% if nextPage > include.contactType.places.totalPages %} disabled {%endif%}
-    hx-trigger="click" hx-get="/app/list/{{nextPage}}/{{include.contactType.places.pageSize}}" hx-target="#place_list" hx-swap="outerHTML"
-    >&raquo;</button>
+    <button id="nextbtn_{{ contactType.name }}" {%assign nextPage=include.contactType.places.page | plus: 1 %} {% if
+        nextPage> include.contactType.places.totalPages %} disabled {%endif%}
+        hx-trigger="click" hx-get="/app/list/{{nextPage}}/{{include.contactType.places.pageSize}}/{{ contactType.name
+        }}"
+        hx-target="#place_list" hx-swap="outerHTML"
+        >&raquo;</button>
     <div class="pager-control">
         <span>Rows per page</span>
-        <select id="rows-per-page_{{ contactType.name }}"
-        hx-trigger="change" hx-target="#place_list" hx-swap="outerHTML"
-        >
-            <option hx-get="/app/list/1/10" value="10" {%if include.contactType.places.pageSize == 10 %}selected {%endif%}>10</option>
-            <option hx-get="/app/list/1/20" value="20" {%if include.contactType.places.pageSize == 20 %}selected {%endif%}>20</option>
-            <option hx-get="/app/list/1/50" value="50" {%if include.contactType.places.pageSize == 50 %}selected {%endif%}>50</option>
-            <option hx-get="/app/list/1/100" value="100" {%if include.contactType.places.pageSize == 100 %}selected {%endif%}>100</option>
+        <select id="rows-per-page_{{ contactType.name }}" hx-trigger="change" hx-target="#place_list"
+            hx-swap="outerHTML">
+            <option hx-get="/app/list/1/10/{{ contactType.name }}" value="10" {%if
+                include.contactType.places.pageSize==10 %}selected {%endif%}>10</option>
+            <option hx-get="/app/list/1/20/{{ contactType.name }}" value="20" {%if
+                include.contactType.places.pageSize==20 %}selected {%endif%}>20</option>
+            <option hx-get="/app/list/1/50/{{ contactType.name }}" value="50" {%if
+                include.contactType.places.pageSize==50 %}selected {%endif%}>50</option>
+            <option hx-get="/app/list/1/100/{{ contactType.name }}" value="100" {%if
+                include.contactType.places.pageSize==100 %}selected {%endif%}>100</option>
         </select>
     </div>
 </div>
+
+<script>
+    document.getElementById(`rows-per-page_{{contactType.name | escape}}`).addEventListener('change', () => {
+        const selectInput = document.getElementById(`rows-per-page_{{contactType.name | escape}}`);
+        document.cookie = `{{contactType.name | escape}}_pageSize=${selectInput.value};SameSite=Strict`
+    });
+    document.cookie = `{{contactType.name | escape}}_currentPage={{include.contactType.places.page}};SameSite=Strict`;
+</script>

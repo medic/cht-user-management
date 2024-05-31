@@ -1,6 +1,7 @@
 <div id="place_list">
   {% for contactType in contactTypes %}
   <h2>{{contactType.friendly}}</h2>
+  {% include "components/actions.html" contactType=contactType %}
   <div id="{{contactType.name}}" class="table-container">
     {% if contactType.places.pagePlaces.length > 0 %}
     <table id="table_places">
@@ -12,7 +13,7 @@
       </tbody>
     </table>
   </div>
-  {% include "components/pagination.html" contactType = contactType %}
+  {% include "components/pagination.html" contactType=contactType %}
   {% else %}
   <div>
     <i>No Results</i>
@@ -20,3 +21,9 @@
   {% endif %}
   {% endfor %}
 </div>
+
+<script type="text/javascript">
+  $(function () {
+      $('[data-toggle="tooltip"]').tooltip()
+  })
+</script>

@@ -41,16 +41,19 @@ export default async function sessionCache(fastify: FastifyInstance) {
 
     return resp.view('src/liquid/app/view.html', tmplData);
   });
-  
-  fastify.get('/app/list/:page/:pageSize?', async (req, resp) => {
+
+  fastify.get('/app/list/:page/:pageSize:/:contactTypeName?', async (req, resp) => {
     const params: any = req.params;
     const page = parseInt(params.page, 10);
-    const pageSize = parseInt(params.pageSize, 10) || 10;
+    const pageSize = params.pageSize;
+    const contactTypeName = params.contactTypeName;
 
-    const pagination = new Pagination({ page, pageSize });
+    const pagination = new Pagination({ page, pageSize, cookie: req.cookies, contactTypeName, clearCookie: resp.clearCookie });
+
     const contactTypes = Config.contactTypes();
     const sessionCache: SessionCache = req.sessionCache;
     const directiveModel = new DirectiveModel(sessionCache, req.cookies.filter);
+
     const placeData = contactTypes.map((item) => {
       const itemPlacesData = sessionCache.getPlaces({
         type: item.name,
@@ -58,23 +61,25 @@ export default async function sessionCache(fastify: FastifyInstance) {
       });
       return {
         ...item,
-        places: pagination.getPageData(itemPlacesData),
+        places: pagination.getPageData(itemPlacesData, item.name),
         hierarchy: Config.getHierarchyWithReplacement(item, 'desc'),
         userRoleProperty: Config.getUserRoleConfig(item),
       };
     });
 
-    console.log('xxxxxxxxxxxxxxxxxxxxxxxxx', placeData[0]);
     const tmplData = {
       session: req.chtSession,
       contactTypes: placeData,
+      directiveModel
     };
     return resp.view('src/liquid/place/list.html', tmplData);
   });
 
-  fastify.post('/app/remove-all', async (req, resp) => {
+  fastify.post('/app/remove-all/:contactTypeName?', async (req, resp) => {
+    const params: any = req.params;
+    const contactTypeName = params.contactTypeName;
     const sessionCache: SessionCache = req.sessionCache;
-    sessionCache.removeAll();
+    sessionCache.removeAll(contactTypeName);
     resp.header('HX-Redirect', '/');
   });
 

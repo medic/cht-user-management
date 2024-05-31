@@ -1,0 +1,31 @@
+<div class="actions">
+
+  <div class="top">
+    <div class="dropdown-button">
+      <button class="clear-btn"><img src="/public/icons/plus.svg"> {{include.contactType.friendly}}</button>
+      <div class="dropdown-content">
+        <a href="/add-place?type={{ include.contactType.name }}&op=new">Create New</a>
+        <a href="/add-place?type={{ include.contactType.name }}&op=replace">Replace Existing</a>
+        <a href="/add-place?type={{ include.contactType.name }}&op=bulk">Upload from CSV</a>
+      </div>
+    </div>
+    <button class="clear-btn" onclick="window.location.href='/move/{{ include.contactType.name }}'">
+      <img src="/public/icons/move.svg">Move {{include.contactType.friendly}}
+    </button>
+  </div>
+  <div class="bottom" id="action_buttons_{{include.contactType.name}}">
+    {% if directiveModel.validationErrorCount > 0 or directiveModel.totalCount == 0 %}
+    <div data-toggle="tooltip" title="Fix invalid users">
+      <button class="clear-btn disabled" hx-post="/app/apply-changes?type={{ include.contactType.name }}" hx-swap="none"
+        disabled>
+        <img src="/public/icons/upload-users.svg"> Upload All
+      </button>
+    </div>
+    {% else %}
+    <button class="clear-btn" hx-post="/app/apply-changes?type={{ include.contactType.name }}" hx-swap="none">
+      <img src="/public/icons/upload-users.svg"> Upload All
+    </button>
+    {% endif %}
+    {% include "components/button_save_credentials.html" %}
+  </div>
+</div>

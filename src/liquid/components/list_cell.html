@@ -1,5 +1,6 @@
 <td
   id="{{ include.propertyName }}"
+  data-label="{{ include.dataLabel }}"
   {% if place.validationErrors[include.propertyName] %} 
     class="error-bg"
   {% endif %}
@@ -18,6 +19,8 @@
     {% if include.linkTo.type == 'local' %}
       <span>cloud_off</span>
     {% endif %}
+  {% else %}
+    <span class="empty"></span>
   {% endif %}
   </div>
 </td>
