@@ -22,7 +22,11 @@ export class MoveContactWorker {
   private readonly MAX_SENTINEL_BACKLOG = 1000; // ensure we don't take down the server
   
   constructor(private queueName: string) {
-    new Worker(
+    this.initializeWorker();
+  }
+
+  private initializeWorker() {
+    return new Worker(
       this.queueName, 
       this.handleJob, 
       { connection: redisConnection, concurrency: this.MAX_CONCURRENCY }
@@ -56,8 +60,9 @@ export class MoveContactWorker {
       const response = await axios.get(`${instanceUrl}/api/v2/monitoring`);
       const sentinelBacklog = response.data.sentinel?.backlog;
       return sentinelBacklog < this.MAX_SENTINEL_BACKLOG;
-    } catch (error) {
-      console.error('Error fetching monitoring data:', error);
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.error?.message || err.response?.data || err?.message;
+      console.error('Error fetching monitoring data:', errorMessage);
       return false;
     }
   }

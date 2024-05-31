@@ -6,10 +6,16 @@ import { BullMQQueueManager, JobParams } from '../../src/shared/queues';
 describe('BullMQQueueManager', () => {
   let queueManager: BullMQQueueManager;
   let addStub: sinon.SinonStub;
+  let getOrCreateQueueStub: sinon.SinonStub;
+  let mockQueue: sinon.SinonStubbedInstance<Queue>;
 
   beforeEach(() => {
     queueManager = new BullMQQueueManager();
-    addStub = sinon.stub(Queue.prototype, 'add').resolves();
+    mockQueue = sinon.createStubInstance(Queue);
+    addStub = mockQueue.add.resolves();
+    getOrCreateQueueStub = sinon.stub(queueManager as any, 'getOrCreateQueue').returns(
+      mockQueue as unknown as Queue
+    );
   });
 
   afterEach(() => {
@@ -46,7 +52,12 @@ describe('BullMQQueueManager', () => {
     await queueManager.addJob(jobParams);
     const queue = queueManager.getQueue(queueName);
 
-    expect(queue).to.be.instanceOf(Queue);
+    expect(queue).to.equal(mockQueue);
+
+    // Ensure getOrCreateQueue was called twice (once by addJob and once by getQueue)
+    expect(getOrCreateQueueStub.callCount).to.equal(2);
+    // Ensure getOrCreateQueue was called with the correct arguments
+    expect(getOrCreateQueueStub.firstCall.calledWithExactly(queueName)).to.be.true;
   });
 
   it('should add multiple jobs to the same queue', async () => {
@@ -105,5 +116,10 @@ describe('BullMQQueueManager', () => {
 
     const secondQueue = queueManager.getQueue(queueName);
     expect(firstQueue).to.equal(secondQueue);
+
+    /// Ensure getOrCreateQueue was called twice (once by addJob and once by each getQueue)
+    expect(getOrCreateQueueStub.callCount).to.equal(3);
+    // Ensure getOrCreateQueue was called with the correct arguments
+    expect(getOrCreateQueueStub.firstCall.calledWithExactly(queueName)).to.be.true;
   });
 });

@@ -67,8 +67,8 @@
     "test": "npx ts-mocha test/{,**}/*.spec.ts",
     "build": "npm run cp-package-json && npx tsc",
     "lint": "npx eslint --color --cache .",
-    "start": "node dist/frontend/index.js",
-    "dev": "tsc-watch --onSuccess \"node dist/frontend/index.js\"",
+    "start": "node dist/index.js",
+    "dev": "tsc-watch --onSuccess \"node dist/index.js\"",
     "publish": "node scripts/publish.js",
     "start:worker": "node dist/worker/main.js"
   },

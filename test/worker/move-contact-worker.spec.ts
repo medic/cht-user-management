@@ -1,10 +1,16 @@
 /* eslint-disable dot-notation */
+import axios from 'axios';
 import { expect } from 'chai';
 import sinon, { SinonSandbox } from 'sinon';
-import { MoveContactWorker, MoveContactData, JobResult } from '../../src/worker/move-contact-worker';
+
+
 import Auth from '../../src/lib/authentication';
-import axios from 'axios';
 import { queueManager } from '../../src/shared/queues';
+import { 
+  MoveContactWorker, 
+  MoveContactData, 
+  JobResult 
+} from '../../src/worker/move-contact-worker';
 
 describe('MoveContactWorker', () => {
   let worker: MoveContactWorker;
@@ -31,11 +37,15 @@ describe('MoveContactWorker', () => {
 
   beforeEach(() => {
     sandbox = sinon.createSandbox();
+    sandbox.stub(MoveContactWorker.prototype as any, 'initializeWorker').callsFake(() => {});
+    sandbox.stub(queueManager, 'addJob').resolves();
+
     worker = new MoveContactWorker(queueName);
     canProcessStub = sandbox.stub(worker as any, 'canProcess');
     moveContactStub = sandbox.stub(worker as any, 'moveContact');
     postponeStub = sandbox.stub(worker as any, 'postpone');
     decodeTokenStub = sandbox.stub(Auth, 'decodeToken');
+    
   });
 
   afterEach(() => {
@@ -120,11 +130,10 @@ describe('MoveContactWorker', () => {
   describe('postpone', () => {
     it('should add job back to queue with delay', async () => {
       postponeStub.callThrough();
-      sandbox.stub(queueManager, 'addJob').resolves();
+      // sandbox.stub(queueManager, 'addJob').resolves();
 
       const result = await (worker as any)['postpone'](job);
       expect(result).to.be.true;
     });
   });
 });
-
