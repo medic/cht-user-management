@@ -1,5 +1,8 @@
 <div id="place_list" hx-trigger="load" hx-get="/app/list" hx-target="this" hx-swap="outerHTML">
   {% for contactType in contactTypes %}
+  {%if contactType.name != directiveModel.activeTab %}
+  {%continue%}
+  {%endif%}
   <div id="{{contactType.name}}">
     <h2>{{contactType.friendly}}</h2>
     <div class="table-container">
