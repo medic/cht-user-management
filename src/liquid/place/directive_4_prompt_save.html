@@ -1,13 +1,8 @@
-<p class="title is-5">
-  Download Resulting User Credentials
-</p>
-
-<p>
-  Usernames and passwords are now available for download. Click the button below to download the credentials as a file.
-</p>
-
-<div class="columns is-centered">
-  <div class="column is-4 has-text-centered">
-    {% include "components/button_save_credentials.html" %}
-  </div>
+<div class = "prompt-save">
+  {% include "components/button_save_credentials.html" %}
+  <h3>User Credentials ready!</h3>
+  <p>
+    You have successfully uploaded <b class="success-text"><i>{{directiveModel.completeCount}} users</i></b>. Usernames and passwords are now available for download.
+    Click the button below to download the credentials as a file.
+  </p>
 </div>

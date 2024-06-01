@@ -30,7 +30,7 @@ export default class Pagination {
 
     const totalPlaces = places.length;
     const totalPages = Math.ceil(totalPlaces / selectedPageSize);
-    selectedPage = totalPages === 1 ? totalPages : selectedPage;
+    selectedPage = selectedPage > totalPages ? totalPages : selectedPage;
     const startIndex = (selectedPage - 1) * selectedPageSize;
     const endIndex = startIndex + selectedPageSize;
 

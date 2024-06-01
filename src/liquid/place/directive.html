@@ -1,74 +1,52 @@
-<div class="columns is-3 is-variable is-multiline" id="directive" hx-sse="swap:directive"
-  hx-target="this" hx-swap="outerHTML">
-  <div class="column has-background-light is-9">
-    <section class="hero is-small is-light">
-      <div class="hero-body" id="hero_directive_model">
-        {% if directiveModel.inProgressCount > 0 %}
-          {% include "place/directive_3_in_progress.html" %}
-        {% elsif directiveModel.stagedCount > 0 %}
-          {% include "place/directive_2_prompt_upload.html" %}
-        {% elsif directiveModel.successCount > 0 %}
-          {% include "place/directive_4_prompt_save.html" %}
-        {% else %}
-          <!-- {% include "place/directive_1_get_started.html" %} -->
-        {% endif %}
-      </div>
-    </section>
-  </div>
+<div class="directive" id="directive" hx-sse="swap:directive" hx-target="this"
+  hx-swap="outerHTML">
+  {% if directiveModel.inProgressCount > 0 %}
+  {% include "place/directive_3_in_progress.html" %}
+  {% elsif directiveModel.successCount > 0 %}
+  {% include "place/directive_4_prompt_save.html" %}
+  {% elsif directiveModel.validationErrorCount > 0 %}
+  {% include "place/directive_validation_errors.html" %}
+  {% elsif directiveModel.stagedCount > 0 %}
+  {% include "place/directive_2_prompt_upload.html" %}
+  {%else%}
+  <p>
+    Add users you want to create on the <i>{{ session.authInfo.friendly }}</i> instance below.
+  </p>
+  {% endif %}
 
-  <div class="column is-3 has-background-light">
-    <section class="hero is-small is-light">
-      <div class="hero-body">  
-        <p class="title is-5">Summary</p>
-        <ul>
-          <li>
-            {% include "components/filter_tag.html"
-              class="is-info"
-              filterName="staged"
-              count=directiveModel.stagedCount
-            %}
-          </li>
+  {% if directiveModel.failureCount > 0 %}
+  <p><img src="public/icons/warning.svg"> You have
+    <b class="error-text"><i>{{directiveModel.failureCount}} failed upload(s)</i></b>. You can retry uploading below
+  </p>
+  {%endif%}
 
-          <li>
-            {% include "components/filter_tag.html"
-              class="is-warning"
-              filterName="invalid"
-              count=directiveModel.validationErrorCount
-            %}
-          </li>
+  {% include "components/filter_tag.html"
+  class="staging-bg"
+  filterName="staged"
+  count=directiveModel.stagedCount
+  %}
+  {% include "components/filter_tag.html"
+  class="warning-bg"
+  filterName="invalid"
+  count=directiveModel.validationErrorCount
+  %}
+  {% include "components/filter_tag.html"
+  class="success-bg"
+  filterName="success"
+  count=directiveModel.successCount
+  %}
+  {% include "components/filter_tag.html"
+  class="error-bg"
+  filterName="failure"
+  count=directiveModel.failureCount
+  %}
 
-          <li>
-            {% include "components/filter_tag.html"
-              class="is-success"
-              filterName="success"
-              count=directiveModel.successCount
-            %}
-          </li>
-
-          <li>
-            {% include "components/filter_tag.html"
-              class="is-danger"
-              filterName="failure"
-              count=directiveModel.failureCount
-            %}
-          </li>
-        </ul>
-      </div>
-    </div>
-  </section>
-  
   {% if directiveModel.filter %}
-    <div id="filter-warning" class="column is-12">
-      <div class="notification is-primary is-light has-text-centered">
-        {{ directiveModel.hiddenCount }} results are hidden by a filter
-        <button 
-          class="button tag is-normal"
-          hx-post="/app/set-filter/none" 
-          hx-swap="none"
-        >
-          Remove Filter
-        </button>
-      </div>
-    </div>
+  <div id="filter-warning" class="hidden-tag-container">
+    <i>{{ directiveModel.hiddenCount }} results are hidden by the filter</i>
+    <button class="clear-btn tag" hx-post="/app/set-filter/none" hx-swap="none">
+      Remove Filter
+    </button>
+  </div>
   {% endif %}
 </div>

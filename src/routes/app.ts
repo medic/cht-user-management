@@ -42,11 +42,11 @@ export default async function sessionCache(fastify: FastifyInstance) {
     return resp.view('src/liquid/app/view.html', tmplData);
   });
 
-  fastify.get('/app/list/:page/:pageSize:/:contactTypeName?', async (req, resp) => {
-    const params: any = req.params;
-    const page = parseInt(params.page, 10);
-    const pageSize = params.pageSize;
-    const requestContactTypeName = params.contactTypeName;
+  fastify.get('/app/list', async (req, resp) => {
+    const queryParams: any = req.query;
+    const page = queryParams.page && parseInt(queryParams.page, 10);
+    const pageSize = queryParams.pageSize;
+    const requestContactTypeName = queryParams.contactTypeName;
 
     const pagination = new Pagination({ page, pageSize, cookie: req.cookies, requestContactTypeName });
 
@@ -73,6 +73,10 @@ export default async function sessionCache(fastify: FastifyInstance) {
       directiveModel
     };
     return resp.view('src/liquid/place/list.html', tmplData);
+  });
+
+  fastify.get('/app/list/summary', async (req, res) => {
+    return res.view('src/liquid/components/summary.html');
   });
 
   fastify.post('/app/remove-all/:contactTypeName?', async (req, resp) => {

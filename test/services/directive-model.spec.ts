@@ -30,6 +30,8 @@ describe('services/directive-model.ts', () => {
       stagedCount: 3,
       totalCount: 6,
       percent: '33%',
+      totalCountByContactType: {},
+      activeTab: undefined
     });
   });
 
@@ -58,6 +60,8 @@ describe('services/directive-model.ts', () => {
       percent: '0%',
       filter: undefined,
       hiddenCount: 0,
+      totalCountByContactType: {},
+      activeTab: undefined
     });
   }); 
 });

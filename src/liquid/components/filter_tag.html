@@ -1,21 +1,21 @@
-<div class="tags has-addons">
-  {% if directiveModel.filter == include.filterName %}
-    <button class="button {{ include.class }} tag disable">
-      {{ include.count }} {{ include.filterName }}
-    </button>
-    <a class="tag is-delete" hx-post="/app/set-filter/" hx-swap="none"></a>
-  {% else %}
-    <button 
-      class="
-        button
-        {{ include.class }}
-        tag
-        {% if directiveModel.filter %}is-light{%endif %}
-        " 
-      hx-post="/app/set-filter/{{ include.filterName }}" 
-      hx-swap="none"
-    >
-      {{ include.count }} {{ include.filterName }}
-    </button>
-  {% endif %}
-</div>
+{% if directiveModel.filter == include.filterName %}
+<button class="badge {{ include.class }} tag" hx-post="/app/set-filter/" hx-swap="none">
+  {{ include.count }} {{ include.filterName }}
+</button>
+
+{%elsif include.count == 0 %}
+<button class="badge tag 
+  {% if not directiveModel.filter %} {{ include.class }} {%endif %}
+   disabled" disabled>
+  {{ include.count }} {{ include.filterName }}
+</button>
+{% else %}
+<button class="
+        badge
+        {% if not directiveModel.filter %} 
+        {{ include.class }} 
+        {%endif %}
+        tag" hx-post="/app/set-filter/{{ include.filterName }}" hx-swap="none">
+  {{ include.count }} {{ include.filterName }}
+</button>
+{% endif %}
