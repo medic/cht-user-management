@@ -13,22 +13,20 @@ export default class Pagination {
   private pageSize;
   private cookiePageSize;
   private cookieCurrentPage;
-  private contactTypeName;
-  private clearCookie;
+  private requestContactTypeName;
 
-  constructor(options: { page: number; pageSize?: number; cookie: {}; contactTypeName?: string; clearCookie: (n: string) => any }) {
+  constructor(options: { page: number; pageSize?: number; cookie: {}; requestContactTypeName?: string }) {
     this.pageSize = options.pageSize ? options.pageSize : 10;
     this.page = options.page;
     this.cookiePageSize = this.getPaginationCookie(options.cookie, 'pageSize');
     this.cookieCurrentPage = this.getPaginationCookie(options.cookie, 'currentPage');
-    this.contactTypeName = options.contactTypeName;
-    this.clearCookie = options.clearCookie;
+    this.requestContactTypeName = options.requestContactTypeName;
   }
 
   public getPageData(places: Place[], contactTypeName: string): ListPage {
     const selectedPageSize = this.cookiePageSize[contactTypeName] ? parseInt(this.cookiePageSize[contactTypeName], 10) : this.pageSize;
     const currentPage = this.cookieCurrentPage[contactTypeName] ? parseInt(this.cookieCurrentPage[contactTypeName], 10) : 1;
-    let selectedPage = this.contactTypeName === contactTypeName ? this.page : currentPage;
+    let selectedPage = this.requestContactTypeName === contactTypeName ? this.page : currentPage;
 
     const totalPlaces = places.length;
     const totalPages = Math.ceil(totalPlaces / selectedPageSize);
@@ -39,7 +37,11 @@ export default class Pagination {
     places.forEach((place, index) => {
       place.placeNumber = index + 1;
     });
-    const pagePlaces = places.slice(startIndex, endIndex);
+
+    let pagePlaces = places.slice(startIndex, endIndex);
+    if (this.requestContactTypeName){
+      pagePlaces = pagePlaces.filter(place => place.type.name === this.requestContactTypeName);
+    }
     return {
       page: selectedPage,
       pageSize: selectedPageSize,

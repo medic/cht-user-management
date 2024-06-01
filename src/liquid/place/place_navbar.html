@@ -1,0 +1,31 @@
+<div class="topnav" id="topnav">
+    {% for contactType in contactTypes %}
+    {% capture tabClass %}
+    {% if contactType.name == directiveModel.activeTab %}active
+    {%endif%}
+    {%endcapture%}
+    <a hx-trigger="click" hx-get="/app/list/1/{{contactType.places.pageSize}}/{{ contactType.name }}"
+        id="tab_{{contactType.name}}" hx-target="#place_list" hx-swap="outerHTML" onclick="highlight(this)"
+        class="{{tabClass}} nav-item">{{contactType.friendly}}
+        <span class="badge">
+            {%if directiveModel.totalCountByContactType[contactType.name] > 999 %}
+            999+
+            {%else%}
+            {{directiveModel.totalCountByContactType[contactType.name]}}
+            {%endif%}
+        </span>
+    </a>
+    {% endfor %}
+    <a hx-trigger="click" hx-get="/app/list/1/10/summary"
+    {% capture summarytabClass %} {% if directiveModel.activeTab == 'summary' %}active{%endif%}{%endcapture%}
+    id="tab_summary" hx-target="#place_list" hx-swap="outerHTML" class="nav-item {{summarytabClass}}" onclick="highlight(this)">Summary</a>
+</div>
+
+<script>
+    function highlight(element) {
+        document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+        element.classList.add('active');
+        document.cookie = `currentTab=${element.id.substring(4)};SameSite=Strict`;
+    }
+    document.cookie = `currentTab={{directiveModel.activeTab}};SameSite=Strict`;
+</script>

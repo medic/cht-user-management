@@ -1,5 +1,8 @@
 <div id="place_list">
   {% for contactType in contactTypes %}
+  {%if contactType.name != directiveModel.activeTab %}
+  {%continue%}
+  {%endif%}
   <h2>{{contactType.friendly}}</h2>
   {% include "components/actions.html" contactType=contactType %}
   <div id="{{contactType.name}}" class="table-container">

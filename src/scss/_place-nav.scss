@@ -13,6 +13,7 @@
     @include mobile-only {
       font-size: $font-small;
     }
+    cursor: pointer;
     float: left;
     display: block;
     color: $disabled-color;

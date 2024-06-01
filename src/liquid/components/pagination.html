@@ -2,7 +2,9 @@
     <button {%assign prevPage=include.contactType.places.page | minus: 1 %} {% if prevPage==0 %} disabled {%endif%}
         hx-trigger="click"
         hx-get="/app/list/{{prevPage}}/{{include.contactType.places.pageSize}}/{{ contactType.name }}"
-        hx-target="#place_list" hx-swap="outerHTML" id="prevbtn">&laquo;</button>
+        hx-target="#place_list" hx-swap="outerHTML" id="prevbtn">&laquo;
+    </button>
+    
     <span id="pager">
         {% for pageNumber in (1..contactType.places.totalPages) %}
         {% assign collapseRightLimit = include.contactType.places.totalPages | minus: 3 %}
@@ -15,12 +17,13 @@
                 hx-target="#place_list" hx-swap="outerHTML" {%endif%}>{{pageNumber}}</a>
             {%endfor%}
     </span>
-    <button id="nextbtn_{{ contactType.name }}" {%assign nextPage=include.contactType.places.page | plus: 1 %} {% if
-        nextPage> include.contactType.places.totalPages %} disabled {%endif%}
-        hx-trigger="click" hx-get="/app/list/{{nextPage}}/{{include.contactType.places.pageSize}}/{{ contactType.name
-        }}"
-        hx-target="#place_list" hx-swap="outerHTML"
-        >&raquo;</button>
+
+    <button id="nextbtn_{{ contactType.name }}" {%assign nextPage=include.contactType.places.page | plus: 1%} 
+        {% if nextPage > include.contactType.places.totalPages %} disabled {%endif%}
+        hx-trigger="click" hx-get="/app/list/{{nextPage}}/{{include.contactType.places.pageSize}}/{{contactType.name}}"
+        hx-target="#place_list" hx-swap="outerHTML">&raquo;
+    </button>
+
     <div class="pager-control">
         <span>Rows per page</span>
         <select id="rows-per-page_{{ contactType.name }}" hx-trigger="change" hx-target="#place_list"

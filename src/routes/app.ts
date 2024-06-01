@@ -20,7 +20,7 @@ export default async function sessionCache(fastify: FastifyInstance) {
 
     const contactType = Config.getContactType(placeTypeName);
     const sessionCache: SessionCache = req.sessionCache;
-    const directiveModel = new DirectiveModel(sessionCache, req.cookies.filter);
+    const directiveModel = new DirectiveModel(sessionCache, req.cookies.filter, contactTypes, req.cookies.currentTab);
     const placeData = contactTypes.map((item) => {
       return {
         ...item,
@@ -46,13 +46,13 @@ export default async function sessionCache(fastify: FastifyInstance) {
     const params: any = req.params;
     const page = parseInt(params.page, 10);
     const pageSize = params.pageSize;
-    const contactTypeName = params.contactTypeName;
+    const requestContactTypeName = params.contactTypeName;
 
-    const pagination = new Pagination({ page, pageSize, cookie: req.cookies, contactTypeName, clearCookie: resp.clearCookie });
+    const pagination = new Pagination({ page, pageSize, cookie: req.cookies, requestContactTypeName });
 
     const contactTypes = Config.contactTypes();
     const sessionCache: SessionCache = req.sessionCache;
-    const directiveModel = new DirectiveModel(sessionCache, req.cookies.filter);
+    const directiveModel = new DirectiveModel(sessionCache, req.cookies.filter, contactTypes, req.cookies.currentTab);
 
     const placeData = contactTypes.map((item) => {
       const itemPlacesData = sessionCache.getPlaces({
@@ -114,6 +114,7 @@ export default async function sessionCache(fastify: FastifyInstance) {
     const filter = params.filter;
     resp.setCookie('filter', filter, {
       signed: false,
+      sameSite: 'strict',
       httpOnly: true,
       expires: Auth.cookieExpiry(),
       path: '/',

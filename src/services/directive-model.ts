@@ -1,3 +1,4 @@
+import { ContactType } from '../config';
 import { PlaceUploadState } from './place';
 import SessionCache from './session-cache';
 
@@ -14,10 +15,12 @@ export default class DirectiveModel {
   public readonly validationErrorCount: number;
   public readonly totalCount: number;
   public readonly hiddenCount: number;
+  public readonly totalCountByContactType: {[key: string]: number};
 
+  public readonly activeTab?: string;
   public readonly filter?: DirectiveFilter;
 
-  constructor(sessionCache: SessionCache, filterCookie?: string) {
+  constructor(sessionCache: SessionCache, filterCookie?: string, contactTypes?: ContactType[], activeTabCookie?: string ) {
     this.successCount = sessionCache.getPlaces({ filter: 'success' }).length;
     this.failureCount = sessionCache.getPlaces({ filter: 'failure' }).length;
     this.validationErrorCount = sessionCache.getPlaces({ filter: 'invalid' }).length;
@@ -31,8 +34,21 @@ export default class DirectiveModel {
     const percentage = this.stagedCount > 0 ? this.completeCount / this.totalCount : 0;
     this.percent = Math.round(percentage * 100.0) + '%';
 
+    this.activeTab = (this.totalCount > 0 && activeTabCookie) || contactTypes?.[0].name;
     this.filter = this.stringToDirectiveFilter(filterCookie);
     this.hiddenCount = this.totalCount - sessionCache.getPlaces({ filter: this.filter }).length;
+    this.totalCountByContactType = this.getTotalsByContactType(sessionCache, contactTypes, this.filter);
+  }
+
+  private getTotalsByContactType (sessionCache: SessionCache, contactTypes?: ContactType[], filterString?: string): {[key: string]: number} {
+    const placeFilter = filterString as DirectiveFilter;
+    const result: {[key: string]: number} = {}; 
+    if (contactTypes) {
+      contactTypes.forEach(contactType => {
+        result[contactType.name] = sessionCache.getPlaces({ filter: placeFilter, type: contactType.name }).length;
+      });
+    }
+    return result;
   }
 
   private stringToDirectiveFilter(filterString: string | undefined): DirectiveFilter {
