@@ -5,7 +5,7 @@ import ChtSession from '../../src/lib/cht-session';
 import MoveLib from '../../src/lib/move';
 import SessionCache from '../../src/services/session-cache';
 
-import allPlacesToMove from './laikipia-west.json';
+import allPlacesToMove from './nairobi-judy.json';
 
 const username = 'kenn_sippell_medic_user_manager';
 const password = '';
@@ -15,10 +15,13 @@ const batchToMove = allPlacesToMove.slice(51, 52);
 
 (async () => {
   for (const toMove of batchToMove) {
-    const [from_SUBCOUNTY, from_CHU, from_replacement, to_SUBCOUNTY, to_CHU] = toMove as any[];
+    const [from_SUBCOUNTY, from_CHU, from_replacement_alternate, to_SUBCOUNTY, to_CHU, from_replacement] = toMove as any[];
     const formData = {
-      from_SUBCOUNTY, from_CHU, from_replacement,
-      to_SUBCOUNTY, to_CHU,
+      from_SUBCOUNTY,
+      from_CHU, 
+      from_replacement: from_replacement || from_replacement_alternate,
+      to_SUBCOUNTY,
+      to_CHU,
     };  
     const session = await ChtSession.create(authInfo, username, password);
     const chtApi = new ChtApi(session);
