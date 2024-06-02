@@ -88,7 +88,7 @@
             <img src="public/icons/refresh.svg" alt="refresh">
         </a>
         {% if place.validationErrors == empty %}
-        <a class="action-link" hx-post="/place/upload/{{place.id}}" hx-target="this" hx-swap="none" 
+        <a class="action-link" hx-post="/place/upload/{{place.id}}" hx-target="this" hx-swap="none show:window:top" 
         data-toggle="tooltip" data-placement="bottom" title="Upload">
             <img src="public/icons/upload.svg" alt="upload">
         </a>

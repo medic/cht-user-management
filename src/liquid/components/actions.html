@@ -22,7 +22,7 @@
       </button>
     </div>
     {% else %}
-    <button class="clear-btn" hx-post="/app/apply-changes?type={{ include.contactType.name }}" hx-swap="none">
+    <button class="clear-btn" hx-post="/app/apply-changes?type={{ include.contactType.name }}" hx-swap="none show:window:top">
       <img src="/public/icons/upload-users.svg"> Upload All
     </button>
     {% endif %}
