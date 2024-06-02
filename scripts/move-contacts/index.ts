@@ -9,9 +9,9 @@ import allPlacesToMove from './nairobi-judy.json';
 
 const username = 'kenn_sippell_medic_user_manager';
 const password = '';
-const authInfo = Config.getAuthenticationInfo('laikipia.echis.go.ke');
+const authInfo = Config.getAuthenticationInfo('nairobi.echis.go.ke');
 const contactType = Config.getContactType('d_community_health_volunteer_area');
-const batchToMove = allPlacesToMove.slice(51, 52);
+const batchToMove = allPlacesToMove;
 
 (async () => {
   for (const toMove of batchToMove) {
