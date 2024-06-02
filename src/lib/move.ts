@@ -4,10 +4,14 @@ import { ChtApi } from '../lib/cht-api';
 import RemotePlaceResolver from '../lib/remote-place-resolver';
 import Place from '../services/place';
 
-export default class MoveLib {
-  constructor() {}
+import { env } from 'process';
+import { encryptSessionToken } from '../../shared/encryption';
+import { QUEUE_NAMES, JobParams, IQueueManager } from '../../shared/queues';
 
-  public static async move(formData: any, contactType: ContactType, sessionCache: SessionCache, chtApi: ChtApi) {
+export default class MoveLib {
+  constructor() { }
+
+  public static async move(formData: any, contactType: ContactType, sessionCache: SessionCache, chtApi: ChtApi, queueManager: IQueueManager) {
     const fromLineage = await resolve('from_', formData, contactType, sessionCache, chtApi);
     const toLineage = await resolve('to_', formData, contactType, sessionCache, chtApi);
 
@@ -20,13 +24,36 @@ export default class MoveLib {
     if (toId === fromLineage[1]?.id) {
       throw Error(`Place "${fromLineage[0]?.name}" already has "${toLineage[1]?.name}" as parent`);
     }
-    
-    const { authInfo } = chtApi.chtSession;
-    const url = `http${authInfo.useHttp ? '' : 's'}://${chtApi.chtSession.username}:password@${authInfo.domain}`;
+
+    const jobName = this.getJobName(fromLineage, toLineage);
+    const jobData = this.getJobData(fromId, toId, chtApi);
+    const jobParam: JobParams = {
+      jobName,
+      jobData,
+      queueName: QUEUE_NAMES.MOVE_CONTACT_QUEUE,
+    };
+    await queueManager.addJob(jobParam);
+    const jobsBoardUrl = `/board/queue/${QUEUE_NAMES.MOVE_CONTACT_QUEUE}`;
+
     return {
-      command: `npx cht --url=${url} move-contacts upload-docs -- --contacts=${fromId} --parent=${toId}`,
-      fromLineage,
       toLineage,
+      fromLineage,
+      jobsBoardUrl
+    };
+  }
+
+  private static getJobName(fromLineage: any, toLineage: any): string {
+    return `move_[${fromLineage[0]?.name}]_from_[${fromLineage[1]?.name}]_to_[${toLineage[1]?.name}]`;
+  }
+
+  private static getJobData(fromId: string, toId: string, chtApi: ChtApi): any {
+    const { ENCRYPTION_KEY } = env;
+    const { authInfo } = chtApi.chtSession;
+    return {
+      contactId: fromId,
+      parentId: toId,
+      instanceUrl: `http${authInfo.useHttp ? '' : 's'}://${authInfo.domain}`,
+      sessionToken: encryptSessionToken(chtApi.chtSession.sessionToken, ENCRYPTION_KEY)
     };
   }
 }

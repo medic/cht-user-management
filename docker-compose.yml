@@ -1,13 +1,47 @@
 version: '3.7'
 
 services:
+  redis:
+    image: redis:6.2-alpine
+    restart: always
+    volumes:
+      - redis-data:/data
+
   cht-user-management:
-    image: public.ecr.aws/medic/cht-user-management:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
     environment:
       - EXTERNAL_PORT=${EXTERNAL_PORT:-3000}
       - COOKIE_PRIVATE_KEY=${COOKIE_PRIVATE_KEY}
       - CONFIG_NAME=${CONFIG_NAME}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - MOVE_CONTACT_QUEUE=${MOVE_CONTACT_QUEUE:-MOVE_CONTACT_QUEUE}
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY}
     ports:
       - '${EXTERNAL_PORT-3000}:${PORT:-3000}'
     restart: always
     command: npm start
+    depends_on:
+      - redis
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    command: npm run start:worker
+    environment:
+      - NODE_ENV=production
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - MOVE_CONTACT_QUEUE=${MOVE_CONTACT_QUEUE:-MOVE_CONTACT_QUEUE}
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY}
+      - BOARD_PORT=${BOARD_PORT:-3333}
+    ports:
+      - '${BOARD_PORT-3333}:${BOARD_PORT:-3333}'
+    depends_on:
+      - redis
+
+volumes:
+  redis-data:

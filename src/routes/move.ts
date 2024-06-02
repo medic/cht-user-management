@@ -5,6 +5,7 @@ import { ChtApi } from '../lib/cht-api';
 import { FastifyInstance } from 'fastify';
 import MoveLib from '../lib/move';
 import SessionCache from '../services/session-cache';
+import { queueManager } from '../../shared/queues';
 
 export default async function sessionCache(fastify: FastifyInstance) {
   fastify.get('/move/:placeType', async (req, resp) => {
@@ -34,7 +35,7 @@ export default async function sessionCache(fastify: FastifyInstance) {
     const chtApi = new ChtApi(req.chtSession);
     
     try {
-      const tmplData = await MoveLib.move(formData, contactType, sessionCache, chtApi);
+      const tmplData = await MoveLib.move(formData, contactType, sessionCache, chtApi, queueManager);
       return resp.view('src/liquid/components/move_result.html', tmplData);
     } catch (e: any) {
       const tmplData = {
