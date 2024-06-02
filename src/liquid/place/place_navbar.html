@@ -7,13 +7,7 @@
     <a hx-trigger="click" hx-get="/app/list?page=1&contactTypeName={{ contactType.name }}"
         id="tab_{{contactType.name}}" hx-target="#place_list" hx-swap="outerHTML" onclick="highlight(this)"
         class="{{tabClass}} nav-item">{{contactType.friendly}}
-        <span class="badge">
-            {%if directiveModel.totalCountByContactType[contactType.name] > 999 %}
-            999+
-            {%else%}
-            {{directiveModel.totalCountByContactType[contactType.name]}}
-            {%endif%}
-        </span>
+        {% include "components/nav_badge.html" %}
     </a>
     {% endfor %}
     <a hx-trigger="click" hx-get="/app/list/summary"

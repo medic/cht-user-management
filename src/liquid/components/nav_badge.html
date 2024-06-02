@@ -1,0 +1,7 @@
+<span class="badge" hx-sse="swap:badge-{{contactType.name}}" hx-target="this" hx-swap="outerHTML">
+    {%if directiveModel.totalCountByContactType[contactType.name] > 999 %}
+    999+
+    {%else%}
+    {{directiveModel.totalCountByContactType[contactType.name]}}
+    {%endif%}
+</span>

@@ -1,7 +1,7 @@
 <div class="pagination" id="pagination">
     <button {%assign prevPage=include.contactType.places.page | minus: 1 %} {% if prevPage==0 %} disabled {%endif%}
         hx-trigger="click"
-        hx-get="/app/list?page={{prevPage}}&pageSize={{include.contactType.places.pageSize}}&contactTypeName={{contactType.name}}"
+        hx-get="/app/list?page={{prevPage}}&contactTypeName={{contactType.name}}"
         hx-target="#place_list" hx-swap="outerHTML" id="prevbtn">&laquo;
     </button>
 
@@ -13,14 +13,14 @@
             %} {% if collapseLeft or collapseRight %} <a class="collapse">...</a>
             {%endif%}
             <a {% if pageNumber==include.contactType.places.page %} class="active" {%else%} hx-trigger="click"
-                hx-get="/app/list?page={{pageNumber}}&pageSize={{include.contactType.places.pageSize}}&contactTypeName={{ contactType.name }}"
+                hx-get="/app/list?page={{pageNumber}}&contactTypeName={{ contactType.name }}"
                 hx-target="#place_list" hx-swap="outerHTML" {%endif%}>{{pageNumber}}</a>
         {%endfor%}
     </span>
 
     <button id="nextbtn_{{ contactType.name }}" {%assign nextPage=include.contactType.places.page | plus: 1%} 
         {% if nextPage > include.contactType.places.totalPages %} disabled {%endif%}
-        hx-trigger="click" hx-get="/app/list?page={{nextPage}}&pageSize={{include.contactType.places.pageSize}}&contactTypeName={{contactType.name}}"
+        hx-trigger="click" hx-get="/app/list?page={{nextPage}}&contactTypeName={{contactType.name}}"
         hx-target="#place_list" hx-swap="outerHTML">&raquo;
     </button>
 

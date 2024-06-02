@@ -30,6 +30,28 @@ export default async function events(fastify: FastifyInstance) {
       });
     };
 
+    const updateNavBadge = async () => {
+      const contactTypes = Config.contactTypes();
+      const directiveModel = new DirectiveModel(
+        sessionCache,
+        req.cookies.filter,
+        contactTypes
+      );
+      for (const contactType of contactTypes) {
+        const html = await fastify.view(
+          'src/liquid/components/nav_badge.html',
+          { contactType, directiveModel }
+        );
+        resp.sse({
+          event: `badge-${contactType.name}`,
+          data: minify(html, {
+            html5: true,
+            collapseWhitespace: true,
+          }),
+        });
+      }
+    };
+
     const placeChangeListener = async (arg: string) => {
       const place = sessionCache.getPlace(arg);
       if (!place) {
@@ -57,6 +79,7 @@ export default async function events(fastify: FastifyInstance) {
         });
       }
       await updateDirective();
+      await updateNavBadge();
     };
 
     uploadManager.on('refresh_table_row', placeChangeListener);
