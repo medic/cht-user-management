@@ -72,7 +72,7 @@
     "start": "node dist/server.js",
     "dev": "tsc-watch --onSuccess \"node dist/server.js\"",
     "publish": "node scripts/publish.js",
-    "start:worker": "docker-compose up redis worker"
+    "start:worker": "node dist/worker/main.js"
   },
   "repository": {
     "type": "git",
