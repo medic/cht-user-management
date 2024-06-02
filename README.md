@@ -13,6 +13,7 @@ A simple user-facing web application using [CHT's API](https://docs.communityhea
 * [Moving an Existing Place with the User Management Tool](https://www.loom.com/share/cd9e98aefedb490fae61775c86b9b6fe)
 * [CHIS Kenya - CHA Changing a Phone Number for a CHP](https://www.loom.com/share/8a0f629161944567b6ca504ab27ec6cf)
 * [How to Bulk Replace CHPs with CHIS User Management Tool](https://www.loom.com/share/33d9395a515741fa9620f7004578de24)
+* [How to Resolve eCHIS-KE Logic Error](https://www.loom.com/share/80e130733d094e4a829bdfe063d8b1e6)
 
 For Developers:
 * [Running CHT User Management Tool with a Local CHT Instance](https://www.loom.com/share/645cf995a9c44a5ab843628538a019ff)

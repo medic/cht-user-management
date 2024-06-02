@@ -1,12 +1,13 @@
 import { ContactType } from '../config';
 import SessionCache from '../services/session-cache';
-import { ChtApi } from '../lib/cht-api';
-import RemotePlaceResolver from '../lib/remote-place-resolver';
+import { ChtApi } from './cht-api';
+import RemotePlaceResolver from './remote-place-resolver';
 import Place from '../services/place';
 
-import { env } from 'process';
-import { encryptSessionToken } from '../../shared/encryption';
-import { QUEUE_NAMES, JobParams, IQueueManager } from '../../shared/queues';
+import { MOVE_CONTACT_QUEUE, JobParams, IQueueManager } from '../shared/queues';
+import Auth from './authentication';
+import { MoveContactData } from '../worker/move-contact-worker';
+import { queuePrivateKey } from '../shared/queue-config';
 
 export default class MoveLib {
   constructor() { }
@@ -30,11 +31,11 @@ export default class MoveLib {
     const jobParam: JobParams = {
       jobName,
       jobData,
-      queueName: QUEUE_NAMES.MOVE_CONTACT_QUEUE,
+      queueName: MOVE_CONTACT_QUEUE,
     };
     await queueManager.addJob(jobParam);
-    const jobsBoardUrl = `/board/queue/${QUEUE_NAMES.MOVE_CONTACT_QUEUE}`;
-
+    const jobsBoardUrl = `/board/queue/${MOVE_CONTACT_QUEUE}`;
+    
     return {
       toLineage,
       fromLineage,
@@ -46,14 +47,13 @@ export default class MoveLib {
     return `move_[${fromLineage[0]?.name}]_from_[${fromLineage[1]?.name}]_to_[${toLineage[1]?.name}]`;
   }
 
-  private static getJobData(fromId: string, toId: string, chtApi: ChtApi): any {
-    const { ENCRYPTION_KEY } = env;
+  private static getJobData(fromId: string, toId: string, chtApi: ChtApi):MoveContactData {
     const { authInfo } = chtApi.chtSession;
     return {
       contactId: fromId,
       parentId: toId,
       instanceUrl: `http${authInfo.useHttp ? '' : 's'}://${authInfo.domain}`,
-      sessionToken: encryptSessionToken(chtApi.chtSession.sessionToken, ENCRYPTION_KEY)
+      sessionToken: Auth.encodeToken(chtApi.chtSession, queuePrivateKey),
     };
   }
 }

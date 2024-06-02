@@ -16,21 +16,21 @@ export default class Auth {
     }
   }
 
-  public static encodeToken (session: ChtSession) {
+  public static encodeToken (session: ChtSession, customKey?: string) {
     const data = JSON.stringify(session);
-    return jwt.sign({ data }, SIGNING_KEY, { expiresIn: '1 day' });
+    return jwt.sign({ data }, customKey || SIGNING_KEY, { expiresIn: '1 day' });
   }
 
   public static cookieExpiry() {
     return new Date(new Date().getTime() + LOGIN_EXPIRES_AFTER_MS);
   }
 
-  public static decodeToken (token: string) : ChtSession {
+  public static decodeToken (token: string, customKey?: string) : ChtSession {
     if (!token) {
       throw new Error('invalid authentication token');
     }
 
-    const { data } = jwt.verify(token, SIGNING_KEY) as any;
+    const { data } = jwt.verify(token, customKey || SIGNING_KEY) as any;
     return ChtSession.createFromDataString(data);
   }
 }

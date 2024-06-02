@@ -6,7 +6,7 @@ import ChtSession from '../src/lib/cht-session';
 import { ContactProperty, ContactType } from '../src/config';
 import Place from '../src/services/place';
 import { v4 } from 'uuid';
-import { IQueueManager } from '../shared/queues';
+import { IQueueManager } from '../src/shared/queues';
 
 
 export const mockPlace = (type: ContactType, prop: any) : Place => {
@@ -134,7 +134,6 @@ export function expectInvalidProperties(
 
 export const mockQueueManager = (): IQueueManager => ({
   addJob: Sinon.stub().resolves(v4()),
-  removeJob: Sinon.stub().resolves(undefined),
   getQueue: Sinon.stub().returns({
     add: Sinon.stub().resolves(v4()),
     remove: Sinon.stub().resolves(undefined),

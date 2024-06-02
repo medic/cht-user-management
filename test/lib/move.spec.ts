@@ -19,7 +19,6 @@ describe('lib/move.ts', () => {
   );
 
   it('move CHU: success', async () => {    
-    process.env.ENCRYPTION_KEY = 'superimportantkey';
     const formData = {
       from_replacement: 'c-h-u',
       from_SUBCOUNTY: 'from sub',
@@ -42,7 +41,7 @@ describe('lib/move.ts', () => {
     const contactType = Config.getContactType('c_community_health_unit');
     const sessionCache = new SessionCache();
 
-    const actual = MoveLib.move(formData, contactType, sessionCache, chtApi());
+    const actual = MoveLib.move(formData, contactType, sessionCache, chtApi(), mockQueueManager());
     await expect(actual).to.eventually.be.rejectedWith('search string is empty');
   });
 
@@ -55,7 +54,7 @@ describe('lib/move.ts', () => {
     const contactType = Config.getContactType('c_community_health_unit');
     const sessionCache = new SessionCache();
 
-    const actual = MoveLib.move(formData, contactType, sessionCache, chtApi());
+    const actual = MoveLib.move(formData, contactType, sessionCache, chtApi(), mockQueueManager());
     await expect(actual).to.eventually.be.rejectedWith('Place "c-h-u" already has "From Sub" as parent');
   });
 
@@ -68,7 +67,7 @@ describe('lib/move.ts', () => {
     const contactType = Config.getContactType('c_community_health_unit');
     const sessionCache = new SessionCache();
 
-    const actual = MoveLib.move(formData, contactType, sessionCache, chtApi());
+    const actual = MoveLib.move(formData, contactType, sessionCache, chtApi(), mockQueueManager());
     await expect(actual).to.eventually.be.rejectedWith('Cannot find \'b_sub_county\' matching \'Invalid Sub\'');
   });
 });

@@ -4,6 +4,7 @@
   {% if backend %} hx-post="{{backend}}" {%else%} hx-post="/move" {%endif%}
   hx-target="this" 
   hx-swap="outerHTML"
+  hx-post-end="handleResponse"
 >
   {% if error %}
     <div class="notification is-danger" style="margin: 0;">
@@ -46,3 +47,29 @@
     </div>
   </div>
 </form>
+
+<script type="text/javascript">
+  function handleResponse(event) {
+    console.log('Event', event);
+    if (!event.error) {
+      // Reset form
+      const $form = document.getElementById('form_place_move');
+      $form.reset();
+
+      // Show toast
+      const toastContent = `
+        <p>A worker is taking care of this job, you can please check it 
+          <a target="_blank" class="button is-chartreuse is-bold" href="${event.jobsBoardUrl}">here</a>
+        </p>
+      `;
+
+      bulmaToast.toast({
+        message: toastContent,
+        type: 'is-success',
+        position: 'center',
+        closeOnClick: true,
+        pauseOnHover: true,
+      });
+    }
+  }
+</script>

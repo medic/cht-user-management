@@ -13,7 +13,6 @@ COPY package*.json .
 RUN npm ci --omit=dev
 
 COPY src ./src
-COPY shared/ ./shared
 COPY tsconfig.json .
 RUN npm run build
 

@@ -1,15 +1,14 @@
 FROM node:20-alpine
+
 WORKDIR /app
 
-ENV BOARD_PORT 7878
 ENV NODE_ENV production
 
 COPY package*.json .
 RUN apk add git
 RUN npm ci --omit=dev
 
-COPY worker/ ./worker
-COPY shared/ ./shared
+COPY src ./src
 COPY tsconfig.json .
 RUN npm run build
 
