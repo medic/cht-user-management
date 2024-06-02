@@ -65,7 +65,6 @@
     "tsc-watch": "^6.0.4"
   },
   "scripts": {
-    "prepare": "npm run build",
     "cp-package-json": "cp package.json ./src",
     "test": "npx ts-mocha test/{,**}/*.spec.ts",
     "build": "npm run cp-package-json && npx tsc",
