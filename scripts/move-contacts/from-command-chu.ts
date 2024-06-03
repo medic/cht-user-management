@@ -29,7 +29,7 @@ const batchToMove = allPlacesToMove.slice(0, 10000);
   for (const toMove of batchToMove) {
     const [command, x, movingId, y, toId] = toMove as any[];
     
-    const subcounties = await RemotePlaceCache.getPlacesWithType(chtApi, 'b_subcounty');
+    const subcounties = await RemotePlaceCache.getPlacesWithType(chtApi, 'b_sub_county');
     const chus = await RemotePlaceCache.getPlacesWithType(chtApi, 'c_community_health_unit');
 
     const from_replacement = chus.find(chp => chp.id === movingId);
