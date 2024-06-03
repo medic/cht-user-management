@@ -98,7 +98,7 @@ export class MoveContactWorker {
 
   private logCommand(command: string, args: string[]): void {
     const maskedArgs = args.map(arg => arg.startsWith('--session-token=') ? '--session-token=********' : arg);
-    console.log('Executing command:', `${command} ${maskedArgs.join(' ')}`);
+    console.log('Executing FRESH command:', `${command} ${maskedArgs.join(' ')}`);
   }
 
   private async executeCommand(command: string, args: string[]): Promise<void> {
