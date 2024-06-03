@@ -4,6 +4,8 @@ services:
     restart: always
     volumes:
       - redis-data:/data
+    network_mode: host
+    
 
   cht-user-management:
     build:
