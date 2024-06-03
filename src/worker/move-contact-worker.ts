@@ -106,8 +106,8 @@ export class MoveContactWorker {
       const chtProcess = spawn(command, args);
 
       const timeout = setTimeout(() => {
-        chtProcess.kill();
-        reject(new Error('cht-conf timed out'));
+        // chtProcess.kill();
+        // reject(new Error('cht-conf timed out'));
       }, this.MAX_TIMEOUT);
 
       chtProcess.stdout.on('data', data => {
