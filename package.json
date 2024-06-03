@@ -24,7 +24,6 @@
     "axios-retry": "^4.0.0",
     "bullmq": "^5.7.6",
     "cht-conf": "github:medic/cht-conf#session-token-auth",
-    "cryptr": "^6.3.0",
     "csv": "^6.3.5",
     "dotenv": "^16.3.1",
     "fastify": "^4.27.0",
@@ -69,8 +68,8 @@
     "test": "npx ts-mocha test/{,**}/*.spec.ts",
     "build": "npm run cp-package-json && npx tsc",
     "lint": "npx eslint --color --cache .",
-    "start": "node dist/server.js",
-    "dev": "tsc-watch --onSuccess \"node dist/server.js\"",
+    "start": "node dist/src/server.js",
+    "dev": "tsc-watch --onSuccess \"node dist/src/server.js\"",
     "publish": "node scripts/publish.js",
     "start:worker": "node dist/worker/main.js"
   },
