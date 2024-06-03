@@ -31,8 +31,9 @@ services:
       dockerfile: Dockerfile.worker
     restart: always
     command: npm run start:worker
+    network_mode: host
     environment:
-      - REDIS_HOST=redis
+      - REDIS_HOST=${REDIS_HOST:-redis}
       - REDIS_PORT=${REDIS_PORT:-6379}
       - QUEUE_PRIVATE_KEY=${QUEUE_PRIVATE_KEY}
     depends_on:
