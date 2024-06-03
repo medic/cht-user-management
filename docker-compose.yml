@@ -32,7 +32,7 @@ services:
     restart: always
     command: npm run start:worker
     environment:
-      - REDIS_HOST=${REDIS_HOST:-redis}
+      - REDIS_HOST=redis
       - REDIS_PORT=${REDIS_PORT:-6379}
       - QUEUE_PRIVATE_KEY=${QUEUE_PRIVATE_KEY}
     depends_on:
