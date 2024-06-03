@@ -19,7 +19,7 @@ export class MoveContactWorker {
   private readonly DELAY_IN_MILLIS = 360_000;   // 1 hour
   private readonly MAX_TIMEOUT = 180_000;       // 30 minutes timeout
   private readonly MAX_CONCURRENCY = 1;         // Limit concurrency to 1 job at a time
-  private readonly MAX_SENTINEL_BACKLOG = 1000; // ensure we don't take down the server
+  private readonly MAX_SENTINEL_BACKLOG = 5000; // ensure we don't take down the server
   
   constructor(private queueName: string) {
     this.initializeWorker();
@@ -55,16 +55,7 @@ export class MoveContactWorker {
   };
 
   private async canProcess(jobData: MoveContactData): Promise<boolean> {
-    try {
-      const { instanceUrl } = jobData;
-      const response = await axios.get(`${instanceUrl}/api/v2/monitoring`);
-      const sentinelBacklog = response.data.sentinel?.backlog;
-      return sentinelBacklog < this.MAX_SENTINEL_BACKLOG;
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.error?.message || err.response?.data || err?.message;
-      console.error('Error fetching monitoring data:', errorMessage);
-      return false;
-    }
+    return true;
   }
 
   private async moveContact(jobData: MoveContactData): Promise<JobResult> {

@@ -5,20 +5,21 @@ import ChtSession from '../../src/lib/cht-session';
 import MoveLib from '../../src/lib/move';
 import SessionCache from '../../src/services/session-cache';
 
-import allPlacesToMove from './nairobi-judy.json';
+import allPlacesToMove from './nairobi-ids.json';
+import RemotePlaceCache from '../../src/lib/remote-place-cache';
 
 import { config } from 'dotenv';
 config();
 
 const { username, password } = process.env;
-
 if (!username || !password) {
   throw 'invalid env';
 }
 
 const authInfo = Config.getAuthenticationInfo('nairobi-echis.health.go.ke');
-const contactType = Config.getContactType('d_community_health_volunteer_area');
-const batchToMove = allPlacesToMove.slice(45, 100000);
+const contactTypeString = 'c_community_health_unit';
+const contactType = Config.getContactType(contactTypeString);
+const batchToMove = allPlacesToMove.slice(0, 10000);
 
 (async () => {
   const session = await ChtSession.create(authInfo, username, password);
@@ -26,13 +27,19 @@ const batchToMove = allPlacesToMove.slice(45, 100000);
   const sessionCache = SessionCache.getForSession(session);
   
   for (const toMove of batchToMove) {
-    const [from_SUBCOUNTY, from_CHU, from_replacement_alternate, to_SUBCOUNTY, to_CHU, from_replacement] = toMove as any[];
+    const [command, x, movingId, y, toId] = toMove as any[];
+    
+    const subcounties = await RemotePlaceCache.getPlacesWithType(chtApi, 'b_subcounty');
+    const chus = await RemotePlaceCache.getPlacesWithType(chtApi, 'c_community_health_unit');
+
+    const from_replacement = chus.find(chp => chp.id === movingId);
+    const from_SUBCOUNTY = subcounties.find(chu => chu.id === from_replacement?.lineage[0])?.name;
+    const to_SUBCOUNTY = subcounties.find(chu => toId === chu.id)?.name;
+
     const formData = {
-      from_SUBCOUNTY,
-      from_CHU, 
-      from_replacement: from_replacement || from_replacement_alternate,
+      from_SUBCOUNTY, 
+      from_replacement: from_replacement?.name,
       to_SUBCOUNTY,
-      to_CHU,
     };
     
     

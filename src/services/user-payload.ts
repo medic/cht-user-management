@@ -1,4 +1,3 @@
-import * as crypto from 'crypto';
 import Place from './place';
 
 export class UserPayload {
@@ -25,7 +24,7 @@ export class UserPayload {
   }
 
   public makeUsernameMoreComplex(): void {
-    const randomNumber = crypto.randomInt(0, 100);
+    const randomNumber = Math.floor(Math.random() * 100);
     this.username =  `${this.username}${randomNumber.toString()}`;
   }
 
