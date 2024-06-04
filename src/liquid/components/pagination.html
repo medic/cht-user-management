@@ -8,9 +8,9 @@
     <span id="pager">
         {% for pageNumber in (1..contactType.places.totalPages) %}
         {% assign collapseRightLimit = include.contactType.places.totalPages | minus: 3 %}
-        {%assign collapseLeft = include.contactType.places.page >= 6 and pageNumber == 6 %}
-        {%assign collapseRight = include.contactType.places.page < collapseRightLimit and pageNumber==collapseRightLimit
-            %} {% if collapseLeft or collapseRight %} <a class="collapse">...</a>
+        {%assign collapseLeft = include.contactType.places.page >= 6 and pageNumber == 6 and contactType.places.totalPages > 7 %}
+        {%assign collapseRight = include.contactType.places.page < collapseRightLimit and pageNumber==collapseRightLimit and contactType.places.totalPages > 7%} 
+        {% if collapseLeft or collapseRight %} <a class="collapse">...</a>
             {%endif%}
             <a {% if pageNumber==include.contactType.places.page %} class="active" {%else%} hx-trigger="click"
                 hx-get="/app/list?page={{pageNumber}}&contactTypeName={{ contactType.name }}"

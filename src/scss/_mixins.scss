@@ -11,9 +11,16 @@
 }
 
 @mixin default-shadow {
-    box-shadow: 0 10px 20px 0 rgba(0,0,0,0.1);
+    box-shadow: 0 10px 20px 0 rgba(0, 0, 0, 0.1);
 }
 
 @mixin card-shadow {
     box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+}
+
+@mixin unselectable-text {
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
 }

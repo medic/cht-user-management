@@ -5,14 +5,14 @@
     {%endif%}
     {%endcapture%}
     <a hx-trigger="click" hx-get="/app/list?page=1&contactTypeName={{ contactType.name }}"
-        id="tab_{{contactType.name}}" hx-target="#place_list" hx-swap="outerHTML" onclick="highlight(this)"
+        id="tab_{{contactType.name}}" hx-target="#place_list" hx-swap="outerHTML show:window:top" onclick="highlight(this)"
         class="{{tabClass}} nav-item">{{contactType.friendly}}
         {% include "components/nav_badge.html" %}
     </a>
     {% endfor %}
     <a hx-trigger="click" hx-get="/app/list/summary"
     {% capture summarytabClass %} {% if directiveModel.activeTab == 'summary' %}active{%endif%}{%endcapture%}
-    id="tab_summary" hx-target="#place_list" hx-swap="outerHTML" class="nav-item {{summarytabClass}}" onclick="highlight(this)">Summary</a>
+    id="tab_summary" hx-target="#place_list" hx-swap="outerHTML show:window:top" class="nav-item {{summarytabClass}}" onclick="highlight(this)">Summary</a>
 </div>
 
 <script>

@@ -45,6 +45,9 @@ $table-header-bg-color: rgba(#dcdcdc, 0.6);
                 &:focus {
                     text-decoration: none;
                 }
+                &:first-child {
+                    padding-right: 3px;
+                }
             }
             &.header-actions {
                 text-align: right;
@@ -124,6 +127,7 @@ $table-header-bg-color: rgba(#dcdcdc, 0.6);
         cursor: pointer;
     }
     a {
+        @include unselectable-text;
         color: black;
         float: left;
         margin: auto 1px;

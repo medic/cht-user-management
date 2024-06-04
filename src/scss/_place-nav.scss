@@ -9,6 +9,7 @@
   top: 3.4em;
   z-index: 900;
   a {
+    @include unselectable-text;
     font-size: $font-medium;
     @include mobile-only {
       font-size: $font-small;
