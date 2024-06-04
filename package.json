@@ -1,8 +1,8 @@
 {
   "name": "cht-user-management",
   "version": "1.3.20",
-  "main": "dist/src/index.js",
-  "types": "dist/src/index.d.ts",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "dependencies": {
     "@bull-board/api": "^5.17.0",
     "@bull-board/fastify": "^5.17.0",
