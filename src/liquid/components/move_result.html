@@ -1,34 +1,31 @@
-<nav class="breadcrumb has-succeeds-separator" aria-label="breadcrumbs">
-  <ul>
-    <li><span class="tag is-warning" style="margin: 0 10px;">Current</span></li>
-    {% for lineage in fromLineage %}
-    {% if lineage %}
-      <li><a href="https://{{ session.authInfo.domain }}/#/contacts/{{ lineage.id}}">{{ lineage.name }}</a></li>
-    {% endif %}
-    {% endfor %}
-  </ul>
-  <ul>
-    <li><span class="tag is-success" style="margin: 0 10px;">After</span></li>
-    {% for lineage in toLineage %}
-    {% if lineage %}
-      <li><a href="https://{{ session.authInfo.domain }}/#/contacts/{{ lineage.id}}">{{ lineage.name }}</a></li>
-    {% endif %}
-    {% endfor %}
-    <li><span style="margin: 0 10px;">{{ fromLineage.last.name }}</span></li>
-  </ul>
-</nav>
+<div class="directive">
+  <a href="/" class="close-btn"><img src="/public/icons/delete-all.svg" alt="close"></a>
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+      <li class="tag badge warning-bg">Current</li>
+      {% for lineage in fromLineage %}
+      {% if lineage %}
+      <li class="breadcrumb-item"><a href="https://{{ session.authInfo.domain }}/#/contacts/{{ lineage.id}}">{{
+          lineage.name }}</a></li>
+      {% endif %}
+      {% endfor %}
+    </ol>
+    <ol class="breadcrumb">
+      <li class="tag badge success-bg">After</li>
+      {% for lineage in toLineage %}
+      {% if lineage %}
+      <li class="breadcrumb-item"><a href="https://{{ session.authInfo.domain }}/#/contacts/{{ lineage.id}}">{{
+          lineage.name }}</a></li>
+      {% endif %}
+      {% endfor %}
+      <li class="breadcrumb-item" active>{{ fromLineage.last.name }}</li>
+    </ol>
+  </nav>
 
-<section class="hero {% if isError %}is-danger{% else %}is-info{% endif %}">
-  <div class="hero-body">
-    <div>
-      <button
-        class="button is-right"
-        style="float: right;"
-        onclick="navigator.clipboard.writeText(`{{ command }}`);"
-      >
-        <span class="material-symbols-outlined">content_copy</span>
-      </button>
-      {{ command }}
-    </div>
-  </div>
-</section>
+  <pre class="{% if isError %}error-bg{% endif %}">
+    <button class="clear-btn" onclick="navigator.clipboard.writeText(`{{ command }}`);">
+      <span>copy content</span>
+    </button>
+    {{ command }}
+  </pre>
+</div>

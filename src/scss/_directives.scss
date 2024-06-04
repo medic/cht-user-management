@@ -16,6 +16,23 @@
             top: 20%;
         }
     }
+    ol {
+        margin-bottom: 1px;
+        padding-bottom: 0px;
+        padding-top: 0px;
+    }
+    .close-btn {
+      float: right;     
+    }
+    pre {
+        background-color: white;
+        padding: 5px 5px 5px 5px;
+        text-align: left;
+        text-wrap: wrap;
+        button {
+            float: right;
+        }
+    }
 }
 
 .directive.get-started {

@@ -1,9 +1,9 @@
 form {
     margin: 0 auto;
-    padding: 25px;
+    padding: 2em;
     border-radius: 12px;
     background-color: white;
-    @include default-shadow;
+    @include card-shadow;
     input {
         font-size: $font-medium;
         border: 1px solid $element-border-color;
@@ -19,33 +19,120 @@ form {
             outline-width: 2px;
         }
     }
+    input[type="date-picker"] {
+        @include input-icon("/public/icons/calendar.svg");
+        cursor: pointer;
+    }
+
+    .file-input {
+        width: 70%;
+        @include small-screen{
+            width: 95%;
+        }
+        margin: 5px auto;
+        input {
+            width: 100%;
+            cursor: pointer;
+        }
+    }
 
     select {
         @extend input;
         appearance: none;
         background-color: white;
         cursor: pointer;
-        /*drop down arrow*/
-        background-image: url("/public/images/dropdown.svg");
-        background-repeat: no-repeat;
-        background-position: right 0.7rem top 50%;
-        background-size: 1.25em auto;
+        @include input-icon("/public/icons/dropdown.svg");
+    }
+
+    &.data-form {
+        width: 700px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        margin-bottom: 50px;
+        .input-box {
+            margin-top: 15px;
+        }
+        section {
+            width: 100%;
+            margin-bottom: 1em;
+        }
+        input {
+            margin: 5px auto;
+        }
+        @include small-screen {
+            width: inherit;
+            padding: 15px 10px;
+            margin: 0px;
+            section {
+                width: 95%;
+            }
+        }
+    }
+
+    .autocomplete-dropdown {
+        border: 1px solid $element-border-color;
+        border-radius: $border-radius;
+        background-color: white;
+        max-height: 200px;
+        min-width: 340px;
+        overflow-y: auto;
+        position: absolute;
+        display: flex;
+        flex-direction: column;
+        @include card-shadow;
+        z-index: 999;
+        a {
+            padding: 5px 10px;
+            cursor: pointer;
+            &:hover {
+                background-color: #337ab7;
+            }
+        }
+    }
+
+    &#form_authenticate {
+        font-size: $font-extra-large;
+        width: 550px;
+        @include default-shadow;
+        @include mobile-only {
+            width: 80%;
+        }
+        input {
+            margin: 5px auto;
+            input[type="text"] {
+                margin-bottom: 20px;
+            }
+        }
+        select {
+            margin: 5px auto 20px auto;
+        }
+    }
+
+    .check-box {
+        display: inline-flex;
+        align-items: center;
+        input {
+            width: fit-content;
+        }
+        label {
+            margin-left: 5px;
+            font-style: italic;
+            font-size: $font-small;
+        }
+    }
+
+    .section-box {
+        margin-top: 2em;
+    }
+
+    .error-message {
+        padding: 10px;
+        border-radius: $border-radius;
     }
 }
 
-#form_authenticate {
-    font-size: $font-extra-large;
-    width: 550px;
-    @include mobile-only {
-        width: 80%;
-    }
-    input {
-        margin: 5px auto;
-        input[type="text"] {
-            margin-bottom: 20px;
-        }
-    }
-    select {
-        margin: 5px auto 20px auto;
-    }
+.form-title {
+    text-align: center;
 }

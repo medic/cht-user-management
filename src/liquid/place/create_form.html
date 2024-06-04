@@ -1,9 +1,9 @@
-<form
+<form class="data-form"
 id="form_place_create" autocomplete="off"
 {% if backend %} hx-post="{{backend}}" {%else%} hx-post="/place?op=new&type={{contactType.name}}" {%endif%}
 hx-target="this" hx-swap="outerHTML">
   <input name="place_type" value="{{contactType.name}}" hidden />
-  <section class="section is-small">
+  <section>
     {% for hierarchy in hierarchy %}
       {% if hierarchy.level != 0 or op == 'replace' or place.hierarchyProperties.replacement %}
         {%
@@ -22,7 +22,7 @@ hx-target="this" hx-swap="outerHTML">
       %}
     {% endfor %}
   </section>
-  <section class="section is-small">
+  <section class="section-box">
     {% for prop in contactType.contact_properties %}
       {%
         include "components/contact_type_property.html" prefix="contact_" prop=prop place_type=contactType.name
@@ -31,17 +31,15 @@ hx-target="this" hx-swap="outerHTML">
   </section>
 
   {% if contactType.user_role.size > 1 %}
-  <section class="section is-small">
+  <section class="section-box">
     {%
       include "components/contact_type_property.html" prefix="user_" prop=userRoleProperty
     %}
   </section>
   {% endif %}
 
-  <div class=" field is-grouped is-grouped-right">
-    <div class="control">
-      <button id="place_create_submit" class="button is-link">Save</button>
-      <a href="/" class="button">Cancel</a>
-    </div>
+  <div>
+    <button id="place_create_submit" class="btn">Save</button>
+    <a href="/" class="clear-btn" class="button">Cancel</a>
   </div>
 </form>

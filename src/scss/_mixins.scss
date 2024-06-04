@@ -4,6 +4,12 @@
     }
 }
 
+@mixin small-screen {
+    @media (max-width: 767px) {
+        @content;
+    }
+}
+
 @mixin web-only {
     @media (min-width: $mobile-max-width) {
         @content;
@@ -23,4 +29,11 @@
     -webkit-user-select: none;
     -moz-user-select: none;
     -ms-user-select: none;
+}
+
+@mixin input-icon($icon-url) {
+    background-image: url($icon-url);
+    background-repeat: no-repeat;
+    background-position: right 0.7rem top 50%;
+    background-size: 1.25em auto;
 }

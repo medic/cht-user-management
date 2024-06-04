@@ -16,7 +16,7 @@
   <div class="bottom" id="action_buttons_{{include.contactType.name}}">
     {% if directiveModel.validationErrorCount > 0 or directiveModel.totalCount == 0 %}
     <div data-toggle="tooltip" title="Fix invalid users">
-      <button class="clear-btn disabled" hx-post="/app/apply-changes?type={{ include.contactType.name }}" hx-swap="none"
+      <button class="clear-btn" hx-post="/app/apply-changes?type={{ include.contactType.name }}" hx-swap="none"
         disabled>
         <img src="/public/icons/upload-users.svg"> Upload All
       </button>

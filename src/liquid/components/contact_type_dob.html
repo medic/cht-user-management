@@ -1,14 +1,10 @@
-<div class="control">
-  <input 
-    name="{{ include.prop_name }}" 
-    {% if include.isInYears %} type="text" {%else%} type="date" {%endif%}
-    class="input"
+<div>
+  <input
+    {% if include.isInYears %} type="number" min="0" max="120" {%else%} type="date-picker" readonly {%endif%}
+    name="{{ include.prop_name }}"
     {% if data[include.prop_name] %} value="{{ data[include.prop_name] }}" {% endif %} 
   />
-</div>
-
-<div class="field">
-  <div class="control">
+  <div class="check-box">
     <input 
       type="checkbox" 
       name="option_dob_unknown" 
@@ -19,3 +15,19 @@
     <label>Date of birth unknown</label>
   </div>
 </div>
+
+<script>
+  /* vanillajs-datepicker */
+  var datePickerInput = document.querySelector('input[type="date-picker"]');
+  if (datePickerInput){
+    var datePicker = new Datepicker(datePickerInput, {
+      autohide: true,
+      clearButton: true,
+      enableOnReadonly: true,
+      format: 'yyyy-mm-dd',
+      maxDate: new Date(),
+      minDate: '1920',
+      showOnFocus: true
+    });
+  }
+</script>

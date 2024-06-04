@@ -1,5 +1,4 @@
 .btn {
-    @include card-shadow;
     background-color: #337ab7;
     border-color: #2e6da4;
     border: 1px solid transparent;
@@ -9,13 +8,54 @@
     font-family: inherit;
     cursor: pointer;
     text-decoration: none;
+    span.spinner {
+        margin: 1px 5px;
+        float: inline-end;
+    }
+    &:hover,
+    &:focus {
+        background-color: #2e6da4;
+    }
+    &:disabled {
+        background-color: #2e6da4;
+        color: #e8e8e8;
+        pointer-events: auto;
+        cursor: not-allowed;
+        text-shadow: none;
+    }
 }
 
-.btn.disabled {
-    background-color: #f1f1f1;
-    pointer-events: auto;
-    cursor: not-allowed;
-    text-shadow: none;
+.clear-btn {
+    @extend .btn;
+    background-color: white;
+    align-items: center;
+    border: 1.9px solid $element-border-color;
+    color: $default-text-color;
+    margin: auto 5px;
+    box-shadow: none;
+    display: inline-flex;
+    height: 40px;
+    padding: 0 10px;
+    &:hover,
+    &:focus,
+    &:disabled {
+        background-color: #f1f1f1;
+    }
+    &:disabled {
+        color: #707070;
+    }
+    img {
+        margin-right: 4px;
+    }
+}
+
+a.clear-btn {
+    height: 38px;
+    font-size: 0.9em;
+    &.htmx-request {
+        background-color: #f1f1f1;
+        pointer-events: none;
+    }
 }
 
 .dropdown-content {
@@ -52,34 +92,26 @@
     display: block;
     height: 40px;
     box-shadow: 0px 4px 10px 0px rgba(0, 0, 0, 0.5);
-    &:hover {
-        background-color: #2e6da4;
+}
+
+.data-form {
+    button.btn,
+    button.clear-btn,
+    a.clear-btn {
+        height: 40px;
+        width: 120px;
+        margin: auto 5px;
+    }
+    button.clear-btn {
+        justify-content: center;
+    }
+    a.clear-btn {
+        justify-content: center;
+        width: 95px;
+        margin: auto 5px;
     }
 }
 
-.clear-btn {
-    @extend .btn;
-    font-size: 0.9em;
-    background-color: white;
-    align-items: center;
-    border: 1.9px solid $element-border-color;
-    color: $default-text-color;
-    margin: auto 5px;
-    box-shadow: none;
-    display: inline-flex;
-    height: 40px;
-    padding: 0 10px;
-    &:hover {
-        background-color: #f1f1f1;
-    }
-    img {
-        margin-right: 4px;
-    }
-}
-
-a.clear-btn {
-    height: 38px;
-}
 .tag.clear-btn {
     height: 20px;
     color: $primary-color;
@@ -105,7 +137,12 @@ a.clear-btn {
     align-items: center;
 }
 
-.badge.tag.disabled {
+.badge.tag:disabled {
     pointer-events: auto;
     cursor: not-allowed;
+}
+
+.breadcrumb li.tag {
+    height: 15px;
+    padding: 5px;
 }

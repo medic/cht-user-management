@@ -10,7 +10,11 @@
         {% include "components/table_header.html" contactType=contactType %}
       </table>
     </div>
-    <div id="spinner" class="spinner"></div>
+
+    <div class="center spinner-container">
+      <span id="upload-spinner" class="spinner"></span>
+    </div>
+
     {% endfor %}
   </div>
 </div>
