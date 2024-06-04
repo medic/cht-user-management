@@ -9,20 +9,20 @@ const { expect } = chai;
 describe('lib/authentication.ts', () => {
   it('encode and decode', () => {
     const session = mockChtSession();
-    const encoded = Auth.encodeToken(session);
-    const decoded = Auth.decodeToken(encoded);
+    const encoded = Auth.encodeTokenForCookie(session);
+    const decoded = Auth.decodeTokenForCookie(encoded);
     expect(session).excluding('axiosInstance').to.deep.eq(decoded);
   });
 
   it('invalid token cannot be decoded', () => {
-    expect(() => Auth.decodeToken('encoded')).to.throw('jwt malformed');
+    expect(() => Auth.decodeTokenForCookie('encoded')).to.throw('jwt malformed');
   });
 
   it('invalid session cannot be decoded', () => {
     const session = mockChtSession();
     delete session.username;
-    const encoded = Auth.encodeToken(session);
-    expect(() => Auth.decodeToken(encoded)).to.throw('invalid CHT session information');
+    const encoded = Auth.encodeTokenForCookie(session);
+    expect(() => Auth.decodeTokenForCookie(encoded)).to.throw('invalid CHT session information');
   });
 });
 

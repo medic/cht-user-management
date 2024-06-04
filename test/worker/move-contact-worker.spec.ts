@@ -3,7 +3,6 @@ import axios from 'axios';
 import { expect } from 'chai';
 import sinon, { SinonSandbox } from 'sinon';
 
-
 import Auth from '../../src/lib/authentication';
 import { queueManager } from '../../src/shared/queues';
 import { 
@@ -30,7 +29,7 @@ describe('MoveContactWorker', () => {
     name: 'testJob'
   };
 
-  let canProcessStub: sinon.SinonStub;
+  let shouldPostponeStub: sinon.SinonStub;
   let moveContactStub: sinon.SinonStub;
   let postponeStub: sinon.SinonStub;
   let decodeTokenStub: sinon.SinonStub;
@@ -41,10 +40,10 @@ describe('MoveContactWorker', () => {
     sandbox.stub(queueManager, 'addJob').resolves();
 
     worker = new MoveContactWorker(queueName);
-    canProcessStub = sandbox.stub(worker as any, 'canProcess');
+    shouldPostponeStub = sandbox.stub(worker as any, 'shouldPostpone');
     moveContactStub = sandbox.stub(worker as any, 'moveContact');
     postponeStub = sandbox.stub(worker as any, 'postpone');
-    decodeTokenStub = sandbox.stub(Auth, 'decodeToken');
+    decodeTokenStub = sandbox.stub(Auth, 'decodeTokenForQueue');
     
   });
 
@@ -54,7 +53,7 @@ describe('MoveContactWorker', () => {
 
   describe('handleJob', () => {
     it('should handle job successfully', async () => {
-      canProcessStub.resolves(true);
+      shouldPostponeStub.resolves(false);
       moveContactStub.resolves({ success: true, message: '' });
 
       const result = await (worker as any)['handleJob'](job);
@@ -62,7 +61,7 @@ describe('MoveContactWorker', () => {
     });
 
     it('should postpone job if cannot process', async () => {
-      canProcessStub.resolves(false);
+      shouldPostponeStub.resolves(true);
       postponeStub.resolves(true);
 
       const result = await (worker as any)['handleJob'](job);
@@ -71,7 +70,7 @@ describe('MoveContactWorker', () => {
     });
 
     it('should log error and throw if moveContact fails', async () => {
-      canProcessStub.resolves(true);
+      shouldPostponeStub.resolves(true);
       moveContactStub.resolves({ success: false, message: 'error' });
 
       try {
@@ -82,28 +81,28 @@ describe('MoveContactWorker', () => {
     });
   });
 
-  describe('canProcess', () => {
+  describe('shouldPostpone', () => {
     it('should return true if sentinel backlog is within limit', async () => {
-      canProcessStub.callThrough();
+      shouldPostponeStub.callThrough();
       sandbox.stub(axios, 'get').resolves({ data: { sentinel: { backlog: 500 } } });
 
-      const result = await (worker as any)['canProcess'](jobData);
+      const result = await (worker as any)['shouldPostpone'](jobData);
       expect(result).to.be.true;
     });
 
     it('should return false if sentinel backlog exceeds limit', async () => {
-      canProcessStub.callThrough();
-      sandbox.stub(axios, 'get').resolves({ data: { sentinel: { backlog: 1500 } } });
+      shouldPostponeStub.callThrough();
+      sandbox.stub(axios, 'get').resolves({ data: { sentinel: { backlog: 10000 } } });
 
-      const result = await (worker as any)['canProcess'](jobData);
+      const result = await (worker as any)['shouldPostpone'](jobData);
       expect(result).to.be.false;
     });
 
     it('should return false if axios request fails', async () => {
-      canProcessStub.callThrough();
+      shouldPostponeStub.callThrough();
       sandbox.stub(axios, 'get').rejects(new Error('network error'));
 
-      const result = await (worker as any)['canProcess'](jobData);
+      const result = await (worker as any)['shouldPostpone'](jobData);
       expect(result).to.be.false;
     });
   });
@@ -117,7 +116,7 @@ describe('MoveContactWorker', () => {
       expect(result.message).to.equal('Missing session token');
     });
 
-    it('should return error if queuePrivateKey is missing', async () => {
+    it('should return error if QUEUE_PRIVATE_KEY is missing', async () => {
       moveContactStub.callThrough();
       decodeTokenStub.throws(new Error('Missing QUEUE_PRIVATE_KEY'));
 

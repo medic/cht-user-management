@@ -4,10 +4,9 @@ import { ChtApi } from './cht-api';
 import RemotePlaceResolver from './remote-place-resolver';
 import Place from '../services/place';
 
-import { MOVE_CONTACT_QUEUE, JobParams, IQueueManager } from '../shared/queues';
+import { JobParams, IQueueManager } from '../shared/queues';
 import Auth from './authentication';
 import { MoveContactData } from '../worker/move-contact-worker';
-import { queuePrivateKey } from '../shared/queue-config';
 
 export default class MoveLib {
   constructor() { }
@@ -31,15 +30,12 @@ export default class MoveLib {
     const jobParam: JobParams = {
       jobName,
       jobData,
-      queueName: MOVE_CONTACT_QUEUE,
     };
     await queueManager.addJob(jobParam);
-    const jobsBoardUrl = `/board/queue/${MOVE_CONTACT_QUEUE}`;
     
     return {
       toLineage,
       fromLineage,
-      jobsBoardUrl
     };
   }
 
@@ -53,7 +49,7 @@ export default class MoveLib {
       contactId: fromId,
       parentId: toId,
       instanceUrl: `http${authInfo.useHttp ? '' : 's'}://${authInfo.domain}`,
-      sessionToken: Auth.encodeToken(chtApi.chtSession, queuePrivateKey),
+      sessionToken: Auth.encodeTokenForQueue(chtApi.chtSession),
     };
   }
 }

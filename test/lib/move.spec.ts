@@ -28,7 +28,6 @@ describe('lib/move.ts', () => {
     const sessionCache = new SessionCache();
     
     const actual = await MoveLib.move(formData, contactType, sessionCache, chtApi(), mockQueueManager());
-    expect(actual.jobsBoardUrl).to.exist;
     expect(actual.fromLineage.map((l:any) => l.id)).to.deep.eq(['chu-id', 'from-sub']);
     expect(actual.toLineage.map((l:any) => l.id)).to.deep.eq([undefined, 'to-sub']);
   });

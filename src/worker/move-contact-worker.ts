@@ -3,8 +3,9 @@ import { spawn } from 'child_process';
 import { Worker, Job } from 'bullmq';
 
 import Auth from '../lib/authentication';
-import { queuePrivateKey, redisConnection } from '../shared/queue-config';
+import { redisConnection } from '../shared/queue-config';
 import { queueManager } from '../shared/queues';
+import { DateTime } from 'luxon';
 
 export interface MoveContactData {
   parentId: string;
@@ -15,11 +16,11 @@ export interface MoveContactData {
 
 export type JobResult = { success: boolean; message: string };
 
-export class MoveContactWorker {
-  private readonly DELAY_IN_MILLIS = 360_000;   // 1 hour
-  private readonly MAX_TIMEOUT = 180_000;       // 30 minutes timeout
-  private readonly MAX_CONCURRENCY = 1;         // Limit concurrency to 1 job at a time
-  private readonly MAX_SENTINEL_BACKLOG = 1000; // ensure we don't take down the server
+export class MoveContactWorker {    
+  private readonly DELAY_IN_MILLIS = 3_600_000;       // 60 minutes
+  private readonly MAX_TIMEOUT_IN_MILLIS = 3_600_000; // 60 minutes
+  private readonly MAX_CONCURRENCY = 1;               // Limit concurrency to 1 job at a time
+  private readonly MAX_SENTINEL_BACKLOG = 7000;       // ensure we don't take down the server
   
   constructor(private queueName: string) {
     this.initializeWorker();
@@ -37,7 +38,7 @@ export class MoveContactWorker {
     const jobData: MoveContactData = job.data;
 
     // Ensure server availability
-    if (!(await this.canProcess(jobData))) {
+    if (await this.shouldPostpone(jobData)) {
       await this.postpone(job);
       return true;
     }
@@ -54,11 +55,12 @@ export class MoveContactWorker {
     return true;
   };
 
-  private async canProcess(jobData: MoveContactData): Promise<boolean> {
+  private async shouldPostpone(jobData: MoveContactData): Promise<boolean> {
     try {
       const { instanceUrl } = jobData;
       const response = await axios.get(`${instanceUrl}/api/v2/monitoring`);
       const sentinelBacklog = response.data.sentinel?.backlog;
+      console.log(`Sentinel backlog at ${sentinelBacklog} of ${this.MAX_SENTINEL_BACKLOG}`);
       return sentinelBacklog < this.MAX_SENTINEL_BACKLOG;
     } catch (err: any) {
       const errorMessage = err.response?.data?.error?.message || err.response?.data || err?.message;
@@ -73,11 +75,9 @@ export class MoveContactWorker {
 
       if (!sessionToken) {
         return { success: false, message: 'Missing session token' };
-      } else if (!queuePrivateKey) {
-        return { success: false, message: 'Missing QUEUE_PRIVATE_KEY' };
       }
 
-      const decodedToken = Auth.decodeToken(sessionToken, queuePrivateKey);
+      const decodedToken = Auth.decodeTokenForQueue(sessionToken);
       const token = decodedToken.sessionToken.replace('AuthSession=', '');
 
       const command = 'cht';
@@ -117,7 +117,7 @@ export class MoveContactWorker {
       const timeout = setTimeout(() => {
         chtProcess.kill();
         reject(new Error('cht-conf timed out'));
-      }, this.MAX_TIMEOUT);
+      }, this.MAX_TIMEOUT_IN_MILLIS);
 
       chtProcess.stdout.on('data', data => {
         console.log(`cht-conf: ${data}`);
@@ -129,7 +129,10 @@ export class MoveContactWorker {
 
       chtProcess.on('close', code => {
         clearTimeout(timeout);
-        code === 0 ? resolve() : reject(new Error(`cht-conf exited with code ${code}`));
+        if (code === 0) {
+          resolve();
+        }
+        reject(new Error(`cht-conf exited with code ${code}`));
       });
 
       chtProcess.on('error', error => {
@@ -140,6 +143,10 @@ export class MoveContactWorker {
   }
 
   private async postpone(job: Job): Promise<boolean> {
+    // Calculate the retry time using luxon
+    const retryTime = DateTime.now().plus({ milliseconds: this.DELAY_IN_MILLIS });
+    const retryTimeFormatted = retryTime.toLocaleString(DateTime.TIME_SIMPLE);
+    
     // Add this job back to queue with a DELAY_IN_MILLIS delay
     const jobParams = {
       jobName: job.name,
@@ -152,7 +159,7 @@ export class MoveContactWorker {
     };
     await queueManager.addJob(jobParams);
 
-    const retryMessage = `Job postponed (not ready): ${job.id} (retry in ${this.DELAY_IN_MILLIS / 1000} sec.)`;
+    const retryMessage = `Job ${job.id} postponed until ${retryTimeFormatted}.  Reason was sentinel backlog"`;
     job.log(`[${new Date().toISOString()}]: ${retryMessage}`);
     console.log(retryMessage);
     return true;
