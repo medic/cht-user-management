@@ -60,11 +60,11 @@ export class MoveContactWorker {
       const response = await axios.get(`${instanceUrl}/api/v2/monitoring`);
       const sentinelBacklog = response.data.sentinel?.backlog;
       console.log(`Sentinel backlog at ${sentinelBacklog} of ${this.MAX_SENTINEL_BACKLOG}`);
-      return sentinelBacklog < this.MAX_SENTINEL_BACKLOG;
+      return sentinelBacklog > this.MAX_SENTINEL_BACKLOG;
     } catch (err: any) {
       const errorMessage = err.response?.data?.error?.message || err.response?.data || err?.message;
       console.error('Error fetching monitoring data:', errorMessage);
-      return false;
+      return true;
     }
   }
 

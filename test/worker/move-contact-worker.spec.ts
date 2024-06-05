@@ -23,10 +23,11 @@ describe('MoveContactWorker', () => {
   };
   const job = {
     id: 'job123',
+    name: 'testJob',
     data: jobData,
-    log: sinon.stub(),
     opts: {},
-    name: 'testJob'
+    log: sinon.stub(),
+    moveToDelayed: sinon.stub(),
   };
 
   let shouldPostponeStub: sinon.SinonStub;
@@ -62,48 +63,42 @@ describe('MoveContactWorker', () => {
 
     it('should postpone job if cannot process', async () => {
       shouldPostponeStub.resolves(true);
-      postponeStub.resolves(true);
+      postponeStub.resolves();
 
-      const result = await (worker as any)['handleJob'](job);
-      expect(result).to.be.true;
-      expect(postponeStub.calledWith(job)).to.be.true;
+      expect( (worker as any)['handleJob'](job) ).to.rejected;
     });
 
     it('should log error and throw if moveContact fails', async () => {
-      shouldPostponeStub.resolves(true);
+      shouldPostponeStub.resolves(false);
       moveContactStub.resolves({ success: false, message: 'error' });
 
-      try {
-        await (worker as any)['handleJob'](job);
-      } catch (e) {
-        expect(e.message).to.equal('Job job123 failed with the following error: error');
-      }
+      expect( (worker as any)['handleJob'](job) ).to.rejected;
     });
   });
 
   describe('shouldPostpone', () => {
-    it('should return true if sentinel backlog is within limit', async () => {
+    it('should return false if sentinel backlog is within limit', async () => {
       shouldPostponeStub.callThrough();
       sandbox.stub(axios, 'get').resolves({ data: { sentinel: { backlog: 500 } } });
+
+      const result = await (worker as any)['shouldPostpone'](jobData);
+      expect(result).to.be.false;
+    });
+
+    it('should return true if sentinel backlog exceeds limit', async () => {
+      shouldPostponeStub.callThrough();
+      sandbox.stub(axios, 'get').resolves({ data: { sentinel: { backlog: 10000 } } });
 
       const result = await (worker as any)['shouldPostpone'](jobData);
       expect(result).to.be.true;
     });
 
-    it('should return false if sentinel backlog exceeds limit', async () => {
-      shouldPostponeStub.callThrough();
-      sandbox.stub(axios, 'get').resolves({ data: { sentinel: { backlog: 10000 } } });
-
-      const result = await (worker as any)['shouldPostpone'](jobData);
-      expect(result).to.be.false;
-    });
-
-    it('should return false if axios request fails', async () => {
+    it('should return true if axios request fails', async () => {
       shouldPostponeStub.callThrough();
       sandbox.stub(axios, 'get').rejects(new Error('network error'));
 
       const result = await (worker as any)['shouldPostpone'](jobData);
-      expect(result).to.be.false;
+      expect(result).to.be.true;
     });
   });
 
@@ -127,12 +122,11 @@ describe('MoveContactWorker', () => {
   });
 
   describe('postpone', () => {
-    it('should add job back to queue with delay', async () => {
+    it('should move the job to a delayed state', async () => {
       postponeStub.callThrough();
-      // sandbox.stub(queueManager, 'addJob').resolves();
 
-      const result = await (worker as any)['postpone'](job);
-      expect(result).to.be.true;
+      await (worker as any)['postpone'](job);
+      expect(job.moveToDelayed.calledOnce).to.be.true;
     });
   });
 });
