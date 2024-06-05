@@ -1,10 +1,9 @@
 import axios from 'axios';
 import { spawn } from 'child_process'; 
-import { Worker, Job } from 'bullmq';
+import { Worker, Job, DelayedError } from 'bullmq';
 
 import Auth from '../lib/authentication';
 import { redisConnection } from '../shared/queue-config';
-import { queueManager } from '../shared/queues';
 import { DateTime } from 'luxon';
 
 export interface MoveContactData {
@@ -17,10 +16,10 @@ export interface MoveContactData {
 export type JobResult = { success: boolean; message: string };
 
 export class MoveContactWorker {    
-  private readonly DELAY_IN_MILLIS = 3_600_000;       // 60 minutes
-  private readonly MAX_TIMEOUT_IN_MILLIS = 3_600_000; // 60 minutes
-  private readonly MAX_CONCURRENCY = 1;               // Limit concurrency to 1 job at a time
-  private readonly MAX_SENTINEL_BACKLOG = 7000;       // ensure we don't take down the server
+  private readonly DELAY_IN_MILLIS = 60 * 60 * 1000;       // 60 minutes
+  private readonly MAX_TIMEOUT_IN_MILLIS = 60 * 60 * 1000; // 60 minutes
+  private readonly MAX_CONCURRENCY = 1;                    // Limit concurrency to 1 job at a time
+  private readonly MAX_SENTINEL_BACKLOG = 7000;            // ensure we don't take down the server
   
   constructor(private queueName: string) {
     this.initializeWorker();
@@ -34,13 +33,13 @@ export class MoveContactWorker {
     );
   }
 
-  private handleJob = async (job: Job): Promise<boolean> => {
+  private handleJob = async (job: Job, processingToken?: string): Promise<boolean> => {
     const jobData: MoveContactData = job.data;
 
     // Ensure server availability
     if (await this.shouldPostpone(jobData)) {
-      await this.postpone(job);
-      return true;
+      await this.postpone(job, processingToken);
+      throw new DelayedError();
     }
 
     const result = await this.moveContact(jobData);
@@ -142,26 +141,16 @@ export class MoveContactWorker {
     });
   }
 
-  private async postpone(job: Job): Promise<boolean> {
+  private async postpone(job: Job, processingToken?: string): Promise<void> {
     // Calculate the retry time using luxon
     const retryTime = DateTime.now().plus({ milliseconds: this.DELAY_IN_MILLIS });
     const retryTimeFormatted = retryTime.toLocaleString(DateTime.TIME_SIMPLE);
     
-    // Add this job back to queue with a DELAY_IN_MILLIS delay
-    const jobParams = {
-      jobName: job.name,
-      jobData: job.data,
-      jobOpts: {
-        ...job.opts,
-        delay: this.DELAY_IN_MILLIS
-      },
-      queueName: this.queueName,
-    };
-    await queueManager.addJob(jobParams);
+    // Delayed this job by DELAY_IN_MILLIS, using the current worker processing token
+    await job.moveToDelayed(retryTime.toMillis(), processingToken);
 
-    const retryMessage = `Job ${job.id} postponed until ${retryTimeFormatted}.  Reason was sentinel backlog"`;
+    const retryMessage = `Job ${job.id} postponed until ${retryTimeFormatted}.  Reason was sentinel backlog.`;
     job.log(`[${new Date().toISOString()}]: ${retryMessage}`);
     console.log(retryMessage);
-    return true;
   }
 }
