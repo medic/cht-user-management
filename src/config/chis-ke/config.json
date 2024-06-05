@@ -229,7 +229,7 @@
         "friendly_name": "Affected CHU",
         "property_name": "replacement",
         "type": "name",
-        "parameter": ["\\sCommunity Health Unit", "\\sCommunity Unit", "\\sUnit", "\\sCU", "\\sCHU"],
+        "parameter": ["\\sCommunity", "\\sHealth", "\\sUnit", "\\sCU", "\\sCHU", "\\center"],
         "required": true
       },
       "place_properties": [
@@ -237,7 +237,7 @@
           "friendly_name": "CHU Name",
           "property_name": "name",
           "type": "name",
-          "parameter": ["\\sCommunity Health Unit", "\\sCommunity Unit", "\\sUnit", "\\sCU", "\\sCHU"],
+          "parameter": ["\\sCommunity", "\\sHealth", "\\sUnit", "\\sCU", "\\sCHU", "\\center"],
           "required": true
         },
         {
@@ -300,7 +300,7 @@
           "friendly_name": "CHU",
           "property_name": "CHU",
           "contact_type": "c_community_health_unit",
-          "parameter": ["\\sCommunity Health Unit", "\\scenter", "\\sCommunity Unit", "\\sUnit", "\\sCU", "\\sCHU"],
+          "parameter": ["\\sCommunity", "\\sHealth", "\\sUnit", "\\sCU", "\\sCHU", "\\center"],
           "type": "name",
           "required": true,
           "level": 1
