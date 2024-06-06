@@ -1,10 +1,11 @@
 <form id="form_place_create" class="data-form" hx-encoding='multipart/form-data' autocomplete="off"
   hx-post="/place?op=bulk&type={{contactType.name}}" hx-disabled-elt="button#place_create_submit, a#cancel"
+  hx-on="htmx:beforeRequest:clearErrorMsg('bulk-upload-error')"
   hx-indicator="#upload-spinner" hx-target="this" hx-swap="outerHTML">
   <input name="place_type" value="{{contactType.name}}" hidden />
 
   {% if errors %}
-  <div class="error-bg white-text error-message">
+  <div id="bulk-upload-error" class="error-bg white-text error-message">
     {{errors.message}}
   </div>
   {% endif %}
@@ -82,13 +83,3 @@
     download="{{contactType.name}}.tmpl.csv">Download Template</a>
   </div>
 </form>
-
-<script>
-  const fileInput = document.querySelector('#bulk-upload-file input[type=file]');
-  fileInput.onchange = () => {
-    if (fileInput.files.length > 0) {
-      const fileName = document.querySelector('#bulk-upload-file .file-name');
-      fileName.textContent = fileInput.files[0].name;
-    }
-  }
-</script>
