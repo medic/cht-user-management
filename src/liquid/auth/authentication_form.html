@@ -1,39 +1,46 @@
-<form id="form_authenticate" hx-post="/authenticate" hx-target="this" hx-swap="outerHTML">
-  <!-- want to use tiles, they are super weird with forms in them -->
-  <div class="box" style="margin: 20px; padding: 50px;">
-    {% if errors %}
-      <span class='tag is-warning is-overlay'>Login Failed. Please Try Again</span>
-    {% endif %}
+<form id="form_authenticate" hx-post="/authenticate" hx-indicator="#login-spinner"
+  hx-on="htmx:beforeRequest:clearErrorMsg()"
+  hx-disabled-elt="button#login-btn"
+  hx-target="this" hx-swap="outerHTML">
 
-    <div class="field">
-      <label class="label">Instance</label>
-      <div class="control">
-        <div class="select is-fullwidth">
-          <select name="domain">
-              {% for domain in domains %}
-                <option value="{{ domain.domain }}">{{ domain.friendly }}</option>
-              {% endfor %}
-          </select>
-        </div>
-      </div>
+  {%if errors %}
+    <div id="error-msg" class="error-bg white-text error-message">
+      <span>Login Failed. Please Try Again</span>
     </div>
-    <div class="field">
-      <label class="label">Credentials</label>
-      <div class="control">
-          <input name="username" class="input" type="text" placeholder="username">
-      </div>
-    </div>
-    <div class="field">
-        <div class="control">
-            <input name="password" class="input" type="password" placeholder="password">
-        </div>
-    </div>
-    <div class="field is-grouped is-grouped-right">
-      <p class="control">
-        <button class="button is-primary">
-          Sign In
-        </button>
-      </p>
+  {%endif%}
+
+  <div>
+    <label>Instance</label>
+    <div class="custom-select">
+      <select class="dropdown-input" name="domain">
+        {% for domain in domains %}
+        <option value="{{ domain.domain }}">{{ domain.friendly }}</option>
+        {% endfor %}
+      </select>
     </div>
   </div>
+
+  <div>
+    <label>Credentials</label>
+    <div>
+      <div><input name="username" type="text" placeholder="Username" required></div>
+      <div><input name="password" type="password" placeholder="Password" required></div>
+    </div>
+  </div>
+
+  <div>
+    <button class="login-btn" id="login-btn">Login
+      <span id="login-spinner" class="spinner-sm btn-spinner"></span>
+    </button>
+  </div>
+
 </form>
+
+<script>
+  function clearErrorMsg() {
+    const errMsg = document.getElementById('error-msg');
+    if (errMsg){
+      document.getElementById('error-msg').style.display = 'none';
+    }
+  }
+</script>
