@@ -1,10 +1,10 @@
 <form id="form_authenticate" hx-post="/authenticate" hx-indicator="#login-spinner"
-  hx-on="htmx:beforeRequest:clearErrorMsg()"
+  hx-on="htmx:beforeRequest:clearErrorMsg('login-error-msg')"
   hx-disabled-elt="button#login-btn"
   hx-target="this" hx-swap="outerHTML">
 
   {%if errors %}
-    <div id="error-msg" class="error-bg white-text error-message">
+    <div id="login-error-msg" class="error-bg white-text error-message">
       <span>Login Failed. Please Try Again</span>
     </div>
   {%endif%}
@@ -35,12 +35,3 @@
   </div>
 
 </form>
-
-<script>
-  function clearErrorMsg() {
-    const errMsg = document.getElementById('error-msg');
-    if (errMsg){
-      document.getElementById('error-msg').style.display = 'none';
-    }
-  }
-</script>
