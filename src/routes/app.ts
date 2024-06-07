@@ -75,14 +75,16 @@ export default async function sessionCache(fastify: FastifyInstance) {
     return resp.view('src/liquid/place/list.html', tmplData);
   });
 
-  fastify.get('/app/list/summary', async (req, res) => {
-    return res.view('src/liquid/components/summary.html');
-  });
-
   fastify.post('/app/remove-all/:contactTypeName?', async (req, resp) => {
     const params: any = req.params;
     const contactTypeName = params.contactTypeName;
     const sessionCache: SessionCache = req.sessionCache;
+    for (const cookieName in req.cookies) {
+      if (req.cookies[cookieName] && cookieName === 'currentTab'
+        || cookieName.includes('_currentPage')) {
+        resp.clearCookie(cookieName, { path: '/' });
+      }
+    }
     sessionCache.removeAll(contactTypeName);
     resp.header('HX-Redirect', '/');
   });
