@@ -4,19 +4,20 @@
     <ol class="breadcrumb">
       <li class="tag badge warning-bg">Current</li>
       {% for lineage in fromLineage %}
-      {% if lineage %}
-      <li class="breadcrumb-item"><a href="https://{{ session.authInfo.domain }}/#/contacts/{{ lineage.id}}">{{
-          lineage.name }}</a></li>
-      {% endif %}
+        {% if lineage %}
+        <li class="breadcrumb-item"><a href="https://{{ session.authInfo.domain }}/#/contacts/{{ lineage.id}}">
+          {{ lineage.name }}</a></li>
+        {% endif %}
       {% endfor %}
     </ol>
     <ol class="breadcrumb">
       <li class="tag badge success-bg">After</li>
       {% for lineage in toLineage %}
-      {% if lineage %}
-      <li class="breadcrumb-item"><a href="https://{{ session.authInfo.domain }}/#/contacts/{{ lineage.id}}">{{
-          lineage.name }}</a></li>
-      {% endif %}
+        {% if lineage %}
+          <li class="breadcrumb-item"><a href="https://{{ session.authInfo.domain }}/#/contacts/{{ lineage.id}}">
+            {{ lineage.name }}
+          </a></li>
+        {% endif %}
       {% endfor %}
       <li class="breadcrumb-item" active>{{ fromLineage.last.name }}</li>
     </ol>

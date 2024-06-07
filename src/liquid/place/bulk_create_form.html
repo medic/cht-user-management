@@ -38,41 +38,41 @@
         </tr>
 
         {% for row in contactType.hierarchy %}
-        <tr>
-          <td data-label="Expected Column">{{ row.friendly_name }}</td>
-          <td data-label="Required">{{ row.required }}</td>
-          <td data-label="Description">Name of place {{ row.level }} above in hierarchy</td>
-        </tr>
+          <tr>
+            <td data-label="Expected Column">{{ row.friendly_name }}</td>
+            <td data-label="Required">{{ row.required }}</td>
+            <td data-label="Description">Name of place {{ row.level }} above in hierarchy</td>
+          </tr>
         {% endfor %}
 
         {% for row in contactType.place_properties %}
-        {% if row.type != 'generated' %}
-        <tr>
-          <td data-label="Expected Column">{{ row.friendly_name }}</td>
-          <td data-label="Required">{{ row.required }}</td>
-          <td data-label="Description">Property on place</td>
-        </tr>
-        {% endif %}
+          {% if row.type != 'generated' %}
+            <tr>
+              <td data-label="Expected Column">{{ row.friendly_name }}</td>
+              <td data-label="Required">{{ row.required }}</td>
+              <td data-label="Description">Property on place</td>
+            </tr>
+          {% endif %}
         {% endfor %}
 
         {% for row in contactType.contact_properties %}
-        {% if row.type != 'generated' %}
-        <tr>
-          <td data-label="Expected Column">{{ row.friendly_name }}</td>
-          <td data-label="Required">{{ row.required }}</td>
-          <td data-label="Description">Property on primary contact</td>
-        </tr>
-        {% endif %}
+          {% if row.type != 'generated' %}
+            <tr>
+              <td data-label="Expected Column">{{ row.friendly_name }}</td>
+              <td data-label="Required">{{ row.required }}</td>
+              <td data-label="Description">Property on primary contact</td>
+            </tr>
+          {% endif %}
         {% endfor %}
 
         {% if contactType.user_role.size > 1 %}
-        <tr>
-          <td data-label="Expected Column">{{ userRoleProperty.friendly_name }}</td>
-          <td data-label="Required">{{ userRoleProperty.required }}</td>
-          <td data-label="Description">Role of the user. Separate multiple roles with a <i>space</i>. Allowed roles are <i>{{
-              contactType.user_role | join: ', ' }}
-          </td>
-        </tr>
+          <tr>
+            <td data-label="Expected Column">{{ userRoleProperty.friendly_name }}</td>
+            <td data-label="Required">{{ userRoleProperty.required }}</td>
+            <td data-label="Description">Role of the user. Separate multiple roles with a <i>space</i>. Allowed roles are <i>
+              {{ contactType.user_role | join: ', ' }}
+            </td>
+          </tr>
         {% endif %}
       </tbody>
     </table>
