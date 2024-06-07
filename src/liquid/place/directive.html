@@ -1,52 +1,53 @@
 <div class="directive" id="directive" hx-sse="swap:directive" hx-target="this"
   hx-swap="outerHTML">
   {% if directiveModel.inProgressCount > 0 %}
-  {% include "place/directive_3_in_progress.html" %}
+    {% include "place/directive_3_in_progress.html" %}
   {% elsif directiveModel.successCount > 0 %}
-  {% include "place/directive_4_prompt_save.html" %}
+    {% include "place/directive_4_prompt_save.html" %}
   {% elsif directiveModel.validationErrorCount > 0 %}
-  {% include "place/directive_validation_errors.html" %}
+    {% include "place/directive_validation_errors.html" %}
   {% elsif directiveModel.stagedCount > 0 %}
-  {% include "place/directive_2_prompt_upload.html" %}
+    {% include "place/directive_2_prompt_upload.html" %}
   {%else%}
-  <p>
-    Add users you want to create on the <i>{{ session.authInfo.friendly }}</i> instance below.
-  </p>
+    <p>
+      Add users you want to create on the <i>{{ session.authInfo.friendly }}</i> instance below.
+    </p>
   {% endif %}
 
   {% if directiveModel.failureCount > 0 %}
-  <p><img src="public/icons/warning.svg"> You have
-    <b class="error-text"><i>{{directiveModel.failureCount}} failed upload(s)</i></b>. You can retry uploading below
-  </p>
+    <p>
+      <img src="public/icons/warning.svg"> You have
+      <b class="error-text"><i>{{directiveModel.failureCount}} failed upload(s)</i></b>. You can retry uploading below
+    </p>
   {%endif%}
 
   {% include "components/filter_tag.html"
-  class="staging-bg"
-  filterName="staged"
-  count=directiveModel.stagedCount
+    class="staging-bg"
+    filterName="staged"
+    count=directiveModel.stagedCount
   %}
   {% include "components/filter_tag.html"
-  class="warning-bg"
-  filterName="invalid"
-  count=directiveModel.validationErrorCount
+    class="warning-bg"
+    filterName="invalid"
+    count=directiveModel.validationErrorCount
   %}
   {% include "components/filter_tag.html"
-  class="success-bg"
-  filterName="success"
-  count=directiveModel.successCount
+    class="success-bg"
+    filterName="success"
+    count=directiveModel.successCount
   %}
   {% include "components/filter_tag.html"
-  class="error-bg"
-  filterName="failure"
-  count=directiveModel.failureCount
+    class="error-bg"
+    filterName="failure"
+    count=directiveModel.failureCount
   %}
 
   {% if directiveModel.filter %}
-  <div id="filter-warning" class="hidden-tag-container">
-    <i>{{ directiveModel.hiddenCount }} results are hidden by the filter</i>
-    <button class="clear-btn tag" hx-post="/app/set-filter/none" hx-swap="none">
-      Remove Filter
-    </button>
-  </div>
+    <div id="filter-warning" class="hidden-tag-container">
+      <i>{{ directiveModel.hiddenCount }} results are hidden by the filter</i>
+      <button class="clear-btn tag" hx-post="/app/set-filter/none" hx-swap="none">
+        Remove Filter
+      </button>
+    </div>
   {% endif %}
 </div>
