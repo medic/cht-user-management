@@ -86,7 +86,9 @@ $table-header-bg-color: rgba(#dcdcdc, 0.6);
             td {
                 border-left: 1px solid #ddd;
                 border-right: 1px solid #ddd;
-                background-color: $table-bg-color;
+                &:not(.error-bg){
+                    background-color: $table-bg-color;
+                }
                 display: block;
                 text-align: right;
                 border-top: none;
