@@ -36,6 +36,7 @@ export default class MoveLib {
     return {
       toLineage,
       fromLineage,
+      success: true
     };
   }
 

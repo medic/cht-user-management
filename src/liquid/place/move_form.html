@@ -3,13 +3,16 @@
   autocomplete="off"
   {% if backend %} hx-post="{{backend}}" {%else%} hx-post="/move" {%endif%}
   hx-target="this" 
-  hx-swap="outerHTML"
-  hx-post-end="handleResponse"
+  hx-on::after-request="handleResponse(event)"
 >
   {% if error %}
     <div class="notification is-danger" style="margin: 0;">
       {{ error }}
     </div>
+  {% endif %}
+
+  {% if success %}
+    <div data-success="true"></div>
   {% endif %}
 
   <input name="place_type" value="{{contactType.name}}" hidden />
@@ -50,23 +53,16 @@
 
 <script type="text/javascript">
   function handleResponse(event) {
-    console.log('Event', event);
-    if (!event.error) {
-      // Reset form
-      const $form = document.getElementById('form_place_move');
-      $form.reset();
-
-      // Show toast
-      const toastContent = `
-        <p>This will be moved shortly!  It may take up to 24 hours to process.</p>
-      `;
-
+    const response = event?.detail?.xhr?.responseText;
+    if (response && response.includes('data-success="true"')) {
       bulmaToast.toast({
-        message: toastContent,
-        type: 'is-success',
-        position: 'center',
+        duration: 5000,
+        dismissible: true,
         closeOnClick: true,
         pauseOnHover: true,
+        type: 'is-success',
+        position: 'top-center',
+        message: `<p>This will be moved shortly!  It may take up to 24 hours to process.</p>`,
       });
     }
   }
