@@ -137,10 +137,15 @@ Variable | Description | Sample
 `CONFIG_NAME` | Name of the configuration to use | `chis-ke`
 `EXTERNAL_PORT` | Port to use in docker compose when starting the web server | `3000`
 `PORT` | For localhost development environment | `3000`
-`COOKIE_PRIVATE_KEY` | A string used to two-way encryption of cookies. Production values need to be a secret. Suggest `uuidgen` to generate | `589a7f23-5bb2-4b77-ac78-f202b9b6d5e3`
+`COOKIE_PRIVATE_KEY` | A string used to two-way encryption of main app cookies. Production values need to be a secret. Suggest `uuidgen` to generate | `589a7f23-5bb2-4b77-ac78-f202b9b6d5e3`
+`QUEUE_PRIVATE_KEY` | A string used to two-way encryption of queue cookies. Production values need to be a secret. Suggest `uuidgen` to generate | `589a7f23-5bb2-4b77-ac78-f202b9b6d5e3`
 `INTERFACE` | Interface to bind to. Leave as '0.0.0.0' for prod, suggest '127.0.0.1' for development | `127.0.0.1`
 `CHT_DEV_URL_PORT` | CHT instance when in `NODE_ENV===dev`. Needs URL and port | `192-168-1-26.local-ip.medicmobile.org:10463`
 `CHT_DEV_HTTP` |  'false' for http  'true' for https | `false`
+`REDIS_HOST` | Redis server hostname use 'redis' for docker | `3000`
+`REDIS_PORT` | Redis server port | `6378`
+`CHT_USER_MANAGEMENT_IMAGE` | docker image for cht-user-management service (local development), leave empty to use published one | `cht-user-management:local `
+`CHT_USER_MANAGEMENT_WORKER_IMAGE` | docker image for cht-user-management service (local development), leave empty to use published one | `cht-user-management-worker:local`
 
 ## Publishing new docker images
 
@@ -149,3 +154,12 @@ Docker images are hosted on [AWS's Elastic Container Registry (ECR)](https://gal
 1. Update the [version string](https://github.com/medic/cht-user-management/blob/d992d5d6a911cdc21f610fa48a0ffb3e275bae0d/package.json#L3) in the `package.json`.
 2. Submit a PR and have it merged to `main`. 
 3. [Existing CI](https://github.com/medic/cht-user-management/blob/main/.github/workflows/docker-build.yml) will push an image to ECR.
+
+
+## Docker local setup
+
+To build the Docker images and run Docker Compose locally, run:
+
+```bash
+./docker-local-setup.sh
+```
