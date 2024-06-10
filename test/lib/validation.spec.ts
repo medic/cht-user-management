@@ -5,6 +5,10 @@ import { Validation } from '../../src/lib/validation';
 import { mockSimpleContactType, mockPlace } from '../mocks';
 import RemotePlaceResolver from '../../src/lib/remote-place-resolver';
 
+import kenyaConfig from '../../src/config/chis-ke/config.json';
+
+const ChuNameParameter = kenyaConfig.contact_types[0].place_properties[0].parameter;
+
 type Scenario = {
   type: string;
   prop?: string;
@@ -54,6 +58,8 @@ const scenarios: Scenario[] = [
   { type: 'name', prop: 'Jonathan M.Barasa', isValid: true, altered: 'Jonathan M Barasa' },
   { type: 'name', prop: 'Robert xiv', isValid: true, altered: 'Robert XIV' },
   { type: 'name', prop: ' ', isValid: true, altered: '' },
+
+  { type: 'name', prop: 'saigon community  health unit', propertyParameter: ChuNameParameter, isValid: true, altered: 'Saigon' },
 
   { type: 'dob', prop: undefined, isValid: false, error: 'Required' },
   { type: 'dob', prop: '', isValid: false },

@@ -1,5 +1,5 @@
 import { Config, ContactType } from './config';
-import { ChtApi } from './lib/cht-api';
+import { ChtApi, RemotePlace } from './lib/cht-api';
 import ChtSession from './lib/cht-session';
 import MoveLib from './lib/move';
 import RemotePlaceCache from './lib/remote-place-cache';
@@ -16,6 +16,7 @@ export {
   ChtSession,
   Place,
   PlaceFactory,
+  RemotePlace,
   RemotePlaceCache,
   SessionCache,
   RemotePlaceResolver,
