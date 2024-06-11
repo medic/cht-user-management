@@ -11,9 +11,9 @@
     <div class="dropdown-button">
       <button class="clear-btn"><img src="/public/icons/plus.svg"> {{contactType.friendly}}</button>
       <div class="dropdown-content">
-        <a href="/add-place?type={{ contactType.name }}&op=new">Create New</a>
-        <a href="/add-place?type={{ contactType.name }}&op=replace">Replace Existing</a>
-        <a href="/add-place?type={{ contactType.name }}&op=bulk">Upload from CSV</a>
+        <a href="/add-place?type={{ contactType.name }}&op=new&pageSize=10&page=1">Create New</a>
+        <a href="/add-place?type={{ contactType.name }}&op=replace&pageSize=10&page=1">Replace Existing</a>
+        <a href="/add-place?type={{ contactType.name }}&op=bulk&pageSize=10&page=1">Upload from CSV</a>
       </div>
     </div>
     {% endfor %}

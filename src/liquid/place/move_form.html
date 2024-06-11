@@ -2,7 +2,9 @@
   class="data-form"
   id="form_place_move" 
   autocomplete="off"
-  {% if backend %} hx-post="{{backend}}" {%else%} hx-post="/move" {%endif%}
+  {% if backend %} 
+  hx-post="{{backend}}" 
+  {%else%} hx-post="/move" {%endif%}
   hx-target="this" 
   hx-swap="outerHTML"
 >

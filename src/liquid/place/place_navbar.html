@@ -5,18 +5,9 @@
     {%endif%}
     {%endcapture%}
     <a hx-trigger="click" hx-get="/app/list?page=1&contactTypeName={{ contactType.name }}"
-        id="tab_{{contactType.name}}" hx-target="#place_list" hx-swap="outerHTML show:window:top" onclick="highlight(this)"
+        id="tab_{{contactType.name}}" hx-target="#place_list" hx-swap="outerHTML show:window:top"
         class="{{tabClass}} nav-item">{{contactType.friendly}}
         {% include "components/nav_badge.html" %}
     </a>
     {% endfor %}
 </div>
-
-<script>
-    function highlight(element) {
-        document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
-        element.classList.add('active');
-        document.cookie = `currentTab=${element.id.substring(4)};SameSite=Strict`;
-    }
-    document.cookie = `currentTab={{directiveModel.activeTab}};SameSite=Strict`;
-</script>

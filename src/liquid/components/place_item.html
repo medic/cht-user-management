@@ -79,7 +79,9 @@
             <img class="action-link" src="public/icons/password.svg" alt="password">
         </span>
         {% else %}
-        <a class="action-link" href="/place/edit/{{place.id}}" data-toggle="tooltip" data-placement="bottom" title="Edit">
+        <a class="action-link" 
+        href="/place/edit/{{place.id}}/{{contactType.name}}?pageSize={{contactType.places.pageSize}}&page={{contactType.places.page}}" 
+        data-toggle="tooltip" data-placement="bottom" title="Edit">
             <img src="public/icons/edit.svg" alt="Edit">
         </a>
         <a class="action-link" hx-post="/place/refresh/{{place.id}}" data-toggle="tooltip" data-placement="bottom"
