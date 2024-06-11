@@ -10,11 +10,6 @@ export default async function sessionCache(fastify: FastifyInstance) {
   fastify.get('/move/:placeType', async (req, resp) => {
     const params: any = req.params;
     const placeType = params.placeType;
-    const queryParams = req.query as any;
-    const pageInfo = {
-      page: queryParams.page,
-      pageSize: queryParams.pageSize,
-    };
     const contactTypes = Config.contactTypes();
     
     const contactType = Config.getContactType(placeType);
@@ -24,7 +19,6 @@ export default async function sessionCache(fastify: FastifyInstance) {
       logo: Config.getLogoBase64(),
       contactTypes,
       contactType,
-      pageInfo,
       session: req.chtSession,
       ...moveViewModel(contactType),
     };
@@ -34,12 +28,6 @@ export default async function sessionCache(fastify: FastifyInstance) {
 
   fastify.post('/move', async (req, resp) => {
     const formData:any = req.body;
-    const queryParams = req.query as any;
-    const pageInfo = {
-      page: queryParams.page,
-      contactTypeName: queryParams.type,
-      pageSize: queryParams.pageSize,
-    };
 
     const sessionCache: SessionCache = req.sessionCache;
     const contactType = Config.getContactType(formData.place_type);
@@ -47,12 +35,11 @@ export default async function sessionCache(fastify: FastifyInstance) {
     
     try {
       const tmplData = await MoveLib.move(formData, contactType, sessionCache, chtApi);
-      return resp.view('src/liquid/components/move_result.html', {...tmplData, pageInfo});
+      return resp.view('src/liquid/components/move_result.html', tmplData);
     } catch (e: any) {
       const tmplData = {
         view: 'move',
         op: 'move',
-        pageInfo,
         contactTypes: Config.contactTypes(),
         session: req.chtSession,
         data: formData,

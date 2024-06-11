@@ -2,8 +2,8 @@
   id="form_place_move" 
   autocomplete="off"
   {% if backend %} 
-  hx-post="{{backend}}?page={{pageInfo.page}}&pageSize={{pageInfo.pageSize}}" 
-  {%else%} hx-post="/move?type={{contactType.name}}&page={{pageInfo.page}}&pageSize={{pageInfo.pageSize}}" {%endif%}
+  hx-post="{{backend}}" 
+  {%else%} hx-post="/move" {%endif%}
   hx-target="this" 
   hx-swap="outerHTML"
 >
