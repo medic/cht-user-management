@@ -1,6 +1,8 @@
 <form class="data-form"
 id="form_place_create" autocomplete="off"
-{% if backend %} hx-post="{{backend}}" {%else%} hx-post="/place?op=new&type={{contactType.name}}" {%endif%}
+{% if backend %} hx-post="{{backend}}?page={{pageInfo.page}}&pageSize={{pageInfo.pageSize}}" 
+{%else%} hx-post="/place?op=new&type={{contactType.name}}&page={{pageInfo.page}}&pageSize={{pageInfo.pageSize}}"
+{%endif%}
 hx-target="this" hx-swap="outerHTML">
   <input name="place_type" value="{{contactType.name}}" hidden />
   <section>
@@ -40,6 +42,8 @@ hx-target="this" hx-swap="outerHTML">
 
   <div>
     <button id="place_create_submit" class="btn">Save</button>
-    <a href="/" class="clear-btn">Cancel</a>
+    <a href="/?type={{contactType.name}}&page={{pageInfo.page}}&pageSize={{pageInfo.pageSize}}" class="clear-btn">
+      Cancel
+    </a>
   </div>
 </form>

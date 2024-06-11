@@ -20,7 +20,7 @@ export default class DirectiveModel {
   public readonly activeTab?: string;
   public readonly filter?: DirectiveFilter;
 
-  constructor(sessionCache: SessionCache, filterCookie?: string, contactTypes?: ContactType[], activeTabCookie?: string ) {
+  constructor(sessionCache: SessionCache, filterCookie?: string, contactTypes?: ContactType[], activeTab?: string ) {
     this.successCount = sessionCache.getPlaces({ filter: 'success' }).length;
     this.failureCount = sessionCache.getPlaces({ filter: 'failure' }).length;
     this.validationErrorCount = sessionCache.getPlaces({ filter: 'invalid' }).length;
@@ -34,7 +34,7 @@ export default class DirectiveModel {
     const percentage = this.stagedCount > 0 ? this.completeCount / this.totalCount : 0;
     this.percent = Math.round(percentage * 100.0) + '%';
 
-    this.activeTab = (this.totalCount > 0 && activeTabCookie) || contactTypes?.[0].name;
+    this.activeTab = (this.totalCount > 0 && activeTab) || contactTypes?.[0].name;
     this.filter = this.stringToDirectiveFilter(filterCookie);
     this.hiddenCount = this.totalCount - sessionCache.getPlaces({ filter: this.filter }).length;
     this.totalCountByContactType = this.getTotalsByContactType(sessionCache, contactTypes, this.filter);

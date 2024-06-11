@@ -4,12 +4,19 @@
     <div class="dropdown-button">
       <button class="clear-btn"><img src="/public/icons/plus.svg"> {{include.contactType.friendly}}</button>
       <div class="dropdown-content">
-        <a href="/add-place?type={{ include.contactType.name }}&op=new">Create New</a>
-        <a href="/add-place?type={{ include.contactType.name }}&op=replace">Replace Existing</a>
-        <a href="/add-place?type={{ include.contactType.name }}&op=bulk">Upload from CSV</a>
+        <a href="/add-place?type={{ include.contactType.name }}&op=new&pageSize={{include.contactType.places.pageSize}}&page={{include.contactType.places.page}}">
+          Create New
+        </a>
+        <a href="/add-place?type={{ include.contactType.name }}&op=replace&pageSize={{include.contactType.places.pageSize}}&page={{include.contactType.places.page}}">
+          Replace Existing
+        </a>
+        <a href="/add-place?type={{ include.contactType.name }}&op=bulk&pageSize={{include.contactType.places.pageSize}}&page={{include.contactType.places.page}}">
+          Upload from CSV
+        </a>
       </div>
     </div>
-    <button class="clear-btn" onclick="window.location.href='/move/{{ include.contactType.name }}'">
+    <button class="clear-btn" 
+    onclick="window.location.href='/move/{{ include.contactType.name }}?pageSize={{include.contactType.places.pageSize}}&page={{include.contactType.places.page}}'">
       <img src="/public/icons/move.svg">Move {{include.contactType.friendly}}
     </button>
   </div>

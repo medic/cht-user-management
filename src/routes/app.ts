@@ -13,14 +13,15 @@ import Pagination from '../services/pagination';
 export default async function sessionCache(fastify: FastifyInstance) {
   fastify.get('/', async (req, resp) => {
     const contactTypes = Config.contactTypes();
+    const queryParams: any = req.query;
     const {
       op = 'table',
       type: placeTypeName = contactTypes[0].name,
-    } = req.query as any;
+    } = queryParams;
 
     const contactType = Config.getContactType(placeTypeName);
     const sessionCache: SessionCache = req.sessionCache;
-    const directiveModel = new DirectiveModel(sessionCache, req.cookies.filter, contactTypes, req.cookies.currentTab);
+    const directiveModel = new DirectiveModel(sessionCache, req.cookies.filter, contactTypes, queryParams.type);
     const placeData = contactTypes.map((item) => {
       return {
         ...item,
@@ -29,11 +30,17 @@ export default async function sessionCache(fastify: FastifyInstance) {
       };
     });
 
+    const pageInfo = {
+      page: queryParams.page,
+      pageSize: queryParams.pageSize,
+    };
+
     const tmplData = {
       view: 'list',
       session: req.chtSession,
       logo: Config.getLogoBase64(),
       op,
+      pageInfo,
       contactType,
       contactTypes: placeData,
       directiveModel,
@@ -45,14 +52,14 @@ export default async function sessionCache(fastify: FastifyInstance) {
   fastify.get('/app/list', async (req, resp) => {
     const queryParams: any = req.query;
     const page = queryParams.page && parseInt(queryParams.page, 10);
-    const pageSize = queryParams.pageSize;
+    const pageSize = queryParams.pageSize && parseInt(queryParams.pageSize, 10);
     const requestContactTypeName = queryParams.contactTypeName;
 
-    const pagination = new Pagination({ page, pageSize, cookie: req.cookies, requestContactTypeName });
+    const pagination = new Pagination({ page, pageSize, requestContactTypeName });
 
     const contactTypes = Config.contactTypes();
     const sessionCache: SessionCache = req.sessionCache;
-    const directiveModel = new DirectiveModel(sessionCache, req.cookies.filter, contactTypes, req.cookies.currentTab);
+    const directiveModel = new DirectiveModel(sessionCache, req.cookies.filter, contactTypes, requestContactTypeName);
 
     const placeData = contactTypes.map((item) => {
       const itemPlacesData = sessionCache.getPlaces({

@@ -3,7 +3,6 @@
     {% capture totalCount %}{{directiveModel.totalCount}} {% endcapture %}
     {%if totalCount > 0 %}
     {% include "place/directive.html" %}
-    {% include "place/place_navbar.html" %}
     {% include "place/list_lazy.html" %}
     {%else%}
     {% include "place/directive_1_get_started.html" %}
