@@ -3,7 +3,7 @@
     id="form_place_create" 
     hx-encoding='multipart/form-data' 
     autocomplete="off"
-    hx-post="/place?op=bulk&type={{contactType.name}}"
+    hx-post="/place?op=bulk&type={{contactType.name}}&page={{pageInfo.page}}&pageSize={{pageInfo.pageSize}}"
     hx-disabled-elt="button#place_create_submit, a#cancel"
     hx-indicator="#place_create_submit_progress"
     hx-target="this" 
@@ -38,7 +38,9 @@
             <button id="place_create_submit" class="button is-link">Add</button>
         </div>
         <div class="control">
-            <a href="/" id="cancel" class="button">Cancel</a>
+            <a href="/?type={{contactType.name}}&page={{pageInfo.page}}&pageSize={{pageInfo.pageSize}}" id="cancel" class="button">
+              Cancel
+            </a>
         </div>
       </div>
       <div>

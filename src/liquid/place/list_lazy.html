@@ -1,4 +1,6 @@
-<div id="place_list" hx-trigger="load" hx-get="/app/list" hx-target="this" hx-swap="outerHTML">
+<div id="place_list" hx-trigger="load"
+hx-get="/app/list?contactTypeName={{ directiveModel.activeTab }}&page={{pageInfo.page}}&pageSize={{pageInfo.pageSize}}" 
+hx-target="this" hx-swap="outerHTML">
   {% for contactType in contactTypes %}
   {%if contactType.name != directiveModel.activeTab %}
   {%continue%}

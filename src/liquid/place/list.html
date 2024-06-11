@@ -1,4 +1,5 @@
 <div id="place_list">
+  {% include "place/place_navbar.html" %}
   {% for contactType in contactTypes %}
   {%if contactType.name != directiveModel.activeTab %}
   {%continue%}
