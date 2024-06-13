@@ -26,7 +26,35 @@
         "--esm" 
       ],
       "program": "./index.ts",
-      "cwd": "${workspaceRoot}/scripts/bulk-rename",
+      "cwd": "${workspaceRoot}/scripts/move-contacts",
+      "envFile": "${workspaceFolder}/.env",
+      "internalConsoleOptions": "openOnSessionStart",
+      "skipFiles": ["<node_internals>/**", "node_modules/**"],
+      "runtimeExecutable": "/home/kenn/.nvm/versions/node/v16.20.2/bin/node"
+    },
+    {
+      "name": "Bulk Move Nairobi From Commands",
+      "type": "node",
+      "request": "launch",
+      "runtimeArgs": [
+        "${workspaceRoot}/node_modules/.bin/ts-node",
+        "--transpile-only",
+        // if you use esm
+        "--esm"
+      ],
+      "program": "./from-command-chu.ts",
+      "cwd": "${workspaceRoot}/scripts/move-contacts",
+      "envFile": "${workspaceFolder}/.env",
+      "internalConsoleOptions": "openOnSessionStart",
+      "skipFiles": ["<node_internals>/**", "node_modules/**"],
+      "runtimeExecutable": "/home/kenn/.nvm/versions/node/v16.20.2/bin/node"
+    },
+    {
+      "name": "Worker",
+      "type": "node",
+      "request": "launch",
+      "program": "./dist/worker/main.js",
+      "envFile": "${workspaceFolder}/.env",
       "internalConsoleOptions": "openOnSessionStart",
       "skipFiles": ["<node_internals>/**", "node_modules/**"],
       "runtimeExecutable": "/home/kenn/.nvm/versions/node/v16.20.2/bin/node"
