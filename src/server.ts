@@ -43,9 +43,9 @@ const build = (opts: FastifyServerOptions): FastifyInstance => {
     prefix: '/public/',
     serve: true,
   });
-
+  
   fastify.register(metricsPlugin, {
-    endpoint: '/prometheus',
+    endpoint: '/metrics',
     routeMetrics: {
       enabled: {
         histogram: true,
