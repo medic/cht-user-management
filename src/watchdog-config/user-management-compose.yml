@@ -1,0 +1,5 @@
+services:
+
+  prometheus:
+    volumes:
+      - ./user-management/user-management-prometheus.yml:/etc/prometheus/scrape_configs/user-management-prometheus.yml:ro
