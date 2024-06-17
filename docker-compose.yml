@@ -4,10 +4,10 @@ services:
   cht-user-management:
     image: public.ecr.aws/medic/cht-user-management:latest
     environment:
-      - EXTERNAL_PORT=${EXTERNAL_PORT:-3000}
+      - EXTERNAL_PORT=${EXTERNAL_PORT:-3500}
       - COOKIE_PRIVATE_KEY=${COOKIE_PRIVATE_KEY}
       - CONFIG_NAME=${CONFIG_NAME}
     ports:
-      - '${EXTERNAL_PORT-3000}:${PORT:-3000}'
+      - '${EXTERNAL_PORT-3500}:${PORT:-3000}'
     restart: always
     command: npm start
