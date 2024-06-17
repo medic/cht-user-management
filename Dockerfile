@@ -9,7 +9,7 @@ WORKDIR /app
 HEALTHCHECK --interval=30s --timeout=3s \
   CMD wget --spider http://localhost:${PORT}/_healthz || exit 1
 
-COPY package*.json .
+COPY package*.json ./
 RUN apk add git
 RUN npm ci --omit=dev
 
