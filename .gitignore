@@ -4,3 +4,4 @@ dist
 .env*
 src/package.json
 .eslintcache
+.DS_Store
