@@ -4,7 +4,6 @@ import * as RetryLogic from '../lib/retry-logic';
 import { ChtApi, PlacePayload } from '../lib/cht-api';
 import { Config } from '../config';
 import Place, { PlaceUploadState } from './place';
-import RemotePlaceCache from '../lib/remote-place-cache';
 import { UploadNewPlace } from './upload.new';
 import { UploadReplacementWithDeletion } from './upload.replacement';
 import { UploadReplacementWithDeactivation } from './upload.deactivate';
@@ -69,7 +68,6 @@ export class UploadManager extends EventEmitter {
         place.creationDetails.password = password;
       }
 
-      await RemotePlaceCache.add(place, chtApi);
       delete place.uploadError;
 
       console.log(`successfully created ${JSON.stringify(place.creationDetails)}`);

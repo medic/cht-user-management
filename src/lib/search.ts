@@ -1,7 +1,6 @@
 import _ from 'lodash';
 import SessionCache from '../services/session-cache';
 import { ChtApi, RemotePlace } from './cht-api';
-import RemotePlaceCache from './remote-place-cache';
 import RemotePlaceResolver from './remote-place-resolver';
 import { Config, ContactType, HierarchyConstraint } from '../config';
 import Place from '../services/place';
@@ -56,7 +55,7 @@ async function getRemoteResults(
   chtApi: ChtApi,
   dataPrefix: string
 ) : Promise<RemotePlace[]> {
-  let remoteResults = (await RemotePlaceCache.getPlacesWithType(chtApi, hierarchyLevel.contact_type))
+  let remoteResults = (await chtApi.getPlacesWithType(hierarchyLevel.contact_type))
     .filter(remotePlace => chtApi.chtSession.isPlaceAuthorized(remotePlace))
     .filter(place => place.name.includes(searchString));
 
@@ -71,7 +70,7 @@ async function getRemoteResults(
       continue;
     }
 
-    const placesAtLevel = await RemotePlaceCache.getPlacesWithType(chtApi, constrainingHierarchy.contact_type);
+    const placesAtLevel = await chtApi.getPlacesWithType(constrainingHierarchy.contact_type);
     const relevantPlaceIds = placesAtLevel
       .filter(remotePlace => remotePlace.name.includes(searchStringAtLevel))
       .map(remotePlace => remotePlace.id);

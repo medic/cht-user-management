@@ -4,7 +4,6 @@ import SessionCache from '../services/session-cache';
 import { RemotePlace, ChtApi } from './cht-api';
 import { Config, ContactType, HierarchyConstraint } from '../config';
 import { Validation } from './validation';
-import RemotePlaceCache from './remote-place-cache';
 
 type RemotePlaceMap = { [key: string]: RemotePlace };
 
@@ -123,7 +122,7 @@ async function findRemotePlacesInHierarchy(
   hierarchyLevel: HierarchyConstraint,
   chtApi: ChtApi
 ) : Promise<RemotePlace[]> {
-  let searchPool = await RemotePlaceCache.getPlacesWithType(chtApi, hierarchyLevel.contact_type);
+  let searchPool = await chtApi.getPlacesWithType(hierarchyLevel.contact_type);
   searchPool = searchPool.filter(remotePlace => chtApi.chtSession.isPlaceAuthorized(remotePlace));
 
   const topDownHierarchy = Config.getHierarchyWithReplacement(place.type, 'desc');

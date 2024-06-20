@@ -47,7 +47,7 @@ export default async function authentication(fastify: FastifyInstance) {
       signed: false,
       httpOnly: true,
       expires,
-      secure: true
+      secure: !process.env.CHT_DEV_HTTP
     });
 
     resp.header('HX-Redirect', `/`);

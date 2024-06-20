@@ -47,9 +47,6 @@
       
         <div class="navbar-dropdown">
           {% if op == 'table' %}
-            <a class="navbar-item" hx-post="/app/refresh-all" hx-swap="none">
-              <span class="material-symbols-outlined">refresh</span> Refresh
-            </a>
             <a class="navbar-item" hx-post="/app/remove-all" hx-swap="none">
               <span class="material-symbols-outlined">delete</span> Clear
             </a>

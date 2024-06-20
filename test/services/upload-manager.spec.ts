@@ -7,16 +7,11 @@ import { mockValidContactType, mockParentPlace, mockChtSession, expectInvalidPro
 import PlaceFactory from '../../src/services/place-factory';
 import SessionCache from '../../src/services/session-cache';
 import { ChtApi, RemotePlace } from '../../src/lib/cht-api';
-import RemotePlaceCache from '../../src/lib/remote-place-cache';
 import { Config } from '../../src/config';
 import RemotePlaceResolver from '../../src/lib/remote-place-resolver';
 import { UploadManagerRetryScenario } from '../lib/retry-logic.spec';
 
 describe('services/upload-manager.ts', () => {
-  beforeEach(() => {
-    RemotePlaceCache.clear({});
-  });
-
   it('mock data is properly sent to chtApi', async () => {
     const { fakeFormData, contactType, chtApi, sessionCache, remotePlace } = await createMocks();
     const place = await PlaceFactory.createOne(fakeFormData, contactType, sessionCache, chtApi);
@@ -221,9 +216,9 @@ describe('services/upload-manager.ts', () => {
     expect(chtApi.createUser.args[0][0].roles).to.deep.eq(['community_health_assistant']);
     expect(chtApi.createUser.args[1][0].roles).to.deep.eq(['community_health_volunteer']);
 
-    const cachedChus = await RemotePlaceCache.getPlacesWithType(chtApi, chu.type.name);
+    const cachedChus = await chtApi.getPlacesWithType(chu.type.name);
     expect(cachedChus).to.have.property('length', 1);
-    const cachedChps = await RemotePlaceCache.getPlacesWithType(chtApi, chp.type.name);
+    const cachedChps = await chtApi.getPlacesWithType(chp.type.name);
     expect(cachedChps).to.have.property('length', 1);
   });
 
@@ -391,6 +386,7 @@ async function createMocks() {
     createPlace: sinon.stub().resolves('created-place-id'),
     updateContactParent: sinon.stub().resolves('created-contact-id'),
     createUser: sinon.stub().resolves(),
+    clearCacheOfPlaceType: sinon.stub().resolves(),
     
     getParentAndSibling: sinon.stub().resolves({ parent: {}, sibling: {} }),
     createContact: sinon.stub().resolves('replacement-contact-id'),
