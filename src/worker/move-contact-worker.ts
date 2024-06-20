@@ -112,6 +112,7 @@ export class MoveContactWorker {
   private async executeCommand(command: string, args: string[]): Promise<void> {
     return new Promise((resolve, reject) => {
       const chtProcess = spawn(command, args);
+      let lastOutput = '';
 
       const timeout = setTimeout(() => {
         chtProcess.kill();
@@ -120,6 +121,7 @@ export class MoveContactWorker {
 
       chtProcess.stdout.on('data', data => {
         console.log(`cht-conf: ${data}`);
+        lastOutput = data.toString();
       });
 
       chtProcess.stderr.on('data', error => {
@@ -131,11 +133,12 @@ export class MoveContactWorker {
         if (code === 0) {
           resolve();
         }
-        reject(new Error(`cht-conf exited with code ${code}`));
+        reject(new Error(`cht-conf exited with code ${code}. Last output: ${lastOutput}`));
       });
 
       chtProcess.on('error', error => {
         clearTimeout(timeout);
+        console.log(error);
         reject(error);
       });
     });
