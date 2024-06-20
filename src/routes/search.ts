@@ -1,7 +1,8 @@
 import { FastifyInstance } from 'fastify';
 
 import { Config } from '../config';
-import { ChtApi, RemotePlace } from '../lib/cht-api';
+import { ChtApi } from '../lib/cht-api';
+import { RemotePlace } from '../lib/remote-place-cache';
 import SessionCache from '../services/session-cache';
 import SearchLib from '../lib/search';
 

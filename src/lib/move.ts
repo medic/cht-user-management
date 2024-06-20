@@ -18,7 +18,7 @@ export default class MoveLib {
     }
 
     if (toId === fromLineage[1]?.id) {
-      throw Error(`Place "${fromLineage[0]?.name}" already has "${toLineage[1]?.name}" as parent`);
+      throw Error(`Place "${fromLineage[0]?.name.original}" already has "${toLineage[1]?.name.original}" as parent`);
     }
     
     const { authInfo } = chtApi.chtSession;
@@ -37,7 +37,7 @@ async function resolve(prefix: string, formData: any, contactType: ContactType, 
   await RemotePlaceResolver.resolveOne(place, sessionCache, chtApi, { fuzz: true });
   place.validate();
 
-  const validationError = place.validationErrors && Object.keys(place.validationErrors).find(err => err.startsWith('hierarchy_'));
+  const validationError = place.validationErrors && Object.keys(place.validationErrors).find(err => err.startsWith(prefix));
   if (validationError) {
     throw Error(place.validationErrors?.[validationError]);
   }

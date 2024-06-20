@@ -5,7 +5,7 @@ import { AuthenticationInfo } from '../config';
 import { AxiosHeaders, AxiosInstance } from 'axios';
 import axiosRetry from 'axios-retry';
 import { axiosRetryConfig } from './retry-logic';
-import { RemotePlace } from './cht-api';
+import { RemotePlace } from './remote-place-cache';
 
 const COUCH_AUTH_COOKIE_NAME = 'AuthSession=';
 const ADMIN_FACILITY_ID = '*';
