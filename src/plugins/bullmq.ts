@@ -5,18 +5,17 @@ import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
 import { createBullBoard } from '@bull-board/api';
 import { FastifyAdapter } from '@bull-board/fastify';
 
-import { queueManager } from '../shared/queues';
+import { moveContactQueue } from '../lib/queues';
 
 
 async function bullMQBoardPlugin(fastify: FastifyInstance) {
   const serverAdapter = new FastifyAdapter();
 
-  const moveContactQueue = queueManager.getQueue();
 
   createBullBoard({
     queues: [
       new BullMQAdapter(
-        moveContactQueue
+        moveContactQueue.bullQueue
       ),
     ],
     serverAdapter,

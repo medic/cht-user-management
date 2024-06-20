@@ -4,14 +4,14 @@ import { expect } from 'chai';
 import sinon, { SinonSandbox } from 'sinon';
 
 import Auth from '../../src/lib/authentication';
-import { queueManager } from '../../src/shared/queues';
+import { moveContactQueue } from '../../src/lib/queues';
 import { 
   MoveContactWorker, 
   MoveContactData, 
   JobResult 
 } from '../../src/worker/move-contact-worker';
 
-describe('MoveContactWorker', () => {
+describe('worker/move-contact-worker', () => {
   let worker: MoveContactWorker;
   let sandbox: SinonSandbox;
   const queueName = 'testQueue';
@@ -38,7 +38,7 @@ describe('MoveContactWorker', () => {
   beforeEach(() => {
     sandbox = sinon.createSandbox();
     sandbox.stub(MoveContactWorker.prototype as any, 'initializeWorker').callsFake(() => {});
-    sandbox.stub(queueManager, 'addJob').resolves();
+    sandbox.stub(moveContactQueue, 'add').resolves();
 
     worker = new MoveContactWorker(queueName);
     shouldPostponeStub = sandbox.stub(worker as any, 'shouldPostpone');

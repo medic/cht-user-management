@@ -2,10 +2,10 @@ import { config } from 'dotenv';
 
 config();
 
-import { queueManager } from '../shared/queues';
+import { moveContactQueue } from '../lib/queues';
 import { MoveContactWorker } from './move-contact-worker';
 
-(async () => {
-  new MoveContactWorker(queueManager.getQueue().name);
+(() => {
+  new MoveContactWorker(moveContactQueue.name);
   console.log(`🚀 Move Contact Worker is listening`);
 })();

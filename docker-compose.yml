@@ -8,10 +8,12 @@ services:
   cht-user-management:
     image: ${CHT_USER_MANAGEMENT_IMAGE:-public.ecr.aws/medic/cht-user-management:latest}
     environment:
+      - NODE_ENV=${NODE_ENV:-production}
       - EXTERNAL_PORT=${EXTERNAL_PORT:-3000}
       - COOKIE_PRIVATE_KEY=${COOKIE_PRIVATE_KEY}
       - QUEUE_PRIVATE_KEY=${QUEUE_PRIVATE_KEY}
       - CONFIG_NAME=${CONFIG_NAME}
+      - CHT_DEV_URL_PORT=${CHT_DEV_URL_PORT}
       - REDIS_HOST=${REDIS_HOST:-redis}
       - REDIS_PORT=${REDIS_PORT:-6379}
     ports:
@@ -26,6 +28,7 @@ services:
     restart: always
     command: npm run start:worker
     environment:
+      - NODE_ENV=${NODE_ENV:-production}
       - REDIS_HOST=${REDIS_HOST:-redis}
       - REDIS_PORT=${REDIS_PORT:-6379}
       - QUEUE_PRIVATE_KEY=${QUEUE_PRIVATE_KEY}

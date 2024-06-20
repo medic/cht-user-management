@@ -71,6 +71,7 @@
     "dev": "tsc-watch --onSuccess \"node dist/index.js\"",
     "publish:cht-user-management": "SERVICE=cht-user-management node scripts/publish.js",
     "publish:cht-user-management-worker": "SERVICE=cht-user-management-worker node scripts/publish.js",
+    "publish": "npm run publish:cht-user-management && npm run publish:cht-user-management-worker",
     "start:worker": "node dist/worker/main.js"
   },
   "repository": {

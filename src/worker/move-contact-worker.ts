@@ -3,7 +3,7 @@ import { spawn } from 'child_process';
 import { Worker, Job, DelayedError } from 'bullmq';
 
 import Auth from '../lib/authentication';
-import { redisConnection } from '../shared/queue-config';
+import { redisConnection } from '../lib/queues';
 import { DateTime } from 'luxon';
 
 export interface MoveContactData {
@@ -16,8 +16,8 @@ export interface MoveContactData {
 export type JobResult = { success: boolean; message: string };
 
 export class MoveContactWorker {    
-  private readonly DELAY_IN_MILLIS = 60 * 60 * 1000;       // 60 minutes
-  private readonly MAX_TIMEOUT_IN_MILLIS = 60 * 60 * 1000; // 60 minutes
+  private readonly DELAY_IN_MILLIS = 4 * 60 * 60 * 1000;       // 4 hours
+  private readonly MAX_TIMEOUT_IN_MILLIS = 4 * 60 * 60 * 1000; // 4 hours
   private readonly MAX_CONCURRENCY = 1;                    // Limit concurrency to 1 job at a time
   private readonly MAX_SENTINEL_BACKLOG = 7000;            // ensure we don't take down the server
   
