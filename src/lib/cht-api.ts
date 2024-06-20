@@ -54,7 +54,7 @@ export class ChtApi {
     contactDoc.parent = minify(parentDoc);
 
     const putUrl = `medic/${contactId}`;
-    console.log('axios.put', putUrl);
+    // console.log('axios.put', putUrl);
     const putResp = await this.axiosInstance.put(putUrl, contactDoc);
     if (putResp.status !== 201) {
       throw new Error(putResp.data);
@@ -65,7 +65,7 @@ export class ChtApi {
 
   createPlace = async (payload: PlacePayload): Promise<string> => {
     const url = `api/v1/places`;
-    console.log('axios.post', url);
+    // console.log('axios.post', url);
     const resp = await this.axiosInstance.post(url, payload);
     return resp.data.id;
   };
@@ -73,7 +73,7 @@ export class ChtApi {
   // because there is no PUT for /api/v1/places
   createContact = async (payload: PlacePayload): Promise<string> => {
     const url = `api/v1/people`;
-    console.log('axios.post', url);
+    // console.log('axios.post', url);
     const resp = await this.axiosInstance.post(url, payload.contact);
     return resp.data.id;
   };
@@ -94,7 +94,7 @@ export class ChtApi {
     }
 
     const putUrl = `medic/${payload._id}`;
-    console.log('axios.put', putUrl);
+    // console.log('axios.put', putUrl);
     const resp = await this.axiosInstance.put(putUrl, doc);
     if (!resp.data.ok) {
       throw Error('response from chtApi.updatePlace was not OK');
@@ -107,7 +107,7 @@ export class ChtApi {
     const doc: any = await this.getDoc(docId);
 
     const deleteContactUrl = `medic/${doc._id}?rev=${doc._rev}`;
-    console.log('axios.delete', deleteContactUrl);
+    // console.log('axios.delete', deleteContactUrl);
     const resp = await this.axiosInstance.delete(deleteContactUrl);
     if (!resp.data.ok) {
       throw Error('response from chtApi.deleteDoc was not OK');
@@ -125,7 +125,7 @@ export class ChtApi {
   disableUser = async (docId: string): Promise<void> => {
     const username = docId.substring('org.couchdb.user:'.length);
     const url = `api/v1/users/${username}`;
-    console.log('axios.delete', url);
+    // console.log('axios.delete', url);
     return this.axiosInstance.delete(url);
   };
 
@@ -140,14 +140,14 @@ export class ChtApi {
   deactivateUser = async (docId: string): Promise<void> => {
     const username = docId.substring('org.couchdb.user:'.length);
     const url = `api/v1/users/${username}`;
-    console.log('axios.post', url);
+    // console.log('axios.post', url);
     const deactivationPayload = { roles: ['deactivated' ]};
     return this.axiosInstance.post(url, deactivationPayload);
   };
 
   createUser = async (user: UserPayload): Promise<void> => {
     const url = `api/v1/users`;
-    console.log('axios.post', url);
+    // console.log('axios.post', url);
     const axiosRequestionConfig = {
       'axios-retry': { retries: 0 }, // upload-manager handles retries for this
     };
@@ -156,7 +156,7 @@ export class ChtApi {
 
   getParentAndSibling = async (parentId: string, contactType: ContactType): Promise<{ parent: any; sibling: any }> => {
     const url = `medic/_design/medic/_view/contacts_by_depth`;
-    console.log('axios.get', url);
+    // console.log('axios.get', url);
     const resp = await this.axiosInstance.get(url, {
       params: {
         keys: JSON.stringify([
@@ -181,7 +181,7 @@ export class ChtApi {
       endkey: JSON.stringify([ placeType, 'name:\ufff0']),
       include_docs: true,
     };
-    console.log('axios.get', url, params);
+    // console.log('axios.get', url, params);
     const resp = await this.axiosInstance.get(url, { params });
 
     return resp.data.rows
@@ -198,7 +198,7 @@ export class ChtApi {
 
   getDoc = async (id: string): Promise<any> => {
     const url = `medic/${id}`;
-    console.log('axios.get', url);
+    // console.log('axios.get', url);
     const resp = await this.axiosInstance.get(url);
     return resp.data;
   };
@@ -211,7 +211,7 @@ export class ChtApi {
       },
     };
 
-    console.log('axios.post', url);
+    // console.log('axios.post', url);
     const resp = await this.axiosInstance.post(url, payload);
     return resp.data?.docs?.map((d: any) => d._id);
   }
