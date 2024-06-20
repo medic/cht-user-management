@@ -30,6 +30,7 @@
     "liquidjs": "^10.9.2",
     "lodash": "^4.17.21",
     "luxon": "^3.4.4",
+    "node-cache": "^5.1.2",
     "pino-pretty": "^10.2.3",
     "typescript": "^5.2.2",
     "uuid": "^9.0.1"
