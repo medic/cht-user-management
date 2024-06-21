@@ -48,10 +48,12 @@
     "chai-as-promised": "^7.1.1",
     "chai-exclude": "^2.1.0",
     "commander": "^12.0.0",
+    "concurrently": "^8.2.2",
     "eslint": "^8.57.0",
     "eslint-plugin-node": "^11.1.0",
     "eslint-plugin-promise": "^6.1.1",
     "mocha": "^10.2.0",
+    "node-sass": "^9.0.0",
     "rewire": "^7.0.0",
     "sinon": "^17.0.1",
     "ts-mocha": "^10.0.0",
@@ -59,11 +61,13 @@
   },
   "scripts": {
     "cp-package-json": "cp package.json ./src",
+    "scss-compile": "npx node-sass ./src/scss -o ./src/public/css --output-style compressed",
+    "watch-scss": "npx node-sass --watch ./src/scss -o ./src/public/css --output-style compressed",
     "test": "npx ts-mocha test/{,**}/*.spec.ts",
-    "build": "npm run cp-package-json && npx tsc",
+    "build": "npm run cp-package-json && npx tsc && npm run scss-compile",
     "lint": "npx eslint --color --cache .",
     "start": "node dist/index.js",
-    "dev": "tsc-watch --onSuccess \"node dist/index.js\"",
+    "dev": "npx concurrently \"npm run watch-scss\" \"tsc-watch --onSuccess 'node dist/index.js'\"",
     "publish": "node scripts/publish.js"
   },
   "repository": {

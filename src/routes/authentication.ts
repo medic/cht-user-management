@@ -7,7 +7,7 @@ import ChtSession from '../lib/cht-session';
 
 export default async function authentication(fastify: FastifyInstance) {
   const unauthenticatedOptions = {
-    preParsing: async (req : FastifyRequest) => {
+    preParsing: async (req: FastifyRequest) => {
       req.unauthenticated = true;
     },
   };
@@ -45,6 +45,7 @@ export default async function authentication(fastify: FastifyInstance) {
     const expires = Auth.cookieExpiry();
     resp.setCookie(Auth.AUTH_COOKIE_NAME, tokenizedSession, {
       signed: false,
+      sameSite: 'strict',
       httpOnly: true,
       expires,
       secure: true

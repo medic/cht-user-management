@@ -1,5 +1,6 @@
 <thead>
     <tr>
+        <th>#</th>
         {% for hierarchy in contactType.hierarchy %}
             <th id="hierarchy_{{ hierarchy.property_name }}">{{ hierarchy.friendly_name }}</th>
         {% endfor %}
@@ -17,6 +18,16 @@
             <th id="{{userRoleProperty.property_name}}">{{ contactType.userRoleProperty.friendly_name }}</th>
         {% endif %}
         <th></th>
-        <th></th>
+        <th class="header-actions">
+            <a hx-post="/app/refresh-all" hx-swap="none"
+            data-toggle="tooltip" data-placement="bottom" title="refresh table">
+                <img src="public/icons/refresh-table.svg" alt="refresh">
+            </a>
+            <a hx-post="/app/remove-all/{{contactType.name}}" hx-swap="none" 
+            data-toggle="tooltip" data-placement="bottom" title="clear list"
+            hx-confirm="Are you sure you want to clear list?">
+                <img src="public/icons/delete-all.svg" alt="clear list">
+            </a>
+        </th>
     </tr>
 </thead>

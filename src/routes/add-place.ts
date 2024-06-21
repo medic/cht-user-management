@@ -15,8 +15,13 @@ export default async function addPlace(fastify: FastifyInstance) {
     const contactTypes = Config.contactTypes();
     const contactType = queryParams.type
       ? Config.getContactType(queryParams.type)
-      : contactTypes[contactTypes.length - 1];
+      : contactTypes[contactTypes.length - 1]; 
     const op = queryParams.op || 'new';
+    const pageInfo = {
+      page: queryParams.page,
+      activeTab: queryParams.type,
+      pageSize: queryParams.pageSize,
+    };
     const tmplData = {
       view: 'add',
       logo: Config.getLogoBase64(),
@@ -25,6 +30,7 @@ export default async function addPlace(fastify: FastifyInstance) {
       hierarchy: Config.getHierarchyWithReplacement(contactType, 'desc'),
       contactType,
       contactTypes,
+      pageInfo,
       userRoleProperty: Config.getUserRoleConfig(contactType)
     };
 
@@ -46,14 +52,14 @@ export default async function addPlace(fastify: FastifyInstance) {
 
   // you want to create a place? replace a contact? you'll have to go through me first
   fastify.post('/place', async (req, resp) => {
-    const { op, type: placeType } = req.query as any;
+    const { op, type: placeType, page, pageSize } = req.query as any;
 
     const contactType = Config.getContactType(placeType);
     const sessionCache: SessionCache = req.sessionCache;
     const chtApi = new ChtApi(req.chtSession);
     if (op === 'new' || op === 'replace') {
       await PlaceFactory.createOne(req.body, contactType, sessionCache, chtApi);
-      resp.header('HX-Redirect', `/`);
+      resp.header('HX-Redirect', `/?type=${contactType.name}&page=${page}&pageSize=${pageSize}`);
       return;
     }
 
@@ -74,17 +80,21 @@ export default async function addPlace(fastify: FastifyInstance) {
           },
         });
       }
-      resp.header('HX-Redirect', '/');
+      resp.header('HX-Redirect', `/?type=${contactType.name}&page=${page}&pageSize=${pageSize}`);
       return;
     }
 
     throw new Error('unknown op');
   });
 
-  fastify.get('/place/edit/:id', async (req, resp) => {
+  fastify.get('/place/edit/:id/:contactTypeName', async (req, resp) => {
     const params: any = req.params;
-    const { id } = params;
-
+    const { id, contactTypeName } = params;
+    const queryParams = req.query as any;
+    const pageInfo = {
+      page: queryParams.page,
+      pageSize: queryParams.pageSize,
+    };
     const sessionCache: SessionCache = req.sessionCache;
     const place = sessionCache.getPlace(id);
     if (!place || place.isCreated) {
@@ -98,10 +108,11 @@ export default async function addPlace(fastify: FastifyInstance) {
       logo: Config.getLogoBase64(),
       hierarchy: Config.getHierarchyWithReplacement(place.type, 'desc'),
       place,
+      pageInfo,
       session: req.chtSession,
       contactType: place.type,
       contactTypes: Config.contactTypes(),
-      backend: `/place/edit/${id}`,
+      backend: `/place/edit/${id}/${contactTypeName}`,
       data,
       userRoleProperty: Config.getUserRoleConfig(place.type)
     };
@@ -110,16 +121,16 @@ export default async function addPlace(fastify: FastifyInstance) {
     return resp.view('src/liquid/app/view.html', tmplData);
   });
 
-  fastify.post('/place/edit/:id', async (req, resp) => {
-    const { id } = req.params as any;
+  fastify.post('/place/edit/:id/:contactTypeName', async (req, resp) => {
+    const { id, contactTypeName } = req.params as any;
+    const { page, pageSize } = req.query as any;
     const data: any = req.body;
     const sessionCache: SessionCache = req.sessionCache;
     const chtApi = new ChtApi(req.chtSession);
 
     await PlaceFactory.editOne(id, data, sessionCache, chtApi);
 
-    // back to places list
-    resp.header('HX-Redirect', `/`);
+    resp.header('HX-Redirect', `/?type=${contactTypeName}&page=${page}&pageSize=${pageSize}`);
   });
 
   fastify.post('/place/refresh/:id', async (req) => {

@@ -1,0 +1,51 @@
+form {
+    margin: 0 auto;
+    padding: 25px;
+    border-radius: 12px;
+    background-color: white;
+    @include default-shadow;
+    input {
+        font-size: $font-medium;
+        border: 1px solid $element-border-color;
+        border-radius: $border-radius;
+        padding: 10px;
+        width: 100%;
+        box-sizing: border-box;
+        &:focus {
+            border: none;
+            outline-style: solid;
+            outline-color: $primary-color;
+            box-shadow: 0 0 4px 2px $primary-color;
+            outline-width: 2px;
+        }
+    }
+
+    select {
+        @extend input;
+        appearance: none;
+        background-color: white;
+        cursor: pointer;
+        /*drop down arrow*/
+        background-image: url("/public/images/dropdown.svg");
+        background-repeat: no-repeat;
+        background-position: right 0.7rem top 50%;
+        background-size: 1.25em auto;
+    }
+}
+
+#form_authenticate {
+    font-size: $font-extra-large;
+    width: 550px;
+    @include mobile-only {
+        width: 80%;
+    }
+    input {
+        margin: 5px auto;
+        input[type="text"] {
+            margin-bottom: 20px;
+        }
+    }
+    select {
+        margin: 5px auto 20px auto;
+    }
+}

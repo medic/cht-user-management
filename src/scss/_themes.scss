@@ -1,0 +1,10 @@
+@font-face {
+    font-family: "Noto";
+    src: url(/public/fonts/NotoSans-Regular.ttf) format("truetype");
+    font-weight: normal;
+}
+.theme {
+    background-color: $theme-bg-color;
+    color: $default-text-color;
+    font-family: Noto, sans-serif;
+}

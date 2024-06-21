@@ -31,6 +31,7 @@ const USER_PREFIX = 'user_';
 
 export default class Place {
   public readonly id: string;
+  public placeNumber?: number;
   public readonly type: ContactType;
   public readonly contact : Contact;
   public readonly creationDetails : UserCreationDetails = {};

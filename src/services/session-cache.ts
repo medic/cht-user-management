@@ -8,7 +8,7 @@ export default class SessionCache {
   private static caches: Map<string, SessionCache> = new Map();
   private places: { [key: string]: Place } = {};
 
-  private constructor() {}
+  private constructor() { }
 
   public static getForSession = (session: ChtSession): SessionCache => {
     const lookup = session.sessionToken;
@@ -37,7 +37,7 @@ export default class SessionCache {
     id?: string;
     nameExact?: string;
     nameIncludes?: string;
-  }) : Place[] => {
+  }): Place[] => {
     return Object.values(this.places)
       .filter(p => !options?.filter || getFilterFunction(options.filter)(p))
       .filter(p => !options?.type || p.type.name === options.type)
@@ -56,8 +56,16 @@ export default class SessionCache {
     delete this.places[placeId];
   };
 
-  public removeAll = (): void => {
-    this.places = {};
+  public removeAll = (contactTypeName?: string): void => {
+    if (contactTypeName) {
+      for (const [key, place] of Object.entries(this.places)) {
+        if (place.type.name === contactTypeName){
+          delete this.places[key];
+        }
+      }
+    } else {
+      this.places = {};
+    }
   };
 }
 

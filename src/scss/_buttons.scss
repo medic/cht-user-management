@@ -1,0 +1,111 @@
+.btn {
+    @include card-shadow;
+    background-color: #337ab7;
+    border-color: #2e6da4;
+    border: 1px solid transparent;
+    color: white;
+    border-radius: $border-radius;
+    font-size: 1em;
+    font-family: inherit;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.btn.disabled {
+    background-color: #f1f1f1;
+    pointer-events: auto;
+    cursor: not-allowed;
+    text-shadow: none;
+}
+
+.dropdown-content {
+    display: none;
+    position: absolute;
+    background-color: #f9f9f9;
+    min-width: 160px;
+    font-size: 0.9em;
+    box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+    z-index: 1;
+
+    a {
+        color: $default-text-color;
+        padding: 12px 16px;
+        text-decoration: none;
+        display: block;
+        &:hover {
+            background-color: #f1f1f1;
+        }
+    }
+}
+.dropdown-button {
+    width: fit-content;
+}
+
+.dropdown-button:hover .dropdown-content {
+    display: block;
+}
+
+.login-btn {
+    @extend .btn;
+    width: 100%;
+    margin: 30px auto;
+    display: block;
+    height: 40px;
+    box-shadow: 0px 4px 10px 0px rgba(0, 0, 0, 0.5);
+    &:hover {
+        background-color: #2e6da4;
+    }
+}
+
+.clear-btn {
+    @extend .btn;
+    font-size: 0.9em;
+    background-color: white;
+    align-items: center;
+    border: 1.9px solid $element-border-color;
+    color: $default-text-color;
+    margin: auto 5px;
+    box-shadow: none;
+    display: inline-flex;
+    height: 40px;
+    padding: 0 10px;
+    &:hover {
+        background-color: #f1f1f1;
+    }
+    img {
+        margin-right: 4px;
+    }
+}
+
+a.clear-btn {
+    height: 38px;
+}
+.tag.clear-btn {
+    height: 20px;
+    color: $primary-color;
+    border-color: $primary-color;
+}
+
+.badge.tag {
+    border: none;
+    border-radius: 4px;
+    height: 20px;
+    font-weight: normal;
+    font-size: $font-extra-small;
+    cursor: pointer;
+}
+
+.badge.status {
+    display: inline-flex;
+    height: 12px;
+    border-radius: 4px;
+    font-weight: normal;
+    font-size: $font-extra-small;
+    justify-self: center;
+    align-items: center;
+}
+
+.badge.tag.disabled {
+    pointer-events: auto;
+    cursor: not-allowed;
+}
