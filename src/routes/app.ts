@@ -4,7 +4,6 @@ import Auth from '../lib/authentication';
 import { ChtApi } from '../lib/cht-api';
 import { Config } from '../config';
 import DirectiveModel from '../services/directive-model';
-import RemotePlaceCache from '../lib/remote-place-cache';
 import RemotePlaceResolver from '../lib/remote-place-resolver';
 import SessionCache from '../services/session-cache';
 import { UploadManager } from '../services/upload-manager';
@@ -69,17 +68,17 @@ export default async function sessionCache(fastify: FastifyInstance) {
     resp.header('HX-Redirect', '/');
   });
 
-  fastify.post('/app/refresh-all', async (req, resp) => {
-    const sessionCache: SessionCache = req.sessionCache;
-    const chtApi = new ChtApi(req.chtSession);
-
-    RemotePlaceCache.clear(chtApi);
-
-    const places = sessionCache.getPlaces({ created: false });
-    await RemotePlaceResolver.resolve(places, sessionCache, chtApi, { fuzz: true });
-    places.forEach(p => p.validate());
-    resp.header('HX-Redirect', '/');
-  });
+  // fastify.post('/app/refresh-all', async (req, resp) => {
+  //   const sessionCache: SessionCache = req.sessionCache;
+  //   const chtApi = new ChtApi(req.chtSession);
+  //
+  //   //RemotePlaceCache.clear(chtApi);
+  //
+  //   const places = sessionCache.getPlaces({ created: false });
+  //   await RemotePlaceResolver.resolve(places, sessionCache, chtApi, { fuzz: true });
+  //   places.forEach(p => p.validate());
+  //   resp.header('HX-Redirect', '/');
+  // });
 
   // initiates place creation via the job manager
   fastify.post('/app/apply-changes', async (req, resp) => {

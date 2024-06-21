@@ -6,7 +6,6 @@ import PlaceFactory from '../services/place-factory';
 import SessionCache from '../services/session-cache';
 import RemotePlaceResolver from '../lib/remote-place-resolver';
 import { UploadManager } from '../services/upload-manager';
-import RemotePlaceCache from '../lib/remote-place-cache';
 
 export default async function addPlace(fastify: FastifyInstance) {
   fastify.get('/add-place', async (req, resp) => {
@@ -131,7 +130,6 @@ export default async function addPlace(fastify: FastifyInstance) {
     }
 
     const chtApi = new ChtApi(req.chtSession);
-    RemotePlaceCache.clear(chtApi, place.type.name);
     await RemotePlaceResolver.resolveOne(place, sessionCache, chtApi, { fuzz: true });
     place.validate();
 

@@ -8,15 +8,10 @@ import { Config } from '../../src/config';
 import Place from '../../src/services/place';
 import PlaceFactory from '../../src/services/place-factory';
 import { RemotePlace } from '../../src/lib/cht-api';
-import RemotePlaceCache from '../../src/lib/remote-place-cache';
 import RemotePlaceResolver from '../../src/lib/remote-place-resolver';
 import SessionCache from '../../src/services/session-cache';
 
 describe('services/place-factory.ts', () => {
-  beforeEach(() => {
-    RemotePlaceCache.clear({});
-  });
-
   it('name conflict at local yields invalid', async () => {
     const { parentContactType, sessionCache, fakeFormData, chtApi } = mockScenario();
     const parent1 = mockParentPlace(parentContactType, fakeFormData.hierarchy_PARENT);

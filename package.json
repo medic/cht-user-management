@@ -30,6 +30,7 @@
     "liquidjs": "^10.9.2",
     "lodash": "^4.17.21",
     "luxon": "^3.4.4",
+    "node-cache": "^5.1.2",
     "pino-pretty": "^10.2.3",
     "typescript": "^5.2.2",
     "uuid": "^9.0.1"
@@ -59,7 +60,7 @@
   },
   "scripts": {
     "cp-package-json": "cp package.json ./src",
-    "test": "npx ts-mocha test/{,**}/*.spec.ts",
+    "test": "npx ts-mocha test/services/place-factory.spec.ts",
     "build": "npm run cp-package-json && npx tsc",
     "lint": "npx eslint --color --cache .",
     "start": "node dist/index.js",

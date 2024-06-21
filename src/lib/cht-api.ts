@@ -3,6 +3,7 @@ import ChtSession from './cht-session';
 import { Config, ContactType } from '../config';
 import { UserPayload } from '../services/user-payload';
 import { AxiosInstance } from 'axios';
+import NodeCache from "node-cache";
 
 export type PlacePayload = {
   name: string;
@@ -30,8 +31,12 @@ export type RemotePlace = {
 };
 
 export class ChtApi {
-  public readonly chtSession: ChtSession;
-  private axiosInstance: AxiosInstance;
+  public chtSession: ChtSession;
+  axiosInstance: AxiosInstance;
+  // 60 min cache
+  private static cache = new NodeCache({
+    stdTTL: 60 * 60
+  });
 
   constructor(session: ChtSession) {
     this.chtSession = session;
@@ -67,6 +72,7 @@ export class ChtApi {
     const url = `api/v1/places`;
     console.log('axios.post', url);
     const resp = await this.axiosInstance.post(url, payload);
+    ChtApi.cache.del(payload.contact_type);
     return resp.data.id;
   };
 
@@ -99,6 +105,7 @@ export class ChtApi {
     if (!resp.data.ok) {
       throw Error('response from chtApi.updatePlace was not OK');
     }
+    ChtApi.cache.del(payload.contact_type);
 
     return doc;
   };
@@ -182,10 +189,14 @@ export class ChtApi {
       include_docs: true,
     };
     console.log('axios.get', url, params);
-    const resp = await this.axiosInstance.get(url, { params });
+    let places: any[] | undefined = ChtApi.cache.get(placeType);
+    if (places === undefined) {
+      const resp = await this.axiosInstance.get(url, { params });
+      places = resp.data.rows;
+      ChtApi.cache.set(placeType, places);
+    }
 
-    return resp.data.rows
-      .map((row: any): RemotePlace => {
+    return places?.map((row: any): RemotePlace => {
         const nameData = row.key[1];
         return {
           id: row.id,
@@ -193,8 +204,12 @@ export class ChtApi {
           lineage: extractLineage(row.doc),
           type: 'remote',
         };
-      });
+      }) || [];
   };
+
+  clearCacheOfPlaceType = (placeType: string) => {
+    ChtApi.cache.del(placeType);
+  }
 
   getDoc = async (id: string): Promise<any> => {
     const url = `medic/${id}`;

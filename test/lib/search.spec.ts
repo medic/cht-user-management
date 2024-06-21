@@ -1,7 +1,6 @@
 import { expect } from 'chai';
 
 import { RemotePlace } from '../../src/lib/cht-api';
-import RemotePlaceCache from '../../src/lib/remote-place-cache';
 import SearchLib from '../../src/lib/search';
 import { mockChtApi, mockChtSession, mockValidContactType } from '../mocks';
 import SessionCache from '../../src/services/session-cache';
@@ -9,10 +8,6 @@ import { Config } from '../../src/config';
 import RemotePlaceResolver from '../../src/lib/remote-place-resolver';
 
 describe('lib/remote-place-cache.ts', () => {
-  beforeEach(() => {
-    RemotePlaceCache.clear({});
-  });
-
   const parentPlace: RemotePlace = {
     id: 'parent-id',
     name: 'parent',
