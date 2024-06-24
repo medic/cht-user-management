@@ -1,4 +1,4 @@
 scrape_configs:
   - job_name: 'user-management-metrics'
     static_configs:
-      - targets: ['192.168.1.128:3500']
+      - targets: ['192.168.1.128:3000']
