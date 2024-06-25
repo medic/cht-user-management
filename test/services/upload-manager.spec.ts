@@ -332,6 +332,32 @@ describe('services/upload-manager.ts', () => {
     });
     expect(place.isCreated).to.be.true;
   });
+
+  it('#173 - replacement when place has no primary contact', async () => {
+    const { remotePlace, sessionCache, contactType, fakeFormData, chtApi } = await createMocks();
+    const toReplace: RemotePlace = {
+      id: 'id-replace',
+      name: 'to-replace',
+      lineage: [remotePlace.id],
+      type: 'remote',
+    };
+
+    chtApi.updatePlace.resolves({ _id: 'updated-place-id' });
+    fakeFormData.hierarchy_replacement = toReplace.name;
+    
+    chtApi.getPlacesWithType
+      .resolves([remotePlace])
+      .onSecondCall()
+      .resolves([toReplace]);
+
+    const place = await PlaceFactory.createOne(fakeFormData, contactType, sessionCache, chtApi);
+    expect(place.validationErrors).to.be.empty;
+
+    const uploadManager = new UploadManager();
+    await uploadManager.doUpload([place], chtApi);
+    expect(chtApi.deleteDoc.callCount).to.eq(0);
+    expect(place.isCreated).to.be.true;
+  });
 });
 
 async function createChu(remotePlace: RemotePlace, chu_name: string, sessionCache: any, chtApi: ChtApi) {
