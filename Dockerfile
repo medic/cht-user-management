@@ -6,7 +6,7 @@ ENV PORT 3000
 WORKDIR /app
 
 HEALTHCHECK --interval=30s --timeout=3s \
-  CMD wget --spider http://localhost:${PORT}/_healthz || exit 1
+  CMD wget --spider http://127.0.0.1:${PORT}/_healthz || exit 1
 
 COPY package*.json ./
 RUN apk add git

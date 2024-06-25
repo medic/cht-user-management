@@ -12,6 +12,13 @@ fi
 if [[ -n $1 ]] && [[ $1 == "build" ]]; then
   docker build -f Dockerfile -t cht-user-management:local .
   docker build -f Dockerfile.worker -t cht-user-management-worker:local .
+elif [[ -z "$(docker images -q cht-user-management:local 2> /dev/null)" ]] ||  [[ -z "$(docker images -q cht-user-management-worker:local 2> /dev/null)" ]]; then
+  echo;echo "Docker images not found - please call
+
+     ./docker-local-setup.sh build
+
+to build missing images";echo;
+  exit 1
 fi
 
 echo;echo "Starting Docker Compose...";echo

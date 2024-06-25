@@ -133,7 +133,7 @@ export class MoveContactWorker {
         if (code === 0) {
           resolve();
         }
-        reject(new Error(`cht-conf exited with code ${code}. Last output: ${lastOutput}`));
+        reject(new Error(`Move contact command exited with code ${code}. Last output: ${lastOutput}`));
       });
 
       chtProcess.on('error', error => {
