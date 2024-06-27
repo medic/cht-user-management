@@ -1,33 +1,40 @@
 # CHT Watchdog config files
 
-These files will allow a [CHT Watchdog](https://github.com/medic/cht-watchdog/) instance to easily query CHT User management app Monitoring Data.
+These files will allow a [CHT Watchdog](https://github.com/medic/cht-watchdog/) instance to easily query CHT User **Management Tool **`**/metrics**`** endpoint to enable monitoring**
 
 ## Install
 
-Needs to have first:
+##### Prerequisites:
 
-* A Watchdog instance installed and running with a `cht-instances.yml` populated
-* Have a user-management instance working
+* Watchdog instance
+* User Management Tool instance - reachable by Watchdog
 
-What you have to do:
+##### Install:
 
-1. Check out `cht-watchdog` repo in the same directory as user management app project root directory
-2. Symlink in `watchdog-config` from `cht-user-management`  project folder to base of `cht-watchdog` repo(Give a meaningful name to Symlink in watchdog repo):
-3. Go to the root of `cht-watchdog` directory in the terminal and then run below command
+1. On your Watchdog server, check out `cht-user-management` [repo](https://github.com/medic/cht-user-management/) one directory up from CHT Watchdog directory.
+2. Symlink in `watchdog-config` from `cht-user-management`  to the base of `cht-watchdog` repo:
+3. Go to the root of `cht-watchdog` directory in the terminal and then run below command `ln -s ./cht-user-management/scripts/deploy/watchdog-config/ user-management`
+4. You might need to update thes variables in **.**`env` from  directory to avoid conflict with the port `3000` on which `grafana` is runing.
+
    ```
-   ln -s ./cht-user-management/scripts/deploy/watchdog-config/ user-management
+   PORT=3000 		# for development environment
+   EXTERNAL_PORT=3000	# for docker
    ```
-4. You might need to update thes variables in `.env` from `cht-user-management` directory to avoid conflict with the port `3000` on which `grafana` is runing.
+5. Start Watchdog with the additional compose file:
+
    ```
-   PORT=3000             # for development environment
-   EXTERNAL_PORT=3000    # for docker
+   docker-compose -f docker-compose.yml \-f user-management/user-management-compose.yml up -d --remove-orphans
    ```
-5. While in the Watchdog(`cht-watchdog`) directory, start it with:
-   ```
-   docker-compose -f docker-compose.yml \
-       -f user-management/user-management-compose.yml \
-       up -d --remove-orphans
-   ```
+
+
+
+
+
+
+
+
+
+
 
 ## Visualizing metrics
 
@@ -39,7 +46,7 @@ What you have to do:
       2. Select Target  and check that the status of cht-user management is up
 2. To check if data is populated in prometheus then go to graph and run a query on any of the metrics from user.
 
-#### Add dashboard to Grafana 
+#### Add dashboard to Grafana
 
 1. Open this url [http://localhost:3000]() and it will take you to grafana home page
 2. Click on `hamburger menu` and then select dashboard

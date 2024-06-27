@@ -5,4 +5,4 @@ services:
       - ./user-management/user-management-prometheus.yml:/etc/prometheus/scrape_configs/user-management-prometheus.yml:ro
   grafana:
     volumes:
-      - ./user-management/user-management-grafana.json:/etc/grafana/provisioning/dashboards/user-management/user-management-grafana.json:ro
+      - ./user-management/user-management-grafana.json:/etc/grafana/provisioning/dashboards/CHT/user-management-grafana.json:ro

@@ -64,6 +64,5 @@ export default async function events(fastify: FastifyInstance) {
     req.socket.on('close', () => {
       uploadManager.removeListener('refresh_table_row', placeChangeListener);
     });
-    
   });
 }
