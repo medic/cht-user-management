@@ -28,6 +28,7 @@
     "fastify": "^4.27.0",
     "fastify-sse-v2": "^3.1.2",
     "html-minifier": "^4.0.0",
+    "ioredis": "^5.4.1",
     "jsonwebtoken": "^9.0.2",
     "jszip": "^3.10.1",
     "libphonenumber-js": "^1.10.48",
@@ -64,7 +65,7 @@
   },
   "scripts": {
     "cp-package-json": "cp package.json ./src",
-    "test": "npx ts-mocha test/{,**}/*.spec.ts",
+    "test": "npx ts-mocha test/{,**}/*.spec.ts --exclude test/integration/{,**}/*.spec.ts",
     "build": "npm run cp-package-json && npx tsc",
     "lint": "npx eslint --color --cache .",
     "start": "node dist/index.js",
@@ -72,7 +73,10 @@
     "publish:cht-user-management": "SERVICE=cht-user-management node scripts/publish.js",
     "publish:cht-user-management-worker": "SERVICE=cht-user-management-worker node scripts/publish.js",
     "publish": "npm run publish:cht-user-management && npm run publish:cht-user-management-worker",
-    "start:worker": "node dist/worker/main.js"
+    "start:worker": "node dist/worker/main.js",
+    "docker-start-redis": "npm run docker-stop-redis && docker run -d --rm --name test-redis -p 6363:6379 redis && sh test/scripts/wait_for_redis.sh 6363",
+    "docker-stop-redis": "docker stop test-redis || true",
+    "integration-test": "npm run docker-start-redis && npx ts-mocha test/integration/{,**}/*.spec.ts && npm run docker-stop-redis"
   },
   "repository": {
     "type": "git",

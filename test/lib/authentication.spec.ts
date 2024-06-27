@@ -16,8 +16,8 @@ describe('lib/authentication.ts', () => {
 
   it('encode and decode for workers', () => {
     const session = mockChtSession();
-    const encoded = Auth.encodeTokenForQueue(session);
-    const decoded = Auth.decodeTokenForQueue(encoded);
+    const encoded = Auth.encodeTokenForWorker(session);
+    const decoded = Auth.decodeTokenForWorker(encoded);
     expect(session).excluding('axiosInstance').to.deep.eq(decoded);
   });
 
@@ -26,7 +26,7 @@ describe('lib/authentication.ts', () => {
   });
 
   it('invalid token cannot be decoded for workers', () => {
-    expect(() => Auth.decodeTokenForQueue('encoded')).to.throw('jwt malformed');
+    expect(() => Auth.decodeTokenForWorker('encoded')).to.throw('jwt malformed');
   });
 
   it('invalid session cannot be decoded for cookie', () => {
@@ -39,8 +39,8 @@ describe('lib/authentication.ts', () => {
   it('invalid session cannot be decoded for workers', () => {
     const session = mockChtSession();
     delete session.username;
-    const encoded = Auth.encodeTokenForQueue(session);
-    expect(() => Auth.decodeTokenForQueue(encoded)).to.throw('invalid CHT session information');
+    const encoded = Auth.encodeTokenForWorker(session);
+    expect(() => Auth.decodeTokenForWorker(encoded)).to.throw('invalid CHT session information');
   });
 });
 

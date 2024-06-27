@@ -1,10 +1,9 @@
 import axios from 'axios';
 import { spawn } from 'child_process'; 
-import { Worker, Job, DelayedError } from 'bullmq';
+import { Worker, Job, DelayedError, ConnectionOptions } from 'bullmq';
+import { DateTime } from 'luxon';
 
 import Auth from '../lib/authentication';
-import { redisConnection } from '../lib/queues';
-import { DateTime } from 'luxon';
 
 export interface MoveContactData {
   parentId: string;
@@ -16,24 +15,28 @@ export interface MoveContactData {
 export type JobResult = { success: boolean; message: string };
 
 export class MoveContactWorker {    
-  private readonly DELAY_IN_MILLIS = 4 * 60 * 60 * 1000;       // 4 hours
-  private readonly MAX_TIMEOUT_IN_MILLIS = 4 * 60 * 60 * 1000; // 4 hours
-  private readonly MAX_CONCURRENCY = 1;                    // Limit concurrency to 1 job at a time
-  private readonly MAX_SENTINEL_BACKLOG = 7000;            // ensure we don't take down the server
+  private static readonly DELAY_IN_MILLIS = 4 * 60 * 60 * 1000;       // 4 hours
+  private static readonly MAX_TIMEOUT_IN_MILLIS = 4 * 60 * 60 * 1000; // 4 hours
+  private static readonly MAX_CONCURRENCY = 1;              // Limit concurrency to 1 job at a time
+  private static readonly MAX_SENTINEL_BACKLOG = 7000;      // ensure we don't take down the server
+  static worker: Worker;
   
-  constructor(private queueName: string) {
-    this.initializeWorker();
-  }
-
-  private initializeWorker() {
-    return new Worker(
-      this.queueName, 
+  public static processQueue(queueName: string, connection: ConnectionOptions) {
+    this.worker = new Worker(
+      queueName, 
       this.handleJob, 
-      { connection: redisConnection, concurrency: this.MAX_CONCURRENCY }
+      { connection, concurrency: this.MAX_CONCURRENCY }
     );
   }
 
-  private handleJob = async (job: Job, processingToken?: string): Promise<boolean> => {
+  public static async close() {
+    const client = await this.worker?.client;
+    if (client?.status !== 'end') {
+      await this.worker?.close(true);
+    }
+  }
+
+  private static handleJob = async (job: Job, processingToken?: string): Promise<boolean> => {
     const jobData: MoveContactData = job.data;
 
     // Ensure server availability
@@ -54,7 +57,7 @@ export class MoveContactWorker {
     return true;
   };
 
-  private async shouldPostpone(jobData: MoveContactData): Promise<boolean> {
+  private static async shouldPostpone(jobData: MoveContactData): Promise<boolean> {
     try {
       const { instanceUrl } = jobData;
       const response = await axios.get(`${instanceUrl}/api/v2/monitoring`);
@@ -62,13 +65,13 @@ export class MoveContactWorker {
       console.log(`Sentinel backlog at ${sentinelBacklog} of ${this.MAX_SENTINEL_BACKLOG}`);
       return sentinelBacklog > this.MAX_SENTINEL_BACKLOG;
     } catch (err: any) {
-      const errorMessage = err.response?.data?.error?.message || err.response?.data || err?.message;
+      const errorMessage = err.response?.data?.error?.message || err.response?.error || err?.message;
       console.error('Error fetching monitoring data:', errorMessage);
       return true;
     }
   }
 
-  private async moveContact(jobData: MoveContactData): Promise<JobResult> {
+  private static async moveContact(jobData: MoveContactData): Promise<JobResult> {
     try {
       const { contactId, parentId, instanceUrl, sessionToken } = jobData;
 
@@ -76,7 +79,7 @@ export class MoveContactWorker {
         return { success: false, message: 'Missing session token' };
       }
 
-      const decodedToken = Auth.decodeTokenForQueue(sessionToken);
+      const decodedToken = Auth.decodeTokenForWorker(sessionToken);
       const token = decodedToken.sessionToken.replace('AuthSession=', '');
 
       const command = 'cht';
@@ -91,7 +94,7 @@ export class MoveContactWorker {
     }
   }
 
-  private buildCommandArgs(instanceUrl: string, sessionToken: string, contactId: string, parentId: string): string[] {
+  private static buildCommandArgs(instanceUrl: string, sessionToken: string, contactId: string, parentId: string): string[] {
     return [
       `--url=${instanceUrl}`,
       `--session-token=${sessionToken}`,
@@ -104,12 +107,12 @@ export class MoveContactWorker {
     ];
   }
 
-  private logCommand(command: string, args: string[]): void {
+  private static logCommand(command: string, args: string[]): void {
     const maskedArgs = args.map(arg => arg.startsWith('--session-token=') ? '--session-token=********' : arg);
     console.log('Executing command:', `${command} ${maskedArgs.join(' ')}`);
   }
 
-  private async executeCommand(command: string, args: string[]): Promise<void> {
+  private static async executeCommand(command: string, args: string[]): Promise<void> {
     return new Promise((resolve, reject) => {
       const chtProcess = spawn(command, args);
       let lastOutput = '';
@@ -144,7 +147,7 @@ export class MoveContactWorker {
     });
   }
 
-  private async postpone(job: Job, processingToken?: string): Promise<void> {
+  private static async postpone(job: Job, processingToken?: string): Promise<void> {
     // Calculate the retry time using luxon
     const retryTime = DateTime.now().plus({ milliseconds: this.DELAY_IN_MILLIS });
     const retryTimeFormatted = retryTime.toLocaleString(DateTime.TIME_SIMPLE);

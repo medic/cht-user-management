@@ -4,14 +4,16 @@ import { ChtApi } from './cht-api';
 import RemotePlaceResolver from './remote-place-resolver';
 import Place from '../services/place';
 
-import { JobParams, IQueue } from '../lib/queues';
+import { JobParams, IQueue, getMoveContactQueue } from '../lib/queues';
 import Auth from './authentication';
 import { MoveContactData } from '../worker/move-contact-worker';
 
 export default class MoveLib {
   constructor() { }
 
-  public static async move(formData: any, contactType: ContactType, sessionCache: SessionCache, chtApi: ChtApi, moveContactQueue: IQueue) {
+  public static async move(
+    formData: any, contactType: ContactType, sessionCache: SessionCache, chtApi: ChtApi, moveContactQueue: IQueue = getMoveContactQueue()
+  ) {
     const fromLineage = await resolve('from_', formData, contactType, sessionCache, chtApi);
     const toLineage = await resolve('to_', formData, contactType, sessionCache, chtApi);
 
@@ -50,7 +52,7 @@ export default class MoveLib {
       contactId: fromId,
       parentId: toId,
       instanceUrl: `http${authInfo.useHttp ? '' : 's'}://${authInfo.domain}`,
-      sessionToken: Auth.encodeTokenForQueue(chtApi.chtSession),
+      sessionToken: Auth.encodeTokenForWorker(chtApi.chtSession),
     };
   }
 }

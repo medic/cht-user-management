@@ -1,21 +1,6 @@
 import { v4 } from 'uuid';
-import { env } from 'process';
 import { JobsOptions, Queue, ConnectionOptions } from 'bullmq';
-
-const MOVE_CONTACT_QUEUE = 'MOVE_CONTACT_QUEUE';
-
-const environment = env as unknown as { 
-  REDIS_HOST: string; 
-  REDIS_PORT: string; 
-  QUEUE_PRIVATE_KEY: string;
-};
-
-export const QUEUE_PRIVATE_KEY = environment.QUEUE_PRIVATE_KEY;
-
-export const redisConnection: ConnectionOptions = {
-  host: environment.REDIS_HOST,
-  port: Number(environment.REDIS_PORT)
-};
+import { WorkerConfig } from '../config/config-worker';
 
 export interface IQueue {
   name: string;
@@ -32,9 +17,9 @@ export class BullQueue implements IQueue {
   public readonly name: string;
   public readonly bullQueue: Queue;
 
-  constructor(queueName: string) {
+  constructor(queueName: string, connection: ConnectionOptions) {
     this.name = queueName;
-    this.bullQueue = new Queue(queueName, { connection: redisConnection });
+    this.bullQueue = new Queue(queueName, { connection });
   }
 
   public async add(jobParams: JobParams): Promise<string> {
@@ -44,7 +29,13 @@ export class BullQueue implements IQueue {
     await this.bullQueue.add(jobName, jobData, { jobId, ...jobOpts });
     return jobId;
   }
+
+  public async close(): Promise<void> {
+    await this.bullQueue.close();
+  }
 }
 
-// Create a singleton instance of QueueManager
-export const moveContactQueue = new BullQueue(MOVE_CONTACT_QUEUE);
+export const getMoveContactQueue = () => new BullQueue(
+  WorkerConfig.moveContactQueue, 
+  WorkerConfig.redisConnection
+);

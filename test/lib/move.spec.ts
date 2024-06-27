@@ -18,7 +18,7 @@ describe('lib/move.ts', () => {
 
   beforeEach(() => {
     moveContactQueue = sinon.createStubInstance(BullQueue);
-    sinon.stub(Auth, 'encodeTokenForQueue').returns('encoded-token');
+    sinon.stub(Auth, 'encodeTokenForWorker').returns('encoded-token');
   });
 
   afterEach(() => {
