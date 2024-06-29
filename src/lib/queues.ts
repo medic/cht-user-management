@@ -1,0 +1,41 @@
+import { v4 } from 'uuid';
+import { JobsOptions, Queue, ConnectionOptions } from 'bullmq';
+import { WorkerConfig } from '../config/config-worker';
+
+export interface IQueue {
+  name: string;
+  add(jobParams: any): Promise<string>;
+}
+
+export interface JobParams {
+  jobName: string;
+  jobData: any;
+  jobOpts?: JobsOptions;
+}
+
+export class BullQueue implements IQueue {
+  public readonly name: string;
+  public readonly bullQueue: Queue;
+
+  constructor(queueName: string, connection: ConnectionOptions) {
+    this.name = queueName;
+    this.bullQueue = new Queue(queueName, { connection });
+  }
+
+  public async add(jobParams: JobParams): Promise<string> {
+    const jobId = v4();
+    const { jobName, jobData, jobOpts } = jobParams;
+
+    await this.bullQueue.add(jobName, jobData, { jobId, ...jobOpts });
+    return jobId;
+  }
+
+  public async close(): Promise<void> {
+    await this.bullQueue.close();
+  }
+}
+
+export const getMoveContactQueue = () => new BullQueue(
+  WorkerConfig.moveContactQueue, 
+  WorkerConfig.redisConnection
+);

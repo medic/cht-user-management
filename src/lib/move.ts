@@ -1,13 +1,19 @@
 import { ContactType } from '../config';
 import SessionCache from '../services/session-cache';
-import { ChtApi } from '../lib/cht-api';
-import RemotePlaceResolver from '../lib/remote-place-resolver';
+import { ChtApi } from './cht-api';
+import RemotePlaceResolver from './remote-place-resolver';
 import Place from '../services/place';
 
-export default class MoveLib {
-  constructor() {}
+import { JobParams, IQueue, getMoveContactQueue } from '../lib/queues';
+import Auth from './authentication';
+import { MoveContactData } from '../worker/move-contact-worker';
 
-  public static async move(formData: any, contactType: ContactType, sessionCache: SessionCache, chtApi: ChtApi) {
+export default class MoveLib {
+  constructor() { }
+
+  public static async move(
+    formData: any, contactType: ContactType, sessionCache: SessionCache, chtApi: ChtApi, moveContactQueue: IQueue = getMoveContactQueue()
+  ) {
     const fromLineage = await resolve('from_', formData, contactType, sessionCache, chtApi);
     const toLineage = await resolve('to_', formData, contactType, sessionCache, chtApi);
 
@@ -20,13 +26,33 @@ export default class MoveLib {
     if (toId === fromLineage[1]?.id) {
       throw Error(`Place "${fromLineage[0]?.name}" already has "${toLineage[1]?.name}" as parent`);
     }
+
+    const jobName = this.getJobName(fromLineage, toLineage);
+    const jobData = this.getJobData(fromId, toId, chtApi);
+    const jobParam: JobParams = {
+      jobName,
+      jobData,
+    };
+    await moveContactQueue.add(jobParam);
     
-    const { authInfo } = chtApi.chtSession;
-    const url = `http${authInfo.useHttp ? '' : 's'}://${chtApi.chtSession.username}:password@${authInfo.domain}`;
     return {
-      command: `npx cht --url=${url} move-contacts upload-docs -- --contacts=${fromId} --parent=${toId}`,
-      fromLineage,
       toLineage,
+      fromLineage,
+      success: true
+    };
+  }
+
+  private static getJobName(fromLineage: any, toLineage: any): string {
+    return `move_[${fromLineage[0]?.name}]_from_[${fromLineage[1]?.name}]_to_[${toLineage[1]?.name}]`;
+  }
+
+  private static getJobData(fromId: string, toId: string, chtApi: ChtApi):MoveContactData {
+    const { authInfo } = chtApi.chtSession;
+    return {
+      contactId: fromId,
+      parentId: toId,
+      instanceUrl: `http${authInfo.useHttp ? '' : 's'}://${authInfo.domain}`,
+      sessionToken: Auth.encodeTokenForWorker(chtApi.chtSession),
     };
   }
 }
