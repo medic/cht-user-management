@@ -266,12 +266,13 @@ describe('services/place-factory.ts', () => {
     fakeFormData.hierarchy_GRANDPARENT = 'no match';
 
     chtApi.getPlacesWithType
-      .resolves([grandParent])
-      .onSecondCall().resolves([remotePlace]);
+      .resolves([grandParent]);
 
     const place: Place = await PlaceFactory.createOne(fakeFormData, contactType, sessionCache, chtApi);
     expectInvalidProperties(place.validationErrors, ['hierarchy_PARENT', 'hierarchy_GRANDPARENT'], 'Cannot find');
 
+    chtApi.getPlacesWithType
+      .resolves([remotePlace]);
     fakeFormData.hierarchy_GRANDPARENT = '';
     const edited = await PlaceFactory.editOne(place.id, fakeFormData, sessionCache, chtApi);
     expect(edited.validationErrors).to.be.empty;

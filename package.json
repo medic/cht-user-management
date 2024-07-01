@@ -60,7 +60,7 @@
   },
   "scripts": {
     "cp-package-json": "cp package.json ./src",
-    "test": "npx ts-mocha test/services/place-factory.spec.ts",
+    "test": "npx ts-mocha test/{,**}/*.spec.ts",
     "build": "npm run cp-package-json && npx tsc",
     "lint": "npx eslint --color --cache .",
     "start": "node dist/index.js",

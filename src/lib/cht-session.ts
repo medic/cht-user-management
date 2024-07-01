@@ -19,7 +19,7 @@ export default class ChtSession {
   public readonly axiosInstance: AxiosInstance;
   public readonly sessionToken: string;
 
-  private constructor(authInfo: AuthenticationInfo, sessionToken: string, username: string, facilityId: string) {
+  constructor(authInfo: AuthenticationInfo, sessionToken: string, username: string, facilityId: string) {
     this.authInfo = authInfo;
     this.username = username;
     this.facilityId = facilityId;
