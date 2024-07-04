@@ -23,11 +23,6 @@ export default async function authentication(fastify: FastifyInstance) {
 
   fastify.get('/logout', unauthenticatedOptions, async (req, resp) => {
     resp.clearCookie(Auth.AUTH_COOKIE_NAME);
-    for (const cookieName in req.cookies) {
-      if (req.cookies[cookieName]) {
-        resp.clearCookie(cookieName, { path: '/' });
-      }
-    }
     return resp.redirect('/login');
   });
 

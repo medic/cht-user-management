@@ -86,12 +86,6 @@ export default async function sessionCache(fastify: FastifyInstance) {
     const params: any = req.params;
     const contactTypeName = params.contactTypeName;
     const sessionCache: SessionCache = req.sessionCache;
-    for (const cookieName in req.cookies) {
-      if (req.cookies[cookieName] && cookieName === 'currentTab'
-        || cookieName.includes('_currentPage')) {
-        resp.clearCookie(cookieName, { path: '/' });
-      }
-    }
     sessionCache.removeAll(contactTypeName);
     resp.header('HX-Redirect', '/');
   });
