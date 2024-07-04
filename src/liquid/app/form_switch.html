@@ -2,19 +2,15 @@
   {% capture header_caption %}
     {% if op == "bulk" %} Bulk Load from CSV
     {% elsif op == "replace"%} Replace Existing
-    {% elsif op == "move"%} Move 
+    {% elsif op == "move"%} Move
     {% elsif op == "edit" %} Edit
     {% else %} New
     {% endif %}
   {% endcapture %}
-  
-  <section class="hero is-small">
-    <div class="hero-body">
-      <p class="title">
-        {{header_caption}} {{contactType.contact_friendly | default: contactType.friendly }}
-      </p>
-    </div>
-  </section>
+
+  <h3 class="form-title">
+    {{header_caption}} {{contactType.contact_friendly | default: contactType.friendly }}
+  </h3>
 
   {% if op == "bulk" %}
     {% include "place/bulk_create_form.html" %}

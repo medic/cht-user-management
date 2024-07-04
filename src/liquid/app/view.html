@@ -5,12 +5,13 @@
   <title>CHT User Management Tool</title>
   <script src="/public/scripts/htmx.min.js"></script>
   <script src="/public/scripts/sse.js"></script>
-  <script src="/public/scripts/bulma-calendar.min.js"></script>
   <script src="/public/scripts/jquery-3.7.1.slim.min.js"></script>
   <script src="/public/scripts/bootstrap.min.js"></script>
+  <script src="/public/scripts/datepicker.min.js"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="/public/css/custom-bootstrap.min.css" />
   <link rel="stylesheet" href="/public/css/styles.css" />
+  <link rel="stylesheet" href="/public/css/datepicker.min.css" />
 </head>
 
 <body>
@@ -32,3 +33,12 @@
 </body>
 
 </html>
+
+<script>
+  function clearErrorMsg(elementID) {
+    const errMsg = document.getElementById(elementID);
+    if (errMsg){
+      errMsg.style.display = 'none';
+    }
+  }
+</script>

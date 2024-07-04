@@ -1,9 +1,9 @@
 {% if include.prop.type != 'generated' %}
   {% capture prop_name %}{{ include.prefix }}{{include.prop.property_name}}{% endcapture %}
 
-  <div id="div_{{ include.prefix }}{{include.prop.property_name}}" class="field">
-    <label class="label">
-      {% if data['option_dob_unknown'] %}
+  <div id="div_{{ include.prefix }}{{include.prop.property_name}}">
+    <label>
+      {% if data['option_dob_unknown'] and include.prop.property_name == 'date_of_birth' %}
         Age in Years
       {%else%}
         {{include.prop.friendly_name}}
@@ -20,7 +20,7 @@
           data=data
       %}
     {% else %}
-      <div class="control">
+      <div>
         {% if include.prop.type == 'select_one' or include.prop.type == 'select_multiple' %}
           {%
             include "components/contact_type_select.html"
@@ -32,7 +32,6 @@
           <input
             name="{{ prop_name }}"
             type="{% if include.prop.type == 'dob' %}date{% else %}text{% endif %}"
-            class="input"
             {% if false and include.prop.type == 'regex' %} pattern="{{ include.prop.parameter }}" {% endif %}
             {% if data[prop_name] %} value="{{ data[prop_name] }}" {% endif %}
           />

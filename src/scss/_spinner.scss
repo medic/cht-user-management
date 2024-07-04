@@ -1,41 +1,54 @@
+$spinner-width: 30px;
+$spinner-height: 30px;
+$spinner-height-sm: 15px;
+$spinner-width-sm: 15px;
 $spinner-color: $_gray-dark;
-$spinner-speed: .9s;
-$spinner-size: 10px;
-.spinner {
-    display: block;
-    margin: 1em auto;
-    font-size: $spinner-size;
-    position: relative;
-    border: 0.4em solid rgba($spinner-color, 0.2);
-    border-top-color: rgba($spinner-color,0.4);
-    -webkit-transform: translateZ(0);
-    -ms-transform: translateZ(0);
-    transform: translateZ(0);
-    -webkit-animation: loader $spinner-speed infinite linear;
-    animation: loader $spinner-speed infinite linear;
-    border-radius: 50%;
-    width: 3em;
-    height: 3em;
-  }
 
-@-webkit-keyframes loader {
-    0% {
-      -webkit-transform: rotate(0deg);
-      transform: rotate(0deg);
-    }
-    100% {
-      -webkit-transform: rotate(360deg);
-      transform: rotate(360deg);
-    }
+@keyframes spinner {
+  to {
+    transform: rotate(360deg);
   }
-  
-  @keyframes loader {
-    0% {
-      -webkit-transform: rotate(0deg);
-      transform: rotate(0deg);
-    }
-    100% {
-      -webkit-transform: rotate(360deg);
-      transform: rotate(360deg);
-    }
+}
+
+@-webkit-keyframes spinner {
+  to {
+    transform: rotate(360deg);
   }
+}
+
+.spinner {
+  display: none;
+  width: $spinner-width;
+  height: $spinner-height;
+  vertical-align: text-bottom;
+  border: $spinner-width solid rgba($spinner-color, 0.4);
+  border-right-color: transparent;
+  border-width: 3px;
+  border-radius: 50%;
+  animation: spinner 0.75s linear infinite;
+  transition: opacity 0.85s ease-in;
+  &.htmx-request {
+    display: inline;
+  }
+}
+
+.spinner-sm {
+  @extend .spinner;
+  width: $spinner-width-sm;
+  height: $spinner-height-sm;
+  border-width: 2px;
+  &.btn-spinner {
+    border: $spinner-width solid white;
+    border-width: 2px;
+    border-right-color: transparent;
+  }
+}
+
+.spinner-container {
+  justify-content: center;
+  display: flex;
+  span,
+  div {
+    display: inline-block;
+  }
+}

@@ -5,8 +5,7 @@
 
 {%elsif include.count == 0 %}
 <button class="badge tag 
-  {% if not directiveModel.filter %} {{ include.class }} {%endif %}
-   disabled" disabled>
+  {% if not directiveModel.filter %} {{ include.class }} {%endif %}" disabled>
   {{ include.count }} {{ include.filterName }}
 </button>
 {% else %}
