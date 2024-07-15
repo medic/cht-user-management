@@ -50,6 +50,18 @@ helm upgrade \
       --values values/users-chis-tg.yaml \
       users-chis-tg medic/cht-user-management
 ```
+
+#### CIV
+```shell
+# Edit tag in users-chis-civ.yaml and then run:
+
+helm upgrade \
+      --kube-context arn:aws:eks:eu-west-2:720541322708:cluster/prod-cht-eks \
+      --namespace users-chis-prod \
+      --values values/users-chis-civ.yaml \
+      users-chis-civ medic/cht-user-management
+```
+
 ### How to
 
 #### List all helm deployments
@@ -82,7 +94,7 @@ kubectl --context arn:aws:eks:eu-west-2:720541322708:cluster/prod-cht-eks \
 
 #### View logs of a deployment
 
-Where `$ENV` is one of `ke`, `ug` or  `tg`
+Where `$ENV` is one of `ke`, `ug` or  `tg` or  `civ`
 
 ```shell
 kubectl --context arn:aws:eks:eu-west-2:720541322708:cluster/prod-cht-eks \
@@ -92,7 +104,7 @@ _You can replace `deploy/x` with for example `pods/y` from the get all command a
 
 #### Get more details of a deployment
 
-Where `$ENV` is one of `ke`, `ug` or  `tg`
+Where `$ENV` is one of `ke`, `ug` or  `tg` or  `civ`
 
 ```shell
 kubectl --context arn:aws:eks:eu-west-2:720541322708:cluster/prod-cht-eks \
