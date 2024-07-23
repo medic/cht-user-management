@@ -6,6 +6,7 @@ import ChtSession from '../src/lib/cht-session';
 import { ContactProperty, ContactType } from '../src/config';
 import Place from '../src/services/place';
 
+
 export const mockPlace = (type: ContactType, prop: any) : Place => {
   const result = new Place(type);
   result.properties = {
