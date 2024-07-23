@@ -13,7 +13,7 @@ describe('lib/remote-place-cache.ts', () => {
     id: 'parent-id',
     name: 'parent',
     type: 'remote',
-    lineage: [],
+    lineage: ['lineage'],
   };
 
   it('cache miss', async () => {
@@ -41,6 +41,33 @@ describe('lib/remote-place-cache.ts', () => {
     const second = await RemotePlaceCache.getPlacesWithType(chtApi, contactType.name);
     expect(second).to.deep.eq([remotePlace, place.asRemotePlace()]);
     expect(chtApi.getPlacesWithType.calledOnce).to.be.true;
+  });
+
+  it('should resolve immediate parent names for places provided', async () => {
+    const contactType = mockSimpleContactType('unknown`', undefined);
+
+    const chtApi = mockChtApi([remotePlace]);
+    
+    const updatedPlaces = await RemotePlaceCache.getPlacesWithType(chtApi, contactType.name);
+
+    expect(updatedPlaces[0].immediateParentName).to.equal('Parent Place');
+  });
+
+  it('should return empty string if lineage is empty', async () => {
+    const contactType = mockSimpleContactType('unknown`', undefined);
+
+    const chtApi = mockChtApi([
+      {
+        id: 'parent-id',
+        name: 'parent',
+        type: 'remote',
+        lineage: [],
+      }
+    ]);
+    
+    const updatedPlaces = await RemotePlaceCache.getPlacesWithType(chtApi, contactType.name);
+
+    expect(updatedPlaces[0].immediateParentName).to.equal('');
   });
 });
 

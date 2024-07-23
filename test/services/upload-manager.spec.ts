@@ -403,6 +403,7 @@ async function createMocks() {
     deleteDoc: sinon.stub().resolves(),
     disableUsersWithPlace: sinon.stub().resolves(['org.couchdb.user:disabled']),
     deactivateUsersWithPlace: sinon.stub().resolves(),
+    getDoc: sinon.stub().resolves({ _id: 'lineage', name: `Parent Place` })
   };
   
   const fakeFormData: any = {

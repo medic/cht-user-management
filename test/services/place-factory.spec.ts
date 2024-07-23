@@ -139,12 +139,14 @@ describe('services/place-factory.ts', () => {
           name: 'bob',
           lineage: ['parent-id'],
           type: 'remote',
+          immediateParentName: ''
         },
         {
           id: 'parent-id',
           name: 'Chepalungu CHU',
           type: 'remote',
           lineage: [],
+          immediateParentName: ''
         },
       ],
       validationErrors: {},
@@ -493,6 +495,7 @@ function mockScenario() {
     createPlace: sinon.stub().resolves('created-place-id'),
     updateContactParent: sinon.stub().resolves('created-contact-id'),
     createUser: sinon.stub().resolves(),
+    getDoc: sinon.stub().resolves({ _id: 'lineage', name: `Parent Place` })
   };
   const fakeFormData:any = {
     place_name: 'place',
