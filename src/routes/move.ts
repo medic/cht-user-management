@@ -34,8 +34,18 @@ export default async function sessionCache(fastify: FastifyInstance) {
     const chtApi = new ChtApi(req.chtSession);
     
     try {
-      const tmplData = await MoveLib.move(formData, contactType, sessionCache, chtApi);
-      return resp.view('src/liquid/components/move_result.html', tmplData);
+      const result = await MoveLib.move(formData, contactType, sessionCache, chtApi);
+
+      const tmplData = {
+        view: 'move',
+        op: 'move',
+        logo: Config.getLogoBase64(),
+        contactType,
+        session: req.chtSession,
+        ...moveViewModel(contactType),
+        ...result
+      };
+      return resp.view('src/liquid/place/move_form.html', tmplData);
     } catch (e: any) {
       const tmplData = {
         view: 'move',

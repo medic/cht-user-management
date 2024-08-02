@@ -13,6 +13,7 @@ const metricsPlugin = require('fastify-metrics');
 
 import Auth from './lib/authentication';
 import SessionCache from './services/session-cache';
+import { checkRedisConnection } from './config/config-worker';
 
 const build = (opts: FastifyServerOptions): FastifyInstance => {
   const fastify = Fastify(opts);
@@ -55,6 +56,7 @@ const build = (opts: FastifyServerOptions): FastifyInstance => {
   });
 
   Auth.assertEnvironmentSetup();
+  checkRedisConnection();
 
   fastify.addHook('preValidation', async (req: FastifyRequest, reply: FastifyReply) => {
     if (req.unauthenticated || req.routeOptions.url === '/public/*' || req.routeOptions.url === '/metrics') {
@@ -68,7 +70,7 @@ const build = (opts: FastifyServerOptions): FastifyInstance => {
     }
 
     try {
-      const chtSession = Auth.decodeToken(cookieToken);
+      const chtSession = Auth.decodeTokenForCookie(cookieToken);
       req.chtSession = chtSession;
       req.sessionCache = SessionCache.getForSession(chtSession);
     } catch (e) {
