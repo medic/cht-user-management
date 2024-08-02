@@ -34,7 +34,6 @@ export default async function addPlace(fastify: FastifyInstance) {
   fastify.post('/place/dob', async (req, resp) => {
     const { place_type, prefix, prop_type } = req.query as any;
     const contactType = Config.getContactType(place_type).contact_properties.find(prop => prop.type === prop_type);
-
     return resp.view('src/liquid/components/contact_type_property.html', {
       data: req.body,
       include: {
@@ -138,6 +137,7 @@ export default async function addPlace(fastify: FastifyInstance) {
     RemotePlaceCache.clear(chtApi, place.type.name);
     await RemotePlaceResolver.resolveOne(place, sessionCache, chtApi, { fuzz: true });
     place.validate();
+    
     fastify.uploadManager.triggerRefresh(place.id);
   });
 

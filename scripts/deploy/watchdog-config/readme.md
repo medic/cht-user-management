@@ -1,6 +1,6 @@
 # CHT Watchdog config files
 
-These files will allow a [CHT Watchdog](https://github.com/medic/cht-watchdog/) instance to easily query CHT User **Management Tool **`**/metrics**`** endpoint to enable monitoring**
+These files will allow a [CHT Watchdog](https://github.com/medic/cht-watchdog/) instance to easily query CHT User **Management Tool** `/metrics`endpoint to enable monitoring
 
 ## Install
 
@@ -25,16 +25,6 @@ These files will allow a [CHT Watchdog](https://github.com/medic/cht-watchdog/) 
    ```
    docker-compose -f docker-compose.yml \-f user-management/user-management-compose.yml up -d --remove-orphans
    ```
-
-
-
-
-
-
-
-
-
-
 
 ## Visualizing metrics
 
