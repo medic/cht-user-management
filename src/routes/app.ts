@@ -104,8 +104,9 @@ export default async function sessionCache(fastify: FastifyInstance) {
       expires: Auth.cookieExpiry(),
       path: '/',
       secure: true,
+      
     });
-
+    
     resp.header('HX-Redirect', '/');
   });
 }
