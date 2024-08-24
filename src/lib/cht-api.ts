@@ -23,6 +23,7 @@ export type RemotePlace = {
   name: string;
   lineage: string[];
   ambiguities?: RemotePlace[];
+  doc?: any;
 
   // sadly, sometimes invalid or uncreated objects "pretend" to be remote
   // should reconsider this naming
@@ -191,6 +192,7 @@ export class ChtApi {
           id: row.id,
           name: nameData.substring('name:'.length),
           lineage: extractLineage(row.doc),
+          doc: row.doc,
           type: 'remote',
         };
       });
@@ -200,6 +202,15 @@ export class ChtApi {
     const url = `medic/${id}`;
     // console.log('axios.get', url);
     const resp = await this.axiosInstance.get(url);
+    return resp.data;
+  };
+
+  getDocs = async (keys: string[]): Promise<any> => {
+    const url = `medic/_all_docs?include_docs=true`;
+    const payload = {
+      "keys": keys,
+    };
+    const resp = await this.axiosInstance.post(url, payload);
     return resp.data;
   };
 
