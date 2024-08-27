@@ -1,0 +1,24 @@
+cht-user-management:
+  image:
+    tag: 1.3.20
+  env:
+    CONFIG_NAME: chis-civ
+
+  # EKS prod ELB
+  ingress:
+    enabled: true
+    annotations:
+      alb.ingress.kubernetes.io/scheme: internet-facing
+      alb.ingress.kubernetes.io/tags: Environment=prod,Team=SRE
+      alb.ingress.kubernetes.io/group.name: prod-cht-alb
+      alb.ingress.kubernetes.io/ssl-redirect: '443'
+      alb.ingress.kubernetes.io/target-type: ip
+      alb.ingress.kubernetes.io/healthcheck-port: traffic-port
+      alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
+      alb.ingress.kubernetes.io/certificate-arn: arn:aws:iam::720541322708:server-certificate/2024-wildcard-app-medicmobile-org-chain
+    className: alb
+    hosts:
+      - host: users-chis-civ.app.medicmobile.org
+        paths:
+          - path: /
+            pathType: Prefix
