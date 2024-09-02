@@ -18,7 +18,7 @@ General public is welcome to look at these instructions for who they might use t
 
 ### Known cofigurations:
 
-As each deployment needs its own configuration directory, DNS entry and deployment name, we'll list them here and the the commands below can be used by replacing the correct value.
+As each deployment needs its own configuration directory, DNS entry and deployment name, we'll list them here and the commands below can be used by replacing the correct value.
 
 | Name | Config | Values | EKS-Deployment | URL |
 |--    |--      |--      |--              |--   |   
@@ -33,7 +33,7 @@ The `helm upgrade` and `helm install` commands should be run in the `./scripts/d
 
 1. Check the image is [published](https://github.com/medic/cht-user-management/tree/main#publishing-new-docker-images) to [ECR](https://gallery.ecr.aws/medic/cht-user-management) 
 2. Commit a values YAML file in [values folder](https://github.com/medic/cht-user-management/blob/main/scripts/deploy/values/) in `main` branch
-3. Switch to the to the `deploy` branch and ensure the same values file from the prior step is in the [values folder](https://github.com/medic/cht-user-management/blob/deploy/scripts/deploy/values/) in `deploy` branch
+3. Switch to the `deploy` branch and ensure the same values file from the prior step is in the [values folder](https://github.com/medic/cht-user-management/blob/deploy/scripts/deploy/values/) in `deploy` branch
 4. Edit the version in the `tag:` as the version you want deploy in the `helm` command below. Ensure this version in the `tag:` is commmited to `deploy` branch
 5. run either `helm install...` or `helm deploy...` per the full commands below. 
 
