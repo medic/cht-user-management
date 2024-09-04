@@ -110,6 +110,14 @@
           "type": "name",
           "required": true,
           "level": 1
+        },
+        {
+          "friendly_name": "Health Area",
+          "property_name": "health_area",
+          "contact_type": "c50_health_area",
+          "type": "name",
+          "required": true,
+          "level": 2
         }
       ],
       "replacement_property": {
