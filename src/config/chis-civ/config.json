@@ -89,8 +89,8 @@
         {
           "friendly_name": "Phone Number",
           "property_name": "phone",
-          "type": "phone",
-          "parameter": "CI",
+          "type": "regex",
+          "parameter": "^\\d{10}$",
           "required": true
         }
       ]
@@ -180,8 +180,8 @@
         {
           "friendly_name": "Phone Number",
           "property_name": "phone",
-          "type": "phone",
-          "parameter": "CI",
+          "type": "regex",
+          "parameter": "^\\d{10}$",
           "required": true
         },
         {
