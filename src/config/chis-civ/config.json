@@ -144,13 +144,6 @@
           "required": true
         },
         {
-          "friendly_name": "First Name",
-          "property_name": "first_name",
-          "type": "string",
-          "parameter": ["\\(*First*\\)"],
-          "required": true
-        },
-        {
           "friendly_name": "Full Name",
           "property_name": "name",
           "type": "generated",
