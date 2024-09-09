@@ -118,6 +118,14 @@
           "type": "name",
           "required": true,
           "level": 2
+        },
+        {
+          "friendly_name": "Supervision Area",
+          "property_name": "supervision_area",
+          "contact_type": "c40_supervision_area",
+          "type": "name",
+          "required": true,
+          "level": 3
         }
       ],
       "replacement_property": {
