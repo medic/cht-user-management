@@ -184,32 +184,28 @@
             "male": "Masculin",
             "female": "Feminin"
           },
-          "required": true,
-          "hint": "Genre de l'ASC"
+          "required": true
         },
         {
           "friendly_name": "Age",
           "property_name": "age",
           "type": "regex",
           "parameter": "^\\d{2}$",
-          "required": false,
-          "hint": "Age de l'ASC"
+          "required": false
         },
         {
           "friendly_name": "Phone Number",
           "property_name": "phone",
           "type": "regex",
           "parameter": "^\\d{10}$",
-          "required": true,
-          "hint": "Numero telephone de l'ASC"
+          "required": true
         },
         {
           "friendly_name": "Email",
           "property_name": "email",
           "type": "regex",
           "parameter": "^.+\\@.+\\..+$",
-          "required": false,
-          "hint": "Email de l'ASC"
+          "required": false
         },
         {
           "friendly_name": "Username",
