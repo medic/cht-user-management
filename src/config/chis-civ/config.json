@@ -89,8 +89,8 @@
         {
           "friendly_name": "Phone Number",
           "property_name": "phone",
-          "type": "phone",
-          "parameter": "CI",
+          "type": "regex",
+          "parameter": "^\\d{10}$",
           "required": true
         }
       ]
@@ -110,6 +110,22 @@
           "type": "name",
           "required": true,
           "level": 1
+        },
+        {
+          "friendly_name": "Health Area",
+          "property_name": "health_area",
+          "contact_type": "c50_health_area",
+          "type": "name",
+          "required": true,
+          "level": 2
+        },
+        {
+          "friendly_name": "Supervision Area",
+          "property_name": "supervision_area",
+          "contact_type": "c40_supervision_area",
+          "type": "name",
+          "required": true,
+          "level": 3
         }
       ],
       "replacement_property": {
@@ -141,13 +157,6 @@
           "property_name": "last_name",
           "type": "string",
           "parameter": ["\\(*Last*\\)"],
-          "required": true
-        },
-        {
-          "friendly_name": "First Name",
-          "property_name": "first_name",
-          "type": "string",
-          "parameter": ["\\(*First*\\)"],
           "required": true
         },
         {
@@ -187,8 +196,8 @@
         {
           "friendly_name": "Phone Number",
           "property_name": "phone",
-          "type": "phone",
-          "parameter": "CI",
+          "type": "regex",
+          "parameter": "^\\d{10}$",
           "required": true
         },
         {
