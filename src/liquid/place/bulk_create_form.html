@@ -74,7 +74,7 @@
               <tr>
                 <td>{{ row.friendly_name }}</td>
                 <td>{{ row.required }}</td>
-                <td>Property on place{% if row.hint %}. <i>{{ row.hint }}</i>{% endif %}</td>
+                <td>{% if row.hint %}. <i>{{ row.hint }}</i> {% else %} Property on place {% endif %}</td>
               </tr>
               {% endif %}
             {% endfor %}
@@ -84,7 +84,7 @@
               <tr>
                 <td>{{ row.friendly_name }}</td>
                 <td>{{ row.required }}</td>
-                <td>Property on primary contact{% if row.hint %}. <i>{{ row.hint }}</i>{% endif %}</td>
+                <td>{% if row.hint %}. <i>{{ row.hint }}</i> {% else %} Property on primary contact {% endif %}</td>
               </tr>
               {% endif %}
             {% endfor %}
