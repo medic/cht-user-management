@@ -47,6 +47,7 @@ Property | Type | Description
 `contact_types.place_properties` | Array<ConfigProperty> | Defines the attributes which are collected and set on the user's created place. See [ConfigProperty](#ConfigProperty).
 `contact_types.contact_properties` | Array<ConfigProperty> | Defines the attributes which are collected and set on the user's primary contact doc. See [ConfigProperty](#ConfigProperty).
 `contact_types.deactivate_users_on_replace` | boolean | Controls what should happen to the defunct contact and user documents when a user is replaced. When `false`, the contact and user account will be deleted. When `true`, the contact will be unaltered and the user account will be assigned the role `deactivated`. This allows for account restoration.
+`contact_types.hint` | string | Provide a brief hint or description to clarify the expected input for the property.
 `logoBase64` | Image in base64 | Logo image for your project
 
 #### ConfigProperty
