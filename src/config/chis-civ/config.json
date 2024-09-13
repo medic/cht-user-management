@@ -53,14 +53,16 @@
           "property_name": "first_name",
           "type": "string",
           "parameter": ["\\(*First*\\)"],
-          "required": true
+          "required": true,
+          "hint": "Prénom du superviseur"
         },
         {
           "friendly_name": "Last Name",
           "property_name": "last_name",
           "type": "string",
           "parameter": ["\\(*Last*\\)"],
-          "required": true
+          "required": true,
+          "hint": "Nom du superviseur"
         },
 
         {
@@ -74,7 +76,8 @@
           "friendly_name": "Function",
           "property_name": "function",
           "type": "string",
-          "required": false
+          "required": false,
+          "hint": "Fonction du superviseur"
         },
         {
           "friendly_name": "Gender",
@@ -84,14 +87,16 @@
             "male": "Masculin",
             "female": "Feminin"
           },
-          "required": true
+          "required": true,
+          "hint": "Sexe du superviseur"
         },
         {
           "friendly_name": "Phone Number",
           "property_name": "phone",
           "type": "regex",
           "parameter": "^\\d{10}$",
-          "required": true
+          "required": true,
+          "hint": "N° Téléphone du superviseur"
         }
       ]
     },
@@ -141,7 +146,8 @@
           "property_name": "name",
           "type": "string",
           "parameter": ["\\(*Site*\\)"],
-          "required": true
+          "required": true,
+          "hint": "Nom du site de l'ASC"
         }
       ],
       "contact_properties": [
@@ -150,14 +156,16 @@
           "property_name": "first_name",
           "type": "string",
           "parameter": ["\\(*First*\\)"],
-          "required": true
+          "required": true,
+          "hint": "Prénom de l'ASC"
         },
         {
           "friendly_name": "Last Name",
           "property_name": "last_name",
           "type": "string",
           "parameter": ["\\(*Last*\\)"],
-          "required": true
+          "required": true,
+          "hint": "Nom de l'ASC"
         },
         {
           "friendly_name": "Full Name",
@@ -174,7 +182,8 @@
             "min_5km": "ASC - 5km",
             "max_5km": "ASC + 5km"
           },
-          "required": true
+          "required": true,
+          "hint": "Type d'ASC"
         },
         {
           "friendly_name": "Gender",
@@ -184,35 +193,24 @@
             "male": "Masculin",
             "female": "Feminin"
           },
-          "required": true
+          "required": true,
+          "hint": "Sexe de l'ASC"
         },
         {
           "friendly_name": "Age",
           "property_name": "age",
           "type": "regex",
           "parameter": "^\\d{2}$",
-          "required": false
+          "required": false,
+          "hint": "Âge de l'ASC"
         },
         {
           "friendly_name": "Phone Number",
           "property_name": "phone",
           "type": "regex",
           "parameter": "^\\d{10}$",
-          "required": true
-        },
-        {
-          "friendly_name": "Email",
-          "property_name": "email",
-          "type": "regex",
-          "parameter": "^.+\\@.+\\..+$",
-          "required": false
-        },
-        {
-          "friendly_name": "Username",
-          "property_name": "username",
-          "type": "string",
-          "parameter": "",
-          "required": false
+          "required": true,
+          "hint": "N° Téléphone de l'ASC"
         },
         {
           "friendly_name": "Education Level",
@@ -224,7 +222,8 @@
             "higher": "Higher",
             "none": "None"
           },
-          "required": false
+          "required": false,
+          "hint": "Niveau d'étude de l'ASC"
         }
       ]
     }
