@@ -52,7 +52,12 @@ export default class ChtSession {
   }
 
   public static createFromDataString(data: string): ChtSession {
-    const parsed: { authInfo: AuthenticationInfo, sessionToken: string, username: string, facilityIds: string[] } = JSON.parse(data);
+    const parsed: { 
+      authInfo: AuthenticationInfo;
+      sessionToken: string;
+      username: string;
+      facilityIds: string[]; 
+    } = JSON.parse(data);
     return new ChtSession(parsed.authInfo, parsed.sessionToken, parsed.username, parsed.facilityIds);
   }
 
@@ -85,7 +90,8 @@ export default class ChtSession {
       .find((header: string) => header.startsWith(COUCH_AUTH_COOKIE_NAME));
   }
   
-  private static async fetchUserDetails(authInfo: AuthenticationInfo, username: string, sessionToken: string): Promise<{isAdmin: boolean, facilityId?: string[]}> {
+  private static async fetchUserDetails(authInfo: AuthenticationInfo, username: string, sessionToken: string): 
+  Promise<{isAdmin: boolean; facilityId?: string[]}> {
     // would prefer to use the _users/org.couchdb.user:username doc
     // only admins have access + GET api/v2/users returns all users and cant return just one
     const sessionUrl = ChtSession.createUrl(authInfo, `medic/org.couchdb.user:${username}`);
@@ -99,7 +105,7 @@ export default class ChtSession {
     const adminRoles = ['admin', '_admin'];
     const isAdmin = _.intersection(adminRoles, resp.data?.roles).length > 0;
     let facilityId;
-    if(typeof resp.data?.facility_id === 'string') {
+    if (typeof resp.data?.facility_id === 'string') {
       facilityId = [resp.data.facility_id];
     } else if (Array.isArray(resp.data?.facility_id)) {
       facilityId = resp.data.facility_id;
