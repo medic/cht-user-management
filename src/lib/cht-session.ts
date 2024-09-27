@@ -15,14 +15,14 @@ axiosRetry(axios, axiosRetryConfig);
 export default class ChtSession {
   public readonly authInfo: AuthenticationInfo;
   public readonly username: string;
-  public readonly facilityId: string;
+  public readonly facilityIds: string[];
   public readonly axiosInstance: AxiosInstance;
   public readonly sessionToken: string;
 
-  private constructor(authInfo: AuthenticationInfo, sessionToken: string, username: string, facilityId: string) {
+  private constructor(authInfo: AuthenticationInfo, sessionToken: string, username: string, facilityIds: string[]) {
     this.authInfo = authInfo;
     this.username = username;
-    this.facilityId = facilityId;
+    this.facilityIds = facilityIds;
     this.sessionToken = sessionToken;
     
     this.axiosInstance = axios.create({
@@ -30,8 +30,7 @@ export default class ChtSession {
       headers: { Cookie: sessionToken },
     });
     axiosRetry(this.axiosInstance, axiosRetryConfig);
-
-    if (!this.sessionToken || !this.authInfo.domain || !this.username || !this.facilityId) {
+    if (!this.sessionToken || !this.authInfo.domain || !this.username || this.facilityIds.length === 0) {
       throw new Error('invalid CHT session information');
     }
   }
@@ -44,25 +43,30 @@ export default class ChtSession {
     }
     
     const userDetails = await ChtSession.fetchUserDetails(authInfo, username, sessionToken);
-    const facilityId = userDetails.isAdmin ? ADMIN_FACILITY_ID : userDetails.facilityId;
-    if (!facilityId) {
+    const facilityIds = userDetails.isAdmin ? [ADMIN_FACILITY_ID] : userDetails.facilityId;
+    if (!facilityIds || facilityIds?.length === 0) {
       throw Error(`User ${username} does not have a facility_id connected to their user doc`);
     }
     
-    return new ChtSession(authInfo, sessionToken, username, facilityId);
+    return new ChtSession(authInfo, sessionToken, username, facilityIds);
   }
 
   public static createFromDataString(data: string): ChtSession {
-    const parsed:any = JSON.parse(data);
-    return new ChtSession(parsed.authInfo, parsed.sessionToken, parsed.username, parsed.facilityId);
+    const parsed: { 
+      authInfo: AuthenticationInfo;
+      sessionToken: string;
+      username: string;
+      facilityIds: string[]; 
+    } = JSON.parse(data);
+    return new ChtSession(parsed.authInfo, parsed.sessionToken, parsed.username, parsed.facilityIds);
   }
 
   isPlaceAuthorized(remotePlace: RemotePlace): boolean {
-    return !!this.facilityId &&
+    return this.facilityIds?.length > 0 &&
       (
-        this.facilityId === ADMIN_FACILITY_ID 
-        || remotePlace?.lineage?.includes(this.facilityId)
-        || remotePlace?.id === this.facilityId
+        this.facilityIds.includes(ADMIN_FACILITY_ID) 
+        || _.intersection(remotePlace?.lineage, this.facilityIds).length > 0
+        || this.facilityIds.includes(remotePlace?.id)
       );
   }
 
@@ -86,7 +90,8 @@ export default class ChtSession {
       .find((header: string) => header.startsWith(COUCH_AUTH_COOKIE_NAME));
   }
   
-  private static async fetchUserDetails(authInfo: AuthenticationInfo, username: string, sessionToken: string) {
+  private static async fetchUserDetails(authInfo: AuthenticationInfo, username: string, sessionToken: string): 
+  Promise<{isAdmin: boolean; facilityId?: string[]}> {
     // would prefer to use the _users/org.couchdb.user:username doc
     // only admins have access + GET api/v2/users returns all users and cant return just one
     const sessionUrl = ChtSession.createUrl(authInfo, `medic/org.couchdb.user:${username}`);
@@ -99,10 +104,13 @@ export default class ChtSession {
   
     const adminRoles = ['admin', '_admin'];
     const isAdmin = _.intersection(adminRoles, resp.data?.roles).length > 0;
-    return {
-      isAdmin,
-      facilityId: resp.data?.facility_id,
-    };
+    let facilityId;
+    if (typeof resp.data?.facility_id === 'string') {
+      facilityId = [resp.data.facility_id];
+    } else if (Array.isArray(resp.data?.facility_id)) {
+      facilityId = resp.data.facility_id;
+    }
+    return { isAdmin, facilityId };
   }
   
   private static createUrl(authInfo: AuthenticationInfo, path: string) {
