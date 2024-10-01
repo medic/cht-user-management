@@ -1,0 +1,397 @@
+
+{
+  "domains": [
+    {
+      "friendly": "MoH Mali CHW DEV",
+      "domain": "moh-mali-chw2.dev.medicmobile.org"
+    },
+    {
+      "friendly": "MoH Mali CHW UAT",
+      "domain": "moh-mali-chw3.dev.medicmobile.org"
+    },
+    {
+      "friendly": "MoH Mali CHW PROD",
+      "domain": "disc-mali.ml"
+    }
+  ],
+  "contact_types": [
+    {
+      "name": "c40_health_area",
+      "friendly": "Health Area",
+      "contact_type": "c42_health_area",
+      "user_role": ["dtc", "manager_stock"],
+      "username_from_place": false,
+      "deactivate_users_on_replace": false,
+      "hierarchy": [
+        {
+          "friendly_name": "District",
+          "property_name": "district",
+          "contact_type": "c30_district",
+          "type": "name",
+          "required": true,
+          "level": 1
+        }
+      ],
+      "replacement_property": {
+        "friendly_name": "Affected Health Area",
+        "property_name": "replacement",
+        "type": "string",
+        "parameter": ["\\(*Area*\\)"],
+        "required": true
+      },
+      "place_properties": [
+        {
+          "friendly_name": "Health Area Name",
+          "property_name": "name",
+          "type": "string",
+          "parameter": ["\\(*Area*\\)"],
+          "required": true,
+          "hint": "Name of the Health Area"
+        }
+      ],
+      "contact_properties": [
+        {
+          "friendly_name": "First name",
+          "property_name": "first_name",
+          "type": "string",
+          "parameter": ["\\(*First*\\)"],
+          "required": true,
+          "hint": "First name of the primary contact"
+        },
+        {
+          "friendly_name": "Last name",
+          "property_name": "last_name",
+          "type": "string",
+          "parameter": ["\\(*Last*\\)"],
+          "required": true,
+          "hint": "Last name of the primary contact"
+        },
+        {
+          "friendly_name": "Full Name",
+          "property_name": "name",
+          "type": "generated",
+          "parameter": "{{ contact.first_name }} {{ contact.last_name }}",
+          "required": false
+        },
+        {
+          "friendly_name": "Phone Number",
+          "property_name": "phone",
+          "type": "regex",
+          "parameter": "^(\\d{2}\\s?){4}$",
+          "required": true,
+          "hint": "Phone number of the primary contact"
+        },
+        {
+          "friendly_name": "Type of user",
+          "property_name": "role",
+          "type": "select_one",
+          "parameter": {
+            "dtc": "DTC",
+            "manager_stock": "Stock Manager"
+          },
+          "required": true,
+          "hint": "Type of user associated to the primary contact (dtc / manager_stock)"
+        },
+        {
+          "friendly_name": "Membership Structure",
+          "property_name": "membership_structure",
+          "type": "string",
+          "parameter": ["\\(STRUCTURE[ -]NAME\\)"],
+          "required": true,
+          "hint": "Membership Structure of the primary contact"
+        }
+      ]
+    },
+    {
+      "name": "c50_supervision_area",
+      "friendly": "Supervision Area",
+      "contact_type": "c52_supervisor",
+      "user_role": ["supervisor", "oca_supervisor"],
+      "username_from_place": false,
+      "deactivate_users_on_replace": false,
+      "hierarchy": [
+        {
+          "friendly_name": "Health Area",
+          "property_name": "health_area",
+          "contact_type": "c40_health_area",
+          "type": "name",
+          "required": true,
+          "level": 1
+        }
+      ],
+      "replacement_property": {
+        "friendly_name": "Affected Supervision Area",
+        "property_name": "replacement",
+        "type": "string",
+        "parameter": ["\\(*Area*\\)"],
+        "required": true
+      },
+      "place_properties": [
+        {
+          "friendly_name": "Supervision Area Name",
+          "property_name": "name",
+          "type": "string",
+          "parameter": ["\\(*Area*\\)"],
+          "required": true,
+          "hint": "Name of the Supervision Area"
+        }
+      ],
+      "contact_properties": [
+        {
+          "friendly_name": "First name",
+          "property_name": "first_name",
+          "type": "string",
+          "parameter": ["\\(*First*\\)"],
+          "required": true,
+          "hint": "First name of the primary contact"
+        },
+        {
+          "friendly_name": "Last name",
+          "property_name": "last_name",
+          "type": "string",
+          "parameter": ["\\(*Last*\\)"],
+          "required": true,
+          "hint": "Last name of the primary contact"
+        },
+        {
+          "friendly_name": "Full Name",
+          "property_name": "name",
+          "type": "generated",
+          "parameter": "{{ contact.first_name }} {{ contact.last_name }}",
+          "required": false
+        },
+        {
+          "friendly_name": "Phone Number",
+          "property_name": "phone",
+          "type": "regex",
+          "parameter": "^(\\d{2}\\s?){4}$",
+          "required": true,
+          "hint": "Phone number of the primary contact"
+        },
+        {
+          "friendly_name": "Type of user",
+          "property_name": "role",
+          "type": "select_one",
+          "parameter": {
+            "supervisor": "Supervisor",
+            "oca_supervisor": "ADC (OCA Coach)"
+          },
+          "required": true,
+          "hint": "Type of user associated to the primary contact (supervisor / oca_supervisor)"
+        }
+      ]
+    },
+    {
+      "name": "c60_chw_site",
+      "friendly": "CHW Site",
+      "contact_type": "c62_chw",
+      "user_role": ["chw"],
+      "username_from_place": false,
+      "deactivate_users_on_replace": false,
+      "hierarchy": [
+        {
+          "friendly_name": "Supervision area",
+          "property_name": "supervision_area",
+          "contact_type": "c50_supervision_area",
+          "type": "name",
+          "required": true,
+          "level": 1
+        }
+      ],
+      "replacement_property": {
+        "friendly_name": "Affected CHW Site",
+        "property_name": "replacement",
+        "type": "string",
+        "parameter": ["\\(*Site*\\)"],
+        "required": true
+      },
+      "place_properties": [
+        {
+          "friendly_name": "CHW Site Name",
+          "property_name": "name",
+          "type": "string",
+          "parameter": ["\\(*Site*\\)"],
+          "required": true,
+          "hint": "Name of the CHW Site"
+        }
+      ],
+      "contact_properties": [
+        {
+          "friendly_name": "First name",
+          "property_name": "first_name",
+          "type": "string",
+          "parameter": ["\\(*First*\\)"],
+          "required": true,
+          "hint": "First name of the primary contact"
+        },
+        {
+          "friendly_name": "Last name",
+          "property_name": "last_name",
+          "type": "string",
+          "parameter": ["\\(*Last*\\)"],
+          "required": true,
+          "hint": "Last name of the primary contact"
+        },
+        {
+          "friendly_name": "Full Name",
+          "property_name": "name",
+          "type": "generated",
+          "parameter": "{{ contact.first_name }} {{ contact.last_name }}",
+          "required": false
+        },
+        {
+          "friendly_name": "Site category",
+          "property_name": "site_category",
+          "type": "select_one",
+          "parameter": {
+            "existing": "Existing",
+            "unexisting": "Unexisting"
+          },
+          "required": true,
+          "hint": "Site category of the primary contact (existing, unexisting)"
+        },
+        {
+          "friendly_name": "Type of user",
+          "property_name": "role",
+          "type": "select_one",
+          "parameter": {
+            "chw": "chw"
+          },
+          "required": true,
+          "hint": "Type of user associated to the primary contact ('chw' only allowed here)"
+        },
+        {
+          "friendly_name": "Gender",
+          "property_name": "sex",
+          "type": "select_one",
+          "parameter": {
+            "male": "Masculin",
+            "female": "Feminin"
+          },
+          "required": true,
+          "hint": "Gender of the primary contact"
+        },
+        {
+          "friendly_name": "Phone Number",
+          "property_name": "phone",
+          "type": "regex",
+          "parameter": "^(\\d{2}\\s?){4}$",
+          "required": true,
+          "hint": "Phone number of the primary contact"
+        },
+        {
+          "friendly_name": "Geolocalized",
+          "property_name": "geolocalized",
+          "type": "select_one",
+          "parameter": {
+            "true": "Yes",
+            "false": "No"
+          },
+          "required": true,
+          "hint": "Has been geolocated? (true / false)"
+        }
+      ]
+    },
+    {
+      "name": "c70_village",
+      "friendly": "Village",
+      "contact_type": "c72_village",
+      "user_role": ["oca", "cvs", "savings", "wash_comity"],
+      "username_from_place": false,
+      "deactivate_users_on_replace": false,
+      "hierarchy": [
+        {
+          "friendly_name": "CHW Site",
+          "property_name": "chw_site",
+          "contact_type": "c60_chw_site",
+          "type": "name",
+          "required": true,
+          "level": 1
+        }
+      ],
+      "replacement_property": {
+        "friendly_name": "Affected Village",
+        "property_name": "replacement",
+        "type": "string",
+        "parameter": ["\\(*Village*\\)"],
+        "required": true
+      },
+      "place_properties": [
+        {
+          "friendly_name": "Village Name",
+          "property_name": "name",
+          "type": "string",
+          "parameter": ["\\(*Village*\\)"],
+          "required": true,
+          "hint": "Name of the Village"
+        }
+      ],
+      "contact_properties": [
+        {
+          "friendly_name": "First name",
+          "property_name": "first_name",
+          "type": "string",
+          "parameter": ["\\(*First*\\)"],
+          "required": true,
+          "hint": "First name of the primary contact"
+        },
+        {
+          "friendly_name": "Last name",
+          "property_name": "last_name",
+          "type": "string",
+          "parameter": ["\\(*Last*\\)"],
+          "required": true,
+          "hint": "Last name of the primary contact"
+        },
+        {
+          "friendly_name": "Full Name",
+          "property_name": "name",
+          "type": "generated",
+          "parameter": "{{ contact.first_name }} {{ contact.last_name }}",
+          "required": false
+        },
+        {
+          "friendly_name": "Gender",
+          "property_name": "sex",
+          "type": "select_one",
+          "parameter": {
+            "male": "Masculin",
+            "female": "Feminin"
+          },
+          "required": true,
+          "hint": "Gender of the primary contact"
+        },
+        {
+          "friendly_name": "Phone Number",
+          "property_name": "phone",
+          "type": "regex",
+          "parameter": "^(\\d{2}\\s?){4}$",
+          "required": true,
+          "hint": "Phone number of the primary contact"
+        },
+        {
+          "friendly_name": "Out of Area",
+          "property_name": "out_chw_area",
+          "type": "select_one",
+          "parameter": {
+            "true": "Yes",
+            "false": "No"
+          },
+          "required": true,
+          "hint": "Out of CHW Area ? (true / false)"
+        },
+        {
+          "friendly_name": "Type of user",
+          "property_name": "role",
+          "type": "select_one",
+          "parameter": {
+            "village_head": "Village Head"
+          },
+          "required": true,
+          "hint": "Type of user associated to the primary contact ('village_head' only allowed here)"
+        }
+      ]
+    }
+  ],
+"logoBase64": "data:image/png;base64,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"
+}
