@@ -30,6 +30,7 @@ export const mockPlace = (type: ContactType, prop: any) : Place => {
 export const mockChtApi: ChtApi = (first: RemotePlace[] = [], second: RemotePlace[] = []) => ({
   chtSession: mockChtSession(),
   getPlacesWithType: Sinon.stub().resolves(first).onSecondCall().resolves(second),
+  getDoc: Sinon.stub().resolves({ _id: 'lineage', name: `Parent Place` })
 });
 
 export const mockSimpleContactType = (

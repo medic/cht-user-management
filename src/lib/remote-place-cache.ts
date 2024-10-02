@@ -41,13 +41,35 @@ export default class RemotePlaceCache {
 
     const places = domainCache[domain]?.[placeType];
     if (!places) {
-      const fetchPlacesWithType = chtApi.getPlacesWithType(placeType);
+      const fetchPlacesWithType = await chtApi.getPlacesWithType(placeType);
+
+      const fetchPlacesImmediateParentName = 
+        await RemotePlaceCache.getPlaceParentName(chtApi, fetchPlacesWithType);
+    
       domainCache[domain] = {
         ...domainCache[domain],
-        [placeType]: await fetchPlacesWithType,
+        [placeType]: fetchPlacesImmediateParentName,
       };
     }
-
     return domainCache[domain][placeType];
+  }
+
+  private static async getPlaceParentName(chtApi: ChtApi, places: RemotePlace[])
+    : Promise<RemotePlace[]> {
+    const immediateLineages = [...new Set(places.map(place => place.lineage[0]))];
+
+    const lineageDetails = await Promise.all(
+      immediateLineages.map(lineage => chtApi.getDoc(lineage))
+    );
+
+    const lineageMap = new Map(lineageDetails.map(doc => [doc._id, doc]));
+
+    places.forEach(place => {
+      const immediateLineage = place.lineage[0];
+      const foundLineage = lineageMap.get(immediateLineage);
+      place.immediateParentName = foundLineage ? foundLineage.name : '';
+    });
+
+    return places;
   }
 }
