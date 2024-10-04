@@ -26,7 +26,7 @@ const mockSessionResponse = (headers: Array<string> = ['AuthSession=123']) => ({
 const mockUserFacilityDoc = (facilityId: string = 'parent-id', roles:string[] = []) => ({
   data: {
     roles,
-    facility_id: facilityId,
+    facility_id: !facilityId ? undefined : facilityId,
   }
 });
 
