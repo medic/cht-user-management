@@ -7,8 +7,7 @@ const { spawn } = require('child_process');
 const {
   ECR_REPO,
   BRANCH,
-  BUILD_NUMBER,
-  SERVICE = 'cht-user-management'
+  BUILD_NUMBER
 } = process.env;
 
 const getBranchVersions = () => {
@@ -21,17 +20,17 @@ const getRepo = () => {
   return ECR_REPO || 'medicmobile';
 };
 
-const getVersions = () => {
+const getVersions = (release) => {
   if (BRANCH) {
-    return getBranchVersions();
+    return getBranchVersions(release);
   }
   return [`${packageJson.version}-dev.${buildTime}`];
 };
 
-const getImageTags = (serviceName) => {
+const getImageTags = () => {
   const versions = getVersions();
   const tags = versions.map(version => version.replace(/\/|_/g, '-'));
-  return tags.map(tag => `${getRepo()}/${serviceName}:${tag}`);
+  return tags.map(tag => `${getRepo()}/cht-user-management:${tag}`);
 };
 
 const dockerCommand = (args) => {
@@ -62,24 +61,13 @@ const dockerCommand = (args) => {
 };
 
 (async () => {
-  let dockerfilePath;
-  let serviceName;
-
-  if (SERVICE === 'cht-user-management-worker') {
-    dockerfilePath = 'Dockerfile.worker';
-    serviceName = 'cht-user-management-worker';
-  } else {
-    dockerfilePath = 'Dockerfile';
-    serviceName = 'cht-user-management';
-  }
-
-  const tags = getImageTags(serviceName);
-  const fullDockerfilePath = path.join(__dirname, '..', dockerfilePath);
+  const tags = getImageTags();
+  const dockerfilePath = path.join(__dirname, '..', 'Dockerfile');
   const tagFlags = tags.map(tag => ['-t', tag]).flat();
   const dockerBuildParams = [
     'build',
     '-f',
-    fullDockerfilePath,
+    dockerfilePath,
     ...tagFlags,
     '.'
   ];

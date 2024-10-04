@@ -1,40 +1,13 @@
-services:
-  redis:
-    image: redis:6.2-alpine
-    restart: always
-    volumes:
-      - redis-data:/data
+version: '3.7'
 
+services:
   cht-user-management:
-    image: ${CHT_USER_MANAGEMENT_IMAGE:-public.ecr.aws/medic/cht-user-management:latest}
+    image: public.ecr.aws/medic/cht-user-management:latest
     environment:
-      - NODE_ENV=${NODE_ENV:-production}
       - EXTERNAL_PORT=${EXTERNAL_PORT:-3000}
       - COOKIE_PRIVATE_KEY=${COOKIE_PRIVATE_KEY}
-      - WORKER_PRIVATE_KEY=${WORKER_PRIVATE_KEY}
       - CONFIG_NAME=${CONFIG_NAME}
-      - CHT_DEV_HTTP=${CHT_DEV_HTTP}
-      - CHT_DEV_URL_PORT=${CHT_DEV_URL_PORT}
-      - REDIS_HOST=${REDIS_HOST:-redis}
-      - REDIS_PORT=${REDIS_PORT:-6379}
     ports:
       - '${EXTERNAL_PORT-3000}:${PORT:-3000}'
     restart: always
     command: npm start
-    depends_on:
-      - redis
-
-  cht-user-management-worker:
-    image: ${CHT_USER_MANAGEMENT_WORKER_IMAGE:-public.ecr.aws/medic/cht-user-management-worker:latest}
-    restart: always
-    command: npm run start:worker
-    environment:
-      - NODE_ENV=${NODE_ENV:-production}
-      - REDIS_HOST=${REDIS_HOST:-redis}
-      - REDIS_PORT=${REDIS_PORT:-6379}
-      - WORKER_PRIVATE_KEY=${WORKER_PRIVATE_KEY}
-    depends_on:
-      - redis
-
-volumes:
-  redis-data:

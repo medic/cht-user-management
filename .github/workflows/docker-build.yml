@@ -39,9 +39,4 @@ jobs:
         uses: actions/setup-node@v1
         with:
           node-version: 20.x
-
-      - name: Build and push cht-user-management image
-        run: npm run publish:cht-user-management
-
-      - name: Build and push cht-user-management-worker image
-        run: npm run publish:cht-user-management-worker
+      - run: npm run publish

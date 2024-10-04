@@ -1,10 +1,8 @@
 {
   "name": "cht-user-management",
-  "version": "1.4.1",
+  "version": "1.3.20",
   "main": "dist/index.js",
   "dependencies": {
-    "@bull-board/api": "^5.17.0",
-    "@bull-board/fastify": "^5.17.0",
     "@fastify/autoload": "^5.8.0",
     "@fastify/compress": "^7.0.3",
     "@fastify/cookie": "^9.2.0",
@@ -21,15 +19,12 @@
     "@types/uuid": "^9.0.6",
     "axios": "^1.5.1",
     "axios-retry": "^4.0.0",
-    "bullmq": "^5.7.6",
-    "cht-conf": "^3.23.0",
     "csv": "^6.3.5",
     "dotenv": "^16.3.1",
     "fastify": "^4.27.0",
     "fastify-metrics": "^11.0.0",
     "fastify-sse-v2": "^3.1.2",
     "html-minifier": "^4.0.0",
-    "ioredis": "^5.4.1",
     "jsonwebtoken": "^9.0.2",
     "jszip": "^3.10.1",
     "libphonenumber-js": "^1.10.48",
@@ -37,7 +32,6 @@
     "lodash": "^4.17.21",
     "luxon": "^3.4.4",
     "pino-pretty": "^10.2.3",
-    "ts-node": "^10.9.2",
     "typescript": "^5.2.2",
     "uuid": "^9.0.1"
   },
@@ -66,18 +60,12 @@
   },
   "scripts": {
     "cp-package-json": "cp package.json ./src",
-    "test": "npx ts-mocha test/{,**}/*.spec.ts --exclude test/integration/{,**}/*.spec.ts",
+    "test": "npx ts-mocha test/{,**}/*.spec.ts",
     "build": "npm run cp-package-json && npx tsc",
     "lint": "npx eslint --color --cache .",
     "start": "node dist/index.js",
     "dev": "tsc-watch --onSuccess \"node dist/index.js\"",
-    "publish:cht-user-management": "SERVICE=cht-user-management node scripts/publish.js",
-    "publish:cht-user-management-worker": "SERVICE=cht-user-management-worker node scripts/publish.js",
-    "publish": "npm run publish:cht-user-management && npm run publish:cht-user-management-worker",
-    "start:worker": "node dist/worker/main.js",
-    "docker-start-redis": "npm run docker-stop-redis && docker run -d --rm --name test-redis -p 6363:6379 redis && sh test/scripts/wait_for_redis.sh 6363",
-    "docker-stop-redis": "docker stop test-redis || true",
-    "integration-test": "npm run docker-start-redis && npx ts-mocha test/integration/{,**}/*.spec.ts && npm run docker-stop-redis"
+    "publish": "node scripts/publish.js"
   },
   "repository": {
     "type": "git",
