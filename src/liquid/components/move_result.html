@@ -9,12 +9,12 @@
   </ul>
   <ul>
     <li><span class="tag is-success" style="margin: 0 10px;">After</span></li>
+    <li><span style="margin: 0 10px;">{{ fromLineage.first.name }}</span></li>
     {% for lineage in toLineage %}
     {% if lineage %}
       <li><a href="https://{{ session.authInfo.domain }}/#/contacts/{{ lineage.id}}">{{ lineage.name }}</a></li>
     {% endif %}
     {% endfor %}
-    <li><span style="margin: 0 10px;">{{ fromLineage.last.name }}</span></li>
   </ul>
 </nav>
 

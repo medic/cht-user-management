@@ -1,9 +1,8 @@
-version: '3.7'
-
 services:
   cht-user-management:
     image: public.ecr.aws/medic/cht-user-management:latest
     environment:
+      - NODE_ENV=${NODE_ENV:-production}
       - EXTERNAL_PORT=${EXTERNAL_PORT:-3000}
       - COOKIE_PRIVATE_KEY=${COOKIE_PRIVATE_KEY}
       - CONFIG_NAME=${CONFIG_NAME}

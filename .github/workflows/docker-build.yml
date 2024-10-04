@@ -2,7 +2,7 @@ name: Docker build and publish
 
 on:
   push:
-    branches: main
+    branches: main_without_move_contact_feature
 
 env:
   ECR_REPO: 'public.ecr.aws/s5s3h4s7'
