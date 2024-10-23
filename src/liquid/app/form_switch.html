@@ -11,7 +11,12 @@
   <section class="hero is-small">
     <div class="hero-body">
       <p class="title">
-        {{header_caption}} {{contactType.contact_friendly | default: contactType.friendly }}
+        {{header_caption}} 
+        {% if op == "replace" %}
+          {{contactType.contact_friendly | default: contactType.friendly }}
+        {% else %}
+          {{contactType.friendly}}
+        {% endif %}
       </p>
     </div>
   </section>
