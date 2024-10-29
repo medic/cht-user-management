@@ -173,6 +173,21 @@ export class ChtApi {
     return { parent, sibling };
   };
 
+  contactByType = async (placeType: string, property: string, value: string): Promise<{ name: String; parent: String }[]> => {
+    const url = `medic/_design/medic-client/_view/contacts_by_type_freetext`;
+    const params = {
+      include_docs: true,
+      key: JSON.stringify([placeType, property + ':' + value.toLowerCase()])
+    };
+    const resp = await this.axiosInstance.get(url, { params });
+    return resp.data.rows.map((row: any) => {
+      return {
+        name: row.doc.name,
+        parent: row.doc.parent?._id
+      };
+    });
+  };
+
   getPlacesWithType = async (placeType: string)
     : Promise<RemotePlace[]> => {
     const url = `medic/_design/medic-client/_view/contacts_by_type_freetext`;
