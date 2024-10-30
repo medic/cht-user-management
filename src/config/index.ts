@@ -26,6 +26,7 @@ export type ContactType = {
   contact_properties: ContactProperty[];
   deactivate_users_on_replace: boolean;
   hint?: string;
+  superset?: SupersetConfig;
 };
 
 export type HierarchyConstraint = {
@@ -54,6 +55,20 @@ export type AuthenticationInfo = {
   domain: string;
   useHttp?: boolean;
 };
+
+export type SupersetConfig = {
+  prefix: string;
+  role_template: string;
+  rls_template: string;
+  rls_group_key: string;
+  integration_mode_property: string; // New property to define the integration mode in the contact propery
+};
+
+export enum SupersetMode {
+  BOTH = 'both',
+  CHT_ONLY = 'cht_only',
+  SUP_ONLY = 'sup_only',
+}
 
 const {
   CONFIG_NAME,
@@ -159,6 +174,23 @@ export class Config {
     const requiredHierarchy = contactType.hierarchy.filter(h => h.required);
     const requiredUserRole = Config.hasMultipleRoles(contactType) ? [Config.getUserRoleConfig(contactType)] : [];
 
+    // Early detect email contact property presence if the contact type has superset enabled
+    if (contactType.superset) {
+      const emailProperty = contactType.contact_properties.find(p => p.property_name === 'email');
+      if (!emailProperty) {
+        throw new Error(
+          `It looks like the contact type "${contactType.name}" has Superset integration enabled` +
+          `but missing the required "email" contact property. Please ensure 'email' is included` +
+          `to avoid issues with Superset integration later on.`
+        );
+      }
+
+      // Add 'email' to the list of required contact properties if it's not already required
+      if (!emailProperty.required) {
+        requiredContactProps.push({ ...emailProperty, required: true });
+      }
+    }
+
     return [
       ...requiredHierarchy,
       ...requiredContactProps,
@@ -203,5 +235,38 @@ export class Config {
       ...(Config.hasMultipleRoles(placeTypeConfig) ? [userRoleConfig.friendly_name] : []),
     ]);
     return columns;
+  }
+
+  public static getSupersetBaseUrl(): string {
+    return `${Config.getSupersetConfigValue('SUPERSET_BASE_URL')}`;
+  }
+
+  public static getSupersetCredentials(): { username: string; password: string } {
+    return {
+      username: Config.getSupersetConfigValue('SUPERSET_ADMIN_USERNAME'),
+      password: Config.getSupersetConfigValue('SUPERSET_ADMIN_PASSWORD'),
+    };
+  }
+
+  private static getSupersetConfigValue(envVar: string): string {
+    if (!this.isSupersetEnabled()) {
+      // Superset is not enabled for this contact type, return an empty string (or skip the integration)
+      return '';
+    }
+
+    const envValue = process.env[envVar];
+    if (!envValue) {
+      throw new Error(`Superset ${envVar} is not set in the environment variables.`);
+    }
+
+    return envValue;
+  }
+
+  // Helper function to check if Superset is enabled for the current contact type
+  private static isSupersetEnabled(): boolean {
+    const anyContactTypeWithSuperset = config.contact_types.find(
+      (contactType) => contactType.superset !== undefined
+    );
+    return !!anyContactTypeWithSuperset && !!anyContactTypeWithSuperset.superset;
   }
 }

@@ -13,6 +13,7 @@ import ValidatorSelectMultiple from './validator-select-multiple';
 import ValidatorSelectOne from './validator-select-one';
 import ValidatorSkip from './validator-skip';
 import ValidatorString from './validator-string';
+import ValidatorSelectSupersetMode from './validator-select-superset-mode';
 
 export type ValidationError = {
   property_name: string;
@@ -39,6 +40,7 @@ const TypeValidatorMap: ValidatorMap = {
   string: new ValidatorString(),
   select_one: new ValidatorSelectOne(),
   select_multiple: new ValidatorSelectMultiple(),
+  select_superset_mode: new ValidatorSelectSupersetMode(),
 };
 
 export class Validation {

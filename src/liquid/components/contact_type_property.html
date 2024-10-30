@@ -21,7 +21,7 @@
       %}
     {% else %}
       <div class="control">
-        {% if include.prop.type == 'select_one' or include.prop.type == 'select_multiple' %}
+        {% if include.prop.type == 'select_one' or include.prop.type == 'select_multiple' or include.prop.type == 'select_superset_mode' %}
           {%
             include "components/contact_type_select.html"
               prop_name=prop_name
