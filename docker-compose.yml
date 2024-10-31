@@ -9,7 +9,7 @@ services:
     image: ${CHT_USER_MANAGEMENT_IMAGE:-public.ecr.aws/medic/cht-user-management:latest}
     environment:
       - NODE_ENV=${NODE_ENV:-production}
-      - EXTERNAL_PORT=${EXTERNAL_PORT:-3000}
+      - EXTERNAL_PORT=${EXTERNAL_PORT:-3500}
       - COOKIE_PRIVATE_KEY=${COOKIE_PRIVATE_KEY}
       - WORKER_PRIVATE_KEY=${WORKER_PRIVATE_KEY}
       - CONFIG_NAME=${CONFIG_NAME}
@@ -18,7 +18,7 @@ services:
       - REDIS_HOST=${REDIS_HOST:-redis}
       - REDIS_PORT=${REDIS_PORT:-6379}
     ports:
-      - '${EXTERNAL_PORT-3000}:${PORT:-3000}'
+      - '${EXTERNAL_PORT-3500}:${PORT:-3500}'
     restart: always
     command: npm start
     depends_on:
