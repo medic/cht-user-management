@@ -27,15 +27,18 @@ As each deployment needs its own configuration directory, DNS entry and deployme
 | MoH Uganda | `users-chis-ug`| `users-chis-ug.yaml` | `users-chis-ug-cht-user-management` | users-chis-ug.app.medicmobile.org | 
 | MoH Mali CIV | `users-chis-civ`| `users-chis-civ.yaml` | `users-chis-civ-cht-user-management` | users-chis-civ.app.medicmobile.org | 
 
-### `helm` commands
+### Prepare a Deployment
 
-The `helm upgrade` and `helm install` commands should be run in the `./scripts/deploy` directory in this repo.
+To prepare a deployment, use the following steps to ensure your environment is properly configured.
+The `helm install` and `helm upgrade` commands should be run in the `./scripts/deploy` directory in this repo.
 
 1. Check the image is [published](https://github.com/medic/cht-user-management/tree/main#publishing-new-docker-images) to [ECR](https://gallery.ecr.aws/medic/cht-user-management) 
-2. Commit a values YAML file in [values folder](https://github.com/medic/cht-user-management/blob/main/scripts/deploy/values/) in `main` branch
-3. Switch to the `deploy` branch and ensure the same values file from the prior step is in the [values folder](https://github.com/medic/cht-user-management/blob/deploy/scripts/deploy/values/) in `deploy` branch
-4. Edit the version in the `tag:` as the version you want deploy in the `helm` command below. Ensure this version in the `tag:` is commmited to `deploy` branch
-5. run either `helm install...` or `helm deploy...` per the full commands below. 
+2. Update the `tag:` in the respective `values.yaml` file located in the [values folder](https://github.com/medic/cht-user-management/blob/main/scripts/deploy/values/) to match the version you wish to deploy.
+3. Ensure your local system has the latest charts by running:
+```bash
+helm repo update medic
+```
+4. Run either `helm install...` or `helm upgrade...` per the full commands below. (commands should be run in the `./scripts/deploy` directory in this repo)
 
 #### Install (only once!)
 
@@ -60,6 +63,9 @@ helm upgrade \
       --values values/$VALUES \
       $CONFIG medic/cht-user-management
 ```
+
+> [!NOTE]
+> If you encounter issues, you may need to first delete existing helm values and then reinstall with the new values, as outlined in this [section](#delete-existing-values-in-order-to-redeploy).
 
 ### How to
 
@@ -109,4 +115,20 @@ _You can replace `deploy/x` with for example `pods/y` from the get all command a
 ```shell
 kubectl --context arn:aws:eks:eu-west-2:720541322708:cluster/prod-cht-eks \
       --namespace users-chis-prod describe deploy/$EKS-DEPLOYMENT
+```
+
+#### Delete existing values in order to redeploy
+
+  1. Delete existing values if encountering issues
+```shell
+helm --namespace users-chis-prod users-chis-prod delete $CONFIG
+```
+
+  2. Reinstall with updated values
+```shell
+helm install \
+      --kube-context arn:aws:eks:eu-west-2:720541322708:cluster/prod-cht-eks \
+      --namespace users-chis-prod \
+      --values values/$VALUES \
+      $CONFIG medic/cht-user-management
 ```
