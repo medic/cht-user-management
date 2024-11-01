@@ -167,7 +167,7 @@ Variable | Description | Sample
 `CHT_DEV_URL_PORT` | CHT instance when in `NODE_ENV===dev`. Needs URL and port | `192-168-1-26.local-ip.medicmobile.org:10463`
 `CHT_DEV_HTTP` |  'false' for http  'true' for https | `false`
 `REDIS_HOST` | Redis server hostname use 'redis' for docker | `redis`
-`REDIS_PORT` | Redis server port | `6378`
+`REDIS_PORT` | Redis server port | `6379`
 `CHT_USER_MANAGEMENT_IMAGE` | docker image for cht-user-management service (local development), leave empty to use published one | `cht-user-management:local `
 `CHT_USER_MANAGEMENT_WORKER_IMAGE` | docker image for cht-user-management service (local development), leave empty to use published one | `cht-user-management-worker:local`
 
