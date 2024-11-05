@@ -11,7 +11,10 @@
           {% if searchResult.type == 'local' %}
             <span class="material-symbols-outlined">cloud_off</span>
           {% endif %}
-          {{searchResult.name}}
+          {{searchResult.name}} 
+          {% if searchResult.immediateParentName != '' %}
+          <b>|</b> {{searchResult.immediateParentName}}
+          {% endif %}
         </a>
       {% endfor %}
     </div>

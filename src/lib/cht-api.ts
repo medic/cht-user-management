@@ -23,6 +23,7 @@ export type RemotePlace = {
   name: string;
   lineage: string[];
   ambiguities?: RemotePlace[];
+  immediateParentName?: string;
 
   // sadly, sometimes invalid or uncreated objects "pretend" to be remote
   // should reconsider this naming
