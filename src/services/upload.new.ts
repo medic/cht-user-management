@@ -14,6 +14,12 @@ export class UploadNewPlace implements Uploader {
   };
 
   handlePlacePayload = async (place: Place, payload: PlacePayload): Promise<string> => {
+    if (place.type.dedup_property) {
+      const contacts = await this.chtApi.contactByType(payload.contact_type, place.type.dedup_property, payload[place.type.dedup_property]);
+      if (contacts.some(c => c.parent === payload.parent)) {
+        throw new Error(place.type.friendly + ` with ${place.type.dedup_property} "${payload[place.type.dedup_property]}" already exists`);
+      }
+    }
     return await this.chtApi.createPlace(payload);
   };
 

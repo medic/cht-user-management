@@ -77,6 +77,17 @@ describe('services/upload-manager.ts', () => {
     expect(chtApi.createUser.callCount).to.eq(placeCount);
     expect(places.find(p => !p.isCreated)).to.be.undefined;
   });
+  
+  it('err when creating place with duplicate name in parent place', async () => {
+    const { fakeFormData, contactType, sessionCache, chtApi } = await createMocks();
+    contactType.dedup_property = 'name';
+    const place = await PlaceFactory.createOne(fakeFormData, contactType, sessionCache, chtApi);
+    chtApi.contactByType.resolves([{ name: '', parent: place.asChtPayload('test').parent }]);
+    const uploadManager = new UploadManager();
+    await uploadManager.doUpload([place], chtApi);
+    expect(chtApi.contactByType.calledOnce).to.be.true;
+    expect(place.isCreated).to.be.false;
+  });
 
   it('required attributes can be inherited during replacement', async () => {
     const { remotePlace, sessionCache, contactType, fakeFormData, chtApi } = await createMocks();
@@ -392,6 +403,7 @@ async function createMocks() {
     updateContactParent: sinon.stub().resolves('created-contact-id'),
     createUser: sinon.stub().resolves(),
     
+    contactByType: sinon.stub().resolves([]),
     getParentAndSibling: sinon.stub().resolves({ parent: {}, sibling: {} }),
     createContact: sinon.stub().resolves('replacement-contact-id'),
     updatePlace: sinon.stub().resolves({

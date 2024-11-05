@@ -215,6 +215,7 @@
       "user_role": ["community_health_assistant"],
       "username_from_place": true,
       "deactivate_users_on_replace": false,
+      "dedup_property": "code",
       "hierarchy": [
         {
           "friendly_name": "Sub County",
@@ -287,6 +288,7 @@
       "user_role": ["community_health_volunteer"],
       "username_from_place": false,
       "deactivate_users_on_replace": false,
+      "dedup_property": "name",
       "hierarchy": [
         {
           "friendly_name": "Sub County",

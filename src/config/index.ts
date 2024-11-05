@@ -26,6 +26,7 @@ export type ContactType = {
   contact_properties: ContactProperty[];
   deactivate_users_on_replace: boolean;
   hint?: string;
+  dedup_property?: string;
 };
 
 export type HierarchyConstraint = {
