@@ -12,6 +12,12 @@ export const WorkerConfig = {
     port: Number(environment.REDIS_PORT),
   },
   moveContactQueue: 'MOVE_CONTACT_QUEUE',
+  defaultJobOptions: {
+    attempts: 3, // Max retries for a failed job
+    backoff: {
+      type: 'custom',
+    },
+  }
 };
 
 const assertRedisConfig = () => {
