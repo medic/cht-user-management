@@ -6,15 +6,19 @@ on:
   #   types:
   #     - completed
   workflow_dispatch:
-env:
-  AWS_ACCESS_KEY_ID: ${{ secrets.DEPLOY_KEY_ID }}
-  AWS_SECRET_ACCESS_KEY: ${{ secrets.DEPLOY_ACCESS_KEY }}
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     # if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
+      - name: "Configure"
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{vars.AWS_REGION}}
+          aws-access-key-id: ${{ secrets.DEPLOY_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.DEPLOY_ACCESS_KEY }}
+
       - name: install oathtool
         run: sudo apt-get install -y oathtool jq
 
@@ -22,23 +26,23 @@ jobs:
         run: |
           mfa_serial="arn:aws:iam::${{vars.AWS_ACCOUNT_NUMBER}}:mfa/gh-action"
           mfa_code=$(oathtool -b --totp ${{secrets.MFA_KEY}})
-
-          STS=$(aws sts get-session-token --region "eu-west-2" --serial-number "$mfa_serial" --token-code "$mfa_code")
-          aws configure set aws_access_key_id $(echo "$STS" | jq -r '.Credentials.AccessKeyId') --profile "${{vars.AWS_USER}}"
-          aws configure set aws_secret_access_key $(echo "$STS" | jq -r '.Credentials.SecretAccessKey') --profile "${{vars.AWS_USER}}"
-          aws configure set aws_session_token $(echo "$STS" | jq -r '.Credentials.SessionToken') --profile "${{vars.AWS_USER}}"
+          STS=$(aws sts get-session-token --region "${{vars.AWS_REGION}}" --serial-number "$mfa_serial" --token-code "$mfa_code")
+          eval `echo $STS | (jq -r '"AWS_ACCESS_KEY_ID="+.Credentials.AccessKeyId,"AWS_SECRET_ACCESS_KEY="+.Credentials.SecretAccessKey,"AWS_SESSION_TOKEN="+.Credentials.SessionToken' >> $GITHUB_ENV)`
 
       - name: Assume role
-        run: |
-          EKS=$(aws sts assume-role --region "eu-west-2" --role-arn "arn:aws:iam::${{vars.AWS_ACCOUNT_NUMBER}}:role/eks-${{vars.AWS_USER}}" --role-session-name="${{vars.AWS_USER}}-ghaction" --profile "${{vars.AWS_USER}}")
-          aws configure set aws_access_key_id $(echo "$EKS" | jq -r '.Credentials.AccessKeyId') --profile "${{vars.AWS_USER}}"
-          aws configure set aws_secret_access_key $(echo "$EKS" | jq -r '.Credentials.SecretAccessKey') --profile "${{vars.AWS_USER}}"
-          aws configure set aws_session_token $(echo "$EKS" | jq -r '.Credentials.SessionToken') --profile "${{vars.AWS_USER}}"
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{vars.AWS_REGION}}
+          aws-access-key-id: ${{ env.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ env.AWS_SESSION_TOKEN }}
+          role-skip-session-tagging: true
+          role-to-assume: "arn:aws:iam::${{vars.AWS_ACCOUNT_NUMBER}}:role/eks-${{vars.AWS_USER}}"
 
       - uses: actions/checkout@v2
 
       - name: Helm upgrade
         run: |
-          aws eks update-kubeconfig --name prod-cht-eks --region "eu-west-2"
+          aws eks update-kubeconfig --name ${{vars.CLUSTER}} --region ${{vars.AWS_REGION}}
           helm repo add medic https://docs.communityhealthtoolkit.org/helm-charts
-          helm upgrade --namespace users-chis-prod --values scripts/deploy/values/users-chis-civ.yaml users-chis-civ medic/cht-user-management
+          helm upgrade  --namespace ${{vars.NAMESPACE}} --values scripts/deploy/values/users-chis-civ.yaml users-chis-civ medic/cht-user-management
