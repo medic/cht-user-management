@@ -22,20 +22,31 @@ jobs:
       - name: install oathtool
         run: sudo apt-get install -y oathtool jq
 
-      - name: Authenticate to STS
+      - id: auth
+        name: Authenticate to STS
         run: |
           mfa_serial="arn:aws:iam::${{vars.AWS_ACCOUNT_NUMBER}}:mfa/gh-action"
           mfa_code=$(oathtool -b --totp ${{secrets.MFA_KEY}})
           STS=$(aws sts get-session-token --region "${{vars.AWS_REGION}}" --serial-number "$mfa_serial" --token-code "$mfa_code")
-          eval `echo $STS | (jq -r '"AWS_ACCESS_KEY_ID="+.Credentials.AccessKeyId,"AWS_SECRET_ACCESS_KEY="+.Credentials.SecretAccessKey,"AWS_SESSION_TOKEN="+.Credentials.SessionToken' >> $GITHUB_ENV)`
+
+          aws_access_key_id=$(echo "$STS" | jq -r '.Credentials.AccessKeyId')
+          echo "::add-mask::$aws_access_key_id"
+          aws_secret_access_key=$(echo "$STS" | jq -r '.Credentials.SecretAccessKey') 
+          echo "::add-mask::$aws_secret_access_key"
+          aws_session_token=$(echo "$STS" | jq -r '.Credentials.SessionToken') 
+          echo "::add-mask::$aws_session_token"
+
+          echo "AWS_ACCESS_KEY_ID=$aws_access_key_id" >> "$GITHUB_OUTPUT"
+          echo "AWS_SECRET_ACCESS_KEY=$aws_secret_access_key" >> "$GITHUB_OUTPUT"
+          echo "AWS_SESSION_TOKEN=$aws_session_token" >> "$GITHUB_OUTPUT"
 
       - name: Assume role
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-region: ${{vars.AWS_REGION}}
-          aws-access-key-id: ${{ env.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
-          aws-session-token: ${{ env.AWS_SESSION_TOKEN }}
+          aws-access-key-id: ${{ steps.auth.outputs.AWS_ACCESS_KEY_ID }} 
+          aws-secret-access-key: ${{ steps.auth.outputs.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ steps.auth.outputs.AWS_SESSION_TOKEN }}
           role-skip-session-tagging: true
           role-to-assume: "arn:aws:iam::${{vars.AWS_ACCOUNT_NUMBER}}:role/eks-${{vars.AWS_USER}}"
 
