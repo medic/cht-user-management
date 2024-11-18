@@ -44,7 +44,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-region: ${{vars.AWS_REGION}}
-          aws-access-key-id: ${{ steps.auth.outputs.AWS_ACCESS_KEY_ID }} 
+          aws-access-key-id: ${{ steps.auth.outputs.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ steps.auth.outputs.AWS_SECRET_ACCESS_KEY }}
           aws-session-token: ${{ steps.auth.outputs.AWS_SESSION_TOKEN }}
           role-skip-session-tagging: true
@@ -52,8 +52,19 @@ jobs:
 
       - uses: actions/checkout@v2
 
-      - name: Helm upgrade
+      - name: Update kubeconfig
         run: |
           aws eks update-kubeconfig --name ${{vars.CLUSTER}} --region ${{vars.AWS_REGION}}
           helm repo add medic https://docs.communityhealthtoolkit.org/helm-charts
-          helm upgrade  --namespace ${{vars.NAMESPACE}} --values scripts/deploy/values/users-chis-civ.yaml users-chis-civ medic/cht-user-management
+
+      - name: Upgrade users-chis-civ
+        run: |
+          helm upgrade --namespace ${{vars.NAMESPACE}} --values scripts/deploy/values/users-chis-civ.yaml users-chis-civ medic/cht-user-management
+
+      - name: Upgrade users-chis-tg
+        run: |
+          helm upgrade --namespace ${{vars.NAMESPACE}} --values scripts/deploy/values/users-chis-tg.yaml users-chis-tg medic/cht-user-management
+
+      - name: Upgrade users-chis-ke
+        run: |
+          helm upgrade --namespace ${{vars.NAMESPACE}} --values scripts/deploy/values/users-chis-ke.yaml users-chis-ke medic/cht-user-management
