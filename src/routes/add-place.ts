@@ -20,7 +20,7 @@ export default async function addPlace(fastify: FastifyInstance) {
     if (contactType.feature_flags) {
       if ((op === 'new' && !contactType.feature_flags.includes('create')) || 
       (op === 'replace' && !contactType.feature_flags.includes('replace-contact'))) {
-        resp.status(404);
+        resp.code(404).type('text/html').send('Not Found');
         return;
       }
     }
