@@ -5,6 +5,7 @@ import { RemotePlace, ChtApi } from './cht-api';
 import { Config, ContactType, HierarchyConstraint } from '../config';
 import { Validation } from './validation';
 import RemotePlaceCache from './remote-place-cache';
+import assert from 'assert';
 
 type RemotePlaceMap = { [key: string]: RemotePlace };
 
@@ -111,6 +112,7 @@ export default class RemotePlaceResolver {
 
 function getFuzzFunction(place: Place, hierarchyLevel: HierarchyConstraint, contactType: ContactType) {
   const fuzzingProperty = hierarchyLevel.level === 0 ? contactType.replacement_property : hierarchyLevel;
+  assert(fuzzingProperty);
   if (fuzzingProperty.type === 'generated') {
     throw Error(`Invalid configuration: hierarchy properties cannot be of type "generated".`);
   }

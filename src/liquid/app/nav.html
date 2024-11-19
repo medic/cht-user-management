@@ -19,12 +19,20 @@
         </a>
         <div class="navbar-dropdown">
           {% for placeType in contactTypes %}
-            <div class="navbar-item">
-              <b>{{placeType.friendly}}</b>
-            </div>
-            <a class="navbar-item" href="/add-place?type={{ placeType.name }}&op=new">Create New</a>
-            <a class="navbar-item" href="/add-place?type={{ placeType.name }}&op=replace">Replace Existing</a>
-            <a class="navbar-item" href="/add-place?type={{ placeType.name }}&op=bulk">Upload from CSV</a>  
+            {% if placeType.feature_flags == undefined or placeType.feature_flags contains "create" or placeType.feature_flags contains "replace-contact" %}
+              <div class="navbar-item">
+                <b>{{placeType.friendly}}</b>
+              </div>
+            {%endif%}
+            {% if placeType.feature_flags == undefined or placeType.feature_flags contains "create" %}
+              <a class="navbar-item" href="/add-place?type={{ placeType.name }}&op=new">Create New</a>
+            {%endif%}
+            {% if placeType.feature_flags == undefined or placeType.feature_flags contains "replace-contact" %}
+              <a class="navbar-item" href="/add-place?type={{ placeType.name }}&op=replace">Replace Existing</a>
+            {%endif%}
+            {% if placeType.feature_flags == undefined or placeType.feature_flags contains "create" %}
+              <a class="navbar-item" href="/add-place?type={{ placeType.name }}&op=bulk">Upload from CSV</a>  
+            {%endif%}
           {% endfor%}
         </div>
       </div>
@@ -35,7 +43,9 @@
         </a>
         <div class="navbar-dropdown">
           {% for placeType in contactTypes %}
-            <a class="navbar-item" href="/move/{{ placeType.name }}">Move {{placeType.friendly}}</a>
+            {% if placeType.feature_flags == undefined or placeType.feature_flags contains "move" %}
+              <a class="navbar-item" href="/move/{{ placeType.name }}">Move {{placeType.friendly}}</a>
+            {%endif%}
           {% endfor%}
         </div>
       </div>

@@ -19,13 +19,14 @@ export type ContactType = {
   contact_type: string;
   contact_friendly?: string;
   user_role: string[];
-  username_from_place: boolean;
+  username_from_place?: boolean;
   hierarchy: HierarchyConstraint[];
   replacement_property: ContactProperty;
   place_properties: ContactProperty[];
   contact_properties: ContactProperty[];
-  deactivate_users_on_replace: boolean;
+  deactivate_users_on_replace?: boolean;
   hint?: string;
+  feature_flags?: string[];
 };
 
 export type HierarchyConstraint = {

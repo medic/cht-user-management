@@ -188,7 +188,6 @@
       "friendly": "West Pokot",
       "domain": "westpokot.echis.go.ke"
     },
-
     {
       "friendly": "Staging (chis-staging.health.go.ke)",
       "domain": "chis-staging.health.go.ke"
@@ -335,6 +334,41 @@
           "parameter": "KE",
           "type": "phone",
           "required": true
+        }
+      ]
+    },
+    {
+      "name": "e_household",
+      "friendly": "Household",
+      "contact_type": "f_client",
+      "user_role": [],
+      "place_properties": [],
+      "contact_properties": [],
+      "feature_flags": [
+        "move"
+      ],
+      "replacement_property": {
+        "friendly_name": "",
+        "property_name": "replacement",
+        "type": "name",
+        "required": true
+      },
+      "hierarchy": [
+        {
+          "friendly_name": "CHU",
+          "property_name": "CHU",
+          "contact_type": "c_community_health_unit",
+          "type": "name",
+          "required": true,
+          "level": 2
+        },
+        {
+          "friendly_name": "CHP Area",
+          "property_name": "CHP",
+          "contact_type": "d_community_health_volunteer_area",
+          "type": "name",
+          "required": true,
+          "level": 1
         }
       ]
     }
