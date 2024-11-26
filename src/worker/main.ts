@@ -12,5 +12,5 @@ import { WorkerConfig, checkRedisConnection } from '../config/config-worker';
     moveContactQueue, 
     redisConnection
   );
-  console.log(`🚀 Move Contact Worker is listening`);
+  console.log(`🚀 CHT Conf Worker is listening`);
 })();

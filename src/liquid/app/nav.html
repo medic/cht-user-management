@@ -31,11 +31,11 @@
 
       <div class="navbar-item has-dropdown is-hoverable">
         <a class="navbar-link is-arrowless">
-          <span class="material-symbols-outlined">low_priority</span> Move
+          <span class="material-symbols-outlined">low_priority</span> Manage
         </a>
         <div class="navbar-dropdown">
           {% for placeType in contactTypes %}
-            <a class="navbar-item" href="/move/{{ placeType.name }}">Move {{placeType.friendly}}</a>
+            <a class="navbar-item" href="/move/{{ placeType.name }}">Manage {{placeType.friendly}}</a>
           {% endfor%}
         </div>
       </div>

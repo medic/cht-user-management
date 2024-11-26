@@ -167,7 +167,7 @@ export class ChtConfWorker {
         if (code === 0) {
           resolve();
         }
-        reject(new Error(`Move contact command exited with code ${code}. Last output: ${lastOutput}`));
+        reject(new Error(`CHT command exited with code ${code}. Last output: ${lastOutput}`));
       });
 
       chtProcess.on('error', error => {
