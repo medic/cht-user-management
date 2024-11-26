@@ -12,6 +12,10 @@ export interface MoveContactData {
   instanceUrl: string;
 }
 
+export interface PostponeReason {
+  reason: string;
+}
+
 export type JobResult = { success: boolean; message: string };
 
 export class MoveContactWorker {    
@@ -46,9 +50,9 @@ export class MoveContactWorker {
     const jobData: MoveContactData = job.data;
 
     // Ensure server availability
-    const { shouldPostpone, reason } = await this.shouldPostpone(jobData);
+    const shouldPostpone = await this.shouldPostpone(jobData);
     if (shouldPostpone) {
-      await this.postpone(job, reason, processingToken);
+      await this.postpone(job, shouldPostpone.reason, processingToken);
       throw new DelayedError();
     }
 
@@ -56,7 +60,7 @@ export class MoveContactWorker {
     if (!result.success) {
       const errorMessage = `Job ${job.id} failed with the following error: ${result.message}`;
       console.error(errorMessage);
-      this.jobLogWithTimestamp(job, errorMessage);
+      this.logWithTimestamp(job, errorMessage);
       throw new Error(errorMessage);
     }
 
@@ -69,17 +73,20 @@ export class MoveContactWorker {
   ): number => {
     const {retryTimeFormatted} = this.computeRetryTime();
     const fullMessage = `Job ${job?.id} will be retried ${attemptsMade + 1} time at ${retryTimeFormatted}. Due to failure: ${type}: ${err?.message}`;
-    this.jobLogWithTimestamp(job, fullMessage);
+    this.logWithTimestamp(job, fullMessage);
     return this.DELAY_IN_MILLIS;
   };
 
-  private static async shouldPostpone(jobData: MoveContactData): Promise<{ shouldPostpone: boolean; reason: string }> {
+  private static async shouldPostpone(jobData: MoveContactData): Promise<PostponeReason | undefined> {
     try {
       const { instanceUrl } = jobData;
       const response = await axios.get(`${instanceUrl}/api/v2/monitoring`);
       const sentinelBacklog = response.data.sentinel?.backlog;
       console.log(`Sentinel backlog at ${sentinelBacklog} of ${this.MAX_SENTINEL_BACKLOG}`);
-      return { shouldPostpone: sentinelBacklog > this.MAX_SENTINEL_BACKLOG, reason: `Sentinel backlog too high at ${sentinelBacklog}` };
+      
+      return sentinelBacklog > this.MAX_SENTINEL_BACKLOG 
+        ? { reason: `Sentinel backlog too high at ${sentinelBacklog}` }
+        : undefined;
     } catch (err: any) {
       const errorMessage = err.response?.data?.error?.message || err.response?.error || err?.message;
       console.error('Error fetching monitoring data:', errorMessage);
@@ -87,9 +94,9 @@ export class MoveContactWorker {
       // Handle server unavailability (HTTP 500 errors)
       if (err.response?.status === 500) {
         console.log('Server error encountered, postponing job...');
-        return { shouldPostpone: true, reason: `Server error encountered: ${errorMessage}` };
+        return { reason: `Server error encountered: ${errorMessage}` };
       }
-      return { shouldPostpone: false, reason: '' };
+      return undefined;
     }
   }
 
@@ -146,12 +153,12 @@ export class MoveContactWorker {
 
       chtProcess.stdout.on('data', data => {
         lastOutput = data.toString();
-        this.jobLogWithTimestamp(job, `cht-conf output: ${data.toString()}`);
+        this.logWithTimestamp(job, `cht-conf output: ${data.toString()}`);
       });
 
       chtProcess.stderr.on('data', error => {
         lastOutput = error.toString();
-        this.jobLogWithTimestamp(job, `cht-conf error: ${error.toString()}`);
+        this.logWithTimestamp(job, `cht-conf error: ${error.toString()}`);
       });
 
       chtProcess.on('close', code => {
@@ -164,7 +171,7 @@ export class MoveContactWorker {
 
       chtProcess.on('error', error => {
         clearTimeout(timeout);
-        this.jobLogWithTimestamp(job, `cht-conf process error: ${error.toString()}`);
+        this.logWithTimestamp(job, `cht-conf process error: ${error.toString()}`);
         reject(error);
       });
     });
@@ -172,7 +179,7 @@ export class MoveContactWorker {
 
   private static async postpone(job: Job, retryMessage: string, processingToken?: string): Promise<void> {
     const { retryTimeFormatted, retryTime } = this.computeRetryTime();
-    this.jobLogWithTimestamp(job, `Job ${job.id} postponed until ${retryTimeFormatted}. Reason: ${retryMessage}.`);
+    this.logWithTimestamp(job, `Job ${job.id} postponed until ${retryTimeFormatted}. Reason: ${retryMessage}.`);
     await job.moveToDelayed(retryTime.toMillis(), processingToken);
   }
 
@@ -182,8 +189,8 @@ export class MoveContactWorker {
     return { retryTime, retryTimeFormatted };
   }
 
-  private static jobLogWithTimestamp(job: Job|MinimalJob|undefined, message: string): void {
-    const timestamp = new Date().toISOString();
+  private static logWithTimestamp(job: Job|MinimalJob|undefined, message: string): void {
+    const timestamp = DateTime.now().toISO();
     const fullMessage = `[${timestamp}] ${message}`;
     job?.log(fullMessage);
     console.log(fullMessage);

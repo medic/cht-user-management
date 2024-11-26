@@ -117,7 +117,7 @@ describe('integration/move-contact',  function () {
     await new Promise(resolve => setTimeout(resolve, 1000));
     
     // Check if the job has failed
-    const job = await moveContactQueue['bullQueue'].getJob(jobId) as unknown as Job;
+    const job = await moveContactQueue['bullQueue'].getJob(jobId) as Job;
     expect(await job.getState()).to.equal('failed');
   });
 });
