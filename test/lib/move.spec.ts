@@ -39,14 +39,6 @@ describe('lib/move.ts', () => {
     sinon.restore();
   });
 
-  const chtApi = () => mockChtApi(
-    [
-      { id: 'from-sub', name: 'From Sub', lineage: [], type: 'remote' },
-      { id: 'to-sub', name: 'To Sub', lineage: [], type: 'remote' }
-    ],
-    [{ id: 'chu-id', name: 'c-h-u', lineage: ['from-sub'], type: 'remote' }],
-  );
-
   it('move CHU: success', async () => {    
     const formData = {
       from_replacement: 'c-h-u',

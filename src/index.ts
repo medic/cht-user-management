@@ -1,5 +1,4 @@
 require('dotenv').config();
-import { Config } from './config';
 import build from './server';
 import { env } from 'process';
 const {
