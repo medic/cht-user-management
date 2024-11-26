@@ -72,7 +72,10 @@ export class MoveContactWorker {
     attemptsMade: number, type: string | undefined, err: Error | undefined, job: MinimalJob | undefined
   ): number => {
     const {retryTimeFormatted} = this.computeRetryTime();
-    const fullMessage = `Job ${job?.id} will be retried ${attemptsMade + 1} time at ${retryTimeFormatted}. Due to failure: ${type}: ${err?.message}`;
+
+    const fullMessage = `Job ${job?.id} will retry at ${retryTimeFormatted}.\
+    Attempt Number: ${attemptsMade + 1}. Due to failure: ${type}: ${err?.message}`;
+
     this.logWithTimestamp(job, fullMessage);
     return this.DELAY_IN_MILLIS;
   };
