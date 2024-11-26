@@ -344,9 +344,10 @@
       "user_role": [],
       "place_properties": [],
       "contact_properties": [],
-      "feature_flags": [
-        "move"
-      ],
+      "username_from_place": false,
+      "deactivate_users_on_replace": false,
+      "can_create": false,
+      "can_replace_contact": false,
       "replacement_property": {
         "friendly_name": "",
         "property_name": "replacement",

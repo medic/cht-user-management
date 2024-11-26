@@ -1,6 +1,6 @@
 <div id="place_list">
   {% for contactType in contactTypes %}
-    {% if contactType.feature_flags == undefined or contactType.feature_flags contains "create" or contactType.feature_flags contains "replace-contact" %}
+    {% if contactType.can_create or contactType.can_create == undefined or contactType.can_replace_contact or contactType.can_replace_contact == undefined %}
       <div id="{{contactType.name}}" class="mb-6">
         <h2 class="title is-4">{{contactType.friendly}}</h2>
         {% if contactType.places.length > 0 %}

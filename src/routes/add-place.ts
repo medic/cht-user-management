@@ -7,7 +7,6 @@ import SessionCache from '../services/session-cache';
 import RemotePlaceResolver from '../lib/remote-place-resolver';
 import { UploadManager } from '../services/upload-manager';
 import RemotePlaceCache from '../lib/remote-place-cache';
-import { Feature } from '../config/config-factory';
 
 export default async function addPlace(fastify: FastifyInstance) {
   fastify.get('/add-place', async (req, resp) => {
@@ -18,12 +17,10 @@ export default async function addPlace(fastify: FastifyInstance) {
       ? Config.getContactType(queryParams.type)
       : contactTypes[contactTypes.length - 1];
     const op = queryParams.op || 'new';
-    if (contactType.feature_flags) {
-      if ((op === 'new' && !contactType.feature_flags.includes(Feature.Create)) || 
-      (op === 'replace' && !contactType.feature_flags.includes(Feature.ReplaceContact))) {
-        resp.code(404).type('text/html').send('Not Found');
-        return;
-      }
+    if ((op === 'new' && contactType.can_create === false) || 
+      (op === 'replace' && contactType.can_replace_contact === false)) {
+      resp.code(404).type('text/html').send('Not Found');
+      return;
     }
     const tmplData = {
       view: 'add',

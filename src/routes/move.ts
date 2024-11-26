@@ -5,7 +5,6 @@ import { ChtApi } from '../lib/cht-api';
 import { FastifyInstance } from 'fastify';
 import MoveLib from '../lib/move';
 import SessionCache from '../services/session-cache';
-import { Feature } from '../config/config-factory';
 
 export default async function sessionCache(fastify: FastifyInstance) {
   fastify.get('/move/:placeType', async (req, resp) => {
@@ -14,7 +13,7 @@ export default async function sessionCache(fastify: FastifyInstance) {
     const contactTypes = Config.contactTypes();
     
     const contactType = Config.getContactType(placeType);
-    if (contactType.feature_flags && !contactType.feature_flags.includes(Feature.Move)) {
+    if (contactType.can_move === false) {
       resp.code(404).type('text/html').send('Not Found');
       return;
     }

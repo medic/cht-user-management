@@ -1,6 +1,6 @@
 import _ from 'lodash';
 import { ChtApi, PlacePayload } from '../lib/cht-api';
-import getConfigByKey, { Feature } from './config-factory';
+import getConfigByKey  from './config-factory';
 
 export type ConfigSystem = {
   domains: AuthenticationInfo[];
@@ -19,14 +19,16 @@ export type ContactType = {
   contact_type: string;
   contact_friendly?: string;
   user_role: string[];
-  username_from_place?: boolean;
+  username_from_place: boolean;
   hierarchy: HierarchyConstraint[];
   replacement_property: ContactProperty;
   place_properties: ContactProperty[];
   contact_properties: ContactProperty[];
-  deactivate_users_on_replace?: boolean;
+  deactivate_users_on_replace: boolean;
   hint?: string;
-  feature_flags?: Feature[];
+  can_create?: boolean;
+  can_replace_contact?: boolean;
+  can_move?: boolean;
 };
 
 export type HierarchyConstraint = {
@@ -123,7 +125,7 @@ export class Config {
   }
 
   public static hasMultipleRoles(contactType: ContactType): boolean {
-    if (contactType.feature_flags?.length === 1 && contactType.feature_flags.includes(Feature.Move)) {
+    if (contactType.can_move && (contactType.can_create === false && contactType.can_replace_contact === false)) {
       return false;
     }
     if (!contactType.user_role.length || contactType.user_role.some(role => !role.trim())) {
