@@ -4,17 +4,19 @@ import { Worker, Job, DelayedError, ConnectionOptions, MinimalJob } from 'bullmq
 import { DateTime } from 'luxon';
 
 import Auth from '../lib/authentication';
+import { HierarchyAction } from '../lib/manage-hierarchy';
 
-export interface MoveContactData {
-  parentId: string;
-  contactId: string;
+export interface ChtConfJobData {
+  sourceId: string;
+  destinationId: string;
+  action: HierarchyAction;
   sessionToken: string;
   instanceUrl: string;
 }
 
 export type JobResult = { success: boolean; message: string };
 
-export class MoveContactWorker {    
+export class ChtConfWorker {    
   private static readonly DELAY_IN_MILLIS = 4 * 60 * 60 * 1000;       // 4 hours
   private static readonly MAX_TIMEOUT_IN_MILLIS = 4 * 60 * 60 * 1000; // 4 hours
   private static readonly MAX_CONCURRENCY = 1;              // Limit concurrency to 1 job at a time
@@ -43,7 +45,7 @@ export class MoveContactWorker {
   }
 
   private static handleJob = async (job: Job, processingToken?: string): Promise<boolean> => {
-    const jobData: MoveContactData = job.data;
+    const jobData: ChtConfJobData = job.data;
 
     // Ensure server availability
     const { shouldPostpone, reason } = await this.shouldPostpone(jobData);
@@ -73,7 +75,7 @@ export class MoveContactWorker {
     return this.DELAY_IN_MILLIS;
   };
 
-  private static async shouldPostpone(jobData: MoveContactData): Promise<{ shouldPostpone: boolean; reason: string }> {
+  private static async shouldPostpone(jobData: ChtConfJobData): Promise<{ shouldPostpone: boolean; reason: string }> {
     try {
       const { instanceUrl } = jobData;
       const response = await axios.get(`${instanceUrl}/api/v2/monitoring`);
@@ -95,17 +97,17 @@ export class MoveContactWorker {
 
   private static async moveContact(job: Job): Promise<JobResult> {
     try {
-      const { contactId, parentId, instanceUrl, sessionToken } = job.data as MoveContactData;
+      const jobData: ChtConfJobData = job.data;
 
-      if (!sessionToken) {
+      if (!jobData.sessionToken) {
         return { success: false, message: 'Missing session token' };
       }
 
-      const decodedToken = Auth.decodeTokenForWorker(sessionToken);
+      const decodedToken = Auth.decodeTokenForWorker(jobData.sessionToken);
       const token = decodedToken.sessionToken.replace('AuthSession=', '');
 
       const command = 'cht';
-      const args = this.buildCommandArgs(instanceUrl, token, contactId, parentId);
+      const args = this.buildCommandArgs(jobData, token);
       
       this.logCommand(command, args);
       await this.executeCommand(command, args, job);
@@ -116,17 +118,45 @@ export class MoveContactWorker {
     }
   }
 
-  private static buildCommandArgs(instanceUrl: string, sessionToken: string, contactId: string, parentId: string): string[] {
-    return [
-      `--url=${instanceUrl}`,
-      `--session-token=${sessionToken}`,
+  private static buildCommandArgs(data: ChtConfJobData, decodedToken: string): string[] {
+    const actionArgs = getActionArgs();
+    
+    const baseArgs = [
+      `--url=${data.instanceUrl}`,
+      `--session-token=${decodedToken}`,
       '--force',
-      'move-contacts',
+      getConfActionName(),
       'upload-docs',
       '--',
-      `--contacts=${contactId}`,
-      `--parent=${parentId}`
     ];
+
+    return [
+      ...baseArgs,
+      ...actionArgs,
+    ];
+
+    function getConfActionName() {
+      switch (data.action) {
+      case 'delete':
+        return 'delete-contacts';
+      case 'merge':
+        return 'merge-contacts';
+      default:
+        return 'move-contacts';
+      }
+    }
+
+    function getActionArgs() {
+      if (data.action === 'delete') {
+        return [`--contacts=${data.sourceId}`];
+      }
+
+      if (data.action === 'move') {
+        return [`--contacts=${data.sourceId}`, `--parent=${data.destinationId}`];
+      }
+
+      return [`--remove=${data.sourceId}`, `--keep=${data.destinationId}`];
+    }
   }
 
   private static logCommand(command: string, args: string[]): void {
@@ -159,7 +189,7 @@ export class MoveContactWorker {
         if (code === 0) {
           resolve();
         }
-        reject(new Error(`Move contact command exited with code ${code}. Last output: ${lastOutput}`));
+        reject(new Error(`CHT command exited with code ${code}. Last output: ${lastOutput}`));
       });
 
       chtProcess.on('error', error => {
