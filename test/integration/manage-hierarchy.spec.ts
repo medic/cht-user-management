@@ -4,7 +4,7 @@ import chaiAsPromised from 'chai-as-promised';
 import { Job} from 'bullmq';
 import sinon from 'sinon';
 
-import MoveLib from '../../src/lib/move';
+import MoveLib from '../../src/lib/manage-hierarchy';
 
 import Auth from '../../src/lib/authentication';
 import { Config } from '../../src/config';
@@ -16,7 +16,7 @@ import SessionCache from '../../src/services/session-cache';
 const { expect } = chai;
 chai.use(chaiAsPromised);
 
-describe('integration/move-contact',  function () {
+describe('integration/manage-hierarchy',  function () {
 
   const queueName = 'move_contact_queue';
   const connection = { host: '127.0.0.1', port: 6363 };

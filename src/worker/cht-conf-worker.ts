@@ -8,7 +8,7 @@ import Auth from '../lib/authentication';
 export interface ChtConfJobData {
   sourceId: string;
   destinationId: string;
-  action: 'move' | 'merge';
+  action: 'move' | 'merge' | 'delete';
   sessionToken: string;
   instanceUrl: string;
 }
@@ -118,15 +118,13 @@ export class ChtConfWorker {
   }
 
   private static buildCommandArgs(data: ChtConfJobData, decodedToken: string): string[] {
-    const mergeArgs = [`--remove=${data.sourceId}`, `--keep=${data.destinationId}`];
-    const moveArgs = [`--contacts=${data.sourceId}`, `--parent=${data.destinationId}`];
-    const actionArgs = data.action === 'merge' ? mergeArgs : moveArgs;
+    const actionArgs = getActionArgs();
     
     const baseArgs = [
       `--url=${data.instanceUrl}`,
       `--session-token=${decodedToken}`,
       '--force',
-      data.action === 'merge' ? 'merge-contacts' : 'move-contacts',
+      getConfActionName(),
       'upload-docs',
       '--',
     ];
@@ -135,6 +133,29 @@ export class ChtConfWorker {
       ...baseArgs,
       ...actionArgs,
     ];
+
+    function getConfActionName() {
+      switch (data.action) {
+      case 'delete':
+        return 'delete-contacts';
+      case 'merge':
+        return 'merge-contacts';
+      default:
+        return 'move-contacts';
+      }
+    }
+
+    function getActionArgs() {
+      if (data.action === 'delete') {
+        return [`--contacts=${data.sourceId}`];
+      }
+
+      if (data.action === 'move') {
+        return [`--contacts=${data.sourceId}`, `--parent=${data.destinationId}`];
+      }
+
+      return [`--remove=${data.sourceId}`, `--keep=${data.destinationId}`];
+    }
   }
 
   private static logCommand(command: string, args: string[]): void {

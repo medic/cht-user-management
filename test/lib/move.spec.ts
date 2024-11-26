@@ -1,7 +1,7 @@
 import Chai from 'chai';
 import sinon from 'sinon';
 
-import MoveLib from '../../src/lib/move';
+import ManageHierarchyLib from '../../src/lib/manage-hierarchy';
 import { Config } from '../../src/config';
 import SessionCache from '../../src/services/session-cache';
 import { mockChtApi } from '../mocks';
@@ -42,7 +42,7 @@ describe('lib/move.ts', () => {
     const contactType = Config.getContactType('c_community_health_unit');
     const sessionCache = new SessionCache();
     
-    const actual = await MoveLib.move(formData, contactType, sessionCache, chtApi(), moveContactQueue);
+    const actual = await ManageHierarchyLib.move(formData, contactType, sessionCache, chtApi(), moveContactQueue);
     expect(actual.fromLineage.map((l:any) => l.id)).to.deep.eq(['chu-id', 'from-sub']);
     expect(actual.toLineage.map((l:any) => l.id)).to.deep.eq([undefined, 'to-sub']);
 
@@ -67,7 +67,7 @@ describe('lib/move.ts', () => {
     const contactType = Config.getContactType('c_community_health_unit');
     const sessionCache = new SessionCache();
 
-    const actual = MoveLib.move(formData, contactType, sessionCache, chtApi(), moveContactQueue);
+    const actual = ManageHierarchyLib.move(formData, contactType, sessionCache, chtApi(), moveContactQueue);
     await expect(actual).to.eventually.be.rejectedWith('search string is empty');
   });
 
@@ -80,7 +80,7 @@ describe('lib/move.ts', () => {
     const contactType = Config.getContactType('c_community_health_unit');
     const sessionCache = new SessionCache();
 
-    const actual = MoveLib.move(formData, contactType, sessionCache, chtApi(), moveContactQueue);
+    const actual = ManageHierarchyLib.move(formData, contactType, sessionCache, chtApi(), moveContactQueue);
     await expect(actual).to.eventually.be.rejectedWith('Place "c-h-u" already has "From Sub" as parent');
   });
 
@@ -93,7 +93,7 @@ describe('lib/move.ts', () => {
     const contactType = Config.getContactType('c_community_health_unit');
     const sessionCache = new SessionCache();
 
-    const actual = MoveLib.move(formData, contactType, sessionCache, chtApi(), moveContactQueue);
+    const actual = ManageHierarchyLib.move(formData, contactType, sessionCache, chtApi(), moveContactQueue);
     await expect(actual).to.eventually.be.rejectedWith('Cannot find \'b_sub_county\' matching \'Invalid Sub\'');
   });
 });

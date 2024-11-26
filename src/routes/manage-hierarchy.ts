@@ -1,32 +1,31 @@
-import _ from 'lodash';
-
-import { Config, ContactType } from '../config';
+import { Config } from '../config';
 import { ChtApi } from '../lib/cht-api';
 import { FastifyInstance } from 'fastify';
-import MoveLib from '../lib/move';
+import ManageHierarchyLib from '../lib/manage-hierarchy';
 import SessionCache from '../services/session-cache';
+import { hierarchyViewModel } from '../services/hierarchy-view-model';
 
 export default async function sessionCache(fastify: FastifyInstance) {
-  fastify.get('/move/:placeType', async (req, resp) => {
+  fastify.get('/manage-hierarchy/:action/:placeType', async (req, resp) => {
     const params: any = req.params;
     const placeType = params.placeType;
     const contactTypes = Config.contactTypes();
     
     const contactType = Config.getContactType(placeType);
     const tmplData = {
-      view: 'move',
-      op: 'move',
+      view: 'manage-hierarchy',
+      op: params.action,
       logo: Config.getLogoBase64(),
       contactTypes,
       contactType,
       session: req.chtSession,
-      ...moveViewModel(contactType),
+      ...hierarchyViewModel(params.action, contactType),
     };
 
     return resp.view('src/liquid/app/view.html', tmplData);
   });
 
-  fastify.post('/move', async (req, resp) => {
+  fastify.post('/manage-hierarchy', async (req, resp) => {
     const formData:any = req.body;
 
     const sessionCache: SessionCache = req.sessionCache;
@@ -34,47 +33,32 @@ export default async function sessionCache(fastify: FastifyInstance) {
     const chtApi = new ChtApi(req.chtSession);
     
     try {
-      const result = await MoveLib.move(formData, contactType, sessionCache, chtApi);
+      const result = await ManageHierarchyLib.move(formData, contactType, sessionCache, chtApi);
 
       const tmplData = {
-        view: 'move',
-        op: 'move',
+        view: 'manage-hierarchy',
+        op: formData.op,
         logo: Config.getLogoBase64(),
         contactType,
         session: req.chtSession,
-        ...moveViewModel(contactType),
+        ...hierarchyViewModel(formData.op, contactType),
         ...result
       };
-      return resp.view('src/liquid/place/move_form.html', tmplData);
+      return resp.view('src/liquid/place/manage_hierarchy_form.html', tmplData);
     } catch (e: any) {
       const tmplData = {
-        view: 'move',
-        op: 'move',
+        view: 'manage-hierarchy',
+        op: formData.op,
         contactTypes: Config.contactTypes(),
         session: req.chtSession,
         data: formData,
         contactType,
-        ...moveViewModel(contactType),
+        ...hierarchyViewModel(formData.op, contactType),
         error: e.toString(),
       };
   
-      return resp.view('src/liquid/place/move_form.html', tmplData);
+      return resp.view('src/liquid/place/manage_hierarchy_form.html', tmplData);
     }
   });
 }
 
-export function moveViewModel(contactType: ContactType) {
-  const parentTypeName = contactType.hierarchy.find(h => h.level === 1)?.contact_type;
-  if (!parentTypeName) {
-    throw Error('parent type name');
-  }
-
-  const fromHierarchy = Config.getHierarchyWithReplacement(contactType, 'desc');
-  const toHierarchy = _.orderBy(contactType.hierarchy, 'level', 'desc');
-  fromHierarchy[fromHierarchy.length - 1].friendly_name = contactType.friendly;
-  
-  return {
-    fromHierarchy,
-    toHierarchy,
-  };
-}

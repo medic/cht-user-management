@@ -4,11 +4,14 @@ import { ChtApi } from './cht-api';
 import RemotePlaceResolver from './remote-place-resolver';
 import Place from '../services/place';
 
-import { JobParams, IQueue, getMoveContactQueue } from '../lib/queues';
+import { JobParams, IQueue, getMoveContactQueue } from './queues';
 import Auth from './authentication';
 import { ChtConfJobData } from '../worker/cht-conf-worker';
 
-export default class MoveLib {
+export const HIERARCHY_ACTIONS = ['move', 'merge', 'delete'];
+export type HierarchyAction = typeof HIERARCHY_ACTIONS[number];
+
+export default class ManageHierarchyLib {
   constructor() { }
 
   public static async move(
