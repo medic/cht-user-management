@@ -5,7 +5,6 @@ import { RemotePlace, ChtApi } from './cht-api';
 import { Config, ContactType, HierarchyConstraint } from '../config';
 import { Validation } from './validation';
 import RemotePlaceCache from './remote-place-cache';
-import assert from 'assert';
 
 type RemotePlaceMap = { [key: string]: RemotePlace };
 
