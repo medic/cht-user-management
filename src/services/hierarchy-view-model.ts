@@ -1,6 +1,6 @@
 import _ from 'lodash';
 import { Config, ContactType } from '../config';
-import ManageHierarchyLib, { HIERARCHY_ACTIONS, HierarchyAction } from '../lib/manage-hierarchy';
+import ManageHierarchyLib from '../lib/manage-hierarchy';
 
 export function hierarchyViewModel(action: string, contactType: ContactType) {
   const parentTypeName = contactType.hierarchy.find(h => h.level === 1)?.contact_type;
