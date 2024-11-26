@@ -41,7 +41,7 @@ export default async function authentication(fastify: FastifyInstance) {
       });
     }
 
-    const tokenizedSession = Auth.encodeToken(chtSession);
+    const tokenizedSession = Auth.encodeTokenForCookie(chtSession);
     const expires = Auth.cookieExpiry();
     resp.setCookie(Auth.AUTH_COOKIE_NAME, tokenizedSession, {
       signed: false,

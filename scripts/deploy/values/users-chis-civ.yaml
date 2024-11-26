@@ -10,12 +10,12 @@ cht-user-management:
   # Environment variablues to set in the pod, for example:
   # env:
   #   CONFIG_NAME: changeme
-
+  
   env: 
     NODE_ENV: production
     CHT_DEV_HTTP: false
-    CONFIG_NAME: chis-tg
-    REDIS_HOST: users-chis-tg-redis-master.users-chis-prod.svc.cluster.local
+    CONFIG_NAME: chis-civ
+    REDIS_HOST: users-chis-civ-redis-master.users-chis-prod.svc.cluster.local
     REDIS_PORT: 6379
   envSecrets:
     # COOKIE/WORKER_PRIVATE_KEY will be automatically generated if it doesn't exist
@@ -38,7 +38,7 @@ cht-user-management:
       alb.ingress.kubernetes.io/certificate-arn: arn:aws:iam::720541322708:server-certificate/2024-wildcard-app-medicmobile-org-chain
     className: alb
     hosts:
-      - host: users-chis-tg.app.medicmobile.org
+      - host: users-chis-civ.app.medicmobile.org
         paths:
           - path: /
             pathType: Prefix
@@ -54,7 +54,7 @@ cht-user-management-worker:
     tag: "1.4.2"
   env: 
     NODE_ENV: production
-    REDIS_HOST: users-chis-tg-redis-master.users-chis-prod.svc.cluster.local
+    REDIS_HOST: users-chis-civ-redis-master.users-chis-prod.svc.cluster.local
     REDIS_PORT: 6379
   envSecrets:
     - env: WORKER_PRIVATE_KEY

@@ -25,6 +25,20 @@ export const mockPlace = (contactType: ContactType, formDataOverride?: any) : Pl
   place.setPropertiesFromFormData(formData, 'hierarchy_');
   
   place.resolvedHierarchy[1] = {
+
+export const mockPlace = (type: ContactType, prop: any) : Place => {
+  const result = new Place(type);
+  result.properties = {
+    name: 'place',
+    prop
+  };
+  result.hierarchyProperties = {
+    PARENT: 'parent',
+  };
+  result.contact.properties = {
+    name: 'contact',
+  };
+  result.resolvedHierarchy[1] = {
     id: 'known',
     name: new UnvalidatedPropertyValue('parent'),
     lineage: [],

@@ -26,6 +26,7 @@ export type ContactType = {
   place_properties: ContactProperty[];
   contact_properties: ContactProperty[];
   deactivate_users_on_replace: boolean;
+  hint?: string;
 };
 
 const KnownContactPropertyTypes = [...Validation.getKnownContactPropertyTypes()] as const;

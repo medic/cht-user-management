@@ -57,6 +57,7 @@ export default async function sessionCache(fastify: FastifyInstance) {
       };
     });
     const tmplData = {
+      session: req.chtSession,
       contactTypes: placeData,
     };
     return resp.view('src/liquid/place/list.html', tmplData);
@@ -103,8 +104,9 @@ export default async function sessionCache(fastify: FastifyInstance) {
       expires: Auth.cookieExpiry(),
       path: '/',
       secure: true,
+      
     });
-
+    
     resp.header('HX-Redirect', '/');
   });
 }
