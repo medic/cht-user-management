@@ -10,7 +10,7 @@ import Auth from '../../src/lib/authentication';
 import { Config } from '../../src/config';
 import { BullQueue } from '../../src/lib/queues';
 import { mockChtApi, mockChtSession } from '../mocks';
-import { MoveContactWorker } from '../../src/worker/move-contact-worker';
+import { ChtConfWorker } from '../../src/worker/cht-conf-worker';
 import SessionCache from '../../src/services/session-cache';
 
 const { expect } = chai;
@@ -36,18 +36,18 @@ describe('integration/move-contact',  function () {
     moveContactQueue = new BullQueue(queueName, connection, defaultJobOptions);
     addStub = sandbox.stub(moveContactQueue, 'add');
 
-    handleJobStub = sandbox.stub(MoveContactWorker as any, 'handleJob');
-    shouldPostponeStub = sandbox.stub(MoveContactWorker as any, 'shouldPostpone');
-    executeCommandStub = sandbox.stub(MoveContactWorker as any, 'executeCommand');
+    handleJobStub = sandbox.stub(ChtConfWorker as any, 'handleJob');
+    shouldPostponeStub = sandbox.stub(ChtConfWorker as any, 'shouldPostpone');
+    executeCommandStub = sandbox.stub(ChtConfWorker as any, 'executeCommand');
 
     encodeTokenStub = sandbox.stub(Auth, 'encodeTokenForWorker');
     decodeTokenStub = sandbox.stub(Auth, 'decodeTokenForWorker');
 
-    MoveContactWorker.processQueue(queueName, connection);
+    ChtConfWorker.processQueue(queueName, connection);
   });
 
   afterEach(async () => {
-    await MoveContactWorker.close();
+    await ChtConfWorker.close();
     await moveContactQueue.close();
     sandbox.restore();
   });

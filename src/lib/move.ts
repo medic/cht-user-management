@@ -6,7 +6,7 @@ import Place from '../services/place';
 
 import { JobParams, IQueue, getMoveContactQueue } from '../lib/queues';
 import Auth from './authentication';
-import { MoveContactData } from '../worker/move-contact-worker';
+import { ChtConfJobData } from '../worker/cht-conf-worker';
 
 export default class MoveLib {
   constructor() { }
@@ -27,8 +27,8 @@ export default class MoveLib {
       throw Error(`Place "${fromLineage[0]?.name}" already has "${toLineage[1]?.name}" as parent`);
     }
 
-    const jobName = this.getJobName(fromLineage, toLineage);
     const jobData = this.getJobData(fromId, toId, chtApi);
+    const jobName = this.getJobName(fromLineage[0]?.name, fromLineage[1]?.name, toLineage[1]?.name);
     const jobParam: JobParams = {
       jobName,
       jobData,
@@ -42,17 +42,18 @@ export default class MoveLib {
     };
   }
 
-  private static getJobName(fromLineage: any, toLineage: any): string {
-    return `move_[${fromLineage[0]?.name}]_from_[${fromLineage[1]?.name}]_to_[${toLineage[1]?.name}]`;
+  private static getJobName(sourceChpName?: string, sourceChuName?: string, destinationChuName?: string): string {
+    return `move_[${sourceChpName}]_from_[${sourceChuName}]_to_[${destinationChuName}]`;
   }
 
-  private static getJobData(fromId: string, toId: string, chtApi: ChtApi):MoveContactData {
+  private static getJobData(sourceId: string, destinationId: string, chtApi: ChtApi): ChtConfJobData {
     const { authInfo } = chtApi.chtSession;
     return {
-      contactId: fromId,
-      parentId: toId,
       instanceUrl: `http${authInfo.useHttp ? '' : 's'}://${authInfo.domain}`,
       sessionToken: Auth.encodeTokenForWorker(chtApi.chtSession),
+      action: 'move',
+      sourceId,
+      destinationId,
     };
   }
 }

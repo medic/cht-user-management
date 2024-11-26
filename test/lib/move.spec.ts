@@ -52,8 +52,8 @@ describe('lib/move.ts', () => {
 
     expect(jobParams).to.have.property('jobName').that.equals('move_[c-h-u]_from_[From Sub]_to_[To Sub]');
     expect(jobParams).to.have.property('jobData').that.deep.include({
-      contactId: 'chu-id',
-      parentId: 'to-sub',
+      sourceId: 'chu-id',
+      destinationId: 'to-sub',
       instanceUrl: 'http://domain.com',
       sessionToken: 'encoded-token',
     });
