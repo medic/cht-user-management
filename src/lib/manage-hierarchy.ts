@@ -46,7 +46,7 @@ async function getJobDetails(formData: any, contactType: ContactType, sessionCac
   const hierarchyAction = ManageHierarchyLib.parseHierarchyAction(formData.op);
   const sourceLineage = await resolve('source_', formData, contactType, sessionCache, chtApi);
   const destinationLineage = hierarchyAction === 'delete' ? [] : await resolve('destination_', formData, contactType, sessionCache, chtApi);
-  
+
   const { sourceId, destinationId } = getSourceAndDestination();
   const jobData = getJobData(hierarchyAction, sourceId, destinationId, chtApi);
   const jobName = getJobName(jobData.action, sourceLineage, destinationLineage);
@@ -62,40 +62,35 @@ async function getJobDetails(formData: any, contactType: ContactType, sessionCac
   };
 
   function getSourceAndDestination() {
-    if (hierarchyAction === 'move') {
-      const sourceId = sourceLineage[0]?.id;
-      const destinationId = destinationLineage[1]?.id;
-      if (!destinationId || !sourceId) {
-        throw Error('Unexpected error: Move failed due to missing information');
-      }
+    const sourceId = sourceLineage[0]?.id;
+    if (!sourceId) {
+      throw Error('Unexpected error: Hierarchy operation failed due to missing source information');
+    }
 
+    if (hierarchyAction === 'delete') {
+      return { sourceId, destinationId: '' };
+    }
+
+    const destinationIndex = hierarchyAction === 'move' ? 1 : 0;
+    const destinationId = destinationLineage[destinationIndex]?.id;
+    if (!destinationId) {
+      throw Error('Unexpected error: Hierarchy operation due to missing destination information');
+    }
+
+
+    if (hierarchyAction === 'move') {
       if (destinationId === sourceLineage[1]?.id) {
         throw Error(`Place "${sourceLineage[0]?.name}" already has "${destinationLineage[1]?.name}" as parent`);
       }
-
-      return { sourceId, destinationId };
     }
-
+    
     if (hierarchyAction === 'merge') {
-      const sourceId = sourceLineage[0]?.id;
-      const destinationId = destinationLineage[0]?.id;
-      if (!destinationId || !sourceId) {
-        throw Error('Unexpected error: Merge failed due to missing information');
-      }
-
       if (destinationId === sourceId) {
         throw Error(`Cannot merge "${destinationId}" with self`);
       }
-
-      return { sourceId, destinationId };
     }
 
-    const sourceId = sourceLineage[0]?.id;
-    if (!sourceId) {
-      throw Error('Unexpected error: Delete failed due to missing information');
-    }
-
-    return { sourceId, destinationId: '' };
+    return { sourceId, destinationId };
   }
 }
 
