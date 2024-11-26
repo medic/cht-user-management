@@ -33,7 +33,7 @@ export default async function sessionCache(fastify: FastifyInstance) {
     const chtApi = new ChtApi(req.chtSession);
     
     try {
-      const result = await ManageHierarchyLib.move(formData, contactType, sessionCache, chtApi);
+      const result = await ManageHierarchyLib.scheduleJob(formData, contactType, sessionCache, chtApi);
 
       const tmplData = {
         view: 'manage-hierarchy',

@@ -76,7 +76,7 @@ describe('integration/manage-hierarchy',  function () {
     encodeTokenStub.returns('encoded-token');
     decodeTokenStub.returns(session);
 
-    await MoveLib.move(
+    await MoveLib.scheduleJob(
       formData, contactType, sessionCache, chtApi(), moveContactQueue
     );
 
@@ -107,7 +107,7 @@ describe('integration/manage-hierarchy',  function () {
     encodeTokenStub.returns('encoded-token');
     decodeTokenStub.throws(new Error('Missing WORKER_PRIVATE_KEY'));
 
-    await MoveLib.move(
+    await MoveLib.scheduleJob(
       formData, contactType, sessionCache, chtApi(), moveContactQueue
     );
 

@@ -4,11 +4,12 @@ import { Worker, Job, DelayedError, ConnectionOptions, MinimalJob } from 'bullmq
 import { DateTime } from 'luxon';
 
 import Auth from '../lib/authentication';
+import { HierarchyAction } from '../lib/manage-hierarchy';
 
 export interface ChtConfJobData {
   sourceId: string;
   destinationId: string;
-  action: 'move' | 'merge' | 'delete';
+  action: HierarchyAction;
   sessionToken: string;
   instanceUrl: string;
 }
