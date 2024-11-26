@@ -119,20 +119,14 @@ export class ChtConfWorker {
   }
 
   private static buildCommandArgs(data: ChtConfJobData, decodedToken: string): string[] {
-    const actionArgs = getActionArgs();
-    
-    const baseArgs = [
+    return [
       `--url=${data.instanceUrl}`,
       `--session-token=${decodedToken}`,
       '--force',
       getConfActionName(),
       'upload-docs',
       '--',
-    ];
-
-    return [
-      ...baseArgs,
-      ...actionArgs,
+      ...getActionArgs(),
     ];
 
     function getConfActionName() {
@@ -147,15 +141,14 @@ export class ChtConfWorker {
     }
 
     function getActionArgs() {
-      if (data.action === 'delete') {
+      switch (data.action) {
+      case 'delete':
         return [`--contacts=${data.sourceId}`];
-      }
-
-      if (data.action === 'move') {
+      case 'merge':
+        return [`--remove=${data.sourceId}`, `--keep=${data.destinationId}`];
+      default:
         return [`--contacts=${data.sourceId}`, `--parent=${data.destinationId}`];
       }
-
-      return [`--remove=${data.sourceId}`, `--keep=${data.destinationId}`];
     }
   }
 
