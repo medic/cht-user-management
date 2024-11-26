@@ -1,6 +1,6 @@
 import _ from 'lodash';
 import { ChtApi, PlacePayload } from '../lib/cht-api';
-import getConfigByKey from './config-factory';
+import getConfigByKey, { Feature } from './config-factory';
 
 export type ConfigSystem = {
   domains: AuthenticationInfo[];
@@ -26,7 +26,7 @@ export type ContactType = {
   contact_properties: ContactProperty[];
   deactivate_users_on_replace?: boolean;
   hint?: string;
-  feature_flags?: string[];
+  feature_flags?: Feature[];
 };
 
 export type HierarchyConstraint = {
@@ -123,6 +123,9 @@ export class Config {
   }
 
   public static hasMultipleRoles(contactType: ContactType): boolean {
+    if (contactType.feature_flags?.length === 1 && contactType.feature_flags.includes(Feature.Move)) {
+      return false;
+    }
     if (!contactType.user_role.length || contactType.user_role.some(role => !role.trim())) {
       throw Error(`unvalidatable config: 'user_role' property is empty or contains empty strings`);
     }
