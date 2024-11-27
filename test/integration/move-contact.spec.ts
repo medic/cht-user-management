@@ -20,6 +20,7 @@ describe('integration/move-contact',  function () {
 
   const queueName = 'move_contact_queue';
   const connection = { host: '127.0.0.1', port: 6363 };
+  const defaultJobOptions = { attempts: 3, backoff: { type: 'custom' } };
 
   let sandbox: sinon.SinonSandbox;
   let addStub: sinon.SinonStub;
@@ -32,7 +33,7 @@ describe('integration/move-contact',  function () {
 
   beforeEach(async () => {
     sandbox = sinon.createSandbox();
-    moveContactQueue = new BullQueue(queueName, connection);
+    moveContactQueue = new BullQueue(queueName, connection, defaultJobOptions);
     addStub = sandbox.stub(moveContactQueue, 'add');
 
     handleJobStub = sandbox.stub(MoveContactWorker as any, 'handleJob');
