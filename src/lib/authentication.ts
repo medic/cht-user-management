@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken';
 import ChtSession from './cht-session';
 
 const LOGIN_EXPIRES_AFTER_MS = 2 * 24 * 60 * 60 * 1000;
-const QUEUE_SESSION_EXPIRATION = '48h';
+const QUEUE_SESSION_EXPIRATION = '96h';
 const { COOKIE_PRIVATE_KEY, WORKER_PRIVATE_KEY } = process.env;
 const PRIVATE_KEY_SALT = '_'; // change to logout all users
 const COOKIE_SIGNING_KEY = COOKIE_PRIVATE_KEY + PRIVATE_KEY_SALT;
