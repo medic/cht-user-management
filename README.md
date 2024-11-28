@@ -48,6 +48,9 @@ To use the User Management Tool with your CHT project, you'll need to create a n
 `contact_types.contact_properties` | Array<ConfigProperty> | Defines the attributes which are collected and set on the user's primary contact doc. See [ConfigProperty](#ConfigProperty).
 `contact_types.deactivate_users_on_replace` | boolean | Controls what should happen to the defunct contact and user documents when a user is replaced. When `false`, the contact and user account will be deleted. When `true`, the contact will be unaltered and the user account will be assigned the role `deactivated`. This allows for account restoration.
 `contact_types.hint` | string | Provide a brief hint or description to clarify the expected input for the property.
+`contact_types.can_create` | boolean | Optionally disable/enable creating places of this type. Defaults to true.
+`contact_types.can_replace_contact` | boolean | Optionally disable/enable replacing contacts for places of this type. Defaults to true.
+`contact_types.can_move` | boolean | Optionally disable/enable moving places of this type. Defaults to true.
 `logoBase64` | Image in base64 | Logo image for your project
 
 #### ConfigProperty

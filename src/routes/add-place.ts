@@ -17,6 +17,11 @@ export default async function addPlace(fastify: FastifyInstance) {
       ? Config.getContactType(queryParams.type)
       : contactTypes[contactTypes.length - 1];
     const op = queryParams.op || 'new';
+    if ((op === 'new' && contactType.can_create === false) || 
+      (op === 'replace' && contactType.can_replace_contact === false)) {
+      resp.code(404).type('text/html').send('Not Found');
+      return;
+    }
     const tmplData = {
       view: 'add',
       logo: Config.getLogoBase64(),

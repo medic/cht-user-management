@@ -13,6 +13,10 @@ export default async function sessionCache(fastify: FastifyInstance) {
     const contactTypes = Config.contactTypes();
     
     const contactType = Config.getContactType(placeType);
+    if (contactType.can_move === false) {
+      resp.code(404).type('text/html').send('Not Found');
+      return;
+    }
     const tmplData = {
       view: 'move',
       op: 'move',

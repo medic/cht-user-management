@@ -19,12 +19,20 @@
         </a>
         <div class="navbar-dropdown">
           {% for placeType in contactTypes %}
-            <div class="navbar-item">
-              <b>{{placeType.friendly}}</b>
-            </div>
-            <a class="navbar-item" href="/add-place?type={{ placeType.name }}&op=new">Create New</a>
-            <a class="navbar-item" href="/add-place?type={{ placeType.name }}&op=replace">Replace Existing</a>
-            <a class="navbar-item" href="/add-place?type={{ placeType.name }}&op=bulk">Upload from CSV</a>  
+          {% if placeType.can_create or placeType.can_create == undefined or placeType.can_replace_contact or placeType.can_replace_contact == undefined %}
+              <div class="navbar-item">
+                <b>{{placeType.friendly}}</b>
+              </div>
+            {%endif%}
+            {% if placeType.can_create == undefined or placeType.can_create %}
+              <a class="navbar-item" href="/add-place?type={{ placeType.name }}&op=new">Create New</a>
+            {%endif%}
+            {% if placeType.can_replace_contact == undefined or placeType.can_replace_contact %}
+              <a class="navbar-item" href="/add-place?type={{ placeType.name }}&op=replace">Replace Existing</a>
+            {%endif%}
+            {% if placeType.can_create == undefined or placeType.can_create %}
+              <a class="navbar-item" href="/add-place?type={{ placeType.name }}&op=bulk">Upload from CSV</a>  
+            {%endif%}
           {% endfor%}
         </div>
       </div>
@@ -35,7 +43,9 @@
         </a>
         <div class="navbar-dropdown">
           {% for placeType in contactTypes %}
-            <a class="navbar-item" href="/move/{{ placeType.name }}">Move {{placeType.friendly}}</a>
+            {% if placeType.can_move == undefined or placeType.can_move %}
+              <a class="navbar-item" href="/move/{{ placeType.name }}">Move {{placeType.friendly}}</a>
+            {%endif%}
           {% endfor%}
         </div>
       </div>

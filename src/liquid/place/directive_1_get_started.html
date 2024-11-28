@@ -12,10 +12,18 @@
       <span class="material-symbols-outlined">add</span> Add {{contactType.friendly}}
     </a>
     <div class="navbar-dropdown">
-      <a class="navbar-item" href="/add-place?type={{ contactType.name }}&op=new">Create New</a>
-      <a class="navbar-item" href="/add-place?type={{ contactType.name }}&op=replace">Replace Existing</a>
-      <a class="navbar-item" href="/add-place?type={{ contactType.name }}&op=bulk">Upload from CSV</a>
-      <a class="navbar-item" href="/move/{{ contactType.name }}">Move</a>
+      {% if contactType.can_create == undefined or contactType.can_create %}
+        <a class="navbar-item" href="/add-place?type={{ contactType.name }}&op=new">Create New</a>
+      {%endif%}
+      {% if contactType.can_replace_contact == undefined or contactType.can_replace_contact %}
+        <a class="navbar-item" href="/add-place?type={{ contactType.name }}&op=replace">Replace Existing</a>
+      {%endif%}
+      {% if contactType.can_create == undefined or contactType.can_create %}
+        <a class="navbar-item" href="/add-place?type={{ contactType.name }}&op=bulk">Upload from CSV</a>
+      {%endif%}
+      {% if contactType.can_move == undefined or contactType.can_move %}
+        <a class="navbar-item" href="/move/{{ contactType.name }}">Move</a>
+      {%endif%}
     </div>
   </div>
 </div>
