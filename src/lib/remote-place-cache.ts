@@ -21,6 +21,7 @@ export type RemotePlace = {
   // sadly, sometimes invalid or uncreated objects "pretend" to be remote
   // should reconsider this naming
   type: 'remote' | 'local' | 'invalid';
+  doc?: any;
 };
 
 export default class RemotePlaceCache {
@@ -86,6 +87,7 @@ export default class RemotePlaceCache {
       id: doc._id,
       name: new NamePropertyValue(doc.name, hierarchyLevel),
       lineage: extractLineage(doc),
+      doc,
       type: 'remote',
     }));
   }

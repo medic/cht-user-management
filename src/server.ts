@@ -1,4 +1,5 @@
 require('dotenv').config();
+import { Config } from './config';
 import build from './build';
 import { env } from 'process';
 const {
@@ -6,6 +7,7 @@ const {
 } = process.env;
 
 const port: number = env.PORT ? parseInt(env.PORT) : 3500;
+Config.assertValid();
 
 (async () => {
   const loggerConfig = {
