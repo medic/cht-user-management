@@ -13,8 +13,8 @@ export type PlaceResolverOptions = {
 };
 
 export default class RemotePlaceResolver {
-  public static readonly NoResult: RemotePlace = { id: 'na', name: 'Place Not Found', type: 'invalid', lineage: [] };
-  public static readonly Multiple: RemotePlace = { id: 'multiple', name: 'multiple places', type: 'invalid', lineage: [] };
+  public static readonly NoResult: RemotePlace = { id: 'na', name: 'Place Not Found', type: 'invalid', lineage: [], doc: {} };
+  public static readonly Multiple: RemotePlace = { id: 'multiple', name: 'multiple places', type: 'invalid', lineage: [], doc: {} };
 
   public static resolve = async (
     places: Place[],

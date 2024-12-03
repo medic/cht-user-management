@@ -7,7 +7,6 @@ import RemotePlaceResolver from './lib/remote-place-resolver';
 import Place from './services/place';
 import PlaceFactory from './services/place-factory';
 import SessionCache from './services/session-cache';
-import { IQueue } from './lib/queues';
 
 export {
   Config,
@@ -20,6 +19,5 @@ export {
   RemotePlaceCache,
   SessionCache,
   RemotePlaceResolver,
-  MoveLib,
-  IQueue,
+  MoveLib
 };
