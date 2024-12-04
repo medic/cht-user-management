@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { spawn } from 'child_process'; 
-import { Worker, Job, DelayedError, ConnectionOptions } from 'bullmq';
+import { Worker, Job, DelayedError, ConnectionOptions, MinimalJob } from 'bullmq';
 import { DateTime } from 'luxon';
 
 import Auth from '../lib/authentication';
@@ -10,6 +10,10 @@ export interface MoveContactData {
   contactId: string;
   sessionToken: string;
   instanceUrl: string;
+}
+
+export interface PostponeReason {
+  reason: string;
 }
 
 export type JobResult = { success: boolean; message: string };
@@ -25,7 +29,13 @@ export class MoveContactWorker {
     this.worker = new Worker(
       queueName, 
       this.handleJob, 
-      { connection, concurrency: this.MAX_CONCURRENCY }
+      { 
+        connection, 
+        concurrency: this.MAX_CONCURRENCY, 
+        settings: {
+          backoffStrategy: this.handleRetryBackoff,
+        }
+      }
     );
   }
 
@@ -40,16 +50,17 @@ export class MoveContactWorker {
     const jobData: MoveContactData = job.data;
 
     // Ensure server availability
-    if (await this.shouldPostpone(jobData)) {
-      await this.postpone(job, processingToken);
+    const shouldPostpone = await this.shouldPostpone(jobData);
+    if (shouldPostpone) {
+      await this.postpone(job, shouldPostpone.reason, processingToken);
       throw new DelayedError();
     }
 
-    const result = await this.moveContact(jobData);
+    const result = await this.moveContact(job);
     if (!result.success) {
-      job.log(`[${new Date().toISOString()}]: ${result.message}`);
       const errorMessage = `Job ${job.id} failed with the following error: ${result.message}`;
       console.error(errorMessage);
+      this.logWithTimestamp(job, errorMessage);
       throw new Error(errorMessage);
     }
 
@@ -57,23 +68,44 @@ export class MoveContactWorker {
     return true;
   };
 
-  private static async shouldPostpone(jobData: MoveContactData): Promise<boolean> {
+  private static handleRetryBackoff = (
+    attemptsMade: number, type: string | undefined, err: Error | undefined, job: MinimalJob | undefined
+  ): number => {
+    const {retryTimeFormatted} = this.computeRetryTime();
+
+    const fullMessage = `Job ${job?.id} will retry at ${retryTimeFormatted}.\
+    Attempt Number: ${attemptsMade + 1}. Due to failure: ${type}: ${err?.message}`;
+
+    this.logWithTimestamp(job, fullMessage);
+    return this.DELAY_IN_MILLIS;
+  };
+
+  private static async shouldPostpone(jobData: MoveContactData): Promise<PostponeReason | undefined> {
     try {
       const { instanceUrl } = jobData;
       const response = await axios.get(`${instanceUrl}/api/v2/monitoring`);
       const sentinelBacklog = response.data.sentinel?.backlog;
       console.log(`Sentinel backlog at ${sentinelBacklog} of ${this.MAX_SENTINEL_BACKLOG}`);
-      return sentinelBacklog > this.MAX_SENTINEL_BACKLOG;
+      
+      return sentinelBacklog > this.MAX_SENTINEL_BACKLOG 
+        ? { reason: `Sentinel backlog too high at ${sentinelBacklog}` }
+        : undefined;
     } catch (err: any) {
       const errorMessage = err.response?.data?.error?.message || err.response?.error || err?.message;
       console.error('Error fetching monitoring data:', errorMessage);
-      return true;
+
+      // Handle server unavailability (HTTP 500 errors)
+      if (err.response?.status === 500) {
+        console.log('Server error encountered, postponing job...');
+        return { reason: `Server error encountered: ${errorMessage}` };
+      }
+      return undefined;
     }
   }
 
-  private static async moveContact(jobData: MoveContactData): Promise<JobResult> {
+  private static async moveContact(job: Job): Promise<JobResult> {
     try {
-      const { contactId, parentId, instanceUrl, sessionToken } = jobData;
+      const { contactId, parentId, instanceUrl, sessionToken } = job.data as MoveContactData;
 
       if (!sessionToken) {
         return { success: false, message: 'Missing session token' };
@@ -86,7 +118,7 @@ export class MoveContactWorker {
       const args = this.buildCommandArgs(instanceUrl, token, contactId, parentId);
       
       this.logCommand(command, args);
-      await this.executeCommand(command, args);
+      await this.executeCommand(command, args, job);
 
       return { success: true, message: `Job processing completed.` };
     } catch (error) {
@@ -112,7 +144,7 @@ export class MoveContactWorker {
     console.log('Executing command:', `${command} ${maskedArgs.join(' ')}`);
   }
 
-  private static async executeCommand(command: string, args: string[]): Promise<void> {
+  private static async executeCommand(command: string, args: string[], job: Job): Promise<void> {
     return new Promise((resolve, reject) => {
       const chtProcess = spawn(command, args);
       let lastOutput = '';
@@ -123,12 +155,13 @@ export class MoveContactWorker {
       }, this.MAX_TIMEOUT_IN_MILLIS);
 
       chtProcess.stdout.on('data', data => {
-        console.log(`cht-conf: ${data}`);
         lastOutput = data.toString();
+        this.logWithTimestamp(job, `cht-conf output: ${data.toString()}`);
       });
 
       chtProcess.stderr.on('data', error => {
-        console.error(`cht-conf error: ${error}`);
+        lastOutput = error.toString();
+        this.logWithTimestamp(job, `cht-conf error: ${error.toString()}`);
       });
 
       chtProcess.on('close', code => {
@@ -141,22 +174,28 @@ export class MoveContactWorker {
 
       chtProcess.on('error', error => {
         clearTimeout(timeout);
-        console.log(error);
+        this.logWithTimestamp(job, `cht-conf process error: ${error.toString()}`);
         reject(error);
       });
     });
   }
 
-  private static async postpone(job: Job, processingToken?: string): Promise<void> {
-    // Calculate the retry time using luxon
+  private static async postpone(job: Job, retryMessage: string, processingToken?: string): Promise<void> {
+    const { retryTimeFormatted, retryTime } = this.computeRetryTime();
+    this.logWithTimestamp(job, `Job ${job.id} postponed until ${retryTimeFormatted}. Reason: ${retryMessage}.`);
+    await job.moveToDelayed(retryTime.toMillis(), processingToken);
+  }
+
+  private static computeRetryTime(): { retryTime: DateTime; retryTimeFormatted: string } {
     const retryTime = DateTime.now().plus({ milliseconds: this.DELAY_IN_MILLIS });
     const retryTimeFormatted = retryTime.toLocaleString(DateTime.TIME_SIMPLE);
-    
-    // Delayed this job by DELAY_IN_MILLIS, using the current worker processing token
-    await job.moveToDelayed(retryTime.toMillis(), processingToken);
+    return { retryTime, retryTimeFormatted };
+  }
 
-    const retryMessage = `Job ${job.id} postponed until ${retryTimeFormatted}.  Reason was sentinel backlog.`;
-    job.log(`[${new Date().toISOString()}]: ${retryMessage}`);
-    console.log(retryMessage);
+  private static logWithTimestamp(job: Job|MinimalJob|undefined, message: string): void {
+    const timestamp = DateTime.now().toISO();
+    const fullMessage = `[${timestamp}] ${message}`;
+    job?.log(fullMessage);
+    console.log(fullMessage);
   }
 }

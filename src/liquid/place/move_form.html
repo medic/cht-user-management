@@ -54,7 +54,12 @@
 <script type="text/javascript">
   function handleResponse(event) {
     const response = event?.detail?.xhr?.responseText;
-    if (response && response.includes('data-success="true"')) {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(response, 'text/html');
+
+    // Find the element that indicates success
+    const successElement = doc.querySelector('[data-success="true"]');
+    if (successElement) {
       bulmaToast.toast({
         duration: 5000,
         dismissible: true,

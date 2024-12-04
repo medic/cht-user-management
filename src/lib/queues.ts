@@ -1,5 +1,5 @@
 import { v4 } from 'uuid';
-import { JobsOptions, Queue, ConnectionOptions } from 'bullmq';
+import { JobsOptions, Queue, ConnectionOptions, DefaultJobOptions } from 'bullmq';
 import { WorkerConfig } from '../config/config-worker';
 
 export interface IQueue {
@@ -17,9 +17,9 @@ export class BullQueue implements IQueue {
   public readonly name: string;
   public readonly bullQueue: Queue;
 
-  constructor(queueName: string, connection: ConnectionOptions) {
+  constructor(queueName: string, connection: ConnectionOptions, defaultJobOptions?: DefaultJobOptions) {
     this.name = queueName;
-    this.bullQueue = new Queue(queueName, { connection });
+    this.bullQueue = new Queue(queueName, { connection, defaultJobOptions });
   }
 
   public async add(jobParams: JobParams): Promise<string> {
@@ -37,5 +37,6 @@ export class BullQueue implements IQueue {
 
 export const getMoveContactQueue = () => new BullQueue(
   WorkerConfig.moveContactQueue, 
-  WorkerConfig.redisConnection
+  WorkerConfig.redisConnection,
+  WorkerConfig.defaultJobOptions
 );
