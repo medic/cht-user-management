@@ -3,7 +3,7 @@ import JSZip from 'jszip';
 import { stringify } from 'csv/sync';
 
 import { Config } from '../config';
-import getCredentialsFileStream from '../lib/credentials-file';
+import getCredentialsFiles from '../lib/credentials-file';
 import SessionCache from '../services/session-cache';
 
 export default async function files(fastify: FastifyInstance) {
@@ -18,7 +18,7 @@ export default async function files(fastify: FastifyInstance) {
     const sessionCache: SessionCache = req.sessionCache;
 
     const zip = new JSZip();
-    const files = getCredentialsFileStream(sessionCache, Config.contactTypes());
+    const files = getCredentialsFiles(sessionCache, Config.contactTypes());
     for (const file of files) {
       zip.file(file.filename, file.content);
     }

@@ -7,7 +7,7 @@ type File = {
   content: string;
 };
 
-export default function getCredentialsFileStream(sessionCache: SessionCache, contactTypes: ContactType[]): File[] {
+export default function getCredentialsFiles(sessionCache: SessionCache, contactTypes: ContactType[]): File[] {
   const files: File[] = [];
   for (const contactType of contactTypes) {
     const places = sessionCache.getPlaces({ type: contactType.name });
