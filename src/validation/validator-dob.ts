@@ -1,5 +1,5 @@
 import { DateTime } from 'luxon';
-import { IValidator } from './validation';
+import { IValidator } from '.';
 
 export default class ValidatorDateOfBirth implements IValidator {
   isValid(input: string) : boolean {

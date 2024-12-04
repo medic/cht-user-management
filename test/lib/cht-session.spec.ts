@@ -3,7 +3,7 @@ import rewire from 'rewire';
 import sinon from 'sinon';
 
 import { AuthenticationInfo } from '../../src/config';
-import { RemotePlace } from '../../src/lib/cht-api';
+import { RemotePlace } from '../../src/lib/remote-place-cache';
 const ChtSession = rewire('../../src/lib/cht-session');
 
 import chaiAsPromised from 'chai-as-promised';

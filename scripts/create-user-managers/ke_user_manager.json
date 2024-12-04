@@ -4,7 +4,15 @@
   "contact_type": "person",
   "user_role": ["user_manager", "mm-online"],
   "username_from_place": false,
-  "hierarchy": [],
+  "hierarchy": [{
+    "type": "name",
+    "friendly_name": "County",
+    "property_name": "name",
+    "required": false,
+    "parameter": ["\\sCounty"],
+    "contact_type": "a_county",
+    "level": 0
+  }],
   "deactivate_users_on_replace": false,
   "replacement_property": {
     "friendly_name": "Unused",

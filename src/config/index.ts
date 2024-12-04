@@ -1,6 +1,7 @@
 import _ from 'lodash';
 import { ChtApi, PlacePayload } from '../lib/cht-api';
 import getConfigByKey from './config-factory';
+import Validation from '../validation';
 
 export type ConfigSystem = {
   domains: AuthenticationInfo[];
@@ -28,10 +29,13 @@ export type ContactType = {
   hint?: string;
 };
 
+const KnownContactPropertyTypes = [...Validation.getKnownContactPropertyTypes()] as const;
+export type ContactPropertyType = typeof KnownContactPropertyTypes[number]; 
+
 export type HierarchyConstraint = {
   friendly_name: string;
   property_name: string;
-  type: string;
+  type: ContactPropertyType;
   required: boolean;
   parameter? : string | string[] | object;
   errorDescription? : string;
@@ -43,7 +47,7 @@ export type HierarchyConstraint = {
 export type ContactProperty = {
   friendly_name: string;
   property_name: string;
-  type: string;
+  type: ContactPropertyType;
   required: boolean;
   parameter? : string | string[] | object;
   errorDescription? : string;
@@ -54,6 +58,7 @@ export type AuthenticationInfo = {
   domain: string;
   useHttp?: boolean;
 };
+
 
 const {
   CONFIG_NAME,
@@ -187,6 +192,33 @@ export class Config {
     return _.sortBy(domains, 'friendly');
   }
 
+  // TODO: Joi? Chai?
+  public static assertValid({ config }: PartnerConfig = partnerConfig) {
+    for (const contactType of config.contact_types) {
+      const allHierarchyProperties = [...contactType.hierarchy, contactType.replacement_property];
+      const allProperties = [
+        ...contactType.place_properties,
+        ...contactType.contact_properties,
+        ...allHierarchyProperties,
+        Config.getUserRoleConfig(contactType),
+      ];
+      
+      Config.getPropertyWithName(contactType.place_properties, 'name');
+      Config.getPropertyWithName(contactType.contact_properties, 'name');
+
+      allProperties.forEach(property => {
+        if (!KnownContactPropertyTypes.includes(property.type)) {
+          throw Error(`Unknown property type "${property.type}"`);
+        }
+      });
+
+      const generatedHierarchyProperties = allHierarchyProperties.filter(hierarchy => hierarchy.type === 'generated');
+      if (generatedHierarchyProperties.length) {
+        throw Error('Hierarchy properties cannot be of type "generated"');
+      }
+    }
+  }
+
   public static getCsvTemplateColumns(placeType: string) {
     const placeTypeConfig = Config.getContactType(placeType);
     const hierarchy = Config.getHierarchyWithReplacement(placeTypeConfig);
@@ -205,3 +237,4 @@ export class Config {
     return columns;
   }
 }
+

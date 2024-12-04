@@ -7,6 +7,7 @@ import SessionCache from '../../src/services/session-cache';
 import { mockChtApi } from '../mocks';
 
 import chaiAsPromised from 'chai-as-promised';
+import RemotePlaceCache from '../../src/lib/remote-place-cache';
 import Auth from '../../src/lib/authentication';
 import { BullQueue } from '../../src/lib/queues';
 Chai.use(chaiAsPromised);
@@ -14,24 +15,29 @@ Chai.use(chaiAsPromised);
 const { expect } = Chai;
 
 describe('lib/move.ts', () => {
+  beforeEach(() => {
+  });
+
+  const childDocs = [
+    { _id: 'from-sub', name: 'From Sub' },
+    { _id: 'to-sub', name: 'To Sub' }
+  ];
+  const subcountyDocs = [
+    { _id: 'chu-id', name: 'c-h-u', parent: { _id: 'from-sub' } },
+  ];
+
+  const chtApi = () => mockChtApi(childDocs, subcountyDocs);
   let moveContactQueue: any;
 
   beforeEach(() => {
     moveContactQueue = sinon.createStubInstance(BullQueue);
     sinon.stub(Auth, 'encodeTokenForWorker').returns('encoded-token');
+    RemotePlaceCache.clear({});
   });
 
   afterEach(() => {
     sinon.restore();
   });
-
-  const chtApi = () => mockChtApi(
-    [
-      { id: 'from-sub', name: 'From Sub', lineage: [], type: 'remote' },
-      { id: 'to-sub', name: 'To Sub', lineage: [], type: 'remote' }
-    ],
-    [{ id: 'chu-id', name: 'c-h-u', lineage: ['from-sub'], type: 'remote' }],
-  );
 
   it('move CHU: success', async () => {    
     const formData = {
@@ -50,7 +56,7 @@ describe('lib/move.ts', () => {
     expect(moveContactQueue.add.calledOnce).to.be.true;
     const jobParams = moveContactQueue.add.getCall(0).args[0];
 
-    expect(jobParams).to.have.property('jobName').that.equals('move_[c-h-u]_from_[From Sub]_to_[To Sub]');
+    expect(jobParams).to.have.property('jobName').that.equals('move_[C-h-u]_from_[From Sub]_to_[To Sub]');
     expect(jobParams).to.have.property('jobData').that.deep.include({
       contactId: 'chu-id',
       parentId: 'to-sub',
@@ -67,7 +73,7 @@ describe('lib/move.ts', () => {
     const contactType = Config.getContactType('c_community_health_unit');
     const sessionCache = new SessionCache();
 
-    const actual = MoveLib.move(formData, contactType, sessionCache, chtApi(), moveContactQueue);
+    const actual = MoveLib.move(formData, contactType, sessionCache, mockChtApi(subcountyDocs), moveContactQueue);
     await expect(actual).to.eventually.be.rejectedWith('search string is empty');
   });
 
@@ -94,7 +100,7 @@ describe('lib/move.ts', () => {
     const sessionCache = new SessionCache();
 
     const actual = MoveLib.move(formData, contactType, sessionCache, chtApi(), moveContactQueue);
-    await expect(actual).to.eventually.be.rejectedWith('Cannot find \'b_sub_county\' matching \'Invalid Sub\'');
+    await expect(actual).to.eventually.be.rejectedWith('Cannot find \'b_sub_county\' matching \'invalid sub\'');
   });
 });
 
