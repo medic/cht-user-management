@@ -11,7 +11,7 @@ export const WorkerConfig = {
     host: environment.REDIS_HOST,
     port: Number(environment.REDIS_PORT),
   },
-  queueName: 'MOVE_CONTACT_QUEUE',
+  moveContactQueue: 'MOVE_CONTACT_QUEUE',
   defaultJobOptions: {
     attempts: 3, // Max retries for a failed job
     backoff: {
