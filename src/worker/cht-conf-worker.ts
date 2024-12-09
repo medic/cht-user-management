@@ -143,9 +143,9 @@ export class ChtConfWorker {
     function getActionArgs() {
       switch (data.action) {
       case 'delete':
-        return [`--contacts=${data.sourceId}`];
+        return [`--ids=${data.sourceId}`, '--disable-users'];
       case 'merge':
-        return [`--remove=${data.sourceId}`, `--keep=${data.destinationId}`];
+        return [`--sources=${data.sourceId}`, `--destination=${data.destinationId}`, '--merge-primary-contacts', '--disable-users'];
       default:
         return [`--contacts=${data.sourceId}`, `--parent=${data.destinationId}`];
       }
