@@ -52,9 +52,9 @@ export class ChtConfWorker {
     const jobData: ChtConfJobData = job.data;
 
     // Ensure server availability
-    const { shouldPostpone, reason } = await this.shouldPostpone(jobData);
-    if (shouldPostpone) {
-      await this.postpone(job, reason, processingToken);
+    const postponseReason = await this.shouldPostpone(jobData);
+    if (postponseReason) {
+      await this.postpone(job, postponseReason.reason, processingToken);
       throw new DelayedError();
     }
 
