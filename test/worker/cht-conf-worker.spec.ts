@@ -4,16 +4,17 @@ import chaiAsPromised from 'chai-as-promised';
 Chai.use(chaiAsPromised);
 
 import Auth from '../../src/lib/authentication';
-import { ChtConfJobData, ChtConfWorker } from '../../src/worker/cht-conf-worker';
+import { ChtConfWorker } from '../../src/worker/cht-conf-worker';
 import { HierarchyAction } from '../../src/lib/manage-hierarchy';
 import { mockChtSession } from '../mocks';
-import { Job } from 'bullmq';
 
 const { expect } = Chai;
 
 const mockMonitoringResponse = (backlog) => ({ data: { sentinel: { backlog } } });
-describe('cht-conf-worker', () => {
-  let executeStub, monitoringStub;
+describe('worker/cht-conf-worker', () => {
+  let executeStub;
+  let monitoringStub;
+
   beforeEach(() => {
     executeStub = Sinon.stub().resolves(true);
     monitoringStub = Sinon.stub().resolves(mockMonitoringResponse(10));
@@ -47,7 +48,7 @@ describe('cht-conf-worker', () => {
     });
 
     it('merge contacts', async () => {
-      const job = mockJob('merge')
+      const job = mockJob('merge');
       await ChtConfWorker.handleJob(job);
 
       expect(executeStub.calledOnce).to.be.true;
