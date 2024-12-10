@@ -22,6 +22,6 @@ to build missing images";echo;
 fi
 
 echo;echo "Starting Docker Compose...";echo
-CHT_USER_MANAGEMENT_IMAGE=cht-user-management:local CHT_USER_MANAGEMENT_WORKER_IMAGE=cht-user-management-worker:local docker compose up -d
+CHT_USER_MANAGEMENT_IMAGE=cht-user-management:local CHT_USER_MANAGEMENT_WORKER_IMAGE=cht-user-management-worker:local docker compose up
 
 echo;echo "Server is now running at http://127.0.0.1:$EXTERNAL_PORT/login";echo
