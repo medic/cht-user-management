@@ -85,7 +85,7 @@ export class ChtConfWorker {
   private static async shouldPostpone(jobData: ChtConfJobData): Promise<PostponeReason | undefined> {
     try {
       const { instanceUrl } = jobData;
-      const response = await axios.get(`${instanceUrl}/api/v2/monitoring`);
+      const response = await ChtConfWorker.fetchMonitoringApi(instanceUrl);
       const sentinelBacklog = response.data.sentinel?.backlog;
       console.log(`Sentinel backlog at ${sentinelBacklog} of ${this.MAX_SENTINEL_BACKLOG}`);
       
@@ -103,6 +103,10 @@ export class ChtConfWorker {
       }
       return undefined;
     }
+  }
+
+  private static fetchMonitoringApi(instanceUrl: string) {
+    return axios.get(`${instanceUrl}/api/v2/monitoring`);
   }
 
   private static async moveContact(job: Job): Promise<JobResult> {
