@@ -2,15 +2,15 @@ import { config } from 'dotenv';
 
 config();
 
-import { MoveContactWorker } from './move-contact-worker';
+import { ChtConfWorker } from './cht-conf-worker';
 import { WorkerConfig, checkRedisConnection } from '../config/config-worker';
 
 (async () => {
   const { moveContactQueue, redisConnection} = WorkerConfig;
   await checkRedisConnection();
-  MoveContactWorker.processQueue(
+  ChtConfWorker.processQueue(
     moveContactQueue, 
     redisConnection
   );
-  console.log(`🚀 Move Contact Worker is listening`);
+  console.log(`🚀 CHT Conf Worker is listening`);
 })();
