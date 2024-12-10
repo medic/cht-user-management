@@ -1,13 +1,13 @@
-import { ContactType } from '../config';
-import SessionCache from '../services/session-cache';
-import { ChtApi, RemotePlace } from './cht-api';
-import RemotePlaceResolver from './remote-place-resolver';
-import Place from '../services/place';
-
-import { JobParams, IQueue, getChtConfQueue } from './queues';
-import Auth from './authentication';
-import { ChtConfJobData } from '../worker/cht-conf-worker';
 import _ from 'lodash';
+
+import Auth from './authentication';
+import { ChtApi, RemotePlace } from './cht-api';
+import { ChtConfJobData } from '../worker/cht-conf-worker';
+import { ContactType } from '../config';
+import { JobParams, IQueue, getChtConfQueue } from './queues';
+import Place from '../services/place';
+import RemotePlaceResolver from './remote-place-resolver';
+import SessionCache from '../services/session-cache';
 
 export const HIERARCHY_ACTIONS = ['move', 'merge', 'delete'];
 export type HierarchyAction = typeof HIERARCHY_ACTIONS[number];
@@ -47,7 +47,7 @@ async function getJobDetails(formData: any, contactType: ContactType, sessionCac
   const sourceLineage = await resolve('source_', formData, contactType, sessionCache, chtApi);
   const destinationLineage = hierarchyAction === 'delete' ? [] : await resolve('destination_', formData, contactType, sessionCache, chtApi);
 
-  const { sourceId, destinationId } = getSourceAndDestination();
+  const { sourceId, destinationId } = getSourceAndDestinationIds(hierarchyAction, sourceLineage, destinationLineage);
   const jobData = getJobData(hierarchyAction, sourceId, destinationId, chtApi);
   const jobName = getJobName(jobData.action, sourceLineage, destinationLineage);
   const jobParam: JobParams = {
@@ -60,38 +60,42 @@ async function getJobDetails(formData: any, contactType: ContactType, sessionCac
     destinationLineage,
     jobParam
   };
+}
 
-  function getSourceAndDestination() {
-    const sourceId = sourceLineage[0]?.id;
-    if (!sourceId) {
-      throw Error('Unexpected error: Hierarchy operation failed due to missing source information');
-    }
-
-    if (hierarchyAction === 'delete') {
-      return { sourceId, destinationId: '' };
-    }
-
-    const destinationIndex = hierarchyAction === 'move' ? 1 : 0;
-    const destinationId = destinationLineage[destinationIndex]?.id;
-    if (!destinationId) {
-      throw Error('Unexpected error: Hierarchy operation due to missing destination information');
-    }
-
-
-    if (hierarchyAction === 'move') {
-      if (destinationId === sourceLineage[1]?.id) {
-        throw Error(`Place "${sourceLineage[0]?.name}" already has "${destinationLineage[1]?.name}" as parent`);
-      }
-    }
-    
-    if (hierarchyAction === 'merge') {
-      if (destinationId === sourceId) {
-        throw Error(`Cannot merge "${destinationId}" with self`);
-      }
-    }
-
-    return { sourceId, destinationId };
+function getSourceAndDestinationIds(
+  hierarchyAction: HierarchyAction,
+  sourceLineage: (RemotePlace | undefined)[], 
+  destinationLineage: (RemotePlace | undefined)[]
+) {
+  const sourceId = sourceLineage[0]?.id;
+  if (!sourceId) {
+    throw Error('Unexpected error: Hierarchy operation failed due to missing source information');
   }
+
+  if (hierarchyAction === 'delete') {
+    return { sourceId, destinationId: '' };
+  }
+
+  const destinationIndex = hierarchyAction === 'move' ? 1 : 0;
+  const destinationId = destinationLineage[destinationIndex]?.id;
+  if (!destinationId) {
+    throw Error('Unexpected error: Hierarchy operation due to missing destination information');
+  }
+
+
+  if (hierarchyAction === 'move') {
+    if (destinationId === sourceLineage[1]?.id) {
+      throw Error(`Place "${sourceLineage[0]?.name}" already has "${destinationLineage[1]?.name}" as parent`);
+    }
+  }
+  
+  if (hierarchyAction === 'merge') {
+    if (destinationId === sourceId) {
+      throw Error(`Cannot merge "${destinationId}" with self`);
+    }
+  }
+
+  return { sourceId, destinationId };
 }
 
 function getJobName(action: string, sourceLineage: (RemotePlace | undefined)[], destinationLineage: (RemotePlace | undefined)[]): string {
