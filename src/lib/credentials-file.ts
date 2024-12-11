@@ -18,8 +18,8 @@ export default function getCredentialsFiles(sessionCache: SessionCache, contactT
     const rows = places.map((place) => [
       ...Object.values(place.hierarchyProperties).map(prop => prop.formatted),
       place.name,
-      place.contact.properties.name.formatted,
-      place.contact.properties.phone,
+      place.contact.properties.name?.formatted,
+      place.contact.properties.phone?.formatted,
       place.userRoles.join(' '),
       place.creationDetails.username,
       place.creationDetails.password,
