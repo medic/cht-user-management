@@ -1,7 +1,7 @@
 import SessionCache from '../../src/services/session-cache';
 import getCredentialsFiles from '../../src/lib/credentials-file';
 import PlaceFactory from '../../src/services/place-factory';
-import { ChtDoc, mockChtApi, mockProperty, mockValidContactType } from '../mocks';
+import { ChtDoc, mockChtApi, mockValidContactType } from '../mocks';
 import { expect } from 'chai';
 
 describe('lib/credentials-file.ts', () => {
