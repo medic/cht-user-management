@@ -64,5 +64,25 @@ describe('lib/remote-place-cache.ts', () => {
     expect(second[1].id).to.eq(place.asRemotePlace().id);
     expect(chtApi.getPlacesWithType.calledOnce).to.be.true;
   });
+
+  it('clear', async () => {
+    const contactType = mockSimpleContactType('string', undefined);
+    const place = mockPlace(contactType, 'prop');
+    const chtApi = mockChtApi([doc]);
+    
+    const contactTypeAsHierarchyLevel: HierarchyConstraint = {
+      contact_type: contactType.name,
+      property_name: 'level',
+      friendly_name: 'pretend another ContactType needs this',
+      type: 'name',
+      required: true,
+      level: 0,
+    };
+    await RemotePlaceCache.getPlacesWithType(chtApi, contactType, contactTypeAsHierarchyLevel);
+    RemotePlaceCache.add(place, chtApi);
+    
+    chtApi.chtSession.authInfo.domain = 'http://other';
+    RemotePlaceCache.clear(chtApi, 'other');
+  });
 });
 

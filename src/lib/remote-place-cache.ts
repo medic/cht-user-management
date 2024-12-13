@@ -50,7 +50,7 @@ export default class RemotePlaceCache {
       RemotePlaceCache.cache = {};
     } else if (!contactTypeName) {
       delete RemotePlaceCache.cache[domain];
-    } else {
+    } else if (RemotePlaceCache.cache[domain]) {
       delete RemotePlaceCache.cache[domain][contactTypeName];
     }
   }
