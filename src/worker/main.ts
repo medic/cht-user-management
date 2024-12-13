@@ -6,10 +6,10 @@ import { ChtConfWorker } from './cht-conf-worker';
 import { WorkerConfig, checkRedisConnection } from '../config/config-worker';
 
 (async () => {
-  const { moveContactQueue, redisConnection} = WorkerConfig;
+  const { chtConfQueueName, redisConnection } = WorkerConfig;
   await checkRedisConnection();
   ChtConfWorker.processQueue(
-    moveContactQueue, 
+    chtConfQueueName, 
     redisConnection
   );
   console.log(`🚀 CHT Conf Worker is listening`);

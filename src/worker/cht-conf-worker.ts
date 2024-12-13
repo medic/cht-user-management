@@ -58,7 +58,7 @@ export class ChtConfWorker {
       throw new DelayedError();
     }
 
-    const result = await this.moveContact(job);
+    const result = await this.processChtConfJob(job);
     if (!result.success) {
       const errorMessage = `Job ${job.id} failed with the following error: ${result.message}`;
       console.error(errorMessage);
@@ -109,7 +109,7 @@ export class ChtConfWorker {
     return axios.get(`${instanceUrl}/api/v2/monitoring`);
   }
 
-  private static async moveContact(job: Job): Promise<JobResult> {
+  private static async processChtConfJob(job: Job): Promise<JobResult> {
     try {
       const jobData: ChtConfJobData = job.data;
 
