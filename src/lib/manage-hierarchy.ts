@@ -1,13 +1,14 @@
 import _ from 'lodash';
 
 import Auth from './authentication';
-import { ChtApi, RemotePlace } from './cht-api';
+import { ChtApi } from './cht-api';
 import { ChtConfJobData } from '../worker/cht-conf-worker';
 import { ContactType } from '../config';
 import { JobParams, IQueue, getChtConfQueue } from './queues';
 import Place from '../services/place';
 import RemotePlaceResolver from './remote-place-resolver';
 import SessionCache from '../services/session-cache';
+import { RemotePlace } from './remote-place-cache';
 
 export const HIERARCHY_ACTIONS = ['move', 'merge', 'delete'];
 export type HierarchyAction = typeof HIERARCHY_ACTIONS[number];
@@ -85,7 +86,7 @@ function getSourceAndDestinationIds(
 
   if (hierarchyAction === 'move') {
     if (destinationId === sourceLineage[1]?.id) {
-      throw Error(`Place "${sourceLineage[0]?.name}" already has "${destinationLineage[1]?.name}" as parent`);
+      throw Error(`Place "${sourceLineage[0]?.name.original}" already has "${destinationLineage[1]?.name.original}" as parent`);
     }
   }
   
@@ -129,7 +130,7 @@ async function resolve(prefix: string, formData: any, contactType: ContactType, 
   await RemotePlaceResolver.resolveOne(place, sessionCache, chtApi, { fuzz: true });
   place.validate();
 
-  const validationError = place.validationErrors && Object.keys(place.validationErrors).find(err => err.startsWith('hierarchy_'));
+  const validationError = place.validationErrors && Object.keys(place.validationErrors).find(err => err.startsWith(prefix));
   if (validationError) {
     throw Error(place.validationErrors?.[validationError]);
   }
