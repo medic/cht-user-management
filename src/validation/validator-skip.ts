@@ -1,4 +1,4 @@
-import { IValidator } from './validation';
+import { IValidator } from '.';
 
 export default class ValidatorSkip implements IValidator {
   isValid() : boolean | string {
