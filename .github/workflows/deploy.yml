@@ -24,7 +24,7 @@ jobs:
       - id: auth
         name: Authenticate to STS
         run: |
-          mfa_serial="arn:aws:iam::${{vars.AWS_ACCOUNT_NUMBER}}:mfa/gh-action"
+          mfa_serial="arn:aws:iam::${{vars.AWS_ACCOUNT_NUMBER}}:mfa/${{vars.MFA_ID}}"
           mfa_code=$(oathtool -b --totp ${{secrets.MFA_KEY}})
           STS=$(aws sts get-session-token --region "${{vars.AWS_REGION}}" --serial-number "$mfa_serial" --token-code "$mfa_code")
 
