@@ -78,7 +78,7 @@ describe('worker/cht-conf-worker', () => {
         'delete-contacts',
         'upload-docs',
         '--',
-        '--ids=sourceId',
+        '--contacts=sourceId',
         '--disable-users',
       ]);
     });
