@@ -18,41 +18,77 @@
   <input name="place_type" value="{{contactType.name}}" hidden />
   <input name="op" value="{{op}}" hidden />
 
-  
-  <section class="section is-small">
-    <h1 class="subtitle">{{ sourceDescription }}</h1>
-    {% for hierarchy in sourceHierarchy %}
-      {%
-        include "components/search_input.html"
-          type=contactType.name
-          hierarchy=hierarchy
-          data=data
-          required=hierarchy.required
-          prefix="source_"
-      %}
-    {% endfor %}
-  </section>
+  {% if confirm %}
+    <section class="section is-small has-background-danger-light">
+      <h1 class="title has-text-danger">Warning</h1>
+      <h2 class="subtitle">This operation cannot be undone!</h2>
+      <table class="table is-bordered is-fullwidth">
+        <tbody>
+          {% for hierarchy in sourceHierarchy %}
+          {% capture property_name %}source_{{ hierarchy.property_name }}{% endcapture %}
+          <tr>
+            <td>{{ hierarchy.friendly_name }}</td>
+            <td>{{ data[property_name] }}</td>
+          </tr>
+          {% endfor %}
+          <tr>
+            <td>User's Last Sync</td>
+            <td>{{ lastSyncTime }}</td>
+          </tr>
+          <tr>
+            <td>Number of Contacts</td>
+            <td>{{ numberOfContacts }}</td>
+          </tr>
+        </tbody>
+      </table>
 
-  {% if destinationHierarchy.size > 0 %}
+      <div class="field is-grouped is-grouped-right">
+        <div class="control">
+          <button id="place_create_submit" class="button is-link">Confirm {{ op | capitalize }}</button>
+          <a href="/" class="button">Cancel</a>
+        </div>
+      </div>
+
+      <input name="confirmed" value="true" hidden />
+    </section>
+  {% endif %}
+
+  <div {% if confirm %}hidden{% endif %}>
     <section class="section is-small">
-      <h1 class="subtitle">{{ destinationDescription }}</h1>
-      {% for hierarchy in destinationHierarchy %}
+      <h1 class="subtitle">{{ sourceDescription }}</h1>
+      {% for hierarchy in sourceHierarchy %}
         {%
           include "components/search_input.html"
             type=contactType.name
             hierarchy=hierarchy
             data=data
             required=hierarchy.required
-            prefix="destination_"
+            prefix="source_"
         %}
       {% endfor %}
     </section>
-  {% endif %}
 
-  <div class="field is-grouped is-grouped-right">
-    <div class="control">
-      <button id="place_create_submit" class="button is-link">OK</button>
-      <a href="/" class="button">Cancel</a>
+    {% if destinationHierarchy.size > 0 %}
+      <section class="section is-small">
+        <h1 class="subtitle">{{ destinationDescription }}</h1>
+        {% for hierarchy in destinationHierarchy %}
+          {%
+            include "components/search_input.html"
+              type=contactType.name
+              hierarchy=hierarchy
+              data=data
+              required=hierarchy.required
+              prefix="destination_"
+          %}
+        {% endfor %}
+      </section>
+    {% endif %}
+
+    <div class="field is-grouped is-grouped-right">
+      <div class="control">
+        <button id="place_create_submit" class="button is-link">OK</button>
+        <a href="/" class="button">Cancel</a>
+      </div>
     </div>
   </div>
 </form>

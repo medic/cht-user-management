@@ -16,20 +16,11 @@ export type HierarchyAction = typeof HIERARCHY_ACTIONS[number];
 export default class ManageHierarchyLib {
   private constructor() { }
 
-  public static async scheduleJob(
-    formData: any,
-    contactType: ContactType,
-    sessionCache: SessionCache,
-    chtApi: ChtApi,
-    queueName: IQueue = getChtConfQueue()
+  public static async scheduleJob(job: JobParams, queueName: IQueue = getChtConfQueue()
   ) {
-    const { sourceLineage, destinationLineage, jobParam } = await getJobDetails(formData, contactType, sessionCache, chtApi);
-
-    await queueName.add(jobParam);
+    await queueName.add(job);
     
     return {
-      destinationLineage,
-      sourceLineage,
       success: true
     };
   }
@@ -41,26 +32,22 @@ export default class ManageHierarchyLib {
   
     return action as HierarchyAction;
   }
-}
 
-async function getJobDetails(formData: any, contactType: ContactType, sessionCache: SessionCache, chtApi: ChtApi) {
-  const hierarchyAction = ManageHierarchyLib.parseHierarchyAction(formData.op);
-  const sourceLineage = await resolve('source_', formData, contactType, sessionCache, chtApi);
-  const destinationLineage = hierarchyAction === 'delete' ? [] : await resolve('destination_', formData, contactType, sessionCache, chtApi);
+  public static async getJob(formData: any, contactType: ContactType, sessionCache: SessionCache, chtApi: ChtApi): Promise<JobParams> {
+    const hierarchyAction = ManageHierarchyLib.parseHierarchyAction(formData.op);
+    const sourceLineage = await resolve('source_', formData, contactType, sessionCache, chtApi);
+    const destinationLineage = hierarchyAction === 'delete' ? [] : await resolve('destination_', formData, contactType, sessionCache, chtApi);
 
-  const { sourceId, destinationId } = getSourceAndDestinationIds(hierarchyAction, sourceLineage, destinationLineage);
-  const jobData = getJobData(hierarchyAction, sourceId, destinationId, chtApi);
-  const jobName = getJobName(jobData.action, sourceLineage, destinationLineage);
-  const jobParam: JobParams = {
-    jobName,
-    jobData,
-  };
+    const { sourceId, destinationId } = getSourceAndDestinationIds(hierarchyAction, sourceLineage, destinationLineage);
+    const jobData = getJobData(hierarchyAction, sourceId, destinationId, chtApi);
+    const jobName = getJobName(jobData.action, sourceLineage, destinationLineage);
+    const jobParam: JobParams = {
+      jobName,
+      jobData,
+    };
 
-  return {
-    sourceLineage,
-    destinationLineage,
-    jobParam
-  };
+    return jobParam;
+  }
 }
 
 function getSourceAndDestinationIds(

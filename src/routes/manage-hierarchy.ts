@@ -32,31 +32,30 @@ export default async function sessionCache(fastify: FastifyInstance) {
     const contactType = Config.getContactType(formData.place_type);
     const chtApi = new ChtApi(req.chtSession);
     
-    try {
-      const result = await ManageHierarchyLib.scheduleJob(formData, contactType, sessionCache, chtApi);
+    const tmplData: any = {
+      view: 'manage-hierarchy',
+      op: formData.op,
+      logo: Config.getLogoBase64(),
+      contactType,
+      data: formData,
+      session: req.chtSession,
+      ...hierarchyViewModel(formData.op, contactType),
+    };
 
-      const tmplData = {
-        view: 'manage-hierarchy',
-        op: formData.op,
-        logo: Config.getLogoBase64(),
-        contactType,
-        session: req.chtSession,
-        ...hierarchyViewModel(formData.op, contactType),
-        ...result
-      };
+    try {
+      const isConfirmed = false;
+      const job = await ManageHierarchyLib.getJob(formData, contactType, sessionCache, chtApi);
+      tmplData.confirm = !isConfirmed;
+      if (isConfirmed) {
+        const result = await ManageHierarchyLib.scheduleJob(job);
+        tmplData.success = result.success;
+      } else {
+        
+      }
+
       return resp.view('src/liquid/place/manage_hierarchy_form.html', tmplData);
     } catch (e: any) {
-      const tmplData = {
-        view: 'manage-hierarchy',
-        op: formData.op,
-        contactTypes: Config.contactTypes(),
-        session: req.chtSession,
-        data: formData,
-        contactType,
-        ...hierarchyViewModel(formData.op, contactType),
-        error: e.toString(),
-      };
-  
+      tmplData.error = e.toString();
       return resp.view('src/liquid/place/manage_hierarchy_form.html', tmplData);
     }
   });
