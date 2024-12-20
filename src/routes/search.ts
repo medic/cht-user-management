@@ -65,7 +65,11 @@ export default async function place(fastify: FastifyInstance) {
     }
 
     const contactType = Config.getContactType(data.place_type);
-    const moveModel = hierarchyViewModel(op, contactType);
+    let moveModel;
+    if (HIERARCHY_ACTIONS.includes(op)) {
+      moveModel = hierarchyViewModel(op, contactType);
+    }
+
     const hierarchyLevel =  Config.getHierarchyWithReplacement(contactType).find(hierarchy => hierarchy.level === level);
     if (!hierarchyLevel) {
       throw Error(`not hierarchy constraint at ${level}`);
