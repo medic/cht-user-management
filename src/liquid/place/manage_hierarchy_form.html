@@ -1,7 +1,7 @@
 <form
   id="form_place_move" 
   autocomplete="off"
-  {% if backend %} hx-post="{{backend}}" {%else%} hx-post="/move" {%endif%}
+  {% if backend %} hx-post="{{backend}}" {%else%} hx-post="/manage-hierarchy" {%endif%}
   hx-target="this" 
   hx-on::after-request="handleResponse(event)"
 >
@@ -16,36 +16,42 @@
   {% endif %}
 
   <input name="place_type" value="{{contactType.name}}" hidden />
+  <input name="op" value="{{op}}" hidden />
 
+  
   <section class="section is-small">
-    <h1 class="subtitle">From</h1>
-    {% for hierarchy in fromHierarchy %}
+    <h1 class="subtitle">{{ sourceDescription }}</h1>
+    {% for hierarchy in sourceHierarchy %}
       {%
         include "components/search_input.html"
           type=contactType.name
           hierarchy=hierarchy
           data=data
           required=hierarchy.required
-          prefix="from_"
+          prefix="source_"
       %}
     {% endfor %}
   </section>
-  <section class="section is-small">
-    <h1 class="subtitle">To</h1>
-    {% for hierarchy in toHierarchy %}
-      {%
-        include "components/search_input.html"
-          type=contactType.name
-          hierarchy=hierarchy
-          data=data
-          required=hierarchy.required
-          prefix="to_"
-      %}
-    {% endfor %}
-  </section>
+
+  {% if destinationHierarchy.size > 0 %}
+    <section class="section is-small">
+      <h1 class="subtitle">{{ destinationDescription }}</h1>
+      {% for hierarchy in destinationHierarchy %}
+        {%
+          include "components/search_input.html"
+            type=contactType.name
+            hierarchy=hierarchy
+            data=data
+            required=hierarchy.required
+            prefix="destination_"
+        %}
+      {% endfor %}
+    </section>
+  {% endif %}
+
   <div class="field is-grouped is-grouped-right">
     <div class="control">
-      <button id="place_create_submit" class="button is-link">Move</button>
+      <button id="place_create_submit" class="button is-link">OK</button>
       <a href="/" class="button">Cancel</a>
     </div>
   </div>
@@ -67,7 +73,7 @@
         pauseOnHover: true,
         type: 'is-success',
         position: 'top-center',
-        message: `<p>Move has been scheduled. Please allow up to 24 hours for processing.</p>`,
+        message: `<p>{{ op | capitalize }} operation scheduled. Please allow up to 24 hours for processing.</p>`,
       });
     }
   }
