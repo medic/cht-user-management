@@ -3,7 +3,7 @@ import rewire from 'rewire';
 import sinon from 'sinon';
 
 import { AuthenticationInfo } from '../../src/config';
-import { RemotePlace } from '../../src/lib/cht-api';
+import { RemotePlace } from '../../src/lib/remote-place-cache';
 const ChtSession = rewire('../../src/lib/cht-session');
 
 import chaiAsPromised from 'chai-as-promised';
@@ -26,7 +26,7 @@ const mockSessionResponse = (headers: Array<string> = ['AuthSession=123']) => ({
 const mockUserFacilityDoc = (facilityId: string = 'parent-id', roles:string[] = []) => ({
   data: {
     roles,
-    facility_id: facilityId,
+    facility_id: !facilityId ? undefined : facilityId,
   }
 });
 

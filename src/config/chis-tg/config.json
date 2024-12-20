@@ -1,7 +1,7 @@
 
 {
   "domains": [
-    {
+     {
       "friendly": "MoH Togo DEV",
       "domain": "moh-togo.dev.medicmobile.org"
     },
@@ -101,7 +101,7 @@
       "friendly": "CHW Post",
       "contact_type": "ci92_chw_site",
       "user_role": ["chw", "community_user"],
-      "username_from_place": true,
+      "username_from_place": false,
       "deactivate_users_on_replace": true,
       "hierarchy": [
         {

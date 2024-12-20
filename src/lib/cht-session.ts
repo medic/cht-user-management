@@ -6,7 +6,7 @@ import { AuthenticationInfo } from '../config';
 import { AxiosHeaders, AxiosInstance } from 'axios';
 import axiosRetry from 'axios-retry';
 import { axiosRetryConfig } from './retry-logic';
-import { RemotePlace } from './cht-api';
+import { RemotePlace } from './remote-place-cache';
 
 
 const COUCH_AUTH_COOKIE_NAME = 'AuthSession=';
@@ -16,7 +16,7 @@ type SessionCreationDetails = {
   authInfo: AuthenticationInfo;
   username: string;
   sessionToken: string;
-  facilityId: string;
+  facilityIds: string[];
   chtCoreVersion: string;
 };
 
@@ -25,7 +25,7 @@ axiosRetry(axios, axiosRetryConfig);
 export default class ChtSession {
   public readonly authInfo: AuthenticationInfo;
   public readonly username: string;
-  public readonly facilityId: string;
+  public readonly facilityIds: string[];
   public readonly axiosInstance: AxiosInstance;
   public readonly sessionToken: string;
   public readonly chtCoreVersion: string;
@@ -33,7 +33,7 @@ export default class ChtSession {
   private constructor(creationDetails: SessionCreationDetails) {
     this.authInfo = creationDetails.authInfo;
     this.username = creationDetails.username;
-    this.facilityId = creationDetails.facilityId;
+    this.facilityIds = creationDetails.facilityIds;
     this.sessionToken = creationDetails.sessionToken;
     this.chtCoreVersion = creationDetails.chtCoreVersion;
     
@@ -42,8 +42,7 @@ export default class ChtSession {
       headers: { Cookie: creationDetails.sessionToken },
     });
     axiosRetry(this.axiosInstance, axiosRetryConfig);
-
-    if (!this.sessionToken || !this.authInfo.domain || !this.username || !this.facilityId) {
+    if (!this.sessionToken || !this.authInfo.domain || !this.username || this.facilityIds.length === 0) {
       throw new Error('invalid CHT session information');
     }
   }
@@ -69,11 +68,11 @@ export default class ChtSession {
   }
 
   isPlaceAuthorized(remotePlace: RemotePlace): boolean {
-    return !!this.facilityId &&
+    return this.facilityIds?.length > 0 &&
       (
-        this.facilityId === ADMIN_FACILITY_ID 
-        || remotePlace?.lineage?.includes(this.facilityId)
-        || remotePlace?.id === this.facilityId
+        this.facilityIds.includes(ADMIN_FACILITY_ID) 
+        || _.intersection(remotePlace?.lineage, this.facilityIds).length > 0
+        || this.facilityIds.includes(remotePlace?.id)
       );
   }
 
@@ -116,8 +115,8 @@ export default class ChtSession {
     const isAdmin = _.intersection(adminRoles, userDoc?.roles).length > 0;
     const chtCoreVersion = monitoringResponse.data?.version?.app;
 
-    const facilityId = isAdmin ? ADMIN_FACILITY_ID : userDoc?.facility_id;
-    if (!facilityId) {
+    const facilityIds = isAdmin ? [ADMIN_FACILITY_ID] : _.flatten([userDoc?.facility_id]);
+    if (!facilityIds?.length) {
       throw Error(`User ${username} does not have a facility_id connected to their user doc`);
     }
 
@@ -130,7 +129,7 @@ export default class ChtSession {
       username,
       sessionToken,
       chtCoreVersion,
-      facilityId,
+      facilityIds,
     };
   }
   

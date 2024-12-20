@@ -75,6 +75,7 @@ export default async function addPlace(fastify: FastifyInstance) {
 
       // back to places list
       resp.header('HX-Redirect', `/`);
+      resp.header('HX-Redirect', '/');
       return;
     }
 
@@ -132,7 +133,7 @@ export default async function addPlace(fastify: FastifyInstance) {
     RemotePlaceCache.clear(req.chtApi, place.type.name);
     await RemotePlaceResolver.resolveOne(place, sessionCache, req.chtApi, { fuzz: true });
     place.validate();
-
+    
     fastify.uploadManager.triggerRefresh(place.id);
   });
 

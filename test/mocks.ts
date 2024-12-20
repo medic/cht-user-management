@@ -1,39 +1,46 @@
 import { expect } from 'chai';
-import Sinon from 'sinon';
+import sinon from 'sinon';
 
-import { ChtApi, RemotePlace } from '../src/lib/cht-api';
+import { ChtApi } from '../src/lib/cht-api';
 import ChtSession from '../src/lib/cht-session';
-import { ContactProperty, ContactType } from '../src/config';
+import { Config, ContactProperty, ContactType } from '../src/config';
 import Place from '../src/services/place';
+import PlaceFactory from '../src/services/place-factory';
+import { UnvalidatedPropertyValue } from '../src/property-value';
 
-export const mockPlace = (type: ContactType, prop: any) : Place => {
-  const result = new Place(type);
-  result.properties = {
-    name: 'place',
-    prop
-  };
-  result.hierarchyProperties = {
-    PARENT: 'parent',
-  };
-  result.contact.properties = {
-    name: 'contact',
-  };
-  result.resolvedHierarchy[1] = {
-    id: 'known',
-    name: 'parent',
-    type: 'remote',
-  };
-  return result;
+export type ChtDoc = {
+  _id: string;
+  name: string;
+  [key: string]: string | Object;
 };
 
-export const mockChtApi: ChtApi = (first: RemotePlace[] = [], second: RemotePlace[] = []) => ({
+export const mockPlace = (contactType: ContactType, formDataOverride?: any) : Place => {
+  const formData = Object.assign({
+    place_name: 'name',
+    place_prop: 'prop',
+    hierarchy_PARENT: 'parent',
+    contact_name: 'contact'
+  }, formDataOverride);
+  const place = new Place(contactType);
+  place.setPropertiesFromFormData(formData, 'hierarchy_');
+  place.resolvedHierarchy[1] = {
+    id: 'known',
+    name: new UnvalidatedPropertyValue('parent'),
+    lineage: [],
+    type: 'remote',
+  };
+  place.validate();
+  return place;
+};
+
+export const mockChtApi = (first: ChtDoc[] = [], second: ChtDoc[] = []): any => ({
   chtSession: mockChtSession(),
-  getPlacesWithType: Sinon.stub().resolves(first).onSecondCall().resolves(second),
+  getPlacesWithType: sinon.stub().resolves(first).onSecondCall().resolves(second),
 });
 
 export const mockSimpleContactType = (
   propertyType: string,
-  propertyValidator: string | string[] | undefined,
+  propertyValidator?: string | string[] | object,
   errorDescription?: string
 ) : ContactType => {
   const mockedProperty = mockProperty(propertyType, propertyValidator);
@@ -57,9 +64,27 @@ export const mockSimpleContactType = (
       mockProperty('name', undefined, 'name'),
       mockedProperty,
     ],
-    contact_properties: [],
+    contact_properties: [
+      mockProperty('name', undefined, 'name'),
+    ],
   };
 };
+
+export async function createChu(subcounty: ChtDoc, chu_name: string, sessionCache: any, chtApi: ChtApi, dataOverrides?: any): Promise<Place> {
+  const chuType = Config.getContactType('c_community_health_unit');
+  const chuData = Object.assign({
+    hierarchy_SUBCOUNTY: subcounty.name,
+    place_name: chu_name,
+    place_code: '676767',
+    place_link_facility_name: 'facility name',
+    place_link_facility_code: '23456',
+    contact_name: 'new cha',
+    contact_phone: '0712345678',
+  }, dataOverrides);
+  const chu = await PlaceFactory.createOne(chuData, chuType, sessionCache, chtApi);
+  expect(chu.validationErrors).to.be.empty;
+  return chu;
+}
 
 export const mockValidContactType = (propertyType: string, propertyValidator: string | string[] | undefined) : ContactType => ({
   name: 'contacttype-name',
@@ -93,12 +118,12 @@ export const mockValidContactType = (propertyType: string, propertyValidator: st
 
 export const mockParentPlace = (parentPlaceType: ContactType, parentName: string) => {
   const place = new Place(parentPlaceType);
-  place.properties.name = parentName;
+  place.properties.name = new UnvalidatedPropertyValue(parentName, 'name');
   return place;
 };
 
-export const mockProperty = (type: string, parameter: string | string[] | undefined | object, property_name: string = 'prop'): ContactProperty => ({
-  friendly_name: 'csv',
+export const mockProperty = (type: string, parameter?: string | string[] | object, property_name: string = 'prop'): ContactProperty => ({
+  friendly_name: `friendly ${property_name}`,
   property_name,
   type,
   parameter,

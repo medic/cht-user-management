@@ -1,7 +1,7 @@
 import { CountryCode, parsePhoneNumber, isValidNumberForRegion } from 'libphonenumber-js';
 
 import { ContactProperty } from '../config';
-import { IValidator } from './validation';
+import { IValidator } from '.';
 
 export default class ValidatorPhone implements IValidator {
   isValid(input: string, property : ContactProperty) : boolean | string {

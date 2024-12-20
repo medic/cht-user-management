@@ -23,7 +23,7 @@ export class UploadReplacementWithDeletion implements Uploader {
     }
 
     const updatedPlaceDoc = await retryOnUpdateConflict<any>(() => this.chtApi.updatePlace(payload, contactId));
-    const previousPrimaryContact = updatedPlaceDoc.user_attribution.previousPrimaryContacts?.pop();
+    const previousPrimaryContact = updatedPlaceDoc.user_attribution?.previousPrimaryContacts?.pop();
     if (previousPrimaryContact) {
       await retryOnUpdateConflict<any>(() => this.chtApi.deleteDoc(previousPrimaryContact));
     }
