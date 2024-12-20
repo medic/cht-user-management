@@ -212,7 +212,7 @@ export class ChtApi {
     const payload = {
       keys,
       include_docs: true,
-     };
+    };
 
     console.log('axios.post', url);
     const resp = await this.axiosInstance.post(url, payload);

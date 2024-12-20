@@ -27,8 +27,7 @@ export type WarningInformation = {
 export default class ManageHierarchyLib {
   private constructor() { }
 
-  public static async scheduleJob(job: JobParams, queueName: IQueue = getChtConfQueue()
-  ) {
+  public static async scheduleJob(job: JobParams, queueName: IQueue = getChtConfQueue()) {
     await queueName.add(job);
     
     return {
