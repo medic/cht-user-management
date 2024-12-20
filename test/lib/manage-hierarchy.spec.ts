@@ -49,14 +49,7 @@ describe('lib/manage-hierarchy.ts', () => {
       const contactType = Config.getContactType('c_community_health_unit');
       const sessionCache = new SessionCache();
       
-      const actual = await ManageHierarchyLib.scheduleJob(formData, contactType, sessionCache, chtApiWithDocs(), chtConfQueue);
-      expect(actual.sourceLineage.map((l:any) => l.id)).to.deep.eq(['from-chu-id', 'from-sub']);
-      expect(actual.destinationLineage.map((l:any) => l.id)).to.deep.eq([undefined, 'to-sub']);
-
-      // Verify the data passed to mockmoveContactQueue
-      expect(chtConfQueue.add.calledOnce).to.be.true;
-      const jobParams = chtConfQueue.add.getCall(0).args[0];
-
+      const jobParams = await ManageHierarchyLib.getJobDetails(formData, contactType, sessionCache, chtApiWithDocs());
       expect(jobParams).to.have.property('jobName').that.equals('move_[From Sub.C-h-u]_to_[To Sub]');
       expect(jobParams).to.have.property('jobData').that.deep.include({
         action: 'move',
@@ -65,6 +58,11 @@ describe('lib/manage-hierarchy.ts', () => {
         instanceUrl: 'http://domain.com',
         sessionToken: 'encoded-token',
       });
+
+      const actual = await ManageHierarchyLib.scheduleJob(jobParams, chtConfQueue);
+
+      // Verify the data passed to mockmoveContactQueue
+      expect(chtConfQueue.add.calledOnce).to.be.true;
     });
 
     it('move CHU: subcounty required', async () => {
@@ -76,7 +74,7 @@ describe('lib/manage-hierarchy.ts', () => {
       const contactType = Config.getContactType('c_community_health_unit');
       const sessionCache = new SessionCache();
 
-      const actual = ManageHierarchyLib.scheduleJob(formData, contactType, sessionCache, mockChtApi(chuDocs), chtConfQueue);
+      const actual = ManageHierarchyLib.getJobDetails(formData, contactType, sessionCache, mockChtApi(chuDocs));
       await expect(actual).to.eventually.be.rejectedWith('search string is empty');
     });
 
@@ -90,7 +88,7 @@ describe('lib/manage-hierarchy.ts', () => {
       const contactType = Config.getContactType('c_community_health_unit');
       const sessionCache = new SessionCache();
 
-      const actual = ManageHierarchyLib.scheduleJob(formData, contactType, sessionCache, chtApiWithDocs(), chtConfQueue);
+      const actual = ManageHierarchyLib.getJobDetails(formData, contactType, sessionCache, chtApiWithDocs());
       await expect(actual).to.eventually.be.rejectedWith('Place "c-h-u" already has "From Sub" as parent');
     });
 
@@ -104,7 +102,7 @@ describe('lib/manage-hierarchy.ts', () => {
       const contactType = Config.getContactType('c_community_health_unit');
       const sessionCache = new SessionCache();
 
-      const actual = ManageHierarchyLib.scheduleJob(formData, contactType, sessionCache, chtApiWithDocs(), chtConfQueue);
+      const actual = ManageHierarchyLib.getJobDetails(formData, contactType, sessionCache, chtApiWithDocs());
       await expect(actual).to.eventually.be.rejectedWith('Cannot find \'b_sub_county\' matching \'invalid sub\'');
     });
   });
@@ -121,14 +119,7 @@ describe('lib/manage-hierarchy.ts', () => {
       const contactType = Config.getContactType('c_community_health_unit');
       const sessionCache = new SessionCache();
       
-      const actual = await ManageHierarchyLib.scheduleJob(formData, contactType, sessionCache, chtApiWithDocs(), chtConfQueue);
-      expect(actual.sourceLineage.map((l:any) => l.id)).to.deep.eq(['from-chu-id', 'from-sub']);
-      expect(actual.destinationLineage.map((l:any) => l.id)).to.deep.eq(['to-chu-id', 'to-sub']);
-
-      // Verify the data passed to mockmoveContactQueue
-      expect(chtConfQueue.add.calledOnce).to.be.true;
-      const jobParams = chtConfQueue.add.getCall(0).args[0];
-
+      const jobParams = await ManageHierarchyLib.getJobDetails(formData, contactType, sessionCache, chtApiWithDocs());
       expect(jobParams).to.have.property('jobName').that.equals('merge_[From Sub.C-h-u]_to_[To Sub.Destination]');
       expect(jobParams).to.have.property('jobData').that.deep.include({
         action: 'merge',
@@ -137,6 +128,9 @@ describe('lib/manage-hierarchy.ts', () => {
         instanceUrl: 'http://domain.com',
         sessionToken: 'encoded-token',
       });
+
+      await ManageHierarchyLib.scheduleJob(jobParams, chtConfQueue);
+      expect(chtConfQueue.add.calledOnce).to.be.true;
     });
   });
 
@@ -150,14 +144,7 @@ describe('lib/manage-hierarchy.ts', () => {
       const contactType = Config.getContactType('c_community_health_unit');
       const sessionCache = new SessionCache();
       
-      const actual = await ManageHierarchyLib.scheduleJob(formData, contactType, sessionCache, chtApiWithDocs(), chtConfQueue);
-      expect(actual.sourceLineage.map((l:any) => l.id)).to.deep.eq(['from-chu-id', 'from-sub']);
-      expect(actual.destinationLineage.map((l:any) => l.id)).to.deep.eq([]);
-
-      // Verify the data passed to mockmoveContactQueue
-      expect(chtConfQueue.add.calledOnce).to.be.true;
-      const jobParams = chtConfQueue.add.getCall(0).args[0];
-
+      const jobParams = await ManageHierarchyLib.getJobDetails(formData, contactType, sessionCache, chtApiWithDocs());
       expect(jobParams).to.have.property('jobName').that.equals('delete_[From Sub.C-h-u]');
       expect(jobParams).to.have.property('jobData').that.deep.include({
         action: 'delete',
