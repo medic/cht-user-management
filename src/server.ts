@@ -1,19 +1,20 @@
-import Fastify, { FastifyInstance, FastifyReply, FastifyRequest, FastifyServerOptions } from 'fastify';
 import autoload from '@fastify/autoload';
 import cookie from '@fastify/cookie';
-import formbody from '@fastify/formbody';
-import multipart from '@fastify/multipart';
-import fastifyStatic from '@fastify/static';
+import Fastify, { FastifyInstance, FastifyReply, FastifyRequest, FastifyServerOptions } from 'fastify';
 import fastifyCompress from '@fastify/compress';
-import view from '@fastify/view';
-import { Liquid } from 'liquidjs';
 import { FastifySSEPlugin } from 'fastify-sse-v2';
+import fastifyStatic from '@fastify/static';
+import formbody from '@fastify/formbody';
+import { Liquid } from 'liquidjs';
+import multipart from '@fastify/multipart';
 import path from 'path';
+import view from '@fastify/view';
 const metricsPlugin = require('fastify-metrics');
 
 import Auth from './lib/authentication';
-import SessionCache from './services/session-cache';
+import { ChtApi } from './lib/cht-api';
 import { checkRedisConnection } from './config/config-worker';
+import SessionCache from './services/session-cache';
 
 const build = (opts: FastifyServerOptions): FastifyInstance => {
   const fastify = Fastify(opts);
@@ -71,7 +72,7 @@ const build = (opts: FastifyServerOptions): FastifyInstance => {
 
     try {
       const chtSession = Auth.decodeTokenForCookie(cookieToken);
-      req.chtSession = chtSession;
+      req.chtApi = ChtApi.create(chtSession);
       req.sessionCache = SessionCache.getForSession(chtSession);
     } catch (e) {
       reply.redirect('/login');

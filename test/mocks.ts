@@ -131,16 +131,17 @@ export const mockProperty = (type: string, parameter?: string | string[] | objec
 });
 
 //  Constructor of class ChtSession is private and only accessible within the class declaration.
-export const mockChtSession = (userFacilityId: string = '*') : ChtSession => new ChtSession(
-  {
+export const mockChtSession = (userFacilityId: string = '*') : ChtSession => new ChtSession({
+  authInfo: {
     friendly: 'domain',
     domain: 'domain.com',
     useHttp: true,
   },
-  'session-token',
-  'username',
-  userFacilityId
-);
+  sessionToken: 'session-token',
+  username: 'username',
+  facilityIds: [userFacilityId],
+  chtCoreVersion: '4.2.2',
+});
 
 export function expectInvalidProperties(
   validationErrors: { [key: string]: string } | undefined,

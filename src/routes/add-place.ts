@@ -1,12 +1,11 @@
 import { FastifyInstance } from 'fastify';
 
 import { Config } from '../config';
-import { ChtApi } from '../lib/cht-api';
 import PlaceFactory from '../services/place-factory';
-import SessionCache from '../services/session-cache';
-import RemotePlaceResolver from '../lib/remote-place-resolver';
-import { UploadManager } from '../services/upload-manager';
 import RemotePlaceCache from '../lib/remote-place-cache';
+import RemotePlaceResolver from '../lib/remote-place-resolver';
+import SessionCache from '../services/session-cache';
+import { UploadManager } from '../services/upload-manager';
 
 export default async function addPlace(fastify: FastifyInstance) {
   fastify.get('/add-place', async (req, resp) => {
@@ -20,7 +19,7 @@ export default async function addPlace(fastify: FastifyInstance) {
     const tmplData = {
       view: 'add',
       logo: Config.getLogoBase64(),
-      session: req.chtSession,
+      session: req.chtApi.chtSession,
       op,
       hierarchy: Config.getHierarchyWithReplacement(contactType, 'desc'),
       contactType,
@@ -50,9 +49,8 @@ export default async function addPlace(fastify: FastifyInstance) {
 
     const contactType = Config.getContactType(placeType);
     const sessionCache: SessionCache = req.sessionCache;
-    const chtApi = new ChtApi(req.chtSession);
     if (op === 'new' || op === 'replace') {
-      await PlaceFactory.createOne(req.body, contactType, sessionCache, chtApi);
+      await PlaceFactory.createOne(req.body, contactType, sessionCache, req.chtApi);
       resp.header('HX-Redirect', `/`);
       return;
     }
@@ -65,7 +63,7 @@ export default async function addPlace(fastify: FastifyInstance) {
       }
       try {
         const csvBuf = await fileData.toBuffer();
-        await PlaceFactory.createFromCsv(csvBuf, contactType, sessionCache, chtApi);
+        await PlaceFactory.createFromCsv(csvBuf, contactType, sessionCache, req.chtApi);
       } catch (error) {
         return fastify.view('src/liquid/place/bulk_create_form.html', {
           contactType,
@@ -101,7 +99,7 @@ export default async function addPlace(fastify: FastifyInstance) {
       logo: Config.getLogoBase64(),
       hierarchy: Config.getHierarchyWithReplacement(place.type, 'desc'),
       place,
-      session: req.chtSession,
+      session: req.chtApi.chtSession,
       contactType: place.type,
       contactTypes: Config.contactTypes(),
       backend: `/place/edit/${id}`,
@@ -117,9 +115,8 @@ export default async function addPlace(fastify: FastifyInstance) {
     const { id } = req.params as any;
     const data: any = req.body;
     const sessionCache: SessionCache = req.sessionCache;
-    const chtApi = new ChtApi(req.chtSession);
 
-    await PlaceFactory.editOne(id, data, sessionCache, chtApi);
+    await PlaceFactory.editOne(id, data, sessionCache, req.chtApi);
 
     // back to places list
     resp.header('HX-Redirect', `/`);
@@ -133,9 +130,8 @@ export default async function addPlace(fastify: FastifyInstance) {
       throw Error(`unable to find place ${id}`);
     }
 
-    const chtApi = new ChtApi(req.chtSession);
-    RemotePlaceCache.clear(chtApi, place.type.name);
-    await RemotePlaceResolver.resolveOne(place, sessionCache, chtApi, { fuzz: true });
+    RemotePlaceCache.clear(req.chtApi, place.type.name);
+    await RemotePlaceResolver.resolveOne(place, sessionCache, req.chtApi, { fuzz: true });
     place.validate();
     
     fastify.uploadManager.triggerRefresh(place.id);
@@ -149,9 +145,8 @@ export default async function addPlace(fastify: FastifyInstance) {
       throw Error(`unable to find place ${id}`);
     }
 
-    const chtApi = new ChtApi(req.chtSession);
     const uploadManager: UploadManager = fastify.uploadManager;
-    uploadManager.doUpload([place], chtApi);
+    uploadManager.doUpload([place], req.chtApi);
   });
 
   fastify.post('/place/remove/:id', async (req) => {

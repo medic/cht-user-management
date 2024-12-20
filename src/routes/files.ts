@@ -23,7 +23,7 @@ export default async function files(fastify: FastifyInstance) {
       zip.file(file.filename, file.content);
     }
     
-    reply.header('Content-Disposition', `attachment; filename="${Date.now()}_${req.chtSession.authInfo.friendly}_users.zip"`);
+    reply.header('Content-Disposition', `attachment; filename="${Date.now()}_${req.chtApi.chtSession.authInfo.friendly}_users.zip"`);
     return zip.generateNodeStream();
   });
 }

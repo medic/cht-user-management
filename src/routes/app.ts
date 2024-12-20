@@ -1,7 +1,6 @@
 import { FastifyInstance } from 'fastify';
 
 import Auth from '../lib/authentication';
-import { ChtApi } from '../lib/cht-api';
 import { Config } from '../config';
 import DirectiveModel from '../services/directive-model';
 import RemotePlaceCache from '../lib/remote-place-cache';
@@ -30,7 +29,7 @@ export default async function sessionCache(fastify: FastifyInstance) {
 
     const tmplData = {
       view: 'list',
-      session: req.chtSession,
+      session: req.chtApi.chtSession,
       logo: Config.getLogoBase64(),
       op,
       contactType,
@@ -71,12 +70,10 @@ export default async function sessionCache(fastify: FastifyInstance) {
 
   fastify.post('/app/refresh-all', async (req, resp) => {
     const sessionCache: SessionCache = req.sessionCache;
-    const chtApi = new ChtApi(req.chtSession);
-
-    RemotePlaceCache.clear(chtApi);
+    RemotePlaceCache.clear(req.chtApi);
 
     const places = sessionCache.getPlaces({ created: false });
-    await RemotePlaceResolver.resolve(places, sessionCache, chtApi, { fuzz: true });
+    await RemotePlaceResolver.resolve(places, sessionCache, req.chtApi, { fuzz: true });
     places.forEach(p => p.validate());
     resp.header('HX-Redirect', '/');
   });
@@ -87,8 +84,7 @@ export default async function sessionCache(fastify: FastifyInstance) {
     const sessionCache: SessionCache = req.sessionCache;
     const directiveModel = new DirectiveModel(sessionCache, req.cookies.filter);
 
-    const chtApi = new ChtApi(req.chtSession);
-    uploadManager.doUpload(sessionCache.getPlaces(), chtApi);
+    uploadManager.doUpload(sessionCache.getPlaces(), req.chtApi);
 
     return resp.view('src/liquid/place/directive.html', {
       directiveModel

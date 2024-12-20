@@ -1,4 +1,4 @@
-import ChtSession from '../../lib/cht-session';
+import { ChtApi } from '../../lib/cht-api';
 import SessionCache from '../../services/session-cache';
 import { UploadManager } from '../../services/upload-manager';
 
@@ -9,7 +9,7 @@ declare module 'fastify' {
 
   interface FastifyRequest {
     unauthenticated: boolean;
-    chtSession: ChtSession;
+    chtApi: ChtApi;
     sessionCache: SessionCache;
   }
 }
