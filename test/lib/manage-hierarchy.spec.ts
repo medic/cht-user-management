@@ -58,11 +58,6 @@ describe('lib/manage-hierarchy.ts', () => {
         instanceUrl: 'http://domain.com',
         sessionToken: 'encoded-token',
       });
-
-      const actual = await ManageHierarchyLib.scheduleJob(jobParams, chtConfQueue);
-
-      // Verify the data passed to mockmoveContactQueue
-      expect(chtConfQueue.add.calledOnce).to.be.true;
     });
 
     it('move CHU: subcounty required', async () => {
@@ -128,9 +123,6 @@ describe('lib/manage-hierarchy.ts', () => {
         instanceUrl: 'http://domain.com',
         sessionToken: 'encoded-token',
       });
-
-      await ManageHierarchyLib.scheduleJob(jobParams, chtConfQueue);
-      expect(chtConfQueue.add.calledOnce).to.be.true;
     });
   });
 

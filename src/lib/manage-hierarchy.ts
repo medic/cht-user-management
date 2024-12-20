@@ -29,10 +29,6 @@ export default class ManageHierarchyLib {
 
   public static async scheduleJob(job: JobParams, queueName: IQueue = getChtConfQueue()) {
     await queueName.add(job);
-    
-    return {
-      success: true
-    };
   }
 
   public static parseHierarchyAction(action: string = ''): HierarchyAction {
