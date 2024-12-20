@@ -1,4 +1,5 @@
 import _ from 'lodash';
+import { DateTime } from 'luxon';
 
 import Auth from './authentication';
 import { ChtApi } from './cht-api';
@@ -13,25 +14,21 @@ import { RemotePlace } from './remote-place-cache';
 export const HIERARCHY_ACTIONS = ['move', 'merge', 'delete'];
 export type HierarchyAction = typeof HIERARCHY_ACTIONS[number];
 
+const ACTIVE_USER_THRESHOLD_DAYS = 60;
+const LARGE_PLACE_THRESHOLD_PLACE_COUNT = 100;
+
+export type WarningInformation = {
+  affectedPlaceCount: number;
+  lastSyncDescription: string;
+  userIsActive: boolean;
+  lotsOfPlaces: boolean;
+};
+
 export default class ManageHierarchyLib {
   private constructor() { }
 
-  public static async scheduleJob(
-    formData: any,
-    contactType: ContactType,
-    sessionCache: SessionCache,
-    chtApi: ChtApi,
-    queueName: IQueue = getChtConfQueue()
-  ) {
-    const { sourceLineage, destinationLineage, jobParam } = await getJobDetails(formData, contactType, sessionCache, chtApi);
-
-    await queueName.add(jobParam);
-    
-    return {
-      destinationLineage,
-      sourceLineage,
-      success: true
-    };
+  public static async scheduleJob(job: JobParams, queueName: IQueue = getChtConfQueue()) {
+    await queueName.add(job);
   }
 
   public static parseHierarchyAction(action: string = ''): HierarchyAction {
@@ -41,26 +38,57 @@ export default class ManageHierarchyLib {
   
     return action as HierarchyAction;
   }
+
+  public static async getJobDetails(formData: any, contactType: ContactType, sessionCache: SessionCache, chtApi: ChtApi): Promise<JobParams> {
+    const hierarchyAction = ManageHierarchyLib.parseHierarchyAction(formData.op);
+    const sourceLineage = await resolve('source_', formData, contactType, sessionCache, chtApi);
+    const destinationLineage = hierarchyAction === 'delete' ? [] : await resolve('destination_', formData, contactType, sessionCache, chtApi);
+
+    const { sourceId, destinationId } = getSourceAndDestinationIds(hierarchyAction, sourceLineage, destinationLineage);
+    const jobData = getJobData(hierarchyAction, sourceId, destinationId, chtApi);
+    const jobName = getJobName(jobData.action, sourceLineage, destinationLineage);
+    const jobParam: JobParams = {
+      jobName,
+      jobData,
+    };
+
+    return jobParam;
+  }
+
+  public static async getWarningInfo(job: JobParams, chtApi: ChtApi): Promise<WarningInformation> {
+    const sourceId = job.jobData.sourceId;
+    const affectedPlaceCount = await chtApi.countContactsUnderPlace(sourceId);
+    const lastSyncTime = await chtApi.lastSyncAtPlace(sourceId);
+    const syncBelowThreshold = diffNowInDays(lastSyncTime) < ACTIVE_USER_THRESHOLD_DAYS;
+    const lastSyncDescription = describeDateTime(lastSyncTime);
+    return {
+      affectedPlaceCount,
+      lastSyncDescription,
+      userIsActive: syncBelowThreshold && lastSyncDescription !== '-',
+      lotsOfPlaces: affectedPlaceCount > LARGE_PLACE_THRESHOLD_PLACE_COUNT,
+    };
+  }
 }
 
-async function getJobDetails(formData: any, contactType: ContactType, sessionCache: SessionCache, chtApi: ChtApi) {
-  const hierarchyAction = ManageHierarchyLib.parseHierarchyAction(formData.op);
-  const sourceLineage = await resolve('source_', formData, contactType, sessionCache, chtApi);
-  const destinationLineage = hierarchyAction === 'delete' ? [] : await resolve('destination_', formData, contactType, sessionCache, chtApi);
+function diffNowInDays(dateTime: DateTime): number {
+  return -(dateTime?.diffNow('days')?.days || 0);
+}
 
-  const { sourceId, destinationId } = getSourceAndDestinationIds(hierarchyAction, sourceLineage, destinationLineage);
-  const jobData = getJobData(hierarchyAction, sourceId, destinationId, chtApi);
-  const jobName = getJobName(jobData.action, sourceLineage, destinationLineage);
-  const jobParam: JobParams = {
-    jobName,
-    jobData,
-  };
+function describeDateTime(dateTime: DateTime): string {
+  if (!dateTime || !dateTime.isValid) {
+    return '-';
+  }
 
-  return {
-    sourceLineage,
-    destinationLineage,
-    jobParam
-  };
+  const diffNow = diffNowInDays(dateTime);
+  if (diffNow > 365) {
+    return 'over a year';
+  }
+
+  if (diffNow < 0) {
+    return '-';
+  }
+
+  return dateTime.toRelativeCalendar() || '-';
 }
 
 function getSourceAndDestinationIds(

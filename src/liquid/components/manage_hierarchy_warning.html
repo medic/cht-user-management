@@ -1,0 +1,40 @@
+<section class="section is-small has-background-danger-light">
+  <h1 class="title has-text-danger">Warning</h1>
+  <h2 class="subtitle">This operation cannot be undone!</h2>
+  <table class="table is-bordered is-fullwidth">
+    <tbody>
+      {% for hierarchy in sourceHierarchy %}
+      {% capture property_name %}source_{{ hierarchy.property_name }}{% endcapture %}
+      <tr>
+        <td>{{ hierarchy.friendly_name }}</td>
+        <td>{{ data[property_name] }}</td>
+      </tr>
+      {% endfor %}
+      <tr>
+        <td>User's Last Sync</td>
+        <td>{{ warningInfo.lastSyncDescription }}</td>
+      </tr>
+      <tr>
+        <td># of Affected Contacts</td>
+        <td>{{ warningInfo.affectedPlaceCount }}</td>
+      </tr>
+    </tbody>
+  </table>
+
+  {% if warningInfo.userIsActive or warningInfo.lotsOfPlaces %}
+  <p>
+    Double check that that you want to {{ op }} this place.
+    {% if warningInfo.userIsActive %}<b>This user is active!</b>{% endif %}
+    {% if warningInfo.lotsOfPlaces %}<b>There is a lot of data here!</b>{% endif %}
+  </p>
+  {% endif %}
+
+  <div class="field is-grouped is-grouped-right">
+    <div class="control">
+      <button id="place_create_submit" class="button is-link">Confirm {{ op | capitalize }}</button>
+      <a href="/manage-hierarchy/{{ op }}/{{ contactType.name }}" class="button">Cancel</a>
+    </div>
+  </div>
+
+  <input name="confirmed" value="true" hidden />
+</section>
