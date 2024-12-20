@@ -43,16 +43,17 @@ export default async function sessionCache(fastify: FastifyInstance) {
     };
 
     try {
-      const isConfirmed = false;
-      const job = await ManageHierarchyLib.getJob(formData, contactType, sessionCache, chtApi);
-      tmplData.confirm = !isConfirmed;
+      const isConfirmed = formData.confirmed === 'true';
+      const job = await ManageHierarchyLib.getJobDetails(formData, contactType, sessionCache, chtApi);
       if (isConfirmed) {
         const result = await ManageHierarchyLib.scheduleJob(job);
         tmplData.success = result.success;
       } else {
-        
+        const warningInfo = await ManageHierarchyLib.getWarningInfo(job, chtApi);
+        tmplData.warningInfo = warningInfo;
       }
 
+      tmplData.confirm = !isConfirmed;
       return resp.view('src/liquid/place/manage_hierarchy_form.html', tmplData);
     } catch (e: any) {
       tmplData.error = e.toString();

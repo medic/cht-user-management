@@ -2,6 +2,7 @@ import _ from 'lodash';
 import { AxiosInstance } from 'axios';
 import ChtSession from './cht-session';
 import { Config, ContactType } from '../config';
+import { DateTime } from 'luxon';
 import { UserPayload } from '../services/user-payload';
 
 export type PlacePayload = {
@@ -134,6 +135,20 @@ export class ChtApi {
     return this.axiosInstance.post(url, deactivationPayload);
   };
 
+  countContactsUnderPlace = async (docId: string): Promise<number> => {
+    const url = `medic/_design/medic/_view/contacts_by_depth`;
+    console.log('axios.get', url);
+    const resp = await this.axiosInstance.get(url, {
+      params: {
+        startkey: JSON.stringify([docId, 0]),
+        endkey: JSON.stringify([docId, 20]),
+        include_docs: false,
+      },
+    });
+
+    return resp.data?.rows?.length || 0;
+  };
+
   createUser = async (user: UserPayload): Promise<void> => {
     const url = `api/v1/users`;
     console.log('axios.post', url);
@@ -181,17 +196,54 @@ export class ChtApi {
     return resp.data;
   };
 
+  lastSyncAtPlace = async (placeId: string): Promise<DateTime> => {
+    const userIds = await this.getUsersAtPlace(placeId);
+    const result = await this.getLastSyncForUsers(userIds); 
+    return result || DateTime.invalid('unknown');
+  };
+
+  private getLastSyncForUsers = async (usernames: string[]): Promise<DateTime | undefined> => {
+    if (!usernames?.length) {
+      return undefined;
+    }
+
+    const url = '/medic-logs/_all_docs';
+    const keys = usernames.map(username => `connected-user-${username}`);
+    const payload = {
+      keys,
+      include_docs: true,
+     };
+
+    console.log('axios.post', url);
+    const resp = await this.axiosInstance.post(url, payload);
+    const timestamps = resp.data?.rows?.map((row: any) => row.doc?.timestamp);
+
+    if (!timestamps?.length) {
+      return undefined;
+    }
+
+    const maxTimestamp = Math.max(timestamps);
+    return DateTime.fromMillis(maxTimestamp);
+  };
+
   private async getUsersAtPlace(placeId: string): Promise<string[]> {
     const url = `_users/_find`;
     const payload = {
       selector: {
-        facility_id: placeId,
+        $or: [
+          { facility_id: placeId },
+          {
+            facility_id: {
+              $elemMatch: { $eq: placeId }
+            },
+          },
+        ]
       },
     };
 
     console.log('axios.post', url);
     const resp = await this.axiosInstance.post(url, payload);
-    return resp.data?.docs?.map((d: any) => d._id);
+    return resp.data?.docs?.map((d: any) => d.name);
   }
 }
 

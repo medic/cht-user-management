@@ -1,4 +1,5 @@
 import _ from 'lodash';
+import { DateTime } from 'luxon';
 
 import Auth from './authentication';
 import { ChtApi } from './cht-api';
@@ -12,6 +13,16 @@ import { RemotePlace } from './remote-place-cache';
 
 export const HIERARCHY_ACTIONS = ['move', 'merge', 'delete'];
 export type HierarchyAction = typeof HIERARCHY_ACTIONS[number];
+
+const ACTIVE_USER_THRESHOLD_DAYS = 60;
+const LARGE_PLACE_THRESHOLD_PLACE_COUNT = 100;
+
+export type WarningInformation = {
+  affectedPlaceCount: number;
+  lastSyncDescription: string;
+  userIsActive: boolean;
+  lotsOfPlaces: boolean;
+};
 
 export default class ManageHierarchyLib {
   private constructor() { }
@@ -33,7 +44,7 @@ export default class ManageHierarchyLib {
     return action as HierarchyAction;
   }
 
-  public static async getJob(formData: any, contactType: ContactType, sessionCache: SessionCache, chtApi: ChtApi): Promise<JobParams> {
+  public static async getJobDetails(formData: any, contactType: ContactType, sessionCache: SessionCache, chtApi: ChtApi): Promise<JobParams> {
     const hierarchyAction = ManageHierarchyLib.parseHierarchyAction(formData.op);
     const sourceLineage = await resolve('source_', formData, contactType, sessionCache, chtApi);
     const destinationLineage = hierarchyAction === 'delete' ? [] : await resolve('destination_', formData, contactType, sessionCache, chtApi);
@@ -48,6 +59,41 @@ export default class ManageHierarchyLib {
 
     return jobParam;
   }
+
+  public static async getWarningInfo(job: JobParams, chtApi: ChtApi): Promise<WarningInformation> {
+    const sourceId = job.jobData.sourceId;
+    const affectedPlaceCount = await chtApi.countContactsUnderPlace(sourceId);
+    const lastSyncTime = await chtApi.lastSyncAtPlace(sourceId);
+    const syncBelowThreshold = diffNowInDays(lastSyncTime) < ACTIVE_USER_THRESHOLD_DAYS;
+    const lastSyncDescription = describeDateTime(lastSyncTime);
+    return {
+      affectedPlaceCount,
+      lastSyncDescription,
+      userIsActive: syncBelowThreshold && lastSyncDescription !== '-',
+      lotsOfPlaces: affectedPlaceCount > LARGE_PLACE_THRESHOLD_PLACE_COUNT,
+    };
+  }
+}
+
+function diffNowInDays(dateTime: DateTime): number {
+  return -(dateTime?.diffNow('days')?.days || 0);
+}
+
+function describeDateTime(dateTime: DateTime): string {
+  if (!dateTime || !dateTime.isValid) {
+    return '-';
+  }
+
+  const diffNow = diffNowInDays(dateTime);
+  if (diffNow > 365) {
+    return 'over a year';
+  }
+
+  if (diffNow < 0) {
+    return '-';
+  }
+
+  return dateTime.toRelativeCalendar() || '-';
 }
 
 function getSourceAndDestinationIds(
