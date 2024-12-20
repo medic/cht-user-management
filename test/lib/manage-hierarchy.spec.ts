@@ -8,15 +8,12 @@ import { mockChtApi } from '../mocks';
 
 import chaiAsPromised from 'chai-as-promised';
 import Auth from '../../src/lib/authentication';
-import { BullQueue } from '../../src/lib/queues';
 import RemotePlaceCache from '../../src/lib/remote-place-cache';
 Chai.use(chaiAsPromised);
 
 const { expect } = Chai;
 
 describe('lib/manage-hierarchy.ts', () => {
-  let chtConfQueue: any;
-
   const subcountyDocs = [
     { _id: 'from-sub', name: 'From Sub' },
     { _id: 'to-sub', name: 'To Sub' }
@@ -29,7 +26,6 @@ describe('lib/manage-hierarchy.ts', () => {
   const chtApiWithDocs = () => mockChtApi(subcountyDocs, chuDocs);
 
   beforeEach(() => {
-    chtConfQueue = sinon.createStubInstance(BullQueue);
     sinon.stub(Auth, 'encodeTokenForWorker').returns('encoded-token');
     RemotePlaceCache.clear({});
   });
