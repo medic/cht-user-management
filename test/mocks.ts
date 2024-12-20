@@ -139,7 +139,7 @@ export const mockChtSession = (userFacilityId: string = '*') : ChtSession => new
   },
   sessionToken: 'session-token',
   username: 'username',
-  facilityId: userFacilityId,
+  facilityIds: [userFacilityId],
   chtCoreVersion: '4.2.2',
 });
 

@@ -73,8 +73,6 @@ describe('lib/cht-session.ts', () => {
 
     it('throw if user-settings has no facility_id', async () => {
       mockAxios.get.resolves(mockUserFacilityDoc('', []));
-      ChtSession.__set__('axios', mockAxios);
-
       await expect(ChtSession.default.create(mockAuthInfo, 'user', 'pwd')).to.eventually.be.rejectedWith('does not have a facility_id');
     });
   });

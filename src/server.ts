@@ -12,8 +12,9 @@ import view from '@fastify/view';
 const metricsPlugin = require('fastify-metrics');
 
 import Auth from './lib/authentication';
-import SessionCache from './services/session-cache';
+import { ChtApi } from './lib/cht-api';
 import { checkRedisConnection } from './config/config-worker';
+import SessionCache from './services/session-cache';
 
 const build = (opts: FastifyServerOptions): FastifyInstance => {
   const fastify = Fastify(opts);

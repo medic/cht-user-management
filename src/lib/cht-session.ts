@@ -115,7 +115,7 @@ export default class ChtSession {
     const isAdmin = _.intersection(adminRoles, userDoc?.roles).length > 0;
     const chtCoreVersion = monitoringResponse.data?.version?.app;
 
-    const facilityIds = isAdmin ? [ADMIN_FACILITY_ID] : _.flatten([userDoc?.facility_id]);
+    const facilityIds = isAdmin ? [ADMIN_FACILITY_ID] : _.flatten([userDoc?.facility_id]).filter(Boolean);
     if (!facilityIds?.length) {
       throw Error(`User ${username} does not have a facility_id connected to their user doc`);
     }
