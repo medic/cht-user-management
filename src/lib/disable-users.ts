@@ -1,6 +1,6 @@
 import { ChtApi, UserInfo } from './cht-api';
 
-type UserApiFormat = {
+type UserApiPayload = {
   username: string;
   place?: string[];
 };
@@ -9,7 +9,6 @@ export class DisableUsers {
   public static async disableUsersAt(placeId: string, chtApi: ChtApi): Promise<string[]> {
     const affectedUsers = await this.getAffectedUsers(placeId, chtApi);
     if (affectedUsers.length === 0) {
-      console.log('No users found needing an update.');
       return [];
     }
 
@@ -18,19 +17,19 @@ export class DisableUsers {
     return affectedUsers.map(user => user.username);
   }
 
-  private static async getAffectedUsers(facilityId: string, chtApi: ChtApi): Promise<UserApiFormat[]> {
-    const knownUserDocs: { [key: string]: UserApiFormat } = {};
-    const fetchedUserInfos = await chtApi.getUsersAtPlace(facilityId);
-    for (const fetchedUserInfo of fetchedUserInfos) {
-      const userPayload = knownUserDocs[fetchedUserInfo.username] || this.toPostApiFormat(fetchedUserInfo);
+  private static async getAffectedUsers(facilityId: string, chtApi: ChtApi): Promise<UserApiPayload[]> {
+    const result: UserApiPayload[] = [];
+    const userInfos = await chtApi.getUsersAtPlace(facilityId);
+    for (const userInfo of userInfos) {
+      const userPayload = this.toPostApiPayload(userInfo);
       this.removeUserFromPlace(userPayload, facilityId);
-      knownUserDocs[userPayload.username] = userPayload;
-    }
+      result.push(userPayload);
+    } 
 
-    return Object.values(knownUserDocs);
+    return result;
   }
 
-  private static toPostApiFormat(apiResponse: UserInfo): UserApiFormat {
+  private static toPostApiPayload(apiResponse: UserInfo): UserApiPayload {
     const places = Array.isArray(apiResponse.place) ? apiResponse.place : [apiResponse.place];
     const placeIds: string[] = places.map(place => {
       if (typeof place === 'string') {
@@ -46,21 +45,19 @@ export class DisableUsers {
     };
   }
 
-  private static async updateAffectedUsers(userDocs: UserApiFormat[], chtApi: ChtApi) {
+  private static async updateAffectedUsers(userDocs: UserApiPayload[], chtApi: ChtApi) {
     for (const userDoc of userDocs) {
       const places = userDoc.place && !Array.isArray(userDoc.place) ? [userDoc.place] : userDoc.place;
       const shouldDisable = !userDoc.place || places?.length === 0;
       if (shouldDisable) {
-        console.log(`Disabling ${userDoc.username}`);
         await chtApi.disableUser(userDoc.username);
       } else {
-        console.log(`Updating ${userDoc.username}`);
         await chtApi.updateUser(userDoc);
       }
     }
   }
 
-  private static removeUserFromPlace(userDoc: UserApiFormat, placeId: string) {
+  private static removeUserFromPlace(userDoc: UserApiPayload, placeId: string) {
     if (Array.isArray(userDoc.place)) {
       userDoc.place = userDoc.place.filter(place => place !== placeId);
     } else {
