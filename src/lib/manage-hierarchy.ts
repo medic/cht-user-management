@@ -56,7 +56,7 @@ export default class ManageHierarchyLib {
   }
 
   public static async getWarningInfo(job: JobParams, chtApi: ChtApi): Promise<WarningInformation> {
-    const sourceId = job.jobData.sourceId;
+    const { jobData: { sourceId } } = job;
     const affectedPlaceCount = await chtApi.countContactsUnderPlace(sourceId);
     const lastSyncTime = chtApi.chtSession.isAdmin ? await chtApi.lastSyncAtPlace(sourceId) : DateTime.invalid('must be admin');
     const syncBelowThreshold = diffNowInDays(lastSyncTime) < ACTIVE_USER_THRESHOLD_DAYS;

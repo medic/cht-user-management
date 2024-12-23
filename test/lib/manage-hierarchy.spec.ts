@@ -1,14 +1,16 @@
 import Chai from 'chai';
+import chaiAsPromised from 'chai-as-promised';
+import { DateTime } from 'luxon';
 import sinon from 'sinon';
 
-import ManageHierarchyLib from '../../src/lib/manage-hierarchy';
-import { Config } from '../../src/config';
-import SessionCache from '../../src/services/session-cache';
-import { mockChtApi } from '../mocks';
-
-import chaiAsPromised from 'chai-as-promised';
 import Auth from '../../src/lib/authentication';
+import { Config } from '../../src/config';
+import { JobParams } from '../../src/lib/queues';
+import ManageHierarchyLib from '../../src/lib/manage-hierarchy';
+import { mockChtApi, mockChtSession } from '../mocks';
 import RemotePlaceCache from '../../src/lib/remote-place-cache';
+import SessionCache from '../../src/services/session-cache';
+
 Chai.use(chaiAsPromised);
 
 const { expect } = Chai;
@@ -139,6 +141,73 @@ describe('lib/manage-hierarchy.ts', () => {
         sourceId: 'from-chu-id',
         instanceUrl: 'http://domain.com',
         sessionToken: 'encoded-token',
+      });
+    });
+  });
+
+  describe('getWarningInfo', () => {
+    const fakeJob: JobParams = { jobName: 'foo', jobData: { sourceId: 'abc' }};
+
+    it('below thrsholds', async () => {
+      const chtApi = mockChtApi();
+      chtApi.countContactsUnderPlace = sinon.stub().resolves(5);
+      chtApi.lastSyncAtPlace = sinon.stub().resolves(DateTime.now().minus({ days: 100 }));
+      const actual = await ManageHierarchyLib.getWarningInfo(fakeJob, chtApi);
+      expect(actual).to.deep.eq({
+        affectedPlaceCount: 5,
+        lastSyncDescription: '3 months ago',
+        userIsActive: false,
+        lotsOfPlaces: false,
+      });
+    });
+
+    it('above thresholds', async () => {
+      const chtApi = mockChtApi();
+      chtApi.countContactsUnderPlace = sinon.stub().resolves(1000);
+      chtApi.lastSyncAtPlace = sinon.stub().resolves(DateTime.now().minus({ days: 10 }));
+      const actual = await ManageHierarchyLib.getWarningInfo(fakeJob, chtApi);
+      expect(actual).to.deep.eq({
+        affectedPlaceCount: 1000,
+        lastSyncDescription: '10 days ago',
+        userIsActive: true,
+        lotsOfPlaces: true,
+      });
+    });
+
+    it('no sync details for non-admins', async () => {
+      const chtApi = mockChtApi();
+      chtApi.chtSession = mockChtSession('abc');
+      chtApi.countContactsUnderPlace = sinon.stub().resolves(2);
+      chtApi.lastSyncAtPlace = sinon.stub().throws('only for admins');
+      const actual = await ManageHierarchyLib.getWarningInfo(fakeJob, chtApi);
+      expect(actual).to.deep.eq({
+        affectedPlaceCount: 2,
+        lastSyncDescription: '-',
+        userIsActive: false,
+        lotsOfPlaces: false,
+      });
+      expect(chtApi.lastSyncAtPlace.called).to.be.false;
+    });
+
+    it('very old sync dates show as -', async () => {
+      const chtApi = mockChtApi();
+      chtApi.countContactsUnderPlace = sinon.stub().resolves(2);
+      chtApi.lastSyncAtPlace = sinon.stub().resolves(DateTime.now().minus({ days: 1000 }));
+      const actual = await ManageHierarchyLib.getWarningInfo(fakeJob, chtApi);
+      expect(actual).to.deep.include({
+        lastSyncDescription: 'over a year',
+        userIsActive: false,
+      });
+    });
+
+    it('sync dates in future show as -', async () => {
+      const chtApi = mockChtApi();
+      chtApi.countContactsUnderPlace = sinon.stub().resolves(2);
+      chtApi.lastSyncAtPlace = sinon.stub().resolves(DateTime.now().plus({ days: 1 }));
+      const actual = await ManageHierarchyLib.getWarningInfo(fakeJob, chtApi);
+      expect(actual).to.deep.include({
+        lastSyncDescription: '-',
+        userIsActive: false,
       });
     });
   });
