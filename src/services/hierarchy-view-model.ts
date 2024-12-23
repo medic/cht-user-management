@@ -5,7 +5,7 @@ import ManageHierarchyLib from '../lib/manage-hierarchy';
 export function hierarchyViewModel(action: string, contactType: ContactType) {
   const parentTypeName = contactType.hierarchy.find(h => h.level === 1)?.contact_type;
   if (!parentTypeName) {
-    throw Error('parent type name');
+    throw Error('Parent type name not found in config');
   }
 
   const sourceHierarchy = Config.getHierarchyWithReplacement(contactType, 'desc');
