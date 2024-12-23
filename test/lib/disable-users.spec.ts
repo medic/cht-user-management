@@ -5,11 +5,6 @@ import { DisableUsers } from '../../src/lib/disable-users';
 
 const PLACE_ID = 'abc';
 
-const userInfoFourSeven = {
-  username: 'user',
-  place: { _id: 'abc' }
-};
-
 const mockChtApi = (usersAtPlace) => ({
   getUsersAtPlace: Sinon.stub().resolves(usersAtPlace),
   disableUser: Sinon.stub().resolves(),
@@ -18,7 +13,10 @@ const mockChtApi = (usersAtPlace) => ({
 
 describe('lib/disable-users.ts', () => {
   it('disable a user with single facility (4.7)', async () => {
-    const cht = mockChtApi([userInfoFourSeven]);
+    const cht = mockChtApi([{
+      username: 'user',
+      place: { _id: PLACE_ID }
+    }]);
     const actual = await DisableUsers.disableUsersAt(PLACE_ID, cht);
     expect(cht.disableUser.callCount).to.eq(1);
     expect(cht.disableUser.args[0]).to.deep.eq(['user']);
@@ -37,12 +35,42 @@ describe('lib/disable-users.ts', () => {
     expect(actual).to.deep.eq(['user']);
   });
 
-  it('user is updated when one of two facility are removed', async () => {
+  it('deactivate a user with single facility (4.11)', async () => {
+    const cht = mockChtApi([{
+      username: 'user',
+      place: [{ _id: PLACE_ID }]
+    }]);
+    const actual = await DisableUsers.deactivateUsersAt(PLACE_ID, cht);
+    expect(cht.disableUser.called).to.be.false;
+    expect(cht.updateUser.callCount).to.eq(1);
+    expect(cht.updateUser.args[0]).to.deep.eq([{
+      username: 'user',
+      roles: ['deactivated'],
+    }]);
+    expect(actual).to.deep.eq(['user']);
+  });
+
+  it('user is updated when one of two facilities are removed (disable)', async () => {
     const cht = mockChtApi([{
       username: 'user',
       place: [{ _id: PLACE_ID }, { _id: 'efg' }]
     }]);
     const actual = await DisableUsers.disableUsersAt(PLACE_ID, cht);
+    expect(cht.disableUser.called).to.be.false;
+    expect(cht.updateUser.called).to.be.true;
+    expect(cht.updateUser.args[0]).to.deep.eq([{
+      username: 'user',
+      place: ['efg'],
+    }]);
+    expect(actual).to.deep.eq(['user']);
+  });
+
+  it('user is updated when one of two facilities are removed (deactivate)', async () => {
+    const cht = mockChtApi([{
+      username: 'user',
+      place: [{ _id: PLACE_ID }, { _id: 'efg' }]
+    }]);
+    const actual = await DisableUsers.deactivateUsersAt(PLACE_ID, cht);
     expect(cht.disableUser.called).to.be.false;
     expect(cht.updateUser.called).to.be.true;
     expect(cht.updateUser.args[0]).to.deep.eq([{

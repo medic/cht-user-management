@@ -24,7 +24,7 @@ export class UploadReplacementWithDeactivation implements Uploader {
     }
 
     const updatedPlaceDoc = await retryOnUpdateConflict<any>(() => this.chtApi.updatePlace(payload, contactId));
-    await DisableUsers.disableUsersAt(placeId, this.chtApi);
+    await DisableUsers.deactivateUsersAt(placeId, this.chtApi);
     return {
       placeId: updatedPlaceDoc._id,
       contactId,

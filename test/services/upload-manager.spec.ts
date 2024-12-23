@@ -160,7 +160,10 @@ describe('services/upload-manager.ts', () => {
     expect(chtApi.disableUser.called).to.be.false;
     expect(chtApi.deleteDoc.called).to.be.false;
     expect(chtApi.updateUser.called).to.be.true;
-    expect(chtApi.updateUser.args[0][0]).to.eq('user');
+    expect(chtApi.updateUser.args[0][0]).to.deep.eq({
+      username: 'user',
+      roles: ['deactivated'],
+    });
     expect(place.isCreated).to.be.true;
   });
 

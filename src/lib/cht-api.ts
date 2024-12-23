@@ -30,6 +30,7 @@ export type CouchDoc = {
 export type UserInfo = {
   username: string;
   place?: CouchDoc[] | CouchDoc | string[] | string;
+  roles?: string[];
 };
 
 export class ChtApi {
