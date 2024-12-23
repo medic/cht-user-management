@@ -41,7 +41,7 @@ describe('integration/move-contact',  function () {
     executeCommandStub = sandbox.stub(MoveContactWorker as any, 'executeCommand');
 
     encodeTokenStub = sandbox.stub(Auth, 'encodeTokenForWorker');
-    decodeTokenStub = sandbox.stub(Auth, 'decodeTokenForWorker');
+    decodeTokenStub = sandbox.stub(Auth, 'createWorkerSession');
 
     MoveContactWorker.processQueue(queueName, connection);
   });

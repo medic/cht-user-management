@@ -111,7 +111,7 @@ export class MoveContactWorker {
         return { success: false, message: 'Missing session token' };
       }
 
-      const decodedToken = Auth.decodeTokenForWorker(sessionToken);
+      const decodedToken = Auth.createWorkerSession(sessionToken);
       const token = decodedToken.sessionToken.replace('AuthSession=', '');
 
       const command = 'cht';
