@@ -58,6 +58,7 @@ describe('lib/cht-session.ts', () => {
       expect(mockAxios.post.args[0][0]).to.be.a('string');
       expect(session.sessionToken).to.eq('AuthSession=123');
       expect(session.username).to.eq('user');
+      expect(session.isAdmin).to.be.false;
     });
 
     it('throw cht yields no authtoken', async () => {
@@ -83,6 +84,7 @@ describe('lib/cht-session.ts', () => {
     const data = JSON.stringify(session);
     const actual = ChtSession.default.createFromDataString(data);
     expect(actual).to.deep.eq(session);
+    expect(session.isAdmin).to.be.false;
   });
 
   describe('isPlaceAuthorized', () => {
