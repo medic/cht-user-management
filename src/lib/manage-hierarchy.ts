@@ -108,7 +108,7 @@ function getSourceAndDestinationIds(
   const destinationIndex = hierarchyAction === 'move' ? 1 : 0;
   const destinationId = destinationLineage[destinationIndex]?.id;
   if (!destinationId) {
-    throw Error('Unexpected error: Hierarchy operation due to missing destination information');
+    throw Error('Unexpected error: Hierarchy operation failed due to missing destination information');
   }
 
 
