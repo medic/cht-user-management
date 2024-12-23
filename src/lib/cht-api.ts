@@ -23,6 +23,15 @@ export type CreatedPlaceResult = {
   contactId?: string;
 };
 
+export type CouchDoc = {
+  _id: string;
+};
+
+export type UserInfo = {
+  username: string;
+  place?: CouchDoc[] | CouchDoc | string[] | string;
+};
+
 export class ChtApi {
   public readonly chtSession: ChtSession;
   private axiosInstance: AxiosInstance;
@@ -91,35 +100,16 @@ export class ChtApi {
     }
   }
 
-  async disableUsersWithPlace(placeId: string): Promise<string[]> {
-    const usersToDisable: string[] = await this.getUsersAtPlace(placeId);
-    for (const userDocId of usersToDisable) {
-      await this.disableUser(userDocId);
-    }
-    return usersToDisable;
-  }
-
-  async disableUser(docId: string): Promise<void> {
-    const username = docId.substring('org.couchdb.user:'.length);
+  async disableUser(username: string): Promise<void> {
     const url = `api/v1/users/${username}`;
     console.log('axios.delete', url);
     return this.axiosInstance.delete(url);
   }
 
-  async deactivateUsersWithPlace(placeId: string): Promise<string[]> {
-    const usersToDeactivate: string[] = await this.getUsersAtPlace(placeId);
-    for (const userDocId of usersToDeactivate) {
-      await this.deactivateUser(userDocId);
-    }
-    return usersToDeactivate;
-  }
-
-  async deactivateUser(docId: string): Promise<void> {
-    const username = docId.substring('org.couchdb.user:'.length);
-    const url = `api/v1/users/${username}`;
+  async updateUser(userInfo: UserInfo): Promise<void> {
+    const url = `api/v1/users/${userInfo.username}`;
     console.log('axios.post', url);
-    const deactivationPayload = { roles: ['deactivated' ]};
-    return this.axiosInstance.post(url, deactivationPayload);
+    return this.axiosInstance.post(url, userInfo);
   }
 
   async createUser(user: UserPayload): Promise<void> {
@@ -168,10 +158,13 @@ export class ChtApi {
     return resp.data;
   }
   
-  private async getUsersAtPlace(placeId: string): Promise<string[]> {
+  async getUsersAtPlace(placeId: string): Promise<UserInfo[]> {
     const url = `api/v2/users?facility_id=${placeId}`;
     console.log('axios.get', url);
     const resp = await this.axiosInstance.get(url);
-    return resp.data?.map((d: any) => d.id);
+    return resp.data?.map((doc: any): UserInfo => ({
+      username: doc.username,
+      place: doc.place,
+    }));
   }
 }

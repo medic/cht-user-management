@@ -1,4 +1,5 @@
 import { ChtApi, CreatedPlaceResult, PlacePayload } from '../lib/cht-api';
+import { DisableUsers } from '../lib/disable-users';
 import Place from './place';
 import { retryOnUpdateConflict } from '../lib/retry-logic';
 import { Uploader } from './upload-manager';
@@ -28,7 +29,7 @@ export class UploadReplacementWithDeletion implements Uploader {
       await retryOnUpdateConflict<any>(() => this.chtApi.deleteDoc(previousPrimaryContact));
     }
 
-    await this.chtApi.disableUsersWithPlace(placeId);
+    await DisableUsers.disableUsersAt(placeId, this.chtApi);
     return { placeId, contactId };
   };
 }
