@@ -31,9 +31,4 @@ export class UploadReplacementWithDeletion implements Uploader {
     await this.chtApi.disableUsersWithPlace(placeId);
     return { placeId, contactId };
   };
-
-  linkContactAndPlace = async (place: Place, placeId: string): Promise<void> => {
-    const contactId = await this.chtApi.updateContactParent(placeId);
-    place.creationDetails.contactId = contactId;
-  };
 }

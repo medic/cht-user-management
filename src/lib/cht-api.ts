@@ -43,42 +43,14 @@ export class ChtApi {
       throw Error(`invalid cht core version "${chtSession.chtCoreVersion}"`);
     }
 
-    if (semver.gte(coercedVersion, '4.7.0') || chtSession.chtCoreVersion === '4.6.0-local-development') {
-      result = new ChtApi_4_7(chtSession);
-      result.version = '4.7';
-    } else if (semver.gte(coercedVersion, '4.6.0')) {
-      result = new ChtApi_4_6(chtSession);
-      result.version = '4.6';
+    if (semver.gte(coercedVersion, '4.11.0') || chtSession.chtCoreVersion === '4.11.0-local-development') {
+      result = new ChtApi_4_11(chtSession);
+      result.version = '4.11';
     } else {
       result = new ChtApi(chtSession);
     }
   
     return result;
-  }
-
-  // workaround https://github.com/medic/cht-core/issues/8674
-  async updateContactParent(parentId: string): Promise<string> {
-    const parentDoc = await this.getDoc(parentId);
-    const contactId = parentDoc?.contact?._id;
-    if (!contactId) {
-      throw Error('cannot find id of contact');
-    }
-
-    const contactDoc = await this.getDoc(contactId);
-    if (!contactDoc || !parentDoc) {
-      throw Error('cannot find parent or contact docs');
-    }
-
-    contactDoc.parent = minify(parentDoc);
-
-    const putUrl = `medic/${contactId}`;
-    console.log('axios.put', putUrl);
-    const putResp = await this.axiosInstance.put(putUrl, contactDoc);
-    if (putResp.status !== 201) {
-      throw new Error(putResp.data);
-    }
-
-    return contactDoc._id;
   }
 
   async createPlace(payload: PlacePayload): Promise<CreatedPlaceResult> {
@@ -205,16 +177,10 @@ export class ChtApi {
   }
 
   protected async getUsersAtPlace(placeId: string): Promise<string[]> {
-    const url = `_users/_find`;
-    const payload = {
-      selector: {
-        facility_id: placeId,
-      },
-    };
-
-    console.log('axios.post', url);
-    const resp = await this.axiosInstance.post(url, payload);
-    return resp.data?.docs?.map((d: any) => d._id);
+    const url = `api/v2/users?facility_id=${placeId}`;
+    console.log('axios.get', url);
+    const resp = await this.axiosInstance.get(url);
+    return resp.data?.map((d: any) => d.id);
   }
 
   private async getDoc(id: string): Promise<any> {
@@ -239,40 +205,3 @@ export class ChtApi {
     return this.axiosInstance.delete(url);
   }
 }
-
-class ChtApi_4_6 extends ChtApi {
-  public constructor(session: ChtSession) {
-    super(session);
-  }
-
-  // #8674: assign parent place to new contacts
-  public override updateContactParent = async (): Promise<string> => {
-    throw Error(`program should never update contact's parent after cht-core 4.6`);
-  };
-}
-
-class ChtApi_4_7 extends ChtApi_4_6 {
-  public constructor(session: ChtSession) {
-    super(session);
-  }
-
-  // #8877: Look up users from their facility_id or contact_id
-  protected override async getUsersAtPlace(placeId: string): Promise<string[]> {
-    const url = `api/v2/users?facility_id=${placeId}`;
-    console.log('axios.get', url);
-    const resp = await this.axiosInstance.get(url);
-    return resp.data?.map((d: any) => d.id);
-  }
-}
-
-function minify(doc: any): any {
-  if (!doc) {
-    return;
-  }
-
-  return {
-    _id: doc._id,
-    parent: minify(doc.parent),
-  };
-}
-

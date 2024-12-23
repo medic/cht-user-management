@@ -42,11 +42,6 @@ describe('services/upload-manager.ts', () => {
           contact_type: contactType.name,
         });
 
-        if (scenario === 'base') {
-          expect(chtApi.updateContactParent.calledOnce).to.be.true;
-          expect(chtApi.updateContactParent.args[0]).to.deep.eq(['created-place-id']);
-        }
-
         expect(chtApi.createUser.calledOnce).to.be.true;
         const userPayload = chtApi.createUser.args[0][0];
         expect(userPayload).to.deep.include({
@@ -260,7 +255,6 @@ describe('services/upload-manager.ts', () => {
         expect(chu.creationDetails.password).to.not.be.undefined;
 
         expect(chtApi.createPlace.callCount).to.eq(1);
-        expect(chtApi.updateContactParent.callCount).to.eq(scenario === 'base' ? 1 : 0);
         expect(chtApi.createUser.callCount).to.eq(2);
         expect(chtApi.getParentAndSibling.called).to.be.false;
         expect(chtApi.createContact.called).to.be.false;
@@ -322,11 +316,6 @@ describe('services/upload-manager.ts', () => {
           contact_type: contactType.name,
         });
 
-        if (scenario === 'base') {
-          expect(chtApi.updateContactParent.calledOnce).to.be.true;
-          expect(chtApi.updateContactParent.args[0]).to.deep.eq(['created-place-id']);
-        }
-
         expect(chtApi.createUser.calledOnce).to.be.true;
         const userPayload = chtApi.createUser.args[0][0];
         expect(userPayload).to.deep.include({
@@ -365,7 +354,7 @@ describe('services/upload-manager.ts', () => {
   }
 });
 
-async function createMocks(coreVersion) {
+async function createMocks() {
   const contactType = mockValidContactType('string', undefined);
   const subcounty: ChtDoc = {
     _id: 'parent-id',
@@ -376,7 +365,6 @@ async function createMocks(coreVersion) {
     chtSession: mockChtSession(),
     getPlacesWithType: sinon.stub().resolves([subcounty]),
     createPlace: sinon.stub().resolves({ placeId: 'created-place-id' }),
-    updateContactParent: sinon.stub().resolves('created-contact-id'),
     createUser: sinon.stub().resolves(),
     
     getParentAndSibling: sinon.stub().resolves({ parent: {}, sibling: {} }),
@@ -391,11 +379,6 @@ async function createMocks(coreVersion) {
     disableUsersWithPlace: sinon.stub().resolves(['org.couchdb.user:disabled']),
     deactivateUsersWithPlace: sinon.stub().resolves(),
   };
-
-  if (coreVersion !== 'base') {
-    chtApi.createPlace.resolves({ placeId: 'created-place-id', contactId: 'created-contact-id' });
-    chtApi.updateContactParent.throws('never');
-  }
   
   const fakeFormData: any = {
     place_name: 'place',

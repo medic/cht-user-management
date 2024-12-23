@@ -502,7 +502,6 @@ function mockScenario() {
     chtSession: mockChtSession(),
     getPlacesWithType: sinon.stub().resolves([parentDoc]),
     createPlace: sinon.stub().resolves('created-place-id'),
-    updateContactParent: sinon.stub().resolves('created-contact-id'),
     createUser: sinon.stub().resolves(),
   };
   const fakeFormData:any = {

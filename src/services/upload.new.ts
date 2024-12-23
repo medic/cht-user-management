@@ -16,11 +16,4 @@ export class UploadNewPlace implements Uploader {
   handlePlacePayload = async (place: Place, payload: PlacePayload): Promise<CreatedPlaceResult> => {
     return await this.chtApi.createPlace(payload);
   };
-
-  //  we don't get a contact id when we create a place with a contact defined prior to cht 4.6
-  //  https://github.com/medic/cht-core/issues/8674
-  linkContactAndPlace = async (place: Place, placeId: string): Promise<void> => {
-    const contactId = await this.chtApi.updateContactParent(placeId);
-    place.creationDetails.contactId = contactId;
-  };
 }

@@ -29,9 +29,4 @@ export class UploadReplacementWithDeactivation implements Uploader {
       contactId,
     };
   };
-
-  linkContactAndPlace = async (place: Place, placeId: string): Promise<void> => {
-    const contactId = await this.chtApi.updateContactParent(placeId);
-    place.creationDetails.contactId = contactId;
-  };
 }
