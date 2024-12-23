@@ -4,10 +4,12 @@ import { Worker, Job, DelayedError, ConnectionOptions, MinimalJob } from 'bullmq
 import { DateTime } from 'luxon';
 
 import Auth from '../lib/authentication';
+import { HierarchyAction } from '../lib/manage-hierarchy';
 
-export interface MoveContactData {
-  parentId: string;
-  contactId: string;
+export interface ChtConfJobData {
+  sourceId: string;
+  destinationId: string;
+  action: HierarchyAction;
   sessionToken: string;
   instanceUrl: string;
 }
@@ -18,7 +20,7 @@ export interface PostponeReason {
 
 export type JobResult = { success: boolean; message: string };
 
-export class MoveContactWorker {    
+export class ChtConfWorker {    
   private static readonly DELAY_IN_MILLIS = 4 * 60 * 60 * 1000;       // 4 hours
   private static readonly MAX_TIMEOUT_IN_MILLIS = 4 * 60 * 60 * 1000; // 4 hours
   private static readonly MAX_CONCURRENCY = 1;              // Limit concurrency to 1 job at a time
@@ -47,16 +49,16 @@ export class MoveContactWorker {
   }
 
   private static handleJob = async (job: Job, processingToken?: string): Promise<boolean> => {
-    const jobData: MoveContactData = job.data;
+    const jobData: ChtConfJobData = job.data;
 
     // Ensure server availability
-    const shouldPostpone = await this.shouldPostpone(jobData);
-    if (shouldPostpone) {
-      await this.postpone(job, shouldPostpone.reason, processingToken);
+    const postponseReason = await this.shouldPostpone(jobData);
+    if (postponseReason) {
+      await this.postpone(job, postponseReason.reason, processingToken);
       throw new DelayedError();
     }
 
-    const result = await this.moveContact(job);
+    const result = await this.processChtConfJob(job);
     if (!result.success) {
       const errorMessage = `Job ${job.id} failed with the following error: ${result.message}`;
       console.error(errorMessage);
@@ -80,10 +82,10 @@ export class MoveContactWorker {
     return this.DELAY_IN_MILLIS;
   };
 
-  private static async shouldPostpone(jobData: MoveContactData): Promise<PostponeReason | undefined> {
+  private static async shouldPostpone(jobData: ChtConfJobData): Promise<PostponeReason | undefined> {
     try {
       const { instanceUrl } = jobData;
-      const response = await axios.get(`${instanceUrl}/api/v2/monitoring`);
+      const response = await ChtConfWorker.fetchMonitoringApi(instanceUrl);
       const sentinelBacklog = response.data.sentinel?.backlog;
       console.log(`Sentinel backlog at ${sentinelBacklog} of ${this.MAX_SENTINEL_BACKLOG}`);
       
@@ -103,19 +105,23 @@ export class MoveContactWorker {
     }
   }
 
-  private static async moveContact(job: Job): Promise<JobResult> {
-    try {
-      const { contactId, parentId, instanceUrl, sessionToken } = job.data as MoveContactData;
+  private static fetchMonitoringApi(instanceUrl: string) {
+    return axios.get(`${instanceUrl}/api/v2/monitoring`);
+  }
 
-      if (!sessionToken) {
+  private static async processChtConfJob(job: Job): Promise<JobResult> {
+    try {
+      const jobData: ChtConfJobData = job.data;
+
+      if (!jobData.sessionToken) {
         return { success: false, message: 'Missing session token' };
       }
 
-      const decodedToken = Auth.createWorkerSession(sessionToken);
+      const decodedToken = Auth.createWorkerSession(jobData.sessionToken);
       const token = decodedToken.sessionToken.replace('AuthSession=', '');
 
       const command = 'cht';
-      const args = this.buildCommandArgs(instanceUrl, token, contactId, parentId);
+      const args = this.buildCommandArgs(jobData, token);
       
       this.logCommand(command, args);
       await this.executeCommand(command, args, job);
@@ -126,17 +132,38 @@ export class MoveContactWorker {
     }
   }
 
-  private static buildCommandArgs(instanceUrl: string, sessionToken: string, contactId: string, parentId: string): string[] {
+  private static buildCommandArgs(data: ChtConfJobData, decodedToken: string): string[] {
     return [
-      `--url=${instanceUrl}`,
-      `--session-token=${sessionToken}`,
+      `--url=${data.instanceUrl}`,
+      `--session-token=${decodedToken}`,
       '--force',
-      'move-contacts',
+      getConfActionName(),
       'upload-docs',
       '--',
-      `--contacts=${contactId}`,
-      `--parent=${parentId}`
+      ...getActionArgs(),
     ];
+
+    function getConfActionName() {
+      switch (data.action) {
+      case 'delete':
+        return 'delete-contacts';
+      case 'merge':
+        return 'merge-contacts';
+      default:
+        return 'move-contacts';
+      }
+    }
+
+    function getActionArgs() {
+      switch (data.action) {
+      case 'delete':
+        return [`--contacts=${data.sourceId}`, '--disable-users'];
+      case 'merge':
+        return [`--sources=${data.sourceId}`, `--destination=${data.destinationId}`, '--merge-primary-contacts', '--disable-users'];
+      default:
+        return [`--contacts=${data.sourceId}`, `--parent=${data.destinationId}`];
+      }
+    }
   }
 
   private static logCommand(command: string, args: string[]): void {
@@ -169,7 +196,7 @@ export class MoveContactWorker {
         if (code === 0) {
           resolve();
         }
-        reject(new Error(`Move contact command exited with code ${code}. Last output: ${lastOutput}`));
+        reject(new Error(`CHT command exited with code ${code}. Last output: ${lastOutput}`));
       });
 
       chtProcess.on('error', error => {
