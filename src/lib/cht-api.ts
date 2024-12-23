@@ -18,6 +18,11 @@ export type PlacePayload = {
   [key: string]: any;
 };
 
+export type CreatedPlaceResult = {
+  placeId: string;
+  contactId?: string;
+};
+
 export class ChtApi {
   public readonly chtSession: ChtSession;
   private axiosInstance: AxiosInstance;
@@ -27,47 +32,30 @@ export class ChtApi {
     this.axiosInstance = session.axiosInstance;
   }
 
-  // workaround https://github.com/medic/cht-core/issues/8674
-  updateContactParent = async (parentId: string): Promise<string> => {
-    const parentDoc = await this.getDoc(parentId);
-    const contactId = parentDoc?.contact?._id;
-    if (!contactId) {
-      throw Error('cannot find id of contact');
-    }
-
-    const contactDoc = await this.getDoc(contactId);
-    if (!contactDoc || !parentDoc) {
-      throw Error('cannot find parent or contact docs');
-    }
-
-    contactDoc.parent = minify(parentDoc);
-
-    const putUrl = `medic/${contactId}`;
-    console.log('axios.put', putUrl);
-    const putResp = await this.axiosInstance.put(putUrl, contactDoc);
-    if (putResp.status !== 201) {
-      throw new Error(putResp.data);
-    }
-
-    return contactDoc._id;
-  };
-
-  createPlace = async (payload: PlacePayload): Promise<string> => {
+  async createPlace(payload: PlacePayload): Promise<CreatedPlaceResult> {
     const url = `api/v1/places`;
     console.log('axios.post', url);
     const resp = await this.axiosInstance.post(url, payload);
-    return resp.data.id;
-  };
+    return {
+      placeId: resp.data.id,
+      contactId: resp.data.contact?.id,
+    };
+  }
 
   // because there is no PUT for /api/v1/places
-  createContact = async (payload: PlacePayload): Promise<string> => {
+  async createContact(payload: PlacePayload): Promise<string> {
+    const payloadWithPlace = {
+      ...payload.contact,
+      place: payload._id,
+    };
+
     const url = `api/v1/people`;
     console.log('axios.post', url);
-    const resp = await this.axiosInstance.post(url, payload.contact);
+    const resp = await this.axiosInstance.post(url, payloadWithPlace);
     return resp.data.id;
-  };
+  }
 
-  updatePlace = async (payload: PlacePayload, contactId: string): Promise<any> => {
+  async updatePlace(payload: PlacePayload, contactId: string): Promise<any> {
     const doc: any = await this.getDoc(payload._id);
 
     const payloadClone:any = _.cloneDeep(payload);
@@ -90,9 +78,9 @@ export class ChtApi {
     }
 
     return doc;
-  };
+  }
 
-  deleteDoc = async (docId: string): Promise<void> => {
+  async deleteDoc(docId: string): Promise<void> {
     const doc: any = await this.getDoc(docId);
 
     const deleteContactUrl = `medic/${doc._id}?rev=${doc._rev}`;
@@ -101,49 +89,49 @@ export class ChtApi {
     if (!resp.data.ok) {
       throw Error('response from chtApi.deleteDoc was not OK');
     }
-  };
+  }
 
-  disableUsersWithPlace = async (placeId: string): Promise<string[]> => {
+  async disableUsersWithPlace(placeId: string): Promise<string[]> {
     const usersToDisable: string[] = await this.getUsersAtPlace(placeId);
     for (const userDocId of usersToDisable) {
       await this.disableUser(userDocId);
     }
     return usersToDisable;
-  };
+  }
 
-  disableUser = async (docId: string): Promise<void> => {
+  async disableUser(docId: string): Promise<void> {
     const username = docId.substring('org.couchdb.user:'.length);
     const url = `api/v1/users/${username}`;
     console.log('axios.delete', url);
     return this.axiosInstance.delete(url);
-  };
+  }
 
-  deactivateUsersWithPlace = async (placeId: string): Promise<string[]> => {
+  async deactivateUsersWithPlace(placeId: string): Promise<string[]> {
     const usersToDeactivate: string[] = await this.getUsersAtPlace(placeId);
     for (const userDocId of usersToDeactivate) {
       await this.deactivateUser(userDocId);
     }
     return usersToDeactivate;
-  };
+  }
 
-  deactivateUser = async (docId: string): Promise<void> => {
+  async deactivateUser(docId: string): Promise<void> {
     const username = docId.substring('org.couchdb.user:'.length);
     const url = `api/v1/users/${username}`;
     console.log('axios.post', url);
     const deactivationPayload = { roles: ['deactivated' ]};
     return this.axiosInstance.post(url, deactivationPayload);
-  };
+  }
 
-  createUser = async (user: UserPayload): Promise<void> => {
+  async createUser(user: UserPayload): Promise<void> {
     const url = `api/v1/users`;
     console.log('axios.post', url);
     const axiosRequestionConfig = {
       'axios-retry': { retries: 0 }, // upload-manager handles retries for this
     };
     await this.axiosInstance.post(url, user, axiosRequestionConfig);
-  };
+  }
 
-  getParentAndSibling = async (parentId: string, contactType: ContactType): Promise<{ parent: any; sibling: any }> => {
+  async getParentAndSibling(parentId: string, contactType: ContactType): Promise<{ parent: any; sibling: any }> {
     const url = `medic/_design/medic/_view/contacts_by_depth`;
     console.log('axios.get', url);
     const resp = await this.axiosInstance.get(url, {
@@ -160,10 +148,9 @@ export class ChtApi {
     const parent = docs.find((d: any) => d.contact_type === parentType);
     const sibling = docs.find((d: any) => d.contact_type === contactType.name);
     return { parent, sibling };
-  };
+  }
 
-  getPlacesWithType = async (placeType: string)
-    : Promise<any[]> => {
+  async getPlacesWithType(placeType: string): Promise<any[]> {
     const url = `medic/_design/medic-client/_view/contacts_by_type`;
     const params = {
       key: JSON.stringify([placeType]),
@@ -172,37 +159,19 @@ export class ChtApi {
     console.log('axios.get', url, params);
     const resp = await this.axiosInstance.get(url, { params });
     return resp.data.rows.map((row: any) => row.doc);
-  };
+  }
 
-  getDoc = async (id: string): Promise<any> => {
+  async getDoc(id: string): Promise<any> {
     const url = `medic/${id}`;
     console.log('axios.get', url);
     const resp = await this.axiosInstance.get(url);
     return resp.data;
-  };
-
+  }
+  
   private async getUsersAtPlace(placeId: string): Promise<string[]> {
-    const url = `_users/_find`;
-    const payload = {
-      selector: {
-        facility_id: placeId,
-      },
-    };
-
-    console.log('axios.post', url);
-    const resp = await this.axiosInstance.post(url, payload);
-    return resp.data?.docs?.map((d: any) => d._id);
+    const url = `api/v2/users?facility_id=${placeId}`;
+    console.log('axios.get', url);
+    const resp = await this.axiosInstance.get(url);
+    return resp.data?.map((d: any) => d.id);
   }
 }
-
-function minify(doc: any): any {
-  if (!doc) {
-    return;
-  }
-
-  return {
-    _id: doc._id,
-    parent: minify(doc.parent),
-  };
-}
-

@@ -33,8 +33,6 @@ describe('services/upload-manager.ts', () => {
       parent: subcounty._id,
       contact_type: contactType.name,
     });
-    expect(chtApi.updateContactParent.calledOnce).to.be.true;
-    expect(chtApi.updateContactParent.args[0]).to.deep.eq(['created-place-id']);
 
     expect(chtApi.createUser.calledOnce).to.be.true;
     const userPayload = chtApi.createUser.args[0][0];
@@ -249,7 +247,6 @@ describe('services/upload-manager.ts', () => {
     expect(chu.creationDetails.password).to.not.be.undefined;
 
     expect(chtApi.createPlace.callCount).to.eq(1);
-    expect(chtApi.updateContactParent.callCount).to.eq(1);
     expect(chtApi.createUser.callCount).to.eq(2);
     expect(chtApi.getParentAndSibling.called).to.be.false;
     expect(chtApi.createContact.called).to.be.false;
@@ -310,8 +307,6 @@ describe('services/upload-manager.ts', () => {
       parent: subcounty._id,
       contact_type: contactType.name,
     });
-    expect(chtApi.updateContactParent.calledOnce).to.be.true;
-    expect(chtApi.updateContactParent.args[0]).to.deep.eq(['created-place-id']);
 
     expect(chtApi.createUser.calledOnce).to.be.true;
     const userPayload = chtApi.createUser.args[0][0];
@@ -359,8 +354,7 @@ async function createMocks() {
   const chtApi = {
     chtSession: mockChtSession(),
     getPlacesWithType: sinon.stub().resolves([subcounty]),
-    createPlace: sinon.stub().resolves('created-place-id'),
-    updateContactParent: sinon.stub().resolves('created-contact-id'),
+    createPlace: sinon.stub().resolves({ placeId: 'created-place-id', contactId: 'created-contact-id' }),
     createUser: sinon.stub().resolves(),
     
     getParentAndSibling: sinon.stub().resolves({ parent: {}, sibling: {} }),
