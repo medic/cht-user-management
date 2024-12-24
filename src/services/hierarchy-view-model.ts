@@ -5,9 +5,10 @@ import ManageHierarchyLib from '../lib/manage-hierarchy';
 export function hierarchyViewModel(action: string, contactType: ContactType) {
   const parentTypeName = contactType.hierarchy.find(h => h.level === 1)?.contact_type;
   if (!parentTypeName) {
-    throw Error('parent type name');
+    throw Error('Parent type name not found in config');
   }
 
+  const isPermanent = ['merge', 'delete'].includes(action);
   const sourceHierarchy = Config.getHierarchyWithReplacement(contactType, 'desc');
   sourceHierarchy[sourceHierarchy.length - 1].friendly_name = contactType.friendly;
   const hierarchyAction = ManageHierarchyLib.parseHierarchyAction(action);
@@ -16,6 +17,7 @@ export function hierarchyViewModel(action: string, contactType: ContactType) {
   const destinationDescription = hierarchyAction === 'move' ? 'To Have This Parent' : 'After Moving Data Into';
   
   return {
+    isPermanent,
     sourceDescription,
     destinationDescription,
 

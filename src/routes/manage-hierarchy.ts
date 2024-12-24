@@ -32,32 +32,32 @@ export default async function sessionCache(fastify: FastifyInstance) {
     const contactType = Config.getContactType(formData.place_type);
     const chtApi = new ChtApi(req.chtSession);
     
-    try {
-      const result = await ManageHierarchyLib.scheduleJob(formData, contactType, sessionCache, chtApi);
+    const tmplData: any = {
+      view: 'manage-hierarchy',
+      op: formData.op,
+      logo: Config.getLogoBase64(),
+      contactType,
+      data: formData,
+      session: req.chtSession,
+      ...hierarchyViewModel(formData.op, contactType),
+    };
 
-      const tmplData = {
-        view: 'manage-hierarchy',
-        op: formData.op,
-        logo: Config.getLogoBase64(),
-        contactType,
-        session: req.chtSession,
-        ...hierarchyViewModel(formData.op, contactType),
-        ...result
-      };
-      return resp.view('src/liquid/place/manage_hierarchy_form.html', tmplData);
+    try {
+      const isConfirmed = formData.confirmed === 'true';
+      const job = await ManageHierarchyLib.getJobDetails(formData, contactType, sessionCache, chtApi);
+      if (isConfirmed) {
+        await ManageHierarchyLib.scheduleJob(job);
+        tmplData.success = true;
+      } else {
+        const warningInfo = await ManageHierarchyLib.getWarningInfo(job, chtApi);
+        tmplData.warningInfo = warningInfo;
+      }
+
+      tmplData.confirm = !isConfirmed;
+      return resp.view('src/liquid/components/manage_hierarchy_form_content.html', tmplData);
     } catch (e: any) {
-      const tmplData = {
-        view: 'manage-hierarchy',
-        op: formData.op,
-        contactTypes: Config.contactTypes(),
-        session: req.chtSession,
-        data: formData,
-        contactType,
-        ...hierarchyViewModel(formData.op, contactType),
-        error: e.toString(),
-      };
-  
-      return resp.view('src/liquid/place/manage_hierarchy_form.html', tmplData);
+      tmplData.error = e.toString();
+      return resp.view('src/liquid/components/manage_hierarchy_form_content.html', tmplData);
     }
   });
 }
