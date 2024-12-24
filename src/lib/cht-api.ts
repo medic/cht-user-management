@@ -2,6 +2,7 @@ import _ from 'lodash';
 import { AxiosInstance } from 'axios';
 import ChtSession from './cht-session';
 import { Config, ContactType } from '../config';
+import { DateTime } from 'luxon';
 import { UserPayload } from '../services/user-payload';
 
 export type PlacePayload = {
@@ -113,6 +114,20 @@ export class ChtApi {
     return this.axiosInstance.post(url, userInfo);
   }
 
+  async countContactsUnderPlace(docId: string): Promise<number> {
+    const url = `medic/_design/medic/_view/contacts_by_depth`;
+    console.log('axios.get', url);
+    const resp = await this.axiosInstance.get(url, {
+      params: {
+        startkey: JSON.stringify([docId, 0]),
+        endkey: JSON.stringify([docId, 20]),
+        include_docs: false,
+      },
+    });
+
+    return resp.data?.rows?.length || 0;
+  }
+
   async createUser(user: UserPayload): Promise<void> {
     const url = `api/v1/users`;
     console.log('axios.post', url);
@@ -168,4 +183,35 @@ export class ChtApi {
       place: doc.place,
     }));
   }
+
+  async lastSyncAtPlace(placeId: string): Promise<DateTime> {
+    const userIds = await this.getUsersAtPlace(placeId);
+    const usernames = userIds.map(userId => userId.username);
+    const result = await this.getLastSyncForUsers(usernames);
+    return result || DateTime.invalid('unknown');
+  }
+
+  private getLastSyncForUsers = async (usernames: string[]): Promise<DateTime | undefined> => {
+    if (!usernames?.length) {
+      return undefined;
+    }
+
+    const url = '/medic-logs/_all_docs';
+    const keys = usernames.map(username => `connected-user-${username}`);
+    const payload = {
+      keys,
+      include_docs: true,
+    };
+
+    console.log('axios.post', url);
+    const resp = await this.axiosInstance.post(url, payload);
+    const timestamps = resp.data?.rows?.map((row: any) => row.doc?.timestamp);
+
+    if (!timestamps?.length) {
+      return undefined;
+    }
+
+    const maxTimestamp = Math.max(timestamps);
+    return DateTime.fromMillis(maxTimestamp);
+  };
 }

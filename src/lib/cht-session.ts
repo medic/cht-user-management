@@ -47,6 +47,10 @@ export default class ChtSession {
     }
   }
 
+  public get isAdmin(): boolean {
+    return this.facilityIds.includes(ADMIN_FACILITY_ID);
+  }
+
   public static async create(authInfo: AuthenticationInfo, username : string, password: string): Promise<ChtSession> {
     const sessionToken = await ChtSession.createSessionToken(authInfo, username, password);
 
@@ -66,7 +70,7 @@ export default class ChtSession {
   isPlaceAuthorized(remotePlace: RemotePlace): boolean {
     return this.facilityIds?.length > 0 &&
       (
-        this.facilityIds.includes(ADMIN_FACILITY_ID) 
+        this.isAdmin
         || _.intersection(remotePlace?.lineage, this.facilityIds).length > 0
         || this.facilityIds.includes(remotePlace?.id)
       );
