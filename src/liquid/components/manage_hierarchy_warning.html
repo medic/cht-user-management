@@ -1,33 +1,42 @@
-<section class="section is-small has-background-danger-light">
-  <h1 class="title has-text-danger">Warning</h1>
-  <h2 class="subtitle">This operation cannot be undone!</h2>
+<section class="section is-small">
+  <h1 class="subtitle">Confirm you want to {{ op }} this:</h1>
   <table class="table is-bordered is-fullwidth">
     <tbody>
       {% for hierarchy in sourceHierarchy %}
-      {% capture property_name %}source_{{ hierarchy.property_name }}{% endcapture %}
-      <tr>
-        <td>{{ hierarchy.friendly_name }}</td>
-        <td>{{ data[property_name] }}</td>
-      </tr>
+        {% capture property_name %}source_{{ hierarchy.property_name }}{% endcapture %}
+        {%if data[property_name] and data[property_name] != empty %}
+        <tr>
+          <td>Source {{ hierarchy.friendly_name }}</td>
+          <td>{{ data[property_name] }}</td>
+        </tr>
+        {% endif %}
       {% endfor %}
-      <tr>
-        <td>User's Last Sync</td>
-        <td>{{ warningInfo.lastSyncDescription }}</td>
-      </tr>
+
+      {% for hierarchy in destinationHierarchy %}
+        {% capture property_name %}destination_{{ hierarchy.property_name }}{% endcapture %}
+        {%if data[property_name] and data[property_name] != empty %}
+        <tr>
+          <td>Destination {{ hierarchy.friendly_name }}</td>
+          <td>{{ data[property_name] }}</td>
+        </tr>
+        {% endif %}
+      {% endfor %}
+      
       <tr>
         <td># of Affected Contacts</td>
         <td>{{ warningInfo.affectedPlaceCount }}</td>
       </tr>
+
+      <tr>
+        <td>User's Last Sync</td>
+        <td>{{ warningInfo.lastSyncDescription }}</td>
+      </tr>
     </tbody>
   </table>
 
-  {% if warningInfo.userIsActive or warningInfo.lotsOfPlaces %}
-  <p>
-    Double check that that you want to {{ op }} this place.
-    {% if warningInfo.userIsActive %}<b>This user is active!</b>{% endif %}
-    {% if warningInfo.lotsOfPlaces %}<b>There is a lot of data here!</b>{% endif %}
-  </p>
-  {% endif %}
+  {% if isPermanent %}<span class="tag is-warning">Cannot be undone</span>{% endif %}
+  {% if warningInfo.userIsActive %}<span class="tag is-warning">User is active</span>{% endif %}
+  {% if warningInfo.lotsOfPlaces %}<span class="tag is-warning">Large amount of data</span>{% endif %}
 
   <div class="field is-grouped is-grouped-right">
     <div class="control">
