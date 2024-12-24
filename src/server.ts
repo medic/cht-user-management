@@ -70,7 +70,7 @@ const build = (opts: FastifyServerOptions): FastifyInstance => {
     }
 
     try {
-      const chtSession = Auth.decodeTokenForCookie(cookieToken);
+      const chtSession = Auth.createCookieSession(cookieToken);
       req.chtSession = chtSession;
       req.sessionCache = SessionCache.getForSession(chtSession);
     } catch (e) {

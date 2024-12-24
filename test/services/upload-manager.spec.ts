@@ -33,8 +33,6 @@ describe('services/upload-manager.ts', () => {
       parent: subcounty._id,
       contact_type: contactType.name,
     });
-    expect(chtApi.updateContactParent.calledOnce).to.be.true;
-    expect(chtApi.updateContactParent.args[0]).to.deep.eq(['created-place-id']);
 
     expect(chtApi.createUser.calledOnce).to.be.true;
     const userPayload = chtApi.createUser.args[0][0];
@@ -159,10 +157,13 @@ describe('services/upload-manager.ts', () => {
     const uploadManager = new UploadManager();
     await uploadManager.doUpload([place], chtApi);
     expect(chtApi.createUser.callCount).to.eq(1);
-    expect(chtApi.disableUsersWithPlace.called).to.be.false;
+    expect(chtApi.disableUser.called).to.be.false;
     expect(chtApi.deleteDoc.called).to.be.false;
-    expect(chtApi.deactivateUsersWithPlace.called).to.be.true;
-    expect(chtApi.deactivateUsersWithPlace.args[0][0]).to.eq('id-replace');
+    expect(chtApi.updateUser.called).to.be.true;
+    expect(chtApi.updateUser.args[0][0]).to.deep.eq({
+      username: 'user',
+      roles: ['deactivated'],
+    });
     expect(place.isCreated).to.be.true;
   });
 
@@ -249,13 +250,13 @@ describe('services/upload-manager.ts', () => {
     expect(chu.creationDetails.password).to.not.be.undefined;
 
     expect(chtApi.createPlace.callCount).to.eq(1);
-    expect(chtApi.updateContactParent.callCount).to.eq(1);
     expect(chtApi.createUser.callCount).to.eq(2);
     expect(chtApi.getParentAndSibling.called).to.be.false;
     expect(chtApi.createContact.called).to.be.false;
     expect(chtApi.updatePlace.called).to.be.false;
     expect(chtApi.deleteDoc.called).to.be.false;
-    expect(chtApi.disableUsersWithPlace.called).to.be.false;
+    expect(chtApi.disableUser.called).to.be.false;
+    expect(chtApi.updateUser.called).to.be.false;
   });
 
   it('#146 - error details are clear when CHT returns a string', async () => {
@@ -310,8 +311,6 @@ describe('services/upload-manager.ts', () => {
       parent: subcounty._id,
       contact_type: contactType.name,
     });
-    expect(chtApi.updateContactParent.calledOnce).to.be.true;
-    expect(chtApi.updateContactParent.args[0]).to.deep.eq(['created-place-id']);
 
     expect(chtApi.createUser.calledOnce).to.be.true;
     const userPayload = chtApi.createUser.args[0][0];
@@ -345,6 +344,7 @@ describe('services/upload-manager.ts', () => {
     const uploadManager = new UploadManager();
     await uploadManager.doUpload([place], chtApi);
     expect(chtApi.deleteDoc.callCount).to.eq(0);
+    expect(chtApi.disableUser.callCount).to.eq(1);
     expect(place.isCreated).to.be.true;
   });
 });
@@ -359,11 +359,16 @@ async function createMocks() {
   const chtApi = {
     chtSession: mockChtSession(),
     getPlacesWithType: sinon.stub().resolves([subcounty]),
-    createPlace: sinon.stub().resolves('created-place-id'),
-    updateContactParent: sinon.stub().resolves('created-contact-id'),
+    createPlace: sinon.stub().resolves({ placeId: 'created-place-id', contactId: 'created-contact-id' }),
     createUser: sinon.stub().resolves(),
     
     getParentAndSibling: sinon.stub().resolves({ parent: {}, sibling: {} }),
+    getUsersAtPlace: sinon.stub().resolves([{
+      username: 'user',
+      place: [{ _id: 'id-replace' }]
+    }]),
+    disableUser: sinon.stub().resolves(),
+    updateUser: sinon.stub().resolves(),
     createContact: sinon.stub().resolves('replacement-contact-id'),
     updatePlace: sinon.stub().resolves({
       _id: 'updated-place-id',
@@ -372,8 +377,6 @@ async function createMocks() {
       },
     }),
     deleteDoc: sinon.stub().resolves(),
-    disableUsersWithPlace: sinon.stub().resolves(['org.couchdb.user:disabled']),
-    deactivateUsersWithPlace: sinon.stub().resolves(),
   };
   
   const fakeFormData: any = {

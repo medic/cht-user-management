@@ -41,7 +41,7 @@ describe('integration/manage-hierarchy',  function () {
     executeCommandStub = sandbox.stub(ChtConfWorker as any, 'executeCommand');
 
     encodeTokenStub = sandbox.stub(Auth, 'encodeTokenForWorker');
-    decodeTokenStub = sandbox.stub(Auth, 'decodeTokenForWorker');
+    decodeTokenStub = sandbox.stub(Auth, 'createWorkerSession');
 
     ChtConfWorker.processQueue(queueName, connection);
   });
