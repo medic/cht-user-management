@@ -120,7 +120,7 @@ function getSourceAndDestinationIds(
   
   if (hierarchyAction === 'merge') {
     if (destinationId === sourceId) {
-      throw Error(`Cannot merge "${destinationId}" with self`);
+      throw Error(`Cannot merge place with self`);
     }
   }
 

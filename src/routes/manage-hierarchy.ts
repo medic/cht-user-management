@@ -54,10 +54,10 @@ export default async function sessionCache(fastify: FastifyInstance) {
       }
 
       tmplData.confirm = !isConfirmed;
-      return resp.view('src/liquid/place/manage_hierarchy_form.html', tmplData);
+      return resp.view('src/liquid/components/manage_hierarchy_form_content.html', tmplData);
     } catch (e: any) {
       tmplData.error = e.toString();
-      return resp.view('src/liquid/place/manage_hierarchy_form.html', tmplData);
+      return resp.view('src/liquid/components/manage_hierarchy_form_content.html', tmplData);
     }
   });
 }

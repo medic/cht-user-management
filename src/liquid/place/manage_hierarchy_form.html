@@ -1,84 +1,31 @@
 <form
   id="form_place_move" 
   autocomplete="off"
-  {% if backend %} hx-post="{{backend}}" {%else%} hx-post="/manage-hierarchy" {%endif%}
+  hx-post="/manage-hierarchy"
   hx-target="this" 
-  hx-on::after-request="handleResponse(event)"
+  hx-on::after-request="handleHierarchyFormResponse(event)"
 >
-  {% if error %}
-    <div class="notification is-danger" style="margin: 0;">
-      {{ error }}
-    </div>
-  {% endif %}
+  {% include "components/manage_hierarchy_form_content" %}
 
-  {% if success %}
-    <div data-success="true"></div>
-  {% endif %}
+  <script type="text/javascript">
+    function handleHierarchyFormResponse(event) {
+      const response = event?.detail?.xhr?.responseText;
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(response, 'text/html');
 
-  <input name="place_type" value="{{contactType.name}}" hidden />
-  <input name="op" value="{{op}}" hidden />
-
-  {% if confirm %}
-    {% include "components/manage_hierarchy_warning" %}
-  {% endif %}
-
-  <div {% if confirm %}hidden{% endif %}>
-    <section class="section is-small">
-      <h1 class="subtitle">{{ sourceDescription }}</h1>
-      {% for hierarchy in sourceHierarchy %}
-        {%
-          include "components/search_input.html"
-            type=contactType.name
-            hierarchy=hierarchy
-            data=data
-            required=hierarchy.required
-            prefix="source_"
-        %}
-      {% endfor %}
-    </section>
-
-    {% if destinationHierarchy.size > 0 %}
-      <section class="section is-small">
-        <h1 class="subtitle">{{ destinationDescription }}</h1>
-        {% for hierarchy in destinationHierarchy %}
-          {%
-            include "components/search_input.html"
-              type=contactType.name
-              hierarchy=hierarchy
-              data=data
-              required=hierarchy.required
-              prefix="destination_"
-          %}
-        {% endfor %}
-      </section>
-    {% endif %}
-
-    <div class="field is-grouped is-grouped-right">
-      <div class="control">
-        <button id="place_create_submit" class="button is-link">{{ op | capitalize }}</button>
-      </div>
-    </div>
-  </div>
-</form>
-
-<script type="text/javascript">
-  function handleResponse(event) {
-    const response = event?.detail?.xhr?.responseText;
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(response, 'text/html');
-
-    // Find the element that indicates success
-    const successElement = doc.querySelector('[data-success="true"]');
-    if (successElement) {
-      bulmaToast.toast({
-        duration: 5000,
-        dismissible: true,
-        closeOnClick: true,
-        pauseOnHover: true,
-        type: 'is-success',
-        position: 'top-center',
-        message: `<p>{{ op | capitalize }} operation scheduled. Please allow up to 24 hours for processing.</p>`,
-      });
+      // Find the element that indicates success
+      const successElement = doc.querySelector('[data-success="true"]');
+      if (successElement) {
+        bulmaToast.toast({
+          duration: 5000,
+          dismissible: true,
+          closeOnClick: true,
+          pauseOnHover: true,
+          type: 'is-success',
+          position: 'top-center',
+          message: `<p>{{ op | capitalize }} operation scheduled. Please allow up to 24 hours for processing.</p>`,
+        });
+      }
     }
-  }
-</script>
+  </script>}
+</form>
