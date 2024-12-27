@@ -44,7 +44,8 @@ describe('lib/cht-session.ts', () => {
         },
       },
       post: sinon.stub().resolves(mockSessionResponse()),
-      get: sinon.stub().resolves(mockUserFacilityDoc()),
+      get: sinon.stub().resolves(mockUserFacilityDoc())
+        .onSecondCall().resolves({ data: { version: { app: '4.7.0' } } }),
     };
     ChtSession.__set__('axios', {
       create: sinon.stub().returns(mockAxios),
@@ -73,9 +74,12 @@ describe('lib/cht-session.ts', () => {
 
     it('throw if user-settings has no facility_id', async () => {
       mockAxios.get.resolves(mockUserFacilityDoc('', []));
-      ChtSession.__set__('axios', mockAxios);
-
       await expect(ChtSession.default.create(mockAuthInfo, 'user', 'pwd')).to.eventually.be.rejectedWith('does not have a facility_id');
+    });
+
+    it('throw if cht-core is 4.6.5', async () => {
+      mockAxios.get.onSecondCall().resolves({ data: { version: { app: '4.6.5' } } });
+      await expect(ChtSession.default.create(mockAuthInfo, 'user', 'pwd')).to.eventually.be.rejectedWith('CHT Core Version must be');
     });
   });
 

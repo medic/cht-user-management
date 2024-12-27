@@ -117,7 +117,7 @@ export class ChtConfWorker {
         return { success: false, message: 'Missing session token' };
       }
 
-      const decodedToken = Auth.decodeTokenForWorker(jobData.sessionToken);
+      const decodedToken = Auth.createWorkerSession(jobData.sessionToken);
       const token = decodedToken.sessionToken.replace('AuthSession=', '');
 
       const command = 'cht';
