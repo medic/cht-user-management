@@ -63,7 +63,7 @@ export default class ChtSession {
   }
 
   public static createFromDataString(data: string): ChtSession {
-    const parsed:any = JSON.parse(data);
+    const parsed: any = JSON.parse(data);
     return new ChtSession(parsed);
   }
 
