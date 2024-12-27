@@ -1,6 +1,7 @@
 import _ from 'lodash';
 import { ChtApi, PlacePayload } from '../lib/cht-api';
 import getConfigByKey from './config-factory';
+import Validation from '../validation';
 
 export type ConfigSystem = {
   domains: AuthenticationInfo[];
@@ -17,21 +18,26 @@ export type ContactType = {
   name: string;
   friendly: string;
   contact_type: string;
-  user_role: string;
+  contact_friendly?: string;
+  user_role: string[];
   username_from_place: boolean;
   hierarchy: HierarchyConstraint[];
   replacement_property: ContactProperty;
   place_properties: ContactProperty[];
   contact_properties: ContactProperty[];
   deactivate_users_on_replace: boolean;
+  hint?: string;
 };
+
+const KnownContactPropertyTypes = [...Validation.getKnownContactPropertyTypes()] as const;
+export type ContactPropertyType = typeof KnownContactPropertyTypes[number]; 
 
 export type HierarchyConstraint = {
   friendly_name: string;
   property_name: string;
-  type: string;
+  type: ContactPropertyType;
   required: boolean;
-  parameter? : string | string[];
+  parameter? : string | string[] | object;
   errorDescription? : string;
   
   contact_type: string;
@@ -41,9 +47,9 @@ export type HierarchyConstraint = {
 export type ContactProperty = {
   friendly_name: string;
   property_name: string;
-  type: string;
+  type: ContactPropertyType;
   required: boolean;
-  parameter? : string | string[];
+  parameter? : string | string[] | object;
   errorDescription? : string;
 };
 
@@ -52,6 +58,7 @@ export type AuthenticationInfo = {
   domain: string;
   useHttp?: boolean;
 };
+
 
 const {
   CONFIG_NAME,
@@ -102,6 +109,30 @@ export class Config {
     ], 'level', sortBy);
   }
 
+  public static getUserRoleConfig(contactType: ContactType): ContactProperty {
+    const parameter = contactType.user_role.reduce(
+      (acc: { [key: string]: string }, curr: string) => {
+        acc[curr] = curr;
+        return acc;
+      }, {}
+    );
+
+    return {
+      friendly_name: 'Roles',
+      property_name: 'role',
+      type: 'select_multiple',
+      required: true,
+      parameter,
+    };
+  }
+
+  public static hasMultipleRoles(contactType: ContactType): boolean {
+    if (!contactType.user_role.length || contactType.user_role.some(role => !role.trim())) {
+      throw Error(`unvalidatable config: 'user_role' property is empty or contains empty strings`);
+    }
+    return contactType.user_role.length > 1;
+  }
+
   public static async mutate(payload: PlacePayload, chtApi: ChtApi, isReplacement: boolean): Promise<PlacePayload | undefined> {
     return partnerConfig.mutate && partnerConfig.mutate(payload, chtApi, isReplacement);
   }
@@ -121,7 +152,7 @@ export class Config {
   public static getPropertyWithName(properties: ContactProperty[], name: string) : ContactProperty {
     const property = properties.find(prop => prop.property_name === name);
     if (!property) {
-      throw Error(`unable to find place_property with property_name:"${name}"`);
+      throw Error(`unable to find property_name:"${name}"`);
     }
 
     return property;
@@ -131,11 +162,13 @@ export class Config {
     const requiredContactProps = contactType.contact_properties.filter(p => p.required);
     const requiredPlaceProps = isReplacement ? [] : contactType.place_properties.filter(p => p.required);
     const requiredHierarchy = contactType.hierarchy.filter(h => h.required);
+    const requiredUserRole = Config.hasMultipleRoles(contactType) ? [Config.getUserRoleConfig(contactType)] : [];
 
     return [
       ...requiredHierarchy,
       ...requiredContactProps,
-      ...requiredPlaceProps
+      ...requiredPlaceProps,
+      ...requiredUserRole
     ];
   }
 
@@ -158,4 +191,50 @@ export class Config {
 
     return _.sortBy(domains, 'friendly');
   }
+
+  // TODO: Joi? Chai?
+  public static assertValid({ config }: PartnerConfig = partnerConfig) {
+    for (const contactType of config.contact_types) {
+      const allHierarchyProperties = [...contactType.hierarchy, contactType.replacement_property];
+      const allProperties = [
+        ...contactType.place_properties,
+        ...contactType.contact_properties,
+        ...allHierarchyProperties,
+        Config.getUserRoleConfig(contactType),
+      ];
+      
+      Config.getPropertyWithName(contactType.place_properties, 'name');
+      Config.getPropertyWithName(contactType.contact_properties, 'name');
+
+      allProperties.forEach(property => {
+        if (!KnownContactPropertyTypes.includes(property.type)) {
+          throw Error(`Unknown property type "${property.type}"`);
+        }
+      });
+
+      const generatedHierarchyProperties = allHierarchyProperties.filter(hierarchy => hierarchy.type === 'generated');
+      if (generatedHierarchyProperties.length) {
+        throw Error('Hierarchy properties cannot be of type "generated"');
+      }
+    }
+  }
+
+  public static getCsvTemplateColumns(placeType: string) {
+    const placeTypeConfig = Config.getContactType(placeType);
+    const hierarchy = Config.getHierarchyWithReplacement(placeTypeConfig);
+    const userRoleConfig = Config.getUserRoleConfig(placeTypeConfig);
+
+    const extractColumns = (properties: ContactProperty[]) => properties
+      .filter(p => p.type !== 'generated')
+      .map(p => p.friendly_name);
+
+    const columns = _.uniq([
+      ...hierarchy.map(p => p.friendly_name),
+      ...extractColumns(placeTypeConfig.place_properties),
+      ...extractColumns(placeTypeConfig.contact_properties),
+      ...(Config.hasMultipleRoles(placeTypeConfig) ? [userRoleConfig.friendly_name] : []),
+    ]);
+    return columns;
+  }
 }
+

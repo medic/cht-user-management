@@ -7,7 +7,8 @@ const { spawn } = require('child_process');
 const {
   ECR_REPO,
   BRANCH,
-  BUILD_NUMBER
+  BUILD_NUMBER,
+  SERVICE = 'cht-user-management'
 } = process.env;
 
 const getBranchVersions = () => {
@@ -20,17 +21,17 @@ const getRepo = () => {
   return ECR_REPO || 'medicmobile';
 };
 
-const getVersions = (release) => {
+const getVersions = () => {
   if (BRANCH) {
-    return getBranchVersions(release);
+    return getBranchVersions();
   }
   return [`${packageJson.version}-dev.${buildTime}`];
 };
 
-const getImageTags = () => {
+const getImageTags = (serviceName) => {
   const versions = getVersions();
   const tags = versions.map(version => version.replace(/\/|_/g, '-'));
-  return tags.map(tag => `${getRepo()}/cht-user-management:${tag}`);
+  return tags.map(tag => `${getRepo()}/${serviceName}:${tag}`);
 };
 
 const dockerCommand = (args) => {
@@ -61,24 +62,30 @@ const dockerCommand = (args) => {
 };
 
 (async () => {
-  try {
-    const tags = getImageTags();
-    const dockerfilePath = path.join(__dirname, '..', 'Dockerfile');
-    const tagFlags = tags.map(tag => ['-t', tag]).flat();
-    const dockerBuildParams = [
-      'build',
-      '-f',
-      dockerfilePath,
-      ...tagFlags,
-      '.'
-    ];
+  let dockerfilePath;
+  let serviceName;
 
-    await dockerCommand(dockerBuildParams);
-    for (const tag of tags) {
-      await dockerCommand(['push', tag]);
-    }
+  if (SERVICE === 'cht-user-management-worker') {
+    dockerfilePath = 'Dockerfile.worker';
+    serviceName = 'cht-user-management-worker';
+  } else {
+    dockerfilePath = 'Dockerfile';
+    serviceName = 'cht-user-management';
+  }
 
-  } catch (err) {
-    console.error('Error while publishing docker image', err);
+  const tags = getImageTags(serviceName);
+  const fullDockerfilePath = path.join(__dirname, '..', dockerfilePath);
+  const tagFlags = tags.map(tag => ['-t', tag]).flat();
+  const dockerBuildParams = [
+    'build',
+    '-f',
+    fullDockerfilePath,
+    ...tagFlags,
+    '.'
+  ];
+
+  await dockerCommand(dockerBuildParams);
+  for (const tag of tags) {
+    await dockerCommand(['push', tag]);
   }
 })();

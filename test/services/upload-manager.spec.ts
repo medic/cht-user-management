@@ -3,22 +3,21 @@ import { expect } from 'chai';
 import sinon from 'sinon';
 
 import { UploadManager } from '../../src/services/upload-manager';
-import { mockValidContactType, mockParentPlace, mockChtSession, expectInvalidProperties } from '../mocks';
+import { mockValidContactType, mockParentPlace, mockChtSession, expectInvalidProperties, ChtDoc, createChu } from '../mocks';
 import PlaceFactory from '../../src/services/place-factory';
 import SessionCache from '../../src/services/session-cache';
-import { ChtApi, RemotePlace } from '../../src/lib/cht-api';
 import RemotePlaceCache from '../../src/lib/remote-place-cache';
 import { Config } from '../../src/config';
 import RemotePlaceResolver from '../../src/lib/remote-place-resolver';
 import { UploadManagerRetryScenario } from '../lib/retry-logic.spec';
 
-describe('upload-manager.ts', () => {
+describe('services/upload-manager.ts', () => {
   beforeEach(() => {
     RemotePlaceCache.clear({});
   });
 
-  it('mock data is properly sent to chtApi', async () => {
-    const { fakeFormData, contactType, chtApi, sessionCache, remotePlace } = await createMocks();
+  it('mock data is properly sent to chtApi - standard', async () => {
+    const { fakeFormData, contactType, chtApi, sessionCache, subcounty } = await createMocks();
     const place = await PlaceFactory.createOne(fakeFormData, contactType, sessionCache, chtApi);
 
     const uploadManager = new UploadManager();
@@ -31,37 +30,35 @@ describe('upload-manager.ts', () => {
       'contact.name': 'contact',
       prop: 'foo',
       name: 'Place Community Health Unit',
-      parent: remotePlace.id,
+      parent: subcounty._id,
       contact_type: contactType.name,
     });
-    expect(chtApi.updateContactParent.calledOnce).to.be.true;
-    expect(chtApi.updateContactParent.args[0]).to.deep.eq(['created-place-id']);
 
     expect(chtApi.createUser.calledOnce).to.be.true;
     const userPayload = chtApi.createUser.args[0][0];
     expect(userPayload).to.deep.include({
       contact: 'created-contact-id',
       place: 'created-place-id',
-      type: 'role',
+      roles: ['role'],
       username: 'contact',
     });
     expect(chtApi.deleteDoc.called).to.be.false;
     expect(place.isCreated).to.be.true;
   });
 
-  it('mock data is properly sent to chtApi (sessionCache cache)', async () => {
-    const { fakeFormData, contactType, sessionCache, chtApi, remotePlace } = await createMocks();
+  it('mock data is properly sent to chtApi - sessionCache cache', async () => {
+    const { fakeFormData, contactType, sessionCache, chtApi, subcounty } = await createMocks();
 
     const parentContactType = mockValidContactType('string', undefined);
-    parentContactType.name = remotePlace.name;
+    parentContactType.name = subcounty.name;
 
-    const parentPlace = mockParentPlace(parentContactType, remotePlace.name);
+    const parentPlace = mockParentPlace(parentContactType, subcounty.name);
     sessionCache.savePlaces(parentPlace);
     const place = await PlaceFactory.createOne(fakeFormData, contactType, sessionCache, chtApi);
     const uploadManager = new UploadManager();
     await uploadManager.doUpload([place], chtApi);
 
-    expect(chtApi.getPlacesWithType.calledTwice).to.be.true;
+    expect(chtApi.getPlacesWithType.callCount).to.eq(1);
     expect(chtApi.getPlacesWithType.args[0]).to.deep.eq(['parent']);
     expect(chtApi.deleteDoc.called).to.be.false;
     expect(place.isCreated).to.be.true;
@@ -79,20 +76,19 @@ describe('upload-manager.ts', () => {
   });
 
   it('required attributes can be inherited during replacement', async () => {
-    const { remotePlace, sessionCache, contactType, fakeFormData, chtApi } = await createMocks();
+    const { subcounty, sessionCache, contactType, fakeFormData, chtApi } = await createMocks();
     fakeFormData.hierarchy_replacement = 'to-replace';
     fakeFormData.place_prop = ''; // required during creation, but can be empty (ui) or undefined (csv)
     fakeFormData.place_name = undefined;
 
-    const toReplace: RemotePlace = {
-      id: 'id-replace',
+    const toReplace: ChtDoc = {
+      _id: 'id-replace',
       name: 'to-replace',
-      lineage: [remotePlace.id],
-      type: 'remote',
+      parent: { _id: subcounty._id },
     };
 
     chtApi.getPlacesWithType
-      .resolves([remotePlace])
+      .resolves([subcounty])
       .onSecondCall()
       .resolves([toReplace]);
 
@@ -109,21 +105,20 @@ describe('upload-manager.ts', () => {
   });
 
   it('contact_type replacement with username_from_place:true', async () => {
-    const { remotePlace, sessionCache, contactType, fakeFormData, chtApi } = await createMocks();
+    const { subcounty, sessionCache, contactType, fakeFormData, chtApi } = await createMocks();
     contactType.username_from_place = true;
 
     fakeFormData.hierarchy_replacement = 'replacement based username';
     fakeFormData.place_name = ''; // optional due to replacement
 
-    const toReplace: RemotePlace = {
-      id: 'id-replace',
+    const toReplace: ChtDoc = {
+      _id: 'id-replace',
       name: 'replac"e$mENT baSed username',
-      lineage: [remotePlace.id],
-      type: 'remote',
+      parent: { _id: subcounty._id },
     };
 
     chtApi.getPlacesWithType
-      .resolves([remotePlace])
+      .resolves([subcounty])
       .onSecondCall()
       .resolves([toReplace]);
 
@@ -139,21 +134,20 @@ describe('upload-manager.ts', () => {
   });
 
   it('contact_type replacement with deactivate_users_on_replace:true', async () => {
-    const { remotePlace, sessionCache, contactType, fakeFormData, chtApi } = await createMocks();
+    const { subcounty, sessionCache, contactType, fakeFormData, chtApi } = await createMocks();
     contactType.deactivate_users_on_replace = true;
 
     fakeFormData.hierarchy_replacement = 'deactivate me';
     fakeFormData.place_name = ''; // optional due to replacement
 
-    const toReplace: RemotePlace = {
-      id: 'id-replace',
+    const toReplace: ChtDoc = {
+      _id: 'id-replace',
       name: 'deactivate me',
-      lineage: [remotePlace.id],
-      type: 'remote',
+      parent: { _id: subcounty._id },
     };
 
     chtApi.getPlacesWithType
-      .resolves([remotePlace])
+      .resolves([subcounty])
       .onSecondCall()
       .resolves([toReplace]);
 
@@ -163,10 +157,13 @@ describe('upload-manager.ts', () => {
     const uploadManager = new UploadManager();
     await uploadManager.doUpload([place], chtApi);
     expect(chtApi.createUser.callCount).to.eq(1);
-    expect(chtApi.disableUsersWithPlace.called).to.be.false;
+    expect(chtApi.disableUser.called).to.be.false;
     expect(chtApi.deleteDoc.called).to.be.false;
-    expect(chtApi.deactivateUsersWithPlace.called).to.be.true;
-    expect(chtApi.deactivateUsersWithPlace.args[0][0]).to.eq('id-replace');
+    expect(chtApi.updateUser.called).to.be.true;
+    expect(chtApi.updateUser.args[0][0]).to.deep.eq({
+      username: 'user',
+      roles: ['deactivated'],
+    });
     expect(place.isCreated).to.be.true;
   });
 
@@ -183,11 +180,11 @@ describe('upload-manager.ts', () => {
   });
 
   it('uploading a chu and dependant chp where chp is created first', async () => {
-    const { remotePlace, sessionCache, chtApi } = await createMocks();
+    const { subcounty, sessionCache, chtApi } = await createMocks();
 
     chtApi.getPlacesWithType
       .resolves([])                             // parent of chp
-      .onSecondCall().resolves([remotePlace])   // grandparent of chp (subcounty)
+      .onSecondCall().resolves([subcounty])     // grandparent of chp (subcounty)
       .onThirdCall().resolves([]);              // chp replacements
 
     const chu_name = 'new chu';
@@ -203,7 +200,7 @@ describe('upload-manager.ts', () => {
     const chp = await PlaceFactory.createOne(chpData, chpType, sessionCache, chtApi);
     expectInvalidProperties(chp.validationErrors, ['hierarchy_CHU'], 'Cannot find');
 
-    const chu = await createChu(remotePlace, chu_name, sessionCache, chtApi);
+    const chu = await createChu(subcounty, chu_name, sessionCache, chtApi);
 
     // refresh the chp
     await RemotePlaceResolver.resolveOne(chp, sessionCache, chtApi, { fuzz: true });
@@ -218,24 +215,19 @@ describe('upload-manager.ts', () => {
     expect(chp.isCreated).to.be.true;
 
     // chu is created first
-    expect(chtApi.createUser.args[0][0].type).to.eq('community_health_assistant');
-    expect(chtApi.createUser.args[1][0].type).to.eq('community_health_volunteer');
-
-    const cachedChus = await RemotePlaceCache.getPlacesWithType(chtApi, chu.type.name);
-    expect(cachedChus).to.have.property('length', 1);
-    const cachedChps = await RemotePlaceCache.getPlacesWithType(chtApi, chp.type.name);
-    expect(cachedChps).to.have.property('length', 1);
+    expect(chtApi.createUser.args[0][0].roles).to.deep.eq(['community_health_assistant']);
+    expect(chtApi.createUser.args[1][0].roles).to.deep.eq(['community_health_volunteer']);
   });
 
   it('failure to upload', async () => {
-    const { remotePlace, sessionCache, chtApi } = await createMocks();
+    const { subcounty, sessionCache, chtApi } = await createMocks();
 
     chtApi.createUser
       .throws({ response: { status: 404 }, toString: () => 'upload-error' })
       .onSecondCall().resolves();
 
     const chu_name = 'new chu';
-    const chu = await createChu(remotePlace, chu_name, sessionCache, chtApi);
+    const chu = await createChu(subcounty, chu_name, sessionCache, chtApi);
 
     const uploadManager = new UploadManager();
     await uploadManager.doUpload(sessionCache.getPlaces(), chtApi);
@@ -258,22 +250,38 @@ describe('upload-manager.ts', () => {
     expect(chu.creationDetails.password).to.not.be.undefined;
 
     expect(chtApi.createPlace.callCount).to.eq(1);
-    expect(chtApi.updateContactParent.callCount).to.eq(1);
     expect(chtApi.createUser.callCount).to.eq(2);
     expect(chtApi.getParentAndSibling.called).to.be.false;
     expect(chtApi.createContact.called).to.be.false;
     expect(chtApi.updatePlace.called).to.be.false;
     expect(chtApi.deleteDoc.called).to.be.false;
-    expect(chtApi.disableUsersWithPlace.called).to.be.false;
+    expect(chtApi.disableUser.called).to.be.false;
+    expect(chtApi.updateUser.called).to.be.false;
+  });
+
+  it('#146 - error details are clear when CHT returns a string', async () => {
+    const { subcounty, sessionCache, chtApi } = await createMocks();
+    const errorString = 'foo';
+
+    chtApi.createPlace.throws({ response: { data: errorString } });
+
+    const chu_name = 'new chu';
+    const chu = await createChu(subcounty, chu_name, sessionCache, chtApi);
+
+    const uploadManager = new UploadManager();
+    await uploadManager.doUpload(sessionCache.getPlaces(), chtApi);
+    expect(chu.isCreated).to.be.false;
+    expect(chtApi.createUser.called).to.be.false;
+    expect(chu.uploadError).to.include(errorString);
   });
 
   it(`createUser is retried`, async() => {
-    const { remotePlace, sessionCache, chtApi } = await createMocks();
+    const { subcounty, sessionCache, chtApi } = await createMocks();
 
     chtApi.createUser.throws(UploadManagerRetryScenario.axiosError);
 
     const chu_name = 'new chu';
-    const chu = await createChu(remotePlace, chu_name, sessionCache, chtApi);
+    const chu = await createChu(subcounty, chu_name, sessionCache, chtApi);
 
     const uploadManager = new UploadManager();
     await uploadManager.doUpload(sessionCache.getPlaces(), chtApi);
@@ -281,41 +289,86 @@ describe('upload-manager.ts', () => {
     expect(chtApi.createUser.callCount).to.be.gt(2); // retried
     expect(chu.uploadError).to.include('could not create user');  
   });
-});
 
-async function createChu(remotePlace: RemotePlace, chu_name: string, sessionCache: any, chtApi: ChtApi) {
-  const chuType = Config.getContactType('c_community_health_unit');
-  const chuData = {
-    hierarchy_SUBCOUNTY: remotePlace.name,
-    place_name: chu_name,
-    place_code: '676767',
-    place_link_facility_name: 'facility name',
-    place_link_facility_code: '23456',
-    contact_name: 'new cha',
-    contact_phone: '0712345678',
-  };
-  const chu = await PlaceFactory.createOne(chuData, chuType, sessionCache, chtApi);
-  expect(chu.validationErrors).to.be.empty;
-  return chu;
-}
+  it('mock data is properly sent to chtApi - multiple roles', async () => {
+    const { fakeFormData, contactType, chtApi, sessionCache, subcounty } = await createMocks();
+
+    contactType.user_role = ['role1', 'role2'];
+    fakeFormData.user_role = 'role1 role2';
+
+    const place = await PlaceFactory.createOne(fakeFormData, contactType, sessionCache, chtApi);
+
+    const uploadManager = new UploadManager();
+    await uploadManager.doUpload([place], chtApi);
+
+    expect(chtApi.createPlace.calledOnce).to.be.true;
+    const placePayload = chtApi.createPlace.args[0][0];
+    expect(placePayload).to.nested.include({
+      'contact.contact_type': contactType.contact_type,
+      'contact.name': 'contact',
+      prop: 'foo',
+      name: 'Place Community Health Unit',
+      parent: subcounty._id,
+      contact_type: contactType.name,
+    });
+
+    expect(chtApi.createUser.calledOnce).to.be.true;
+    const userPayload = chtApi.createUser.args[0][0];
+    expect(userPayload).to.deep.include({
+      contact: 'created-contact-id',
+      place: 'created-place-id',
+      roles: ['role1', 'role2'],
+      username: 'contact',
+    });
+    expect(place.isCreated).to.be.true;
+  });
+
+  it('#173 - replacement when place has no primary contact', async () => {
+    const { subcounty, sessionCache, contactType, fakeFormData, chtApi } = await createMocks();
+    const toReplace: ChtDoc = {
+      _id: 'id-replace',
+      name: 'to-replace',
+    };
+
+    chtApi.updatePlace.resolves({ _id: 'updated-place-id' });
+    fakeFormData.hierarchy_replacement = toReplace.name;
+    
+    chtApi.getPlacesWithType
+      .resolves([subcounty])
+      .onSecondCall()
+      .resolves([toReplace]);
+
+    const place = await PlaceFactory.createOne(fakeFormData, contactType, sessionCache, chtApi);
+    expect(place.validationErrors).to.be.empty;
+
+    const uploadManager = new UploadManager();
+    await uploadManager.doUpload([place], chtApi);
+    expect(chtApi.deleteDoc.callCount).to.eq(0);
+    expect(chtApi.disableUser.callCount).to.eq(1);
+    expect(place.isCreated).to.be.true;
+  });
+});
 
 async function createMocks() {
   const contactType = mockValidContactType('string', undefined);
-  const remotePlace: RemotePlace = {
-    id: 'parent-id',
+  const subcounty: ChtDoc = {
+    _id: 'parent-id',
     name: 'parent-name',
-    type: 'remote',
-    lineage: [],
   };
   const sessionCache = new SessionCache();
   const chtApi = {
     chtSession: mockChtSession(),
-    getPlacesWithType: sinon.stub().resolves([remotePlace]),
-    createPlace: sinon.stub().resolves('created-place-id'),
-    updateContactParent: sinon.stub().resolves('created-contact-id'),
+    getPlacesWithType: sinon.stub().resolves([subcounty]),
+    createPlace: sinon.stub().resolves({ placeId: 'created-place-id', contactId: 'created-contact-id' }),
     createUser: sinon.stub().resolves(),
     
     getParentAndSibling: sinon.stub().resolves({ parent: {}, sibling: {} }),
+    getUsersAtPlace: sinon.stub().resolves([{
+      username: 'user',
+      place: [{ _id: 'id-replace' }]
+    }]),
+    disableUser: sinon.stub().resolves(),
+    updateUser: sinon.stub().resolves(),
     createContact: sinon.stub().resolves('replacement-contact-id'),
     updatePlace: sinon.stub().resolves({
       _id: 'updated-place-id',
@@ -324,16 +377,14 @@ async function createMocks() {
       },
     }),
     deleteDoc: sinon.stub().resolves(),
-    disableUsersWithPlace: sinon.stub().resolves(['org.couchdb.user:disabled']),
-    deactivateUsersWithPlace: sinon.stub().resolves(),
   };
   
   const fakeFormData: any = {
     place_name: 'place',
     place_prop: 'foo',
-    hierarchy_PARENT: remotePlace.name,
-    contact_name: 'contact',
+    hierarchy_PARENT: subcounty.name,
+    contact_name: 'contact'
   };
 
-  return { fakeFormData, contactType, sessionCache, chtApi, remotePlace };
+  return { fakeFormData, contactType, sessionCache, chtApi, subcounty };
 }

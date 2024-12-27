@@ -1,11 +1,13 @@
 import { FastifyInstance } from 'fastify';
 
 import { Config } from '../config';
-import { ChtApi, RemotePlace } from '../lib/cht-api';
+import { ChtApi } from '../lib/cht-api';
+import { RemotePlace } from '../lib/remote-place-cache';
 import SessionCache from '../services/session-cache';
 import SearchLib from '../lib/search';
 
-import { moveViewModel } from './move';
+import { HIERARCHY_ACTIONS } from '../lib/manage-hierarchy';
+import { hierarchyViewModel } from '../services/hierarchy-view-model';
 
 export default async function place(fastify: FastifyInstance) {
   // returns search results dropdown
@@ -63,7 +65,11 @@ export default async function place(fastify: FastifyInstance) {
     }
 
     const contactType = Config.getContactType(data.place_type);
-    const moveModel = moveViewModel(contactType);
+    let moveModel;
+    if (HIERARCHY_ACTIONS.includes(op)) {
+      moveModel = hierarchyViewModel(op, contactType);
+    }
+
     const hierarchyLevel =  Config.getHierarchyWithReplacement(contactType).find(hierarchy => hierarchy.level === level);
     if (!hierarchyLevel) {
       throw Error(`not hierarchy constraint at ${level}`);
@@ -76,6 +82,7 @@ export default async function place(fastify: FastifyInstance) {
       place,
       contactType,
       hierarchy: Config.getHierarchyWithReplacement(contactType, 'desc'),
+      userRoleProperty: Config.getUserRoleConfig(contactType),
       ...moveModel,
     };
 
@@ -85,8 +92,8 @@ export default async function place(fastify: FastifyInstance) {
       }
 
       tmplData.backend = `/place/edit/${place.id}`;
-    } else if (op === 'move') {
-      tmplData.backend = `/move`;
+    } else if (HIERARCHY_ACTIONS.includes(op)) {
+      tmplData.backend = `/manage-hierarchy`;
     }
 
     return resp.view('src/liquid/app/form_switch.html', tmplData);

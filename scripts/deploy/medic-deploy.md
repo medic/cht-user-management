@@ -16,64 +16,119 @@ General public is welcome to look at these instructions for who they might use t
 - Be able to [authenticate to Medic kubernetes cluster (EKS)](https://github.com/medic/medic-infrastructure/blob/master/terraform/aws/dev/eks/access/README.md)
 
 
-### Deploy new version
+### Known cofigurations:
 
-These commands should be run in the `./scripts/deploy` directory in this repo. Also note you may need to replace `medic/cht-user-management` with the full path to the helm chart repository you checked out above. Ensure the image has [been published](https://github.com/medic/cht-user-management/tree/main#publishing-new-docker-images) first [to ECR](https://gallery.ecr.aws/medic/cht-user-management) and also that the `values.yaml` file ([KE](https://github.com/medic/cht-user-management/blob/main/scripts/deploy/values/users-chis-ke.yaml) or [UG](https://github.com/medic/cht-user-management/blob/main/scripts/deploy/values/users-chis-ug.yaml)) has the same version in the `tag:` as the new image.
+As each deployment needs its own configuration directory, DNS entry and deployment name, we'll list them here and the commands below can be used by replacing the correct value.
 
-#### KE
+| Name | Config | Values | EKS-Deployment | URL |
+|--    |--      |--      |--              |--   |   
+| MoH Kenya | `users-chis-ke`| `users-chis-ke.yaml` | `users-chis-ke-cht-user-management` | users-chis-ke.app.medicmobile.org | 
+| MoH Togo | `users-chis-tg`| `users-chis-tg.yaml` | `users-chis-tg-cht-user-management` | users-chis-tg.app.medicmobile.org | 
+| MoH Uganda | `users-chis-ug`| `users-chis-ug.yaml` | `users-chis-ug-cht-user-management` | users-chis-ug.app.medicmobile.org | 
+| MoH Mali CIV | `users-chis-civ`| `users-chis-civ.yaml` | `users-chis-civ-cht-user-management` | users-chis-civ.app.medicmobile.org | 
+
+### Prepare a Deployment
+
+To prepare a deployment, use the following steps to ensure your environment is properly configured.
+The `helm install` and `helm upgrade` commands should be run in the `./scripts/deploy` directory in this repo.
+
+1. Check the image is [published](https://github.com/medic/cht-user-management/tree/main#publishing-new-docker-images) to [ECR](https://gallery.ecr.aws/medic/cht-user-management) 
+2. Update the `tag:` in the respective `values.yaml` file located in the [values folder](https://github.com/medic/cht-user-management/blob/main/scripts/deploy/values/) to match the version you wish to deploy.
+3. Ensure your local system has the latest charts by running:
+```bash
+helm repo update medic
+```
+4. Run either `helm install...` or `helm upgrade...` per the full commands below. (commands should be run in the `./scripts/deploy` directory in this repo)
+
+#### Install (only once!)
+
+  Replace `$VALUES` and `$CONFIG` from the  [table](#known-cofigurations) above:
+
 ```shell
-# Edit tag in users-chis-ke.yaml and then run:
+helm install \
+      --kube-context arn:aws:eks:eu-west-2:720541322708:cluster/prod-cht-eks \
+      --namespace users-chis-prod \
+      --values values/$VALUES \
+      $CONFIG medic/cht-user-management
+```
 
+#### Upgrade 
+
+Run when ever you need to upgrade.  Replace `$VALUES` and `$CONFIG` from the [table](#known-cofigurations) above:
+
+```shell
 helm upgrade \
       --kube-context arn:aws:eks:eu-west-2:720541322708:cluster/prod-cht-eks \
       --namespace users-chis-prod \
-      --values values/users-chis-ke.yaml \
-      users-chis-ke medic/cht-user-management
+      --values values/$VALUES \
+      $CONFIG medic/cht-user-management
 ```
-#### UG
-```shell
-# Edit tag in users-chis-ug.yaml and then run:
 
-helm upgrade \
-      --kube-context arn:aws:eks:eu-west-2:720541322708:cluster/prod-cht-eks \
-      --namespace users-chis-prod \
-      --values values/users-chis-ug.yaml \
-      users-chis-ug medic/cht-user-management
-```
+> [!NOTE]
+> If you encounter issues, you may need to first delete existing helm values and then reinstall with the new values, as outlined in this [section](#delete-existing-values-in-order-to-redeploy).
+
 ### How to
 
 #### List all helm deployments
 ```shell
-helm --kube-context $context --namespace $namespace list --all
+helm --kube-context arn:aws:eks:eu-west-2:720541322708:cluster/prod-cht-eks \
+      --namespace users-chis-prod list --all
 ```
 
 #### Check history of a deployment
+
+_You can get `$deployment_name` from the `list --all` command above_ or see `$CONFIG` from the [table](#known-cofigurations) above:
+
 ```shell
-helm --kube-context $context --namespace $namespace history $deployment_name
+helm --kube-context arn:aws:eks:eu-west-2:720541322708:cluster/prod-cht-eks \
+      --namespace users-chis-prod \
+      history $CONFIG 
 ```
-_You can get `deployment_name` from the helm list command above_
 
 #### Get current configuration of a deployment
+
+See values for `$CONFIG` from the [table](#known-cofigurations) above:
+
 ```shell
-helm --kube-context $context --namespace $namespace get values $deployment_name
+helm --kube-context arn:aws:eks:eu-west-2:720541322708:cluster/prod-cht-eks \
+      --namespace users-chis-prod get values $CONFIG 
 ```
 
 #### List all resources in a namespace
 ```shell
-kubectl --context $context --namespace $namespace get all
+kubectl --context arn:aws:eks:eu-west-2:720541322708:cluster/prod-cht-eks \
+      --namespace users-chis-prod get all
 ```
 
 #### View logs of a deployment
+
+See values for `$EKS-DEPLOYMENT` from the [table](#known-cofigurations) above:
+
 ```shell
-kubectl --context $context --namespace $namespace logs deploy/users-chis-ke-cht-user-management
-# or
-kubectl --context $context --namespace $namespace logs deploy/users-chis-ug-cht-user-management
+kubectl --context arn:aws:eks:eu-west-2:720541322708:cluster/prod-cht-eks \
+      --namespace users-chis-prod logs deploy/$EKS-DEPLOYMENT
 ```
-_You can replace `deploy/x` with for example `pods/y` from the get all command above_
+_You can replace `deploy/x` with for example `pods/y` from the get all command above_ or see values for `$EKS-DEPLOYMENT` from the [table](#known-cofigurations) above:
 
 #### Get more details of a deployment
+
 ```shell
-kubectl --context $context --namespace $namespace describe deploy/users-chis-ke-cht-user-management
-# or
-kubectl --context $context --namespace $namespace describe deploy/users-chis-ug-cht-user-management
+kubectl --context arn:aws:eks:eu-west-2:720541322708:cluster/prod-cht-eks \
+      --namespace users-chis-prod describe deploy/$EKS-DEPLOYMENT
+```
+
+#### Delete existing values in order to redeploy
+
+  1. Delete existing values if encountering issues
+```shell
+helm --namespace users-chis-prod users-chis-prod delete $CONFIG
+```
+
+  2. Reinstall with updated values
+```shell
+helm install \
+      --kube-context arn:aws:eks:eu-west-2:720541322708:cluster/prod-cht-eks \
+      --namespace users-chis-prod \
+      --values values/$VALUES \
+      $CONFIG medic/cht-user-management
 ```

@@ -1,10 +1,11 @@
 import _ from 'lodash';
 import Place from '../services/place';
+import { IPropertyValue } from '../property-value';
 import SessionCache from '../services/session-cache';
-import { RemotePlace, ChtApi } from './cht-api';
-import { Config, ContactType, HierarchyConstraint } from '../config';
-import { Validation } from './validation';
-import RemotePlaceCache from './remote-place-cache';
+import { ChtApi } from './cht-api';
+import { Config, HierarchyConstraint } from '../config';
+import RemotePlaceCache, { RemotePlace } from './remote-place-cache';
+import { UnvalidatedPropertyValue } from '../property-value';
 
 type RemotePlaceMap = { [key: string]: RemotePlace };
 
@@ -13,8 +14,11 @@ export type PlaceResolverOptions = {
 };
 
 export default class RemotePlaceResolver {
-  public static readonly NoResult: RemotePlace = { id: 'na', name: 'Place Not Found', type: 'invalid', lineage: [] };
-  public static readonly Multiple: RemotePlace = { id: 'multiple', name: 'multiple places', type: 'invalid', lineage: [] };
+  public static readonly NoResult: RemotePlace = 
+    { id: 'na', name: new UnvalidatedPropertyValue('Place Not Found'), type: 'invalid', lineage: [] };
+  
+  public static readonly Multiple: RemotePlace = 
+    { id: 'multiple', name: new UnvalidatedPropertyValue('multiple places'), type: 'invalid', lineage: [] };
 
   public static resolve = async (
     places: Place[],
@@ -35,36 +39,37 @@ export default class RemotePlaceResolver {
   ) : Promise<void> => {
     const topDownHierarchy = Config.getHierarchyWithReplacement(place.type, 'desc');
     for (const hierarchyLevel of topDownHierarchy) {
-      if (!place.hierarchyProperties[hierarchyLevel.property_name]) {
+      // #91 - for editing: forget previous resolution
+      delete place.resolvedHierarchy[hierarchyLevel.level];
+
+      if (!place.hierarchyProperties[hierarchyLevel.property_name]?.original) {
         continue;
       }
       
-      const fuzzFunction = getFuzzFunction(hierarchyLevel, place.type);
       const mapIdToDetails = {};
       if (hierarchyLevel.level > 0) { // no replacing local places
-        const searchKeys = getSearchKeys(place, hierarchyLevel.property_name, fuzzFunction, false);
+        const searchKeys = getSearchKeys(place, hierarchyLevel.property_name);
         for (const key of searchKeys) {
-          const localResult = findLocalPlaces(key, hierarchyLevel.contact_type, sessionCache, options, fuzzFunction);
+          const localResult = findLocalPlaces(key, hierarchyLevel.contact_type, sessionCache, options);
           if (localResult) {
-            addKeyToMap(mapIdToDetails, key, localResult);
+            addKeyToMap(mapIdToDetails, key.original, localResult);
           }
         }
       }
 
       const placesFoundRemote = await findRemotePlacesInHierarchy(place, hierarchyLevel, chtApi);
       placesFoundRemote.forEach(remotePlace => {
-        addKeyToMap(mapIdToDetails, remotePlace.name, remotePlace);
+        addKeyToMap(mapIdToDetails, remotePlace.name.original, remotePlace);
 
         if (options?.fuzz) {
-          const alteredName = fuzzFunction(remotePlace.name);
-          if (remotePlace.name !== alteredName) {
-            addKeyToMap(mapIdToDetails, alteredName, remotePlace);
+          if (remotePlace.name.original !== remotePlace.name.formatted) {
+            addKeyToMap(mapIdToDetails, remotePlace.name.formatted, remotePlace);
           }
         }
       });
 
       const placeName = place.hierarchyProperties[hierarchyLevel.property_name];
-      place.resolvedHierarchy[hierarchyLevel.level] = pickFromMapOptimistic(mapIdToDetails, placeName, fuzzFunction, !!options?.fuzz);
+      place.resolvedHierarchy[hierarchyLevel.level] = pickFromMapOptimistic(mapIdToDetails, placeName, !!options?.fuzz);
     }
     
     await RemotePlaceResolver.resolveAmbiguousParent(place);
@@ -106,21 +111,14 @@ export default class RemotePlaceResolver {
   };
 }
 
-function getFuzzFunction(hierarchyLevel: HierarchyConstraint, contactType: ContactType) {
-  if (hierarchyLevel.level === 0) {
-    const nameProperty = Config.getPropertyWithName(contactType.place_properties, 'name');
-    return (val: string) => Validation.formatSingle(nameProperty, val);
-  }
-  
-  return (val: string) => Validation.formatSingle(hierarchyLevel, val);
-}
-
 async function findRemotePlacesInHierarchy(
   place: Place,
   hierarchyLevel: HierarchyConstraint,
   chtApi: ChtApi
 ) : Promise<RemotePlace[]> {
-  let searchPool = await RemotePlaceCache.getPlacesWithType(chtApi, hierarchyLevel.contact_type);
+  let searchPool = await RemotePlaceCache.getPlacesWithType(chtApi, place.type, hierarchyLevel);
+  searchPool = searchPool.filter(remotePlace => chtApi.chtSession.isPlaceAuthorized(remotePlace));
+
   const topDownHierarchy = Config.getHierarchyWithReplacement(place.type, 'desc');
   for (const { level } of topDownHierarchy) {
     if (level <= hierarchyLevel.level) {
@@ -147,53 +145,46 @@ async function findRemotePlacesInHierarchy(
   return searchPool;
 }
 
-function getSearchKeys(place: Place, searchPropertyName: string, fuzzFunction: (key: string) => string, fuzz: boolean)
-  : string[] {
+function getSearchKeys(place: Place, searchPropertyName: string)
+  : IPropertyValue[] {
   const keys = [];
   const key = place.hierarchyProperties[searchPropertyName];
   if (key) {
     keys.push(key);
   }
-
-  if (fuzz) {
-    keys.push(fuzzFunction(key));
-  }
-
-  return _.uniq(keys);
+  
+  return _.uniqBy(keys, 'formatted');
 }
 
-function pickFromMapOptimistic(map: RemotePlaceMap, placeName: string, fuzzFunction: (key: string) => string, fuzz: boolean)
+function pickFromMapOptimistic(map: RemotePlaceMap, placeName: IPropertyValue, fuzz: boolean)
   : RemotePlace | undefined {
   if (!placeName) {
     return;
   }
 
-  const result = map[placeName.toLowerCase()];
+  const result = map[placeName.original.toLowerCase()];
   if (!fuzz) {
     return result;
   }
 
-  const fuzzyName = fuzzFunction(placeName);
-  const fuzzyResult = map[fuzzyName.toLowerCase()];
+  const fuzzyResult = map[placeName.formatted.toLowerCase()];
   const [optimisticResult] = [result, fuzzyResult].filter(r => r && r.type !== 'invalid');
-  return optimisticResult || result || fuzzyResult;
+  return optimisticResult || result || fuzzyResult || RemotePlaceResolver.NoResult;
 }
 
 function findLocalPlaces(
-  name: string,
+  name: IPropertyValue,
   type: string,
   sessionCache: SessionCache,
-  options: PlaceResolverOptions | undefined,
-  fuzzFunction: (key: string) => string
+  options: PlaceResolverOptions | undefined
 ): RemotePlace | undefined {
-  let places = sessionCache.getPlaces({ type, nameExact: name });
+  let places = sessionCache.getPlaces({ type, nameExact: name.original });
 
   if (options?.fuzz && !places.length) {
-    places = sessionCache.getPlaces({ type, nameExact: fuzzFunction(name) });
+    places = sessionCache.getPlaces({ type, nameExact: name.formatted });
   }
 
   if (places.length > 1) {
-    console.warn(`Found multiple known places for name "${name}"`);
     return {
       ...RemotePlaceResolver.Multiple,
       ambiguities: places.map(p => p.asRemotePlace()),
@@ -207,7 +198,6 @@ function addKeyToMap(map: RemotePlaceMap, key: string, value: RemotePlace) {
   const lowercaseKey = key.toLowerCase();
   const existing = map[lowercaseKey];
   if (existing && existing.id !== value.id) {
-    console.warn(`Found multiple known places for name "${value.name}"`);
     if (existing.id !== RemotePlaceResolver.Multiple.id) {
       map[lowercaseKey] = {
         ...RemotePlaceResolver.Multiple,
