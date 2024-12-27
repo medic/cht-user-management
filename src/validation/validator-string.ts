@@ -1,4 +1,4 @@
-import { IValidator } from './validation';
+import { IValidator } from '.';
 
 export default class ValidatorString implements IValidator {
   isValid(input: string) : boolean | string {

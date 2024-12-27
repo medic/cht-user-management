@@ -1,12 +1,11 @@
 import { v4 as uuidv4 } from 'uuid';
 import { Config, ContactType } from '../config';
+import { FormattedPropertyCollection } from './place';
 
 export default class Contact {
   public id: string;
   public type: ContactType;
-  public properties: {
-    [key: string]: any;
-  };
+  public properties: FormattedPropertyCollection;
 
   constructor(type: ContactType) {
     this.id = uuidv4();
@@ -16,6 +15,6 @@ export default class Contact {
 
   public get name() : string {
     const nameProperty = Config.getPropertyWithName(this.type.contact_properties, 'name');
-    return this.properties[nameProperty.property_name];
+    return this.properties[nameProperty.property_name]?.formatted;
   }
 }
