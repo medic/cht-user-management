@@ -1,5 +1,4 @@
 import { HierarchyPropertyValue, ContactPropertyValue } from './validated-property-values';
-import { NamePropertyValue } from './name-property-value';
 import UnvalidatedPropertyValue from './unvalidated-property-value';
 import { RemotePlacePropertyValue } from './remote-place-property-value';
 
