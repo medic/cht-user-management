@@ -33,12 +33,13 @@ export const mockPlace = (contactType: ContactType, formDataOverride?: any) : Pl
   return place;
 };
 
-export const mockChtApi = (first: ChtDoc[] = [], second: ChtDoc[] = [], third: ChtDoc[] = []): any => ({
+export const mockChtApi = (first: ChtDoc[] = [], second: ChtDoc[] = [], third: ChtDoc[] = [], fourth: ChtDoc[] = []): any => ({
   chtSession: mockChtSession(),
   getPlacesWithType: sinon.stub()
     .onFirstCall().resolves(first)
     .onSecondCall().resolves(second)
-    .onThirdCall().resolves(third),
+    .onThirdCall().resolves(third)
+    .onCall(3).resolves(fourth),
   createPlace: sinon.stub().resolves({ placeId: 'created-place-id', contactId: 'created-contact-id' }),
   createUser: sinon.stub().resolves(),
   getParentAndSibling: sinon.stub().resolves({

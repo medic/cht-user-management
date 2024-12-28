@@ -67,7 +67,7 @@ describe('lib/manage-hierarchy.ts', () => {
       const contactType = Config.getContactType('c_community_health_unit');
       const sessionCache = new SessionCache();
 
-      const actual = ManageHierarchyLib.getJobDetails(formData, contactType, sessionCache, mockChtApi(chuDocs));
+      const actual = ManageHierarchyLib.getJobDetails(formData, contactType, sessionCache, mockChtApi([], chuDocs));
       await expect(actual).to.eventually.be.rejectedWith('search string is empty');
     });
 

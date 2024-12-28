@@ -142,7 +142,7 @@ describe('services/place-factory.ts', () => {
           name: {
             formatted: 'Bob',
             original: 'bob',
-            propertyNameWithPrefix: 'place_name',
+            propertyNameWithPrefix: 'place_replacement',
           },
           lineage: ['parent-id'],
           placeType: 'd_community_health_volunteer_area',
@@ -160,10 +160,11 @@ describe('services/place-factory.ts', () => {
           name: {
             formatted: 'Chepalungu',
             original: parentDoc.name,
-            propertyNameWithPrefix: 'place_name',
+            propertyNameWithPrefix: 'place_CHU',
           },
           type: 'remote',
           lineage: [],
+          placeType: 'c_community_health_unit',
           uniquePlaceValues: {
             name: {
               original: 'Chepalungu CHU',

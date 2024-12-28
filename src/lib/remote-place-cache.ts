@@ -35,7 +35,7 @@ export default class RemotePlaceCache {
 
   public static async getRemotePlaces(chtApi: ChtApi, contactType: ContactType, atHierarchyLevel?: HierarchyConstraint): Promise<RemotePlace[]> {
     const hierarchyLevels = Config.getHierarchyWithReplacement(contactType, 'desc');
-    const fetchAll = hierarchyLevels.map(hierarchyLevel => RemotePlaceCache.fetchAndCacheRemotePlaces(chtApi, hierarchyLevel));
+    const fetchAll = hierarchyLevels.map(hierarchyLevel => RemotePlaceCache.fetchCachedOrRemotePlaces(chtApi, hierarchyLevel));
     const allRemotePlaces = _.flatten(await Promise.all(fetchAll));
     if (!atHierarchyLevel) {
       return allRemotePlaces;
@@ -67,7 +67,7 @@ export default class RemotePlaceCache {
     }
   }
 
-  private static async fetchAndCacheRemotePlaces(chtApi: ChtApi, hierarchyLevel: HierarchyConstraint)
+  private static async fetchCachedOrRemotePlaces(chtApi: ChtApi, hierarchyLevel: HierarchyConstraint)
     : Promise<RemotePlace[]> {
     const { domain } = chtApi.chtSession.authInfo;
     const placeType = hierarchyLevel.contact_type;
