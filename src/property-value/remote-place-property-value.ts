@@ -11,7 +11,7 @@ export class RemotePlacePropertyValue implements IPropertyValue {
   constructor(value: string, nameContactProperty: ContactProperty) {
     this.original = value;
     this.propertyNameWithPrefix = `place_${nameContactProperty.property_name}`;
-    this.formatted = Validation.formatDuringInitialization(nameContactProperty, value);
+    this.formatted = Validation.format(nameContactProperty, value);
   }
 
   public validate(): void {}
