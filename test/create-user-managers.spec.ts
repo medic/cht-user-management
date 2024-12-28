@@ -20,16 +20,16 @@ let fakeGetPlacesWithType;
 describe('scripts/create-user-managers.ts', () => {
   beforeEach(() => {
     RemotePlaceCache.clear();
-    const sessy = mockChtSession('abc');
+    const session = mockChtSession('abc');
     const mockSession = {
-      create: sinon.stub().resolves(sessy),
+      create: sinon.stub().resolves(session),
     };
     fakeGetPlacesWithType = sinon.stub().resolves([{
       _id: 'county_id',
       name: 'vihiga',
     }]);
     const mockChtApi = class MockChtApi {
-      public chtSession = sessy;
+      public chtSession = session;
       public getPlacesWithType = fakeGetPlacesWithType;
 
       public createContact = sinon.stub().resolves({});
@@ -54,7 +54,7 @@ describe('scripts/create-user-managers.ts', () => {
       password: 'S3cret_abc',
       phone: undefined,
       place: 'county_id',
-      roles: ['user_manager'],
+      roles: ['user_manager', 'mm-online'],
       username: 'stan_lee_user_manager',
     });
   });

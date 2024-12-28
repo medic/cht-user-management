@@ -1,7 +1,7 @@
 import { Liquid } from 'liquidjs';
 import { IValidator } from '.';
 import { ContactProperty } from '../config';
-import Place from '../services/place';
+import Place, { FormattedPropertyCollection } from '../services/place';
 
 const engine = new Liquid({
   strictVariables: false,
@@ -25,10 +25,17 @@ export default class ValidatorGenerated implements IValidator {
     }
 
     const place:Place = input;
+    const mapToFormatted = (collection: FormattedPropertyCollection) => {
+      return Object.keys(collection).reduce((agg: any, key: string) => {
+        agg[key] = collection[key].formatted;
+        return agg;
+      }, {});
+    };
+
     const generationScope: GeneratorScope = {
-      place: place.properties,
-      contact: place.contact.properties,
-      lineage: place.hierarchyProperties,
+      place: mapToFormatted(place.properties),
+      contact: mapToFormatted(place.contact.properties),
+      lineage: mapToFormatted(place.hierarchyProperties),
     };
 
     const parameter = this.getParameter(property);

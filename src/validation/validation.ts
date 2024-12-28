@@ -1,6 +1,6 @@
 import _ from 'lodash';
-import { Config, ContactProperty } from '../config';
-import { IValidator, ValidationError } from '.';
+import { Config, ContactProperty, HierarchyConstraint } from '../config';
+import { IValidator } from '.';
 import Place from '../services/place';
 import RemotePlaceResolver from '../lib/remote-place-resolver';
 
@@ -32,103 +32,75 @@ const TypeValidatorMap: ValidatorMap = {
 };
 
 export class Validation {
-  public static getValidationErrors(place: Place) : ValidationError[] {
-    const requiredColumns = Config.getRequiredColumns(place.type, place.isReplacement);
-    const result = [
-      ...Validation.validateHierarchy(place),
-      ...Validation.validateProperties(place.properties, place.type.place_properties, requiredColumns, 'place_'),
-      ...Validation.validateProperties(place.contact.properties, place.type.contact_properties, requiredColumns, 'contact_'),
-      ...Validation.validateProperties(place.userRoleProperties, [Config.getUserRoleConfig(place.type)], requiredColumns, 'user_')
-    ];
-
-    return result;
-  }
-
-  public static format(place: Place): void {
-    const doFormatting = (withGenerators: boolean) => {
-      const isGenerator = (property: ContactProperty) => property.type === 'generated';
-      const alterAllProperties = (propertiesToAlter: ContactProperty[], objectToAlter: any) => {
-        for (const property of propertiesToAlter) {
-          if (isGenerator(property) === withGenerators) {
-            this.alterProperty(place, property, objectToAlter);
-          }
-        }
-      };
-
-      alterAllProperties(place.type.contact_properties, place.contact.properties);
-      alterAllProperties(place.type.place_properties, place.properties);
-      for (const hierarchy of Config.getHierarchyWithReplacement(place.type)) {
-        this.alterProperty(place, hierarchy, place.hierarchyProperties);
-      }
-    };
-
-    doFormatting(false);
-    doFormatting(true);
-  }
-
-  public static formatSingle(place: Place, propertyMatch: ContactProperty, val: string): string {
-    const object = { [propertyMatch.property_name]: val };
-    Validation.alterProperty(place, propertyMatch, object);
-    return object[propertyMatch.property_name];
-  }
-
-  private static validateHierarchy(place: Place): ValidationError[] {
-    const result: ValidationError[] = [];
-
-    const hierarchy = Config.getHierarchyWithReplacement(place.type);
-    hierarchy.forEach((hierarchyLevel, index) => {
-      const data = place.hierarchyProperties[hierarchyLevel.property_name];
-
-      if (hierarchyLevel.level !== 0 || data) {
-        const isExpected = hierarchyLevel.required;
-        const resolution = place.resolvedHierarchy[hierarchyLevel.level];
-        const isValid = resolution?.type !== 'invalid' && (
-          !isExpected || 
-          resolution?.type === 'remote' || 
-          resolution?.type === 'local'
-        );
-        if (!isValid) {
-          const levelUp = hierarchy[index + 1]?.property_name;
-          result.push({
-            property_name: `hierarchy_${hierarchyLevel.property_name}`,
-            description: this.describeInvalidRemotePlace(
-              resolution,
-              hierarchyLevel.contact_type,
-              data,
-              place.hierarchyProperties[levelUp]
-            ),
-          });
-        }
-      }
-    });
-    
-    return result;
-  }
-
-  private static validateProperties(
-    obj : any,
-    properties : ContactProperty[],
-    requiredProperties: ContactProperty[],
-    prefix: string
-  ) : ValidationError[] {
-    const invalid: ValidationError[] = [];
-
-    for (const property of properties) {
-      const value = obj[property.property_name];
-
-      const isRequired = requiredProperties.some((prop) => _.isEqual(prop, property));
-      if (value || isRequired) {
-        const isValid = Validation.isValid(property, value);
-        if (isValid === false || typeof isValid === 'string') {
-          invalid.push({
-            property_name: `${prefix}${property.property_name}`,
-            description: isValid === false ? 'Value is invalid' : isValid as string,
-          });
-        }
-      }
+  public static validateProperty(
+    value: string,
+    property : ContactProperty,
+    requiredProperties: ContactProperty[]
+  ) : string | undefined {
+    const isRequired = requiredProperties.some((prop) => _.isEqual(prop, property));
+    if (!value && isRequired) {
+      return 'Is Required';
     }
 
-    return invalid;
+    if (value || isRequired) {
+      const isValid = Validation.isValid(property, value);
+      if (isValid === false || typeof isValid === 'string') {
+        return isValid === false ? 'Value is invalid' : isValid as string;
+      }
+    }
+  }
+
+  public static formatDuringInitialization(property: ContactProperty, value: string): string {
+    const validator = this.getValidator(property);
+    if (!(validator instanceof ValidatorGenerated) && value) {
+      return validator.format(value, property);
+    }
+
+    return value;
+  }
+
+  public static generateAfterInitialization(place: Place, property: ContactProperty): string | undefined {
+    const validator = this.getValidator(property);
+    if (validator instanceof ValidatorGenerated) {
+      return validator.format(place, property);
+    }
+
+    return;
+  }
+
+  public static validateHierarchyLevel(place: Place, hierarchyLevel: HierarchyConstraint): string | undefined {
+    const hierarchy = Config.getHierarchyWithReplacement(place.type);
+    const data = place.hierarchyProperties[hierarchyLevel.property_name];
+
+    if (hierarchyLevel.level !== 0 || data?.formatted) {
+      const isExpected = hierarchyLevel.required;
+      const resolution = place.resolvedHierarchy[hierarchyLevel.level];
+      const isValid = resolution?.type !== 'invalid' && (
+        !isExpected || 
+        resolution?.type === 'remote' || 
+        resolution?.type === 'local'
+      );
+      if (!isValid) {
+        const index = hierarchy.findIndex(h => h.level === hierarchyLevel.level);
+        if (index < 0) {
+          throw Error('Failed to find hierachy level');
+        }
+
+        const levelUp = hierarchy[index + 1]?.property_name;
+        const error = this.describeInvalidRemotePlace(
+          resolution,
+          hierarchyLevel.contact_type,
+          data?.original,
+          place.hierarchyProperties[levelUp]?.original
+        );
+
+        return error;
+      }
+    }
+  }
+
+  public static getKnownContactPropertyTypes(): string[] {
+    return Object.keys(TypeValidatorMap);
   }
 
   private static isValid(property : ContactProperty, value: string) : boolean | string {
@@ -140,18 +112,6 @@ export class Validation {
       const error = `Error in isValid for '${property.type}': ${e}`;
       console.log(error);
       return error;
-    }
-  }
-
-  private static alterProperty(place: Place, property : ContactProperty, obj: any) {
-    const value = obj[property.property_name];
-    const validator = this.getValidator(property);
-    if (validator instanceof ValidatorGenerated) {
-      const altered = validator.format(place, property);
-      obj[property.property_name] = altered;
-    } else if (value) {
-      const altered = validator.format(value, property);
-      obj[property.property_name] = altered;
     }
   }
 

@@ -1,6 +1,7 @@
 import _ from 'lodash';
 import SessionCache from '../services/session-cache';
 import { ChtApi } from './cht-api';
+import { PropertyValues } from '../property-value';
 import RemotePlaceCache, { RemotePlace } from './remote-place-cache';
 import RemotePlaceResolver from './remote-place-resolver';
 import { Config, ContactType, HierarchyConstraint } from '../config';
@@ -23,7 +24,7 @@ export default class SearchLib {
     const searchResults: RemotePlace[] = _.uniqWith([
       ...localResults.map(r => r.asRemotePlace()),
       ...remoteResults,
-    ], (placeA: RemotePlace, placeB: RemotePlace) => placeA.name === placeB.name && placeA.type === placeB.type);
+    ], (placeA: RemotePlace, placeB: RemotePlace) => placeA.name.formatted === placeB.name.formatted && placeA.type === placeB.type);
 
     if (searchResults.length === 0) {
       searchResults.push(RemotePlaceResolver.NoResult);
@@ -56,9 +57,9 @@ async function getRemoteResults(
   chtApi: ChtApi,
   dataPrefix: string
 ) : Promise<RemotePlace[]> {
-  let remoteResults = (await RemotePlaceCache.getPlacesWithType(chtApi, hierarchyLevel.contact_type))
+  let remoteResults = (await RemotePlaceCache.getPlacesWithType(chtApi, contactType, hierarchyLevel))
     .filter(remotePlace => chtApi.chtSession.isPlaceAuthorized(remotePlace))
-    .filter(place => place.name.includes(searchString));
+    .filter(place => PropertyValues.includes(place.name, searchString));
 
   const topDownHierarchy = Config.getHierarchyWithReplacement(contactType, 'desc');
   for (const constrainingHierarchy of topDownHierarchy) {
@@ -66,14 +67,14 @@ async function getRemoteResults(
       break;
     }
 
-    const searchStringAtLevel = formData[`${dataPrefix}${constrainingHierarchy.property_name}`]?.toLowerCase();
+    const searchStringAtLevel = formData[`${dataPrefix}${constrainingHierarchy.property_name}`];
     if (!searchStringAtLevel) {
       continue;
     }
 
-    const placesAtLevel = await RemotePlaceCache.getPlacesWithType(chtApi, constrainingHierarchy.contact_type);
+    const placesAtLevel = await RemotePlaceCache.getPlacesWithType(chtApi, contactType, constrainingHierarchy);
     const relevantPlaceIds = placesAtLevel
-      .filter(remotePlace => remotePlace.name.includes(searchStringAtLevel))
+      .filter(remotePlace => PropertyValues.includes(remotePlace.name, searchStringAtLevel))
       .map(remotePlace => remotePlace.id);
     const hierarchyIndex = constrainingHierarchy.level - hierarchyLevel.level - 1;
     remoteResults = remoteResults.filter(result => relevantPlaceIds.includes(result.lineage[hierarchyIndex]));

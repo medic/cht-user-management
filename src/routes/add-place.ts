@@ -136,7 +136,7 @@ export default async function addPlace(fastify: FastifyInstance) {
     RemotePlaceCache.clear(chtApi, place.type.name);
     await RemotePlaceResolver.resolveOne(place, sessionCache, chtApi, { fuzz: true });
     place.validate();
-
+    
     fastify.uploadManager.triggerRefresh(place.id);
   });
 

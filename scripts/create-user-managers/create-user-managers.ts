@@ -3,9 +3,10 @@ import { Command } from 'commander';
 import { AuthenticationInfo, ContactType } from '../../src/config';
 import { createUserWithRetries } from '../../src/lib/retry-logic';
 import Place from '../../src/services/place';
-import { UserPayload } from '../../src/services/user-payload';
+import RemotePlaceCache, { RemotePlace } from '../../src/lib/remote-place-cache';
+import { PropertyValues, UnvalidatedPropertyValue } from '../../src/property-value';
 import UserManager from './ke_user_manager.json';
-import RemotePlaceCache from '../../src/lib/remote-place-cache';
+import { UserPayload } from '../../src/services/user-payload';
 
 const { ChtApi } = require('../../src/lib/cht-api'); // require is needed for rewire
 const ChtSession = require('../../src/lib/cht-session').default; // require is needed for rewire
@@ -54,7 +55,8 @@ export default async function createUserManagers(argv: string[]) {
 
 async function createUserManager(username: string, placeDocId: string, chtApi: typeof ChtApi, adminUsername: string, passwordOverride?: string) {
   const place = new Place(UserManagerContactType);
-  place.contact.properties.name = `${username} (User Manager)`;
+  place.contact.properties.name = new UnvalidatedPropertyValue(`${username} (User Manager)`, 'name');
+  place.userRoleProperties.role = new UnvalidatedPropertyValue(UserManagerContactType.user_role.join(' '), 'role');
 
   const chtPayload = place.asChtPayload(adminUsername);
   chtPayload.contact.role = 'user_manager';
@@ -96,8 +98,8 @@ function parseCommandlineArguments(argv: string[]): CommandLineArgs {
 }
 
 async function getPlaceDocId(county: string | undefined, chtApi: typeof ChtApi) {
-  const counties = await RemotePlaceCache.getPlacesWithType(chtApi, 'a_county');
-  const countyMatches = counties.filter((c: any) => !county || c.name === county.toLowerCase());
+  const counties = await RemotePlaceCache.getPlacesWithType(chtApi, UserManagerContactType, UserManagerContactType.hierarchy[0]);
+  const countyMatches = counties.filter((c: RemotePlace) => !county || PropertyValues.isMatch(county, c.name));
   if (countyMatches.length < 1) {
     throw Error(`Could not find county "${county}"`);
   }

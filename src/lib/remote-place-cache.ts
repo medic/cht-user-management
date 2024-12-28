@@ -1,7 +1,8 @@
 import _ from 'lodash';
-import { Config } from '../config';
-import Place from '../services/place';
+import { Config, ContactType, HierarchyConstraint } from '../config';
+import Place, { FormattedPropertyCollection } from '../services/place';
 import { ChtApi } from './cht-api';
+import { IPropertyValue } from '../property-value';
 
 type RemotePlacesByType = {
   [key: string]: RemotePlace[];
@@ -17,7 +18,7 @@ type UniqueKeys = {
 
 export type RemotePlace = {
   id: string;
-  name: string;
+  name: IPropertyValue;
   lineage: string[];
   uniqueKeys: UniqueKeys;
   ambiguities?: RemotePlace[];
@@ -30,21 +31,22 @@ export type RemotePlace = {
 export default class RemotePlaceCache {
   private static cache: RemotePlaceDatastore = {};
 
-  public static async getPlacesWithType(chtApi: ChtApi, placeType: string)
+  public static async getPlacesWithType(chtApi: ChtApi, contactType: ContactType, hierarchyLevel: HierarchyConstraint)
     : Promise<RemotePlace[]> {
-    const domainStore = await RemotePlaceCache.getDomainStore(chtApi, placeType);
+    const domainStore = await RemotePlaceCache.getDomainStore(chtApi, contactType, hierarchyLevel);
     return domainStore;
   }
 
-  public static extractUniqueKeys(placeType: string, doc: any): UniqueKeys {
-    const uniqueProperties = Config.getUniqueProperties(placeType);
-    const toPick = uniqueProperties.map(prop => prop.property_name);
-    return _.pick(doc, toPick);
-  }
+  public static add(place: Place, chtApi: ChtApi): void {
+    const { domain } = chtApi.chtSession.authInfo;
+    const placeType = place.type.name;
 
-  public static async add(place: Place, chtApi: ChtApi): Promise<void> {
-    const domainStore = await RemotePlaceCache.getDomainStore(chtApi, place.type.name);
-    domainStore.push(place.asRemotePlace());
+    const places = RemotePlaceCache.cache[domain]?.[placeType];
+    // if there is no cache existing, discard the value
+    // it will be fetched if needed when the cache is built
+    if (places) {
+      places.push(place.asRemotePlace());
+    }
   }
 
   public static clear(chtApi: ChtApi, contactTypeName?: string): void {
@@ -53,19 +55,19 @@ export default class RemotePlaceCache {
       RemotePlaceCache.cache = {};
     } else if (!contactTypeName) {
       delete RemotePlaceCache.cache[domain];
-    } else {
+    } else if (RemotePlaceCache.cache[domain]) {
       delete RemotePlaceCache.cache[domain][contactTypeName];
     }
   }
 
-  private static async getDomainStore(chtApi: ChtApi, placeType: string)
+  private static async getDomainStore(chtApi: ChtApi, contactType: ContactType, hierarchyLevel: HierarchyConstraint)
     : Promise<RemotePlace[]> {
     const { domain } = chtApi.chtSession.authInfo;
+    const placeType = hierarchyLevel.contact_type;
     const { cache: domainCache } = RemotePlaceCache;
-
     const places = domainCache[domain]?.[placeType];
     if (!places) {
-      const fetchPlacesWithType = RemotePlaceCache.getRemotePlacesWithType(chtApi, placeType);
+      const fetchPlacesWithType = RemotePlaceCache.fetchRemotePlaces(chtApi, contactType, hierarchyLevel);
       domainCache[domain] = {
         ...domainCache[domain],
         [placeType]: await fetchPlacesWithType,
@@ -75,22 +77,32 @@ export default class RemotePlaceCache {
     return domainCache[domain][placeType];
   }
 
-  private static async getRemotePlacesWithType(chtApi: ChtApi, placeType: string): Promise<RemotePlace[]> {
+  private static async fetchRemotePlacesAtLevel(chtApi: ChtApi, hierarchyLevel: HierarchyConstraint): Promise<RemotePlace[]> {
     function extractLineage(doc: any): string[] {
       if (doc?.parent) {
         return [doc.parent._id, ...extractLineage(doc.parent)];
       }
-    
+
       return [];
     }
 
-    const docs = await chtApi.getPlacesWithType(placeType);
-    return docs.map((doc: any): RemotePlace => ({
-      id: doc._id,
-      name: doc.name?.toLowerCase(),
-      lineage: extractLineage(doc),
-      uniqueKeys: RemotePlaceCache.extractUniqueKeys(placeType, doc),
-      type: 'remote',
-    }));
-  }
+    const uniqueKeyproperties = Config.getUniqueProperties(hierarchyLevel.contact_type);
+    const docs = await chtApi.getPlacesWithType(hierarchyLevel.contact_type);
+    return docs.map((doc: any): RemotePlace => {
+      const uniqueKeyStringValues: FormattedPropertyCollection = {};
+      for (const property of uniqueKeyproperties) {
+        const value = doc[property.property_name];
+        if (value) {
+          uniqueKeyStringValues[property.property_name] = new RemotePlacePropertyValue(value, property);
+        }
+      }
+
+      return {
+        id: doc._id,
+        name: new RemotePlacePropertyValue(doc.name, hierarchyLevel),
+        lineage: extractLineage(doc),
+        uniquePlaceValues: uniqueKeyStringValues,
+        type: 'remote',
+      };
+    });
 }

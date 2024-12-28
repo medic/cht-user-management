@@ -2,28 +2,30 @@ import { expect } from 'chai';
 
 import Place from '../../src/services/place';
 import { mockSimpleContactType, mockValidContactType } from '../mocks';
-import RemotePlaceResolver from '../../src/lib/remote-place-resolver';
+import { UnvalidatedPropertyValue, ContactPropertyValue } from '../../src/property-value';
 
 describe('services/place.ts', () => {
   it('setPropertiesFromFormData', () => {
-    const contactType = mockSimpleContactType('string', undefined);
+    const contactType = mockSimpleContactType('name', undefined);
     contactType.contact_properties = contactType.place_properties;
     const place = new Place(contactType);
-    place.properties.existing = 'existing';
+    place.properties.existing = new ContactPropertyValue(place, contactType.place_properties[0], 'place_', 'existing');
 
     const formData = {
       place_prop: 'abc',
       contact_prop: 'efg',
       garbage: 'ghj',
     };
-    place.setPropertiesFromFormData(formData);
+    place.setPropertiesFromFormData(formData, 'hierarchy_');
 
-    expect(place.properties).to.deep.eq({
-      existing: 'existing',
-      prop: 'abc',
+    expect(place.properties).to.nested.include({
+      'existing.original': 'existing',
+      'prop.original': 'abc',
+      'prop.formattedValue': 'Abc',
     });
-    expect(place.contact.properties).to.deep.eq({
-      prop: 'efg',
+    expect(place.contact.properties).to.nested.include({
+      'prop.original': 'efg',
+      'prop.formattedValue': 'Efg',
     });
   });
 
@@ -31,13 +33,13 @@ describe('services/place.ts', () => {
     const contactType = mockSimpleContactType('string', undefined);
     contactType.contact_properties = contactType.place_properties;
     const place = new Place(contactType);
-    place.properties.existing = 'existing';
-    place.properties.prop = 'abc';
-    place.contact.properties.prop = 'efg';
-    const actual = place.asFormData();
+    place.properties.name = new UnvalidatedPropertyValue('name');
+    place.properties.prop = new UnvalidatedPropertyValue('abc');
+    place.contact.properties.prop = new UnvalidatedPropertyValue('efg');
+    const actual = place.asFormData('hierachy_');
 
     expect(actual).to.deep.eq({
-      place_existing: 'existing',
+      place_name: 'name',
       place_prop: 'abc',
       contact_prop: 'efg',
     });
@@ -46,23 +48,23 @@ describe('services/place.ts', () => {
   it('basic asRemotePlace', () => {
     const contactType = mockSimpleContactType('string', undefined);
     const place = new Place(contactType);
-    place.properties.name = 'name';
+    place.properties.name = new UnvalidatedPropertyValue('name');
     place.resolvedHierarchy[0] = {
       id: 'to-replace',
-      name: 'replaced',
+      name: new UnvalidatedPropertyValue('replaced'),
       lineage: ['parent-id'],
       type: 'remote',
     };
     place.resolvedHierarchy[1] = {
       id: 'parent-id',
-      name: 'parent',
+      name: new UnvalidatedPropertyValue('parent'),
       lineage: [],
       type: 'remote',
     };
     const actual = place.asRemotePlace();
 
-    expect(actual).to.deep.include({
-      name: 'name',
+    expect(actual).to.deep.nested.include({
+      'name.original': 'name',
       type: 'local',
       lineage: ['parent-id'],
     });
@@ -71,24 +73,24 @@ describe('services/place.ts', () => {
   it('asRemotePlace with great grandfather (missing place in lineage)', () => {
     const contactType = mockSimpleContactType('string', undefined);
     const place = new Place(contactType);
-    place.properties.name = 'name';
+    place.properties.name = new UnvalidatedPropertyValue('name');
     place.resolvedHierarchy[0] = {
       id: 'to-replace',
-      name: 'replaced',
+      name: new UnvalidatedPropertyValue('replaced'),
       lineage: ['parent-id', 'grandparent-id', 'greatgrandparent-id'],
       type: 'remote',
     };
 
     place.resolvedHierarchy[3] = {
       id: 'greatgrandparent-id',
-      name: 'greatgrandparent',
+      name: new UnvalidatedPropertyValue('greatgrandparent'),
       lineage: [],
       type: 'remote',
     };
     const actual = place.asRemotePlace();
 
-    expect(actual).to.deep.include({
-      name: 'name',
+    expect(actual).to.deep.nested.include({
+      'name.original': 'name',
       type: 'local',
       lineage: ['parent-id', 'grandparent-id', 'greatgrandparent-id'],
     });
@@ -97,7 +99,7 @@ describe('services/place.ts', () => {
   it('generateUsername shouldnt have double underscores', () => {
     const contactType = mockSimpleContactType('string', undefined);
     const place = new Place(contactType);
-    place.contact.properties.name = 'Migwani / Itoloni';
+    place.contact.properties.name = new ContactPropertyValue(place, contactType.place_properties[0], 'place_', 'Migwani / Itoloni');
 
     const actual = place.generateUsername();
     expect(actual).to.eq('migwani_itoloni');
@@ -134,7 +136,6 @@ describe('services/place.ts', () => {
     contactType.user_role = ['role1', 'role2'];
     contactType.contact_properties = contactType.place_properties;
     const place = new Place(contactType);
-    place.properties.existing = 'existing';
 
     const formData = {
       place_prop: 'abc',
@@ -142,15 +143,8 @@ describe('services/place.ts', () => {
       garbage: 'ghj',
       user_role: 'role1 role2',
     };
-    place.setPropertiesFromFormData(formData);
+    place.setPropertiesFromFormData(formData, 'hierarchy_');
 
-    expect(place.properties).to.deep.eq({
-      existing: 'existing',
-      prop: 'abc',
-    });
-    expect(place.contact.properties).to.deep.eq({
-      prop: 'efg',
-    });
     expect(place.userRoles).to.deep.eq([
       'role1',
       'role2',

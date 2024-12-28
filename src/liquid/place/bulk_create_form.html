@@ -4,8 +4,10 @@
     hx-encoding='multipart/form-data' 
     autocomplete="off"
     hx-post="/place?op=bulk&type={{contactType.name}}"
+    hx-disabled-elt="button#place_create_submit, a#cancel"
+    hx-indicator="#place_create_submit_progress"
     hx-target="this" 
-    hx-swap="outerHTML"
+    hx-swap="outerHTML" 
   >
       <input name="place_type" value="{{contactType.name}}" hidden />
 
@@ -39,6 +41,9 @@
             <a href="/" id="cancel" class="button">Cancel</a>
         </div>
       </div>
+      <div>
+        <progress id="place_create_submit_progress" class="progress is-small is-primary htmx-indicator" max="100"></progress>
+      </div>
 
       <div class="tile box">
         <table class="table is-fullwidth is-striped is-hoverable">
@@ -69,7 +74,7 @@
               <tr>
                 <td>{{ row.friendly_name }}</td>
                 <td>{{ row.required }}</td>
-                <td>Property on place</td>
+                <td>{% if row.hint %} <i>{{ row.hint }}</i> {% else %} Property on place. {% endif %}</td>
               </tr>
               {% endif %}
             {% endfor %}
@@ -79,7 +84,7 @@
               <tr>
                 <td>{{ row.friendly_name }}</td>
                 <td>{{ row.required }}</td>
-                <td>Property on primary contact</td>
+                <td>{% if row.hint %} <i>{{ row.hint }}</i> {% else %} Property on primary contact. {% endif %}</td>
               </tr>
               {% endif %}
             {% endfor %}

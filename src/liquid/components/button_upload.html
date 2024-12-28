@@ -1,6 +1,6 @@
-<a class="{{ include.className | default: "button is-primary" }}" hx-post="/app/apply-changes" hx-swap="none">
+<a class="{{ include.className | default: "button is-primary" }}" hx-post="/app/apply-changes" hx-target="div#hero_directive_model" hx-swap="innerHTML">
   <span class="material-symbols-outlined">person_add</span> Upload
 </a>
-<a class="{{ include.className | default: "button is-primary" }}" hx-post="/app/apply-changes?ignoreWarnings=true" hx-swap="none">
+<a class="{{ include.className | default: "button is-primary" }}" hx-post="/app/apply-changes?ignoreWarnings=true" hx-target="div#hero_directive_model" hx-swap="innerHTML">
   <span class="material-symbols-outlined">group_add</span> Upload and Ignore Warnings
 </a>

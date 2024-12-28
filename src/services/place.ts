@@ -1,14 +1,19 @@
-import _ from 'lodash';
 import Contact from './contact';
 import { v4 as uuidv4 } from 'uuid';
 
 import { Config, ContactProperty, ContactType } from '../config';
+import { IPropertyValue } from '../property-value';
 import { PlacePayload } from '../lib/cht-api';
-import Validation from '../validation';
 // can't use package.json because of rootDir in ts
 import { version as appVersion } from '../package.json';
 import RemotePlaceResolver from '../lib/remote-place-resolver';
-import RemotePlaceCache, { RemotePlace } from '../lib/remote-place-cache';
+import { HierarchyPropertyValue, ContactPropertyValue } from '../property-value';
+import { RemotePlace } from '../lib/remote-place-cache';
+import { NamePropertyValue } from '../property-value/name-property-value';
+
+export type FormattedPropertyCollection = {
+  [key: string]: IPropertyValue;
+};
 
 export type UserCreationDetails = {
   username?: string;
@@ -37,20 +42,9 @@ export default class Place {
   public readonly creationDetails : UserCreationDetails = {};
   public readonly resolvedHierarchy: (RemotePlace | undefined)[];
 
-  public properties: {
-    name?: string;
-    [key: string]: any;
-  };
-
-  public hierarchyProperties: {
-    PARENT?: string;
-    replacement?: string;
-    [key: string]: any;
-  };
-
-  public userRoleProperties: {
-    [key: string]: any;
-  };
+  public properties: FormattedPropertyCollection;
+  public hierarchyProperties: FormattedPropertyCollection;
+  public userRoleProperties: FormattedPropertyCollection;
 
   public state : PlaceUploadState;
 
@@ -75,28 +69,34 @@ export default class Place {
   FormData for a place has the expected format `place_${property_name}`.
   */
   public setPropertiesFromFormData(formData: any, hierarchyPrefix: string): void {
-    const getPropertySetWithPrefix = (expectedProperties: ContactProperty[], prefix: string): any => {
-      const propertiesInDataFormat = expectedProperties.map(p => prefix + p.property_name);
-      const relevantData = _.pick(formData, propertiesInDataFormat);
-      return Object.keys(relevantData).reduce((agg, key) => {
-        const keyWithoutPrefix = key.substring(prefix.length);
-        return { ...agg, [keyWithoutPrefix]: relevantData[key] };
-      }, {});
-    };
-
-    this.properties = {
-      ...this.properties,
-      ...getPropertySetWithPrefix(this.type.place_properties, PLACE_PREFIX),
-    };
-    this.contact.properties = {
-      ...this.contact.properties,
-      ...getPropertySetWithPrefix(this.type.contact_properties, CONTACT_PREFIX),
+    const getPropertySetWithPrefix = (expectedProperties: ContactProperty[], prefix: string): FormattedPropertyCollection => {
+      const result: FormattedPropertyCollection = {};
+      for (const property of expectedProperties) {
+        const dataFormat = prefix + property.property_name;
+        result[property.property_name] = new ContactPropertyValue(this, property, prefix, formData[dataFormat]);
+      }
+      return result;
     };
 
     for (const hierarchyLevel of Config.getHierarchyWithReplacement(this.type)) {
       const propertyName = hierarchyLevel.property_name;
-      this.hierarchyProperties[propertyName] = formData[`${hierarchyPrefix}${propertyName}`] ?? '';
+      const hierarchyValue = formData[`${hierarchyPrefix}${propertyName}`] ?? '';
+
+      // validation of hierachies requires RemotePlaceResolver to do its thing
+      // at this point; these may report errors but that's ok as long as hierarchy properties are revalidated later 
+      this.hierarchyProperties[propertyName] = new HierarchyPropertyValue(this, hierarchyLevel, hierarchyPrefix, hierarchyValue);
     }
+
+    // place properties must be set after hierarchy constraints since validation logic is dependent on isReplacement
+    this.properties = {
+      ...this.properties,
+      ...getPropertySetWithPrefix(this.type.place_properties, PLACE_PREFIX),
+    };
+
+    this.contact.properties = {
+      ...this.contact.properties,
+      ...getPropertySetWithPrefix(this.type.contact_properties, CONTACT_PREFIX),
+    };
 
     if (Config.hasMultipleRoles(this.type)) {
       const userRoleConfig = Config.getUserRoleConfig(this.type);
@@ -104,11 +104,8 @@ export default class Place {
       const roleFormData = formData[`${USER_PREFIX}${propertyName}`];
       
       // When multiple are selected, the form data is an array
-      if (Array.isArray(roleFormData)) {
-        this.userRoleProperties[propertyName] = roleFormData.join(' ');
-      } else {
-        this.userRoleProperties[propertyName] = roleFormData;
-      }
+      const userRoleValue = Array.isArray(roleFormData) ? roleFormData.join(' ') : roleFormData;
+      this.userRoleProperties[propertyName] = new ContactPropertyValue(this, userRoleConfig, USER_PREFIX, userRoleValue);
     }
   }
 
@@ -118,11 +115,11 @@ export default class Place {
    * To keep views simple and provide default values when editing, we can express a form in its form data
    */
   public asFormData(hierarchyPrefix: string): any {
-    const addPrefixToPropertySet = (properties: any, prefix: string): any => {
+    const addPrefixToPropertySet = (properties: FormattedPropertyCollection, prefix: string): any => {
       const result: any = {};
       for (const key of Object.keys(properties)) {
         const keyWithPrefix: string = prefix + key;
-        result[keyWithPrefix] = properties[key];
+        result[keyWithPrefix] = properties[key].original;
       }
 
       return result;
@@ -141,16 +138,12 @@ export default class Place {
       tool: `cht-user-management-${appVersion}`,
       username: creator,
       created_time: Date.now(),
-      replacement: this.resolvedHierarchy[0],
+      replacement: this.resolvedHierarchy[0]?.name.formatted,
     };
 
-    const filteredProperties = (properties: any) => {
-      if (!this.isReplacement) {
-        return properties;
-      }
-
+    const filteredProperties = (properties: FormattedPropertyCollection) => {
       return Object.keys(properties).reduce((agg: any, key: string) => {
-        const value = properties[key];
+        const value = properties[key]?.formatted;
         if (value !== undefined && value !== '') {
           agg[key] = value;
         }
@@ -201,9 +194,10 @@ export default class Place {
       }
     }
 
+    const nameProperty = Config.getPropertyWithName(this.type.place_properties, 'name');
     return {
       id: this.id,
-      name: this.name,
+      name: new NamePropertyValue(this.name, nameProperty),
       type: this.isCreated ? 'remote' : 'local',
       uniqueKeys: RemotePlaceCache.extractUniqueKeys(this.type.name, this.properties),
       lineage,
@@ -211,18 +205,32 @@ export default class Place {
   }
 
   public validate(): void {
-    const errors = Validation.getValidationErrors(this);
+    const validateCollection = (collection: FormattedPropertyCollection) => Object.values(collection).forEach(prop => prop.validate());
+    // hierarchy properties need to revalidation after resolution
+    validateCollection(this.hierarchyProperties);
+    // contact properties need to be revalidated after generation
+    validateCollection(this.properties);
+    validateCollection(this.contact.properties);
+    validateCollection(this.userRoleProperties);
+
+    const extractErrorsFromCollection = (properties: FormattedPropertyCollection) => Object.values(properties).filter(prop => prop.validationError);
+    const propertiesWithErrors: IPropertyValue[] = [
+      ...extractErrorsFromCollection(this.properties),
+      ...extractErrorsFromCollection(this.contact.properties),
+      ...extractErrorsFromCollection(this.userRoleProperties),
+      ...extractErrorsFromCollection(this.hierarchyProperties),
+    ];
+
     this.validationErrors = {};
-    for (const error of errors) {
-      this.validationErrors[error.property_name] = error.description;
+    for (const property of propertiesWithErrors) {
+      this.validationErrors[property.propertyNameWithPrefix] = property.validationError as string;
     }
-    
-    Validation.format(this);
   }
 
   public generateUsername(): string {
     const propertySource = this.type.username_from_place ? this.properties : this.contact.properties;
-    let username = propertySource.name || this.hierarchyProperties.replacement; // if name is not present, it must be a replacement
+    // if name is not present, it must be a replacement
+    let username = propertySource.name?.formatted || this.hierarchyProperties.replacement?.formatted;
     username = username
       ?.replace(/[ ]/g, '_')
       ?.replace(/[^a-zA-Z0-9_]/g, '')
@@ -243,7 +251,11 @@ export default class Place {
 
     const userRoleConfig = Config.getUserRoleConfig(this.type);
     const roles = this.userRoleProperties[userRoleConfig.property_name];
-    return roles.split(' ').map((role: string) => role.trim()).filter(Boolean);
+    if (!roles) {
+      throw Error(`Place role data is required when multiple roles are available.`);
+    }
+
+    return roles.formatted.split(' ').map((role: string) => role.trim()).filter(Boolean);
   }
 
   public get hasValidationErrors() : boolean {
@@ -256,11 +268,11 @@ export default class Place {
 
   public get name() : string {
     const nameProperty = Config.getPropertyWithName(this.type.place_properties, 'name');
-    return this.properties[nameProperty.property_name];
+    return this.properties[nameProperty.property_name]?.formatted;
   }
 
   public get isReplacement(): boolean {
-    return !!this.hierarchyProperties.replacement;
+    return !!this.hierarchyProperties.replacement?.original;
   }
 
   public get isCreated(): boolean {

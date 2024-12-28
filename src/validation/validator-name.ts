@@ -15,20 +15,20 @@ export default class ValidatorName implements IValidator {
   format(input : string, property : ContactProperty) : string {
     input = input.replace(/\./g, ' ');
     input = input.replace(/\//g, ' / ');
-    let toAlter = input;
+    let toFormat = input;
     if (property.parameter) {
       if (!Array.isArray(property.parameter)) {
         throw Error(`property with type "name": parameter should be an array`);
       }
       
-      toAlter = property.parameter.reduce((agg, toRemove) => {
+      toFormat = property.parameter.reduce((agg, toRemove) => {
         const regex = new RegExp(toRemove, 'ig');
         return agg.replace(regex, '');
-      }, toAlter);
+      }, toFormat);
     }
     
     const validatorStr = new ValidatorString();
-    return this.titleCase(validatorStr.format(toAlter));
+    return this.titleCase(validatorStr.format(toFormat));
   }
 
   get defaultError(): string {

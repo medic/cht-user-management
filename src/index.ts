@@ -1,15 +1,17 @@
 require('dotenv').config();
+import { Config } from './config';
 import build from './server';
 import { env } from 'process';
 const {
   INTERFACE
 } = process.env;
 
-const port: number = env.PORT ? parseInt(env.PORT) : 3000;
+const port: number = env.PORT ? parseInt(env.PORT) : 3500;
+Config.assertValid();
 
 (async () => {
   const server = build({
-    logger: false,
+    logger: true,
   });
 
   // in 1.1.0 we allowed INTERFACE to be declared in .env, but let's be

@@ -1,7 +1,7 @@
 import EventEmitter from 'events';
 
 import * as RetryLogic from '../lib/retry-logic';
-import { ChtApi, PlacePayload } from '../lib/cht-api';
+import { ChtApi, CreatedPlaceResult, PlacePayload } from '../lib/cht-api';
 import { Config } from '../config';
 import Place, { PlaceUploadState } from './place';
 import RemotePlaceCache from '../lib/remote-place-cache';
@@ -14,8 +14,7 @@ const UPLOAD_BATCH_SIZE = 15;
 
 export interface Uploader {
    handleContact (payload: PlacePayload): Promise<string | undefined>;
-   handlePlacePayload (place: Place, payload: PlacePayload) : Promise<string>;
-   linkContactAndPlace (place: Place, placeId: string): Promise<void>;
+   handlePlacePayload (place: Place, payload: PlacePayload) : Promise<CreatedPlaceResult>;
 }
 
 export class UploadManager extends EventEmitter {
@@ -43,7 +42,7 @@ export class UploadManager extends EventEmitter {
     try {
       const uploader: Uploader = pickUploader(place, chtApi);
       const payload = place.asChtPayload(chtApi.chtSession.username);
-      await Config.mutate(payload, chtApi, !!place.properties.replacement);
+      await Config.mutate(payload, chtApi, place.isReplacement);
 
       if (!place.creationDetails.contactId) {
         const contactId = await uploader.handleContact(payload);
@@ -51,12 +50,10 @@ export class UploadManager extends EventEmitter {
       }
 
       if (!place.creationDetails.placeId) {
-        const placeId = await uploader.handlePlacePayload(place, payload);
-        place.creationDetails.placeId = placeId;
+        const placeResult = await uploader.handlePlacePayload(place, payload);
+        place.creationDetails.placeId = placeResult.placeId;
+        place.creationDetails.contactId ||= placeResult.contactId;
       }
-
-      const createdPlaceId = place.creationDetails.placeId; // closure required for typescript
-      await RetryLogic.retryOnUpdateConflict<void>(() => uploader.linkContactAndPlace(place, createdPlaceId));
 
       if (!place.creationDetails.contactId) {
         throw Error('creationDetails.contactId not set');
@@ -69,37 +66,27 @@ export class UploadManager extends EventEmitter {
         place.creationDetails.password = password;
       }
 
-      await RemotePlaceCache.add(place, chtApi);
+      RemotePlaceCache.add(place, chtApi);
       delete place.uploadError;
 
       console.log(`successfully created ${JSON.stringify(place.creationDetails)}`);
       this.eventedPlaceStateChange(place, PlaceUploadState.SUCCESS);
     } catch (err: any) {
-      const errorDetails = err.response?.data?.error ? JSON.stringify(err.response.data.error) : err.toString();
+      const errorDetails = getErrorDetails(err);
       console.log('error when creating user', errorDetails);
       place.uploadError = errorDetails;
       this.eventedPlaceStateChange(place, PlaceUploadState.FAILURE);
     }
   }
 
-  public triggerRefresh(place_id: string | undefined) {
-    if (place_id) {
-      this.emit('refresh_table_row', place_id);
-    } else {
-      this.emit('refresh_table');
-    }
+  public triggerRefresh(place_id: string) {
+    this.emit('refresh_table_row', place_id);
   }
 
   private eventedPlaceStateChange = (subject: Place | Place[], state: PlaceUploadState) => {
     if (!Array.isArray(subject)) {
       subject = [subject];
     }
-    
-    if (subject.length > 1) {
-      this.triggerRefresh(undefined);
-      return;
-    }
-
     subject.forEach(place => {
       place.state = state;
       this.triggerRefresh(place.id);
@@ -107,8 +94,20 @@ export class UploadManager extends EventEmitter {
   };
 }
 
+function getErrorDetails(err: any) {
+  if (typeof err.response?.data === 'string') {
+    return err.response.data;
+  }
+
+  if (err.response?.data?.error) {
+    return JSON.stringify(err.response.data.error);
+  }
+  
+  return err.toString();
+}
+
 function pickUploader(place: Place, chtApi: ChtApi): Uploader {
-  if (!place.hierarchyProperties.replacement) {
+  if (!place.hierarchyProperties.replacement.original) {
     return new UploadNewPlace(chtApi);
   }
 

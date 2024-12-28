@@ -6,6 +6,7 @@ import ChtSession from '../src/lib/cht-session';
 import { Config, ContactProperty, ContactType } from '../src/config';
 import Place from '../src/services/place';
 import PlaceFactory from '../src/services/place-factory';
+import { UnvalidatedPropertyValue } from '../src/property-value';
 
 export type ChtDoc = {
   _id: string;
@@ -13,34 +14,33 @@ export type ChtDoc = {
   [key: string]: string | Object;
 };
 
-export const mockPlace = (type: ContactType, prop: any) : Place => {
-  const result = new Place(type);
-  result.properties = {
-    name: 'place',
-    prop
-  };
-  result.hierarchyProperties = {
-    PARENT: 'parent',
-  };
-  result.contact.properties = {
-    name: 'contact',
-  };
-  result.resolvedHierarchy[1] = {
+export const mockPlace = (contactType: ContactType, formDataOverride?: any) : Place => {
+  const formData = Object.assign({
+    place_name: 'name',
+    place_prop: 'prop',
+    hierarchy_PARENT: 'parent',
+    contact_name: 'contact'
+  }, formDataOverride);
+  const place = new Place(contactType);
+  place.setPropertiesFromFormData(formData, 'hierarchy_');
+  place.resolvedHierarchy[1] = {
     id: 'known',
-    name: 'parent',
+    name: new UnvalidatedPropertyValue('parent'),
+    lineage: [],
     type: 'remote',
   };
-  return result;
+  place.validate();
+  return place;
 };
 
-export const mockChtApi = (first: ChtDoc[] = [], second: ChtDoc[] = []): ChtApi => ({
+export const mockChtApi = (first: ChtDoc[] = [], second: ChtDoc[] = []): any => ({
   chtSession: mockChtSession(),
   getPlacesWithType: sinon.stub().resolves(first).onSecondCall().resolves(second),
 });
 
 export const mockSimpleContactType = (
   propertyType: string,
-  propertyValidator: string | string[] | undefined,
+  propertyValidator?: string | string[] | object,
   errorDescription?: string
 ) : ContactType => {
   const mockedProperty = mockProperty(propertyType, propertyValidator);
@@ -64,7 +64,9 @@ export const mockSimpleContactType = (
       mockProperty('name', undefined, 'name'),
       mockedProperty,
     ],
-    contact_properties: [],
+    contact_properties: [
+      mockProperty('name', undefined, 'name'),
+    ],
   };
 };
 
@@ -82,7 +84,7 @@ export async function createChu(subcounty: ChtDoc, chu_name: string, sessionCach
   const chu = await PlaceFactory.createOne(chuData, chuType, sessionCache, chtApi);
   expect(chu.validationErrors).to.be.empty;
   return chu;
-};
+}
 
 export const mockValidContactType = (propertyType: string, propertyValidator: string | string[] | undefined) : ContactType => ({
   name: 'contacttype-name',
@@ -116,11 +118,11 @@ export const mockValidContactType = (propertyType: string, propertyValidator: st
 
 export const mockParentPlace = (parentPlaceType: ContactType, parentName: string) => {
   const place = new Place(parentPlaceType);
-  place.properties.name = parentName;
+  place.properties.name = new UnvalidatedPropertyValue(parentName, 'name');
   return place;
 };
 
-export const mockProperty = (type: string, parameter: string | string[] | undefined | object, property_name: string = 'prop'): ContactProperty => ({
+export const mockProperty = (type: string, parameter?: string | string[] | object, property_name: string = 'prop'): ContactProperty => ({
   friendly_name: `friendly ${property_name}`,
   property_name,
   type,
@@ -129,16 +131,20 @@ export const mockProperty = (type: string, parameter: string | string[] | undefi
 });
 
 //  Constructor of class ChtSession is private and only accessible within the class declaration.
-export const mockChtSession = (userFacilityId: string = '*') : ChtSession => new ChtSession(
-  {
-    friendly: 'domain',
-    domain: 'domain.com',
-    useHttp: true,
-  },
-  'session-token',
-  'username',
-  userFacilityId
-);
+export function mockChtSession(userFacilityId: string = '*') : ChtSession {
+  const creationDetails = {
+    authInfo: {
+      friendly: 'domain',
+      domain: 'domain.com',
+      useHttp: true,
+    },
+    sessionToken: 'session-token',
+    username: 'username',
+    facilityIds: [userFacilityId],
+    chtCoreVersion: '4.7.0',
+  };
+  return new ChtSession(creationDetails);
+}
 
 export function expectInvalidProperties(
   validationErrors: { [key: string]: string } | undefined,
