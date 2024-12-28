@@ -1,6 +1,7 @@
 import { HierarchyPropertyValue, ContactPropertyValue } from './validated-property-values';
 import { NamePropertyValue } from './name-property-value';
 import UnvalidatedPropertyValue from './unvalidated-property-value';
+import { RemotePlacePropertyValue } from './remote-place-property-value';
 
 export class PropertyValues {
   public static includes(searchWithin?: string | IPropertyValue, searchFor?: string | IPropertyValue): boolean {
@@ -60,7 +61,7 @@ export { ContactPropertyValue };
 /**
  * When storing a Name, and don't need access to an underlying Place
  */
-export { NamePropertyValue };
+export { RemotePlacePropertyValue };
 
 /**
  * When storing something that doesn't need validation

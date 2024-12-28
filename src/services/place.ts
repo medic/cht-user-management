@@ -9,6 +9,7 @@ import { version as appVersion } from '../package.json';
 import RemotePlaceResolver from '../lib/remote-place-resolver';
 import { HierarchyPropertyValue, ContactPropertyValue } from '../property-value';
 import { RemotePlace } from '../lib/remote-place-cache';
+import _ from 'lodash';
 
 export type FormattedPropertyCollection = {
   [key: string]: IPropertyValue;
