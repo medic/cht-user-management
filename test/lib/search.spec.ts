@@ -81,6 +81,21 @@ describe('lib/remote-place-cache.ts', () => {
     assertPlaceMatchesDoc(actual, [toReplacePlace]);
   });
 
+  it('ignores accents', async () => {
+    const sessionCache = new SessionCache();
+    const contactType = mockValidContactType('string', undefined);
+    const formData = {
+      hierarchy_replacement: 'plÀce',
+    };
+    const chtApi = mockChtApi();
+    chtApi.getPlacesWithType.resolves([toReplacePlace])
+      .onSecondCall().resolves([parentPlace]);
+
+    const [replacementLevel] = Config.getHierarchyWithReplacement(contactType);
+    const actual = await SearchLib.search(contactType, formData, 'hierarchy_', replacementLevel, chtApi, sessionCache);
+    assertPlaceMatchesDoc(actual, [toReplacePlace]);
+  });
+
   it('search unsuccessful when result is not child of user facility', async () => {
     const sessionCache = new SessionCache();
     const contactType = mockValidContactType('string', undefined);

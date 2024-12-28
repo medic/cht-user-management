@@ -6,7 +6,7 @@ const {
   INTERFACE
 } = process.env;
 
-const port: number = env.PORT ? parseInt(env.PORT) : 3000;
+const port: number = env.PORT ? parseInt(env.PORT) : 3500;
 Config.assertValid();
 
 (async () => {

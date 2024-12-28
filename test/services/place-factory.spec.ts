@@ -142,7 +142,7 @@ describe('services/place-factory.ts', () => {
           name: {
             formatted: 'Bob',
             original: 'bob',
-            propertyNameWithPrefix: 'place_replacement',
+            propertyNameWithPrefix: 'place_name',
           },
           lineage: ['parent-id'],
           placeType: 'd_community_health_volunteer_area',
@@ -160,9 +160,8 @@ describe('services/place-factory.ts', () => {
           name: {
             formatted: 'Chepalungu',
             original: parentDoc.name,
-            propertyNameWithPrefix: 'place_CHU',
+            propertyNameWithPrefix: 'place_name',
           },
-          placeType: 'c_community_health_unit',
           type: 'remote',
           lineage: [],
           uniquePlaceValues: {
@@ -389,8 +388,9 @@ describe('services/place-factory.ts', () => {
   });
   
   it('place not under users facility is invalid', async () => {
-    const { sessionCache, contactType, parentContactType, fakeFormData, chtApi } = mockScenario();
+    const { parentDoc, sessionCache, contactType, parentContactType, fakeFormData, chtApi } = mockScenario();
     const parent1 = mockParentPlace(parentContactType, fakeFormData.hierarchy_PARENT);
+    chtApi.getPlacesWithType.resolves([parentDoc]);
     chtApi.chtSession = mockChtSession('other');
     fakeFormData.hierarchy_PARENT = parent1.name;
 
@@ -527,7 +527,6 @@ function mockScenario() {
       .onSecondCall().resolves([parentDoc])
       .onThirdCall().resolves([]),
     createPlace: sinon.stub().resolves('created-place-id'),
-    updateContactParent: sinon.stub().resolves('created-contact-id'),
     createUser: sinon.stub().resolves(),
   };
   const fakeFormData:any = {

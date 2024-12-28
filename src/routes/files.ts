@@ -1,10 +1,12 @@
 import _ from 'lodash';
 
 import { FastifyInstance } from 'fastify';
+import JSZip from 'jszip';
 import { stringify } from 'csv/sync';
+
 import { Config, ContactProperty } from '../config';
+import getCredentialsFiles from '../lib/credentials-file';
 import SessionCache from '../services/session-cache';
-import createZip from '../services/files';
 
 export default async function files(fastify: FastifyInstance) {
   fastify.get('/files/template/:placeType', async (req) => {
@@ -16,7 +18,13 @@ export default async function files(fastify: FastifyInstance) {
 
   fastify.get('/files/credentials', async (req, reply) => {
     const sessionCache: SessionCache = req.sessionCache;
-    const zip = createZip(sessionCache);
+
+    const zip = new JSZip();
+    const files = getCredentialsFiles(sessionCache, Config.contactTypes());
+    for (const file of files) {
+      zip.file(file.filename, file.content);
+    }
+    
     reply.header('Content-Disposition', `attachment; filename="${Date.now()}_${req.chtSession.authInfo.friendly}_users.zip"`);
     return zip.generateNodeStream();
   });

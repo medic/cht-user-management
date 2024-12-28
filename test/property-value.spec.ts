@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { PropertyValues, RemotePlacePropertyValue, UnvalidatedPropertyValue } from '../src/property-value';
+import { PropertyValues, UnvalidatedPropertyValue } from '../src/property-value';
 import { ContactProperty } from '../src/config';
 import { mockProperty } from './mocks';
 
