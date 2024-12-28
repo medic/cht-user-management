@@ -526,7 +526,7 @@ function mockScenario() {
       .onFirstCall().resolves([])
       .onSecondCall().resolves([parentDoc])
       .onThirdCall().resolves([]),
-    createPlace: sinon.stub().resolves('created-place-id'),
+    createPlace: sinon.stub().resolves({ placeId: 'created-place-id', contactId: 'created-contact-id' }),
     createUser: sinon.stub().resolves(),
   };
   const fakeFormData:any = {

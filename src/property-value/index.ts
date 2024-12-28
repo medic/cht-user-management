@@ -25,13 +25,14 @@ export class PropertyValues {
     const normalize = (str: string) => str.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase();
     const valueAsArray = (val: string | IPropertyValue): string[] => {
       const values = typeof val === 'string' ? [val] : [val.formatted, val.original];
-      return values.map(normalize);
+      return values
+        .filter(Boolean)
+        .map(normalize);
     };
 
     const withinArray: string[] = valueAsArray(a);
     const forArray: string[] = valueAsArray(b);
 
-    
     return withinArray.some(within => forArray.some(forX => comparator(within, forX)));
   }
 }
