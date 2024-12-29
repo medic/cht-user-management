@@ -196,12 +196,8 @@ export class Config {
 
   public static getUniqueProperties(contactTypeName: string): ContactProperty[] {
     const contactMatch = config.contact_types.find(c => c.name === contactTypeName);
-    if (!contactMatch) {
-      return [];
-    }
-
-    return contactMatch.place_properties
-      .filter(prop => prop.unique);
+    const uniqueProperties = contactMatch?.place_properties.filter(prop => prop.unique);
+    return uniqueProperties || [];
   }
 
   // TODO: Joi? Chai?

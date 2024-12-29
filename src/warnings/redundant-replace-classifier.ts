@@ -19,7 +19,7 @@ export default class RedundantReplaceClassifier implements IWarningClassifier {
     const confirmedDuplicates = placesToCompare
       .filter(place => place.type !== 'invalid' && 
         place.stagedPlace && 
-        place.stagedPlace?.resolvedHierarchy[0]?.id === replacementDetails.id);
+        place.stagedPlace.resolvedHierarchy?.[0]?.id === replacementDetails.id);
 
     if (confirmedDuplicates.length) {
       return confirmedDuplicates;

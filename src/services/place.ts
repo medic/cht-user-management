@@ -1,15 +1,15 @@
-import Contact from './contact';
+import _ from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
 
 import { Config, ContactProperty, ContactType } from '../config';
+import Contact from './contact';
+import { ContactPropertyValue, HierarchyPropertyValue } from '../property-value';
 import { IPropertyValue, RemotePlacePropertyValue } from '../property-value';
 import { PlacePayload } from '../lib/cht-api';
 // can't use package.json because of rootDir in ts
-import { version as appVersion } from '../package.json';
-import RemotePlaceResolver from '../lib/remote-place-resolver';
-import { HierarchyPropertyValue, ContactPropertyValue } from '../property-value';
 import { RemotePlace } from '../lib/remote-place-cache';
-import _ from 'lodash';
+import RemotePlaceResolver from '../lib/remote-place-resolver';
+import { version as appVersion } from '../package.json';
 
 export type FormattedPropertyCollection = {
   [key: string]: IPropertyValue;
@@ -181,22 +181,14 @@ export default class Place {
   }
 
   public asRemotePlace() : RemotePlace {
-    function getUniqueKeys(properties: FormattedPropertyCollection, place_properties: ContactProperty[]): FormattedPropertyCollection {
-      const uniquePropertyNames = place_properties
-        .filter(prop => prop.unique)
-        .map(prop => prop.property_name);
-
-      return _.pick(properties, uniquePropertyNames);
-    }
-
     const nameProperty = Config.getPropertyWithName(this.type.place_properties, 'name');
     return {
       id: this.id,
       name: new RemotePlacePropertyValue(this.name, nameProperty),
       placeType: this.type.name,
       type: this.isCreated ? 'remote' : 'local',
-      uniquePlaceValues: getUniqueKeys(this.properties, this.type.place_properties),
-      uniqueContactValues: getUniqueKeys(this.contact.properties, this.type.contact_properties),
+      uniquePlaceValues: this.getUniqueKeys(this.properties, this.type.place_properties),
+      uniqueContactValues: this.getUniqueKeys(this.contact.properties, this.type.contact_properties),
       stagedPlace: this,
       lineage: this.buildLineage(),
     };
@@ -294,5 +286,13 @@ export default class Place {
     }
 
     return lineage;
+  }
+
+  private getUniqueKeys(properties: FormattedPropertyCollection, place_properties: ContactProperty[]): FormattedPropertyCollection {
+    const uniquePropertyNames = place_properties
+      .filter(prop => prop.unique)
+      .map(prop => prop.property_name);
+
+    return _.pick(properties, uniquePropertyNames);
   }
 }

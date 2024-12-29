@@ -35,6 +35,20 @@ export default class WarningSystem {
     });
   }
 
+  private static createClassifiers(contactType: ContactType): IWarningClassifier[] {
+    const createUniquePropertyClassifiers = (properties: ContactProperty[], propertyType: 'place' | 'contact') => properties
+      .filter(prop => prop.unique)
+      .map(prop => new UniquePropertyClassifier(propertyType, prop));
+
+    const classifiers = [
+      ...createUniquePropertyClassifiers(contactType.place_properties, 'place'),
+      ...createUniquePropertyClassifiers(contactType.contact_properties, 'contact'),
+      new RedundantReplaceClassifier(contactType),
+    ];
+
+    return classifiers;
+  }
+
   private static runClassifiers(warningClassifiers: IWarningClassifier[], remotePlaces: RemotePlace[], localPlaces: Place[]): Warning[] {
     const warnings: Warning[] = [];
     const knownWarnings = new Set<string>();
@@ -78,8 +92,8 @@ export default class WarningSystem {
     }
 
     const implicatedLocalPlacesWithoutBase = implicatedPlaces
-      .filter(remotePlace => remotePlace.stagedPlace)
-      .map(remotePlace => remotePlace.stagedPlace) as Place[];
+      .map(remotePlace => remotePlace.stagedPlace)
+      .filter(Boolean) as Place[];
     const implicatedLocalPlaces = [basePlace.stagedPlace, ...implicatedLocalPlacesWithoutBase];
 
     const implicatedRemotePlaces = implicatedPlaces.filter(remotePlace => !remotePlace.stagedPlace);
@@ -88,19 +102,5 @@ export default class WarningSystem {
       warningString: classifier.getWarningString(implicatedRemotePlaces),
       uniqueKey: classifier.uniqueKey(place),
     }));
-  }
-
-  private static createClassifiers(contactType: ContactType): IWarningClassifier[] {
-    const createUniquePropertyClassifiers = (properties: ContactProperty[], propertyType: 'place' | 'contact') => properties
-      .filter(prop => prop.unique)
-      .map(prop => new UniquePropertyClassifier(propertyType, prop));
-
-    const classifiers = [
-      ...createUniquePropertyClassifiers(contactType.place_properties, 'place'),
-      ...createUniquePropertyClassifiers(contactType.contact_properties, 'contact'),
-      new RedundantReplaceClassifier(contactType),
-    ];
-
-    return classifiers;
   }
 }
