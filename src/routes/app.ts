@@ -8,6 +8,7 @@ import RemotePlaceCache from '../lib/remote-place-cache';
 import RemotePlaceResolver from '../lib/remote-place-resolver';
 import SessionCache from '../services/session-cache';
 import { UploadManager } from '../services/upload-manager';
+import WarningSystem from '../warnings';
 
 export default async function sessionCache(fastify: FastifyInstance) {
   fastify.get('/', async (req, resp) => {
@@ -78,17 +79,23 @@ export default async function sessionCache(fastify: FastifyInstance) {
     const places = sessionCache.getPlaces({ created: false });
     await RemotePlaceResolver.resolve(places, sessionCache, chtApi, { fuzz: true });
     places.forEach(p => p.validate());
+
+    for (const contactType of Config.contactTypes()) {
+      await WarningSystem.setWarnings(contactType, chtApi, sessionCache);
+    }
+
     resp.header('HX-Redirect', '/');
   });
 
   // initiates place creation via the job manager
   fastify.post('/app/apply-changes', async (req, resp) => {
+    const { ignoreWarnings } = req.query as any;
     const uploadManager: UploadManager = fastify.uploadManager;
     const sessionCache: SessionCache = req.sessionCache;
     const directiveModel = new DirectiveModel(sessionCache, req.cookies.filter);
 
     const chtApi = new ChtApi(req.chtSession);
-    uploadManager.doUpload(sessionCache.getPlaces(), chtApi);
+    uploadManager.doUpload(sessionCache.getPlaces(), chtApi, ignoreWarnings === 'true');
 
     return resp.view('src/liquid/place/directive.html', {
       directiveModel

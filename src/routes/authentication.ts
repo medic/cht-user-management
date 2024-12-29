@@ -35,6 +35,7 @@ export default async function authentication(fastify: FastifyInstance) {
     try {
       chtSession = await ChtSession.create(authInfo, username, password);
     } catch (e: any) {
+      console.error(`Login error: ${e}`);
       return resp.view('src/liquid/auth/authentication_form.html', {
         domains: Config.getDomains(),
         errors: true,

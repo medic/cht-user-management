@@ -17,7 +17,7 @@ abstract class AbstractPropertyValue implements IPropertyValue {
     this.place = place;
     this.property = property;
     this.propertyPrefix = prefix;
-    this.formattedValue = Validation.formatDuringInitialization(this.property, value);
+    this.formattedValue = Validation.format(this.property, value);
   }
 
   public validate(): void {

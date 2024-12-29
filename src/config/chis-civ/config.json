@@ -44,7 +44,8 @@
           "property_name": "name",
           "type": "generated",
           "parameter": "Zone de supervision de: {{ contact.last_name }} {{ contact.first_name }}",
-          "required": false
+          "required": false,
+          "unique": "parent"
         }
       ],
       "contact_properties": [
@@ -147,7 +148,8 @@
           "type": "string",
           "parameter": ["\\(*Site*\\)"],
           "required": true,
-          "hint": "Nom du site de l'ASC"
+          "hint": "Nom du site de l'ASC",
+          "unique": "parent"
         }
       ],
       "contact_properties": [

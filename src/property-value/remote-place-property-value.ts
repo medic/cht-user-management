@@ -2,7 +2,7 @@ import { ContactProperty } from '../config';
 import { IPropertyValue } from '.';
 import Validation from '../validation';
 
-export class NamePropertyValue implements IPropertyValue {
+export class RemotePlacePropertyValue implements IPropertyValue {
   public original: string;
   public formatted: string;
   public propertyNameWithPrefix: string;
@@ -10,8 +10,8 @@ export class NamePropertyValue implements IPropertyValue {
 
   constructor(value: string, nameContactProperty: ContactProperty) {
     this.original = value;
-    this.propertyNameWithPrefix = `place_name`;
-    this.formatted = Validation.formatDuringInitialization(nameContactProperty, value);
+    this.propertyNameWithPrefix = `place_${nameContactProperty.property_name}`;
+    this.formatted = Validation.format(nameContactProperty, value);
   }
 
   public validate(): void {}

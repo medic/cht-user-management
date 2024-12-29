@@ -18,8 +18,8 @@ export interface Uploader {
 }
 
 export class UploadManager extends EventEmitter {
-  doUpload = async (places: Place[], chtApi: ChtApi) => {
-    const placesNeedingUpload = places.filter(p => !p.isCreated && !p.hasValidationErrors);
+  doUpload = async (places: Place[], chtApi: ChtApi, ignoreWarnings: boolean = false) => {
+    const placesNeedingUpload = places.filter(p => !p.isCreated && !p.hasValidationErrors && (ignoreWarnings || !p.warnings.length));
     this.eventedPlaceStateChange(placesNeedingUpload, PlaceUploadState.SCHEDULED);
 
     const independants = placesNeedingUpload.filter(p => !p.isDependant);
