@@ -3,8 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { Config, ContactProperty, ContactType } from '../config';
 import Contact from './contact';
-import { ContactPropertyValue, HierarchyPropertyValue } from '../property-value';
-import { IPropertyValue, RemotePlacePropertyValue } from '../property-value';
+import { ContactPropertyValue, HierarchyPropertyValue, IPropertyValue, RemotePlacePropertyValue } from '../property-value';
 import { PlacePayload } from '../lib/cht-api';
 // can't use package.json because of rootDir in ts
 import { RemotePlace } from '../lib/remote-place-cache';
