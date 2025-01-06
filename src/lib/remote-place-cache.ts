@@ -6,14 +6,6 @@ import { IPropertyValue } from '../property-value';
 import { ContactType, HierarchyConstraint } from '../config';
 import { NamePropertyValue } from '../property-value/name-property-value';
 
-type RemotePlacesByType = {
-  [key: string]: RemotePlace[];
-};
-
-type RemotePlaceDatastore = {
-  [key: string]: RemotePlacesByType;
-};
-
 export type RemotePlace = {
   id: string;
   name: IPropertyValue;
@@ -30,16 +22,16 @@ export default class RemotePlaceCache {
 
   public static async getPlacesWithType(chtApi: ChtApi, contactType: ContactType, hierarchyLevel: HierarchyConstraint)
     : Promise<RemotePlace[]> {
-      const { domain } = chtApi.chtSession.authInfo;
-      const placeType = hierarchyLevel.contact_type;
-      const cacheKey = this.getCacheKey(domain, placeType);
+    const { domain } = chtApi.chtSession.authInfo;
+    const placeType = hierarchyLevel.contact_type;
+    const cacheKey = this.getCacheKey(domain, placeType);
   
-      let places = this.getCache().get<RemotePlace[]>(cacheKey);
-      if (!places) {
-        places = await this.fetchRemotePlaces(chtApi, contactType, hierarchyLevel);
-        this.getCache().set(cacheKey, places);
-      }
-      return places;
+    let places = this.getCache().get<RemotePlace[]>(cacheKey);
+    if (!places) {
+      places = await this.fetchRemotePlaces(chtApi, contactType, hierarchyLevel);
+      this.getCache().set(cacheKey, places);
+    }
+    return places;
   }
 
   private static getCache(): NodeCache {
