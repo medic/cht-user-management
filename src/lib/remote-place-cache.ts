@@ -1,3 +1,5 @@
+import NodeCache from 'node-cache';
+
 import Place from '../services/place';
 import { ChtApi } from './cht-api';
 import { IPropertyValue } from '../property-value';
@@ -24,52 +26,56 @@ export type RemotePlace = {
 };
 
 export default class RemotePlaceCache {
-  private static cache: RemotePlaceDatastore = {};
+  private static cache: NodeCache;
 
   public static async getPlacesWithType(chtApi: ChtApi, contactType: ContactType, hierarchyLevel: HierarchyConstraint)
     : Promise<RemotePlace[]> {
-    const domainStore = await RemotePlaceCache.getDomainStore(chtApi, contactType, hierarchyLevel);
-    return domainStore;
+      const { domain } = chtApi.chtSession.authInfo;
+      const placeType = hierarchyLevel.contact_type;
+      const cacheKey = this.getCacheKey(domain, placeType);
+  
+      let places = this.getCache().get<RemotePlace[]>(cacheKey);
+      if (!places) {
+        places = await this.fetchRemotePlaces(chtApi, contactType, hierarchyLevel);
+        this.getCache().set(cacheKey, places);
+      }
+      return places;
+  }
+
+  private static getCache(): NodeCache {
+    if (!this.cache) {
+      this.cache = new NodeCache({ 
+        stdTTL: 3600,
+        checkperiod: 120 
+      });
+    }
+    return this.cache;
+  }
+
+  private static getCacheKey(domain: string, placeType?: string): string {
+    return placeType ? `${domain}:${placeType}` : domain;
   }
 
   public static add(place: Place, chtApi: ChtApi): void {
     const { domain } = chtApi.chtSession.authInfo;
     const placeType = place.type.name;
-
-    const places = RemotePlaceCache.cache[domain]?.[placeType];
-    // if there is no cache existing, discard the value
-    // it will be fetched if needed when the cache is built
+    const cacheKey = this.getCacheKey(domain, placeType);
+    
+    const places = this.getCache().get<RemotePlace[]>(cacheKey);
     if (places) {
       places.push(place.asRemotePlace());
+      this.getCache().set(cacheKey, places);
     }
   }
 
   public static clear(chtApi: ChtApi, contactTypeName?: string): void {
     const domain = chtApi?.chtSession?.authInfo?.domain;
     if (!domain) {
-      RemotePlaceCache.cache = {};
-    } else if (!contactTypeName) {
-      delete RemotePlaceCache.cache[domain];
-    } else if (RemotePlaceCache.cache[domain]) {
-      delete RemotePlaceCache.cache[domain][contactTypeName];
+      this.getCache().flushAll();
+    } else {
+      const cacheKey = this.getCacheKey(domain, contactTypeName);
+      this.getCache().del(cacheKey);
     }
-  }
-
-  private static async getDomainStore(chtApi: ChtApi, contactType: ContactType, hierarchyLevel: HierarchyConstraint)
-    : Promise<RemotePlace[]> {
-    const { domain } = chtApi.chtSession.authInfo;
-    const placeType = hierarchyLevel.contact_type;
-    const { cache: domainCache } = RemotePlaceCache;
-    const places = domainCache[domain]?.[placeType];
-    if (!places) {
-      const fetchPlacesWithType = RemotePlaceCache.fetchRemotePlaces(chtApi, contactType, hierarchyLevel);
-      domainCache[domain] = {
-        ...domainCache[domain],
-        [placeType]: await fetchPlacesWithType,
-      };
-    }
-
-    return domainCache[domain][placeType];
   }
 
   private static async fetchRemotePlaces(chtApi: ChtApi, contactType: ContactType, hierarchyLevel: HierarchyConstraint): Promise<RemotePlace[]> {

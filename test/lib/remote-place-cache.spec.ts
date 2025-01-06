@@ -1,4 +1,5 @@
 import { expect } from 'chai';
+import NodeCache from 'node-cache';
 
 import { ChtDoc, mockChtApi, mockPlace, mockSimpleContactType } from '../mocks';
 import { HierarchyConstraint } from '../../src/config';
