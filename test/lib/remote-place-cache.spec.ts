@@ -84,5 +84,25 @@ describe('lib/remote-place-cache.ts', () => {
     chtApi.chtSession.authInfo.domain = 'http://other';
     RemotePlaceCache.clear(chtApi, 'other');
   });
+
+  it('clears all place types when clearing domain', async () => {
+    const chtApi = mockChtApi([doc]);
+    const domain = chtApi.chtSession.authInfo.domain;
+    
+    const contactTypeAsHierarchyLevel: HierarchyConstraint = {
+      contact_type: contactType.name,
+      property_name: 'level',
+      friendly_name: 'pretend another ContactType needs this',
+      type: 'name',
+      required: true,
+      level: 0,
+    };
+    await RemotePlaceCache.getPlacesWithType(chtApi, contactType, contactTypeAsHierarchyLevel);
+    expect(RemotePlaceCache.hasData(domain, contactType.name)).to.be.true;
+    
+    // Clear domain
+    RemotePlaceCache.clear(chtApi);
+    expect(RemotePlaceCache.hasData(domain, contactType.name)).to.be.false;
+  });
 });
 

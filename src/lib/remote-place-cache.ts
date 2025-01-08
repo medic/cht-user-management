@@ -44,8 +44,8 @@ export default class RemotePlaceCache {
     return this.cache;
   }
 
-  private static getCacheKey(domain: string, placeType?: string): string {
-    return placeType ? `${domain}:${placeType}` : domain;
+  private static getCacheKey(domain: string, placeType: string): string {
+    return `${domain}:${placeType}`;
   }
 
   public static add(place: Place, chtApi: ChtApi): void {
@@ -64,6 +64,18 @@ export default class RemotePlaceCache {
     const domain = chtApi?.chtSession?.authInfo?.domain;
     if (!domain) {
       this.getCache().flushAll();
+      return;
+    }
+
+    if (!contactTypeName) {
+      // Clear all keys matching domain prefix
+      const keys = this.getCache().keys();
+      const domainPrefix = `${domain}:`;
+      keys.forEach(key => {
+        if (key.startsWith(domainPrefix)) {
+          this.getCache().del(key);
+        }
+      });
     } else {
       const cacheKey = this.getCacheKey(domain, contactTypeName);
       this.getCache().del(cacheKey);
@@ -86,5 +98,12 @@ export default class RemotePlaceCache {
       lineage: extractLineage(doc),
       type: 'remote',
     }));
+  }
+
+  // For testing purposes
+  public static hasData(domain: string, placeType: string): boolean {
+    const cacheKey = this.getCacheKey(domain, placeType);
+    
+    return !!this.getCache().get(cacheKey);
   }
 }
