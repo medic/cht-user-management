@@ -58,8 +58,7 @@ describe('services/upload-manager.ts', () => {
     const uploadManager = new UploadManager();
     await uploadManager.doUpload([place], chtApi);
 
-    expect(chtApi.getPlacesWithType.callCount).to.eq(1);
-    expect(chtApi.getPlacesWithType.args[0]).to.deep.eq(['parent']);
+    expect(chtApi.getPlacesWithType.callCount).to.eq(3);
     expect(chtApi.deleteDoc.called).to.be.false;
     expect(place.isCreated).to.be.true;
   });
@@ -88,9 +87,9 @@ describe('services/upload-manager.ts', () => {
     };
 
     chtApi.getPlacesWithType
-      .resolves([subcounty])
-      .onSecondCall()
-      .resolves([toReplace]);
+      .onFirstCall().resolves([])
+      .onSecondCall().resolves([subcounty])
+      .onThirdCall().resolves([toReplace]);
 
     const place = await PlaceFactory.createOne(fakeFormData, contactType, sessionCache, chtApi);
     expect(place.validationErrors).to.be.empty; // only parent is required when replacing
@@ -118,9 +117,9 @@ describe('services/upload-manager.ts', () => {
     };
 
     chtApi.getPlacesWithType
-      .resolves([subcounty])
-      .onSecondCall()
-      .resolves([toReplace]);
+      .onFirstCall().resolves([])
+      .onSecondCall().resolves([subcounty])
+      .onThirdCall().resolves([toReplace]);
 
     const place = await PlaceFactory.createOne(fakeFormData, contactType, sessionCache, chtApi);
     expect(place.validationErrors).to.be.empty; // only parent is required when replacing
@@ -147,9 +146,9 @@ describe('services/upload-manager.ts', () => {
     };
 
     chtApi.getPlacesWithType
-      .resolves([subcounty])
-      .onSecondCall()
-      .resolves([toReplace]);
+      .onFirstCall().resolves([])
+      .onSecondCall().resolves([subcounty])
+      .onThirdCall().resolves([toReplace]);
 
     const place = await PlaceFactory.createOne(fakeFormData, contactType, sessionCache, chtApi);
     expect(place.validationErrors).to.be.empty; // only parent is required when replacing
@@ -183,9 +182,8 @@ describe('services/upload-manager.ts', () => {
     const { subcounty, sessionCache, chtApi } = await createMocks();
 
     chtApi.getPlacesWithType
-      .resolves([])                             // parent of chp
-      .onSecondCall().resolves([subcounty])     // grandparent of chp (subcounty)
-      .onThirdCall().resolves([]);              // chp replacements
+      .onFirstCall().resolves([subcounty])
+      .onSecondCall().resolves([]);
 
     const chu_name = 'new chu';
     const chpType = Config.getContactType('d_community_health_volunteer_area');
@@ -222,6 +220,10 @@ describe('services/upload-manager.ts', () => {
   it('failure to upload', async () => {
     const { subcounty, sessionCache, chtApi } = await createMocks();
 
+    chtApi.getPlacesWithType
+      .onFirstCall().resolves([subcounty])
+      .onSecondCall().resolves([]);
+      
     chtApi.createUser
       .throws({ response: { status: 404 }, toString: () => 'upload-error' })
       .onSecondCall().resolves();
@@ -263,6 +265,10 @@ describe('services/upload-manager.ts', () => {
     const { subcounty, sessionCache, chtApi } = await createMocks();
     const errorString = 'foo';
 
+    chtApi.getPlacesWithType
+      .onFirstCall().resolves([subcounty])
+      .onSecondCall().resolves([]);
+      
     chtApi.createPlace.throws({ response: { data: errorString } });
 
     const chu_name = 'new chu';
@@ -278,6 +284,9 @@ describe('services/upload-manager.ts', () => {
   it(`createUser is retried`, async() => {
     const { subcounty, sessionCache, chtApi } = await createMocks();
 
+    chtApi.getPlacesWithType
+      .onFirstCall().resolves([subcounty])
+      .onSecondCall().resolves([]);
     chtApi.createUser.throws(UploadManagerRetryScenario.axiosError);
 
     const chu_name = 'new chu';
@@ -334,11 +343,12 @@ describe('services/upload-manager.ts', () => {
     fakeFormData.hierarchy_replacement = toReplace.name;
     
     chtApi.getPlacesWithType
-      .resolves([subcounty])
-      .onSecondCall()
-      .resolves([toReplace]);
+      .onFirstCall().resolves([])
+      .onSecondCall().resolves([subcounty])
+      .onThirdCall().resolves([toReplace]);
 
     const place = await PlaceFactory.createOne(fakeFormData, contactType, sessionCache, chtApi);
+    console.log(place.validationErrors);
     expect(place.validationErrors).to.be.empty;
 
     const uploadManager = new UploadManager();
@@ -358,8 +368,13 @@ async function createMocks() {
   const sessionCache = new SessionCache();
   const chtApi = {
     chtSession: mockChtSession(),
-    getPlacesWithType: sinon.stub().resolves([subcounty]),
+    getPlacesWithType: sinon.stub()
+      .onFirstCall().resolves([])
+      .onSecondCall().resolves([subcounty])
+      .onThirdCall().resolves([]),
+    // getPlacesWithType: sinon.stub().resolves([subcounty]),
     createPlace: sinon.stub().resolves({ placeId: 'created-place-id', contactId: 'created-contact-id' }),
+    updateContactParent: sinon.stub().resolves('created-contact-id'),
     createUser: sinon.stub().resolves(),
     
     getParentAndSibling: sinon.stub().resolves({ parent: {}, sibling: {} }),

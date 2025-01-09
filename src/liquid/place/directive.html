@@ -31,20 +31,28 @@
 
           <li>
             {% include "components/filter_tag.html"
-              class="is-warning"
-              filterName="invalid"
-              count=directiveModel.validationErrorCount
-            %}
-          </li>
-
-          <li>
-            {% include "components/filter_tag.html"
               class="is-success"
               filterName="success"
               count=directiveModel.successCount
             %}
           </li>
 
+          <li>
+            {% include "components/filter_tag.html"
+              class="is-warning"
+              filterName="warning"
+              count=directiveModel.warningCount
+            %}
+          </li>
+
+          <li>
+            {% include "components/filter_tag.html"
+              class="is-danger is-outlined"
+              filterName="invalid"
+              count=directiveModel.validationErrorCount
+            %}
+          </li>
+          
           <li>
             {% include "components/filter_tag.html"
               class="is-danger"

@@ -7,7 +7,7 @@ import SessionCache from '../../src/services/session-cache';
 const oneOfEachTypePlace = [
   { id: 'fail', state: PlaceUploadState.FAILURE },
   { id: 'in-progress', state: PlaceUploadState.IN_PROGRESS },
-  { id: 'staged', state: PlaceUploadState.STAGED },
+  { id: 'staged', state: PlaceUploadState.STAGED, warnings: ['warn'] },
   { id: 'scheduled', state: PlaceUploadState.SCHEDULED },
   { id: 'success', state: PlaceUploadState.SUCCESS },
   { id: 'validation-error', state: PlaceUploadState.STAGED, hasValidationErrors: true },
@@ -22,6 +22,7 @@ describe('services/directive-model.ts', () => {
     expect(progressModel).to.deep.eq({
       failureCount: 1,
       successCount: 1,
+      warningCount: 1,
       validationErrorCount: 1,
       completeCount: 2,
       filter: undefined,
@@ -51,6 +52,7 @@ describe('services/directive-model.ts', () => {
       failureCount: 0,
       successCount: 0,
       validationErrorCount: 0,
+      warningCount: 0,
       completeCount: 0,
       inProgressCount: 0,
       stagedCount: 0,
