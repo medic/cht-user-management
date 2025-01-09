@@ -33,7 +33,7 @@ To prepare a deployment, use the following steps to ensure your environment is p
 The `helm install` and `helm upgrade` commands should be run in the `./scripts/deploy` directory in this repo.
 
 1. Check the image is [published](https://github.com/medic/cht-user-management/tree/main#publishing-new-docker-images) to [ECR](https://gallery.ecr.aws/medic/cht-user-management) 
-2. Update the `tag:` in the respective `values.yaml` file located in the [values folder](https://github.com/medic/cht-user-management/blob/main/scripts/deploy/values/) to match the version you wish to deploy.
+2. Update the `tag:` in the respective `values.yaml` file located in the [values folder](https://github.com/medic/cht-user-management/blob/main/scripts/deploy/values/) to match the version you wish to deploy. There are two places to update: `cht-user-management` and `cht-user-management-worker`
 3. Ensure your local system has the latest charts by running:
 ```bash
 helm repo update medic
