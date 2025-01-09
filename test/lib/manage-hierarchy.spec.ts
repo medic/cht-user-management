@@ -146,9 +146,25 @@ describe('lib/manage-hierarchy.ts', () => {
   });
 
   describe('getWarningInfo', () => {
+    let clock;
+
+    // Mocking the system clock to set the current date to June 15, 2024 (quite middle).
+    // This ensures consistent test behavior for relative date calculations.
+    // Related issue: https://github.com/medic/cht-user-management/issues/238
+    beforeEach(() => {
+      const fixedDate = DateTime.local(2024, 6, 15).toJSDate();
+      clock = sinon.useFakeTimers(fixedDate.getTime());
+    });
+  
+    afterEach(() => {
+      // Restore the original system clock behavior after tests.
+      clock.restore();
+    });
+  
+
     const fakeJob: JobParams = { jobName: 'foo', jobData: { sourceId: 'abc' }};
 
-    it('below thrsholds', async () => {
+    it('below thresholds', async () => {
       const chtApi = mockChtApi();
       chtApi.countContactsUnderPlace = sinon.stub().resolves(5);
       chtApi.lastSyncAtPlace = sinon.stub().resolves(DateTime.now().minus({ days: 100 }));
