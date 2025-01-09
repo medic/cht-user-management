@@ -51,7 +51,7 @@ cht-user-management-worker:
   replicaCount: 1
   image:
     repository: public.ecr.aws/medic/cht-user-management-worker
-    tag: "2.0.0"
+    tag: "2.1.0"
   env: 
     NODE_ENV: production
     REDIS_HOST: users-chis-civ-redis-master.users-chis-prod.svc.cluster.local
