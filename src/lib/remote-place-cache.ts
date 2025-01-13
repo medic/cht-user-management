@@ -108,7 +108,6 @@ export default class RemotePlaceCache {
     const { domain } = chtApi.chtSession.authInfo;
     const placeType = hierarchyLevel.contact_type;
     const cacheKey = this.getCacheKey(domain, placeType);
-    console.log('fetch:cacheKey', cacheKey);
     
     const cacheData = this.getCache().get<RemotePlace[]>(cacheKey);
     if (!cacheData) {
