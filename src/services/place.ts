@@ -1,15 +1,14 @@
-import Contact from './contact';
+import _ from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
 
 import { Config, ContactProperty, ContactType } from '../config';
-import { IPropertyValue } from '../property-value';
+import Contact from './contact';
+import { ContactPropertyValue, HierarchyPropertyValue, IPropertyValue, RemotePlacePropertyValue } from '../property-value';
 import { PlacePayload } from '../lib/cht-api';
 // can't use package.json because of rootDir in ts
-import { version as appVersion } from '../package.json';
-import RemotePlaceResolver from '../lib/remote-place-resolver';
-import { HierarchyPropertyValue, ContactPropertyValue } from '../property-value';
 import { RemotePlace } from '../lib/remote-place-cache';
-import { NamePropertyValue } from '../property-value/name-property-value';
+import RemotePlaceResolver from '../lib/remote-place-resolver';
+import { version as appVersion } from '../package.json';
 
 export type FormattedPropertyCollection = {
   [key: string]: IPropertyValue;
@@ -45,6 +44,7 @@ export default class Place {
   public properties: FormattedPropertyCollection;
   public hierarchyProperties: FormattedPropertyCollection;
   public userRoleProperties: FormattedPropertyCollection;
+  public warnings: string[];
 
   public state : PlaceUploadState;
 
@@ -59,6 +59,7 @@ export default class Place {
     this.hierarchyProperties = {};
     this.state = PlaceUploadState.STAGED;
     this.resolvedHierarchy = [];
+    this.warnings = [];
     this.userRoleProperties = {};
   }
 
@@ -100,7 +101,7 @@ export default class Place {
       const userRoleConfig = Config.getUserRoleConfig(this.type);
       const propertyName = userRoleConfig.property_name;
       const roleFormData = formData[`${USER_PREFIX}${propertyName}`];
-      
+
       // When multiple are selected, the form data is an array
       const userRoleValue = Array.isArray(roleFormData) ? roleFormData.join(' ') : roleFormData;
       this.userRoleProperties[propertyName] = new ContactPropertyValue(this, userRoleConfig, USER_PREFIX, userRoleValue);
@@ -137,6 +138,7 @@ export default class Place {
       username: creator,
       created_time: Date.now(),
       replacement: this.resolvedHierarchy[0]?.name.formatted,
+      warnings: this.warnings,
     };
 
     const filteredProperties = (properties: FormattedPropertyCollection) => {
@@ -161,6 +163,7 @@ export default class Place {
         contact_type: contactType,
       };
     };
+
     return {
       ...filteredProperties(this.properties),
       ...contactAttributes(this.type.name),
@@ -177,27 +180,16 @@ export default class Place {
   }
 
   public asRemotePlace() : RemotePlace {
-    let lastKnownHierarchy = this.resolvedHierarchy.find(h => h) || RemotePlaceResolver.NoResult;
-    let lastKnownIndex = 0;
-
-    const lineage:string[] = [];
-    for (let i = 1; i < this.resolvedHierarchy.length; i++) {
-      const current = this.resolvedHierarchy[i];
-      if (current) {
-        lineage[i-1] = current.id;
-        lastKnownHierarchy = current;
-        lastKnownIndex = i;
-      } else {
-        lineage[i-1] = lastKnownHierarchy.lineage[i - lastKnownIndex - 1];
-      }
-    }
-
     const nameProperty = Config.getPropertyWithName(this.type.place_properties, 'name');
     return {
       id: this.id,
-      name: new NamePropertyValue(this.name, nameProperty),
+      name: new RemotePlacePropertyValue(this.name, nameProperty),
+      placeType: this.type.name,
       type: this.isCreated ? 'remote' : 'local',
-      lineage,
+      uniquePlaceValues: this.getUniqueKeys(this.properties, this.type.place_properties),
+      uniqueContactValues: this.getUniqueKeys(this.contact.properties, this.type.contact_properties),
+      stagedPlace: this,
+      lineage: this.buildLineage(),
     };
   }
 
@@ -274,5 +266,32 @@ export default class Place {
 
   public get isCreated(): boolean {
     return !!this.creationDetails.password;
+  }
+
+  private buildLineage() {
+    let lastKnownHierarchy = this.resolvedHierarchy.find(h => h) || RemotePlaceResolver.NoResult;
+    let lastKnownIndex = 0;
+
+    const lineage: string[] = [];
+    for (let i = 1; i < this.resolvedHierarchy.length; i++) {
+      const current = this.resolvedHierarchy[i];
+      if (current && current.type !== 'invalid') {
+        lineage[i - 1] = current.id;
+        lastKnownHierarchy = current;
+        lastKnownIndex = i;
+      } else {
+        lineage[i - 1] = lastKnownHierarchy.lineage[i - lastKnownIndex - 1];
+      }
+    }
+
+    return lineage;
+  }
+
+  private getUniqueKeys(properties: FormattedPropertyCollection, place_properties: ContactProperty[]): FormattedPropertyCollection {
+    const uniquePropertyNames = place_properties
+      .filter(prop => prop.unique)
+      .map(prop => prop.property_name);
+
+    return _.pick(properties, uniquePropertyNames);
   }
 }

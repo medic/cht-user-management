@@ -33,9 +33,24 @@ export const mockPlace = (contactType: ContactType, formDataOverride?: any) : Pl
   return place;
 };
 
-export const mockChtApi = (first: ChtDoc[] = [], second: ChtDoc[] = []): any => ({
+export const mockChtApi = (first: ChtDoc[] = [], second: ChtDoc[] = [], third: ChtDoc[] = [], fourth: ChtDoc[] = []): any => ({
   chtSession: mockChtSession(),
-  getPlacesWithType: sinon.stub().resolves(first).onSecondCall().resolves(second),
+  getPlacesWithType: sinon.stub()
+    .onFirstCall().resolves(first)
+    .onSecondCall().resolves(second)
+    .onThirdCall().resolves(third)
+    .onCall(3).resolves(fourth),
+  createPlace: sinon.stub().resolves({ placeId: 'created-place-id', contactId: 'created-contact-id' }),
+  createUser: sinon.stub().resolves(),
+  getParentAndSibling: sinon.stub().resolves({
+    parent: {
+      link_facility_code: '12345',
+      link_facility_name: 'facility',
+      name: 'chu',
+      code: '123456',
+    },
+    sibling: undefined,
+  }),
 });
 
 export const mockSimpleContactType = (
@@ -82,7 +97,9 @@ export async function createChu(subcounty: ChtDoc, chu_name: string, sessionCach
     contact_phone: '0712345678',
   }, dataOverrides);
   const chu = await PlaceFactory.createOne(chuData, chuType, sessionCache, chtApi);
-  expect(chu.validationErrors).to.be.empty;
+  if (!dataOverrides) {
+    expect(chu.validationErrors).to.be.empty;
+  }
   return chu;
 }
 

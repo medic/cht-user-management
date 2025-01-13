@@ -50,7 +50,7 @@ export class Validation {
     }
   }
 
-  public static formatDuringInitialization(property: ContactProperty, value: string): string {
+  public static format(property: ContactProperty, value: string): string {
     const validator = this.getValidator(property);
     if (!(validator instanceof ValidatorGenerated) && value) {
       return validator.format(value, property);

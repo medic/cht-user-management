@@ -39,6 +39,7 @@ export type HierarchyConstraint = {
   required: boolean;
   parameter? : string | string[] | object;
   errorDescription? : string;
+  unique?: string;
   
   contact_type: string;
   level: number;
@@ -51,6 +52,7 @@ export type ContactProperty = {
   required: boolean;
   parameter? : string | string[] | object;
   errorDescription? : string;
+  unique?: string;
 };
 
 export type AuthenticationInfo = {
@@ -192,6 +194,12 @@ export class Config {
     return _.sortBy(domains, 'friendly');
   }
 
+  public static getUniqueProperties(contactTypeName: string): ContactProperty[] {
+    const contactMatch = config.contact_types.find(c => c.name === contactTypeName);
+    const uniqueProperties = contactMatch?.place_properties.filter(prop => prop.unique);
+    return uniqueProperties || [];
+  }
+
   // TODO: Joi? Chai?
   public static assertValid({ config }: PartnerConfig = partnerConfig) {
     for (const contactType of config.contact_types) {
@@ -206,6 +214,16 @@ export class Config {
       Config.getPropertyWithName(contactType.place_properties, 'name');
       Config.getPropertyWithName(contactType.contact_properties, 'name');
 
+      const parentLevel = contactType.hierarchy.find(hierarchy => hierarchy.level === 1);
+      if (!parentLevel) {
+        throw Error(`Must have a hierarchy with parent level (level: 1)`);
+      }
+
+      const invalidPropsWithUnique = allHierarchyProperties.filter(prop => prop.unique);
+      if (invalidPropsWithUnique.length) {
+        throw Error(`Only place_properties and contact_properties can have properties with "unique" values`);
+      }
+
       allProperties.forEach(property => {
         if (!KnownContactPropertyTypes.includes(property.type)) {
           throw Error(`Unknown property type "${property.type}"`);
@@ -217,24 +235,6 @@ export class Config {
         throw Error('Hierarchy properties cannot be of type "generated"');
       }
     }
-  }
-
-  public static getCsvTemplateColumns(placeType: string) {
-    const placeTypeConfig = Config.getContactType(placeType);
-    const hierarchy = Config.getHierarchyWithReplacement(placeTypeConfig);
-    const userRoleConfig = Config.getUserRoleConfig(placeTypeConfig);
-
-    const extractColumns = (properties: ContactProperty[]) => properties
-      .filter(p => p.type !== 'generated')
-      .map(p => p.friendly_name);
-
-    const columns = _.uniq([
-      ...hierarchy.map(p => p.friendly_name),
-      ...extractColumns(placeTypeConfig.place_properties),
-      ...extractColumns(placeTypeConfig.contact_properties),
-      ...(Config.hasMultipleRoles(placeTypeConfig) ? [userRoleConfig.friendly_name] : []),
-    ]);
-    return columns;
   }
 }
 
