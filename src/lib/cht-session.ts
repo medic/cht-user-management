@@ -29,6 +29,7 @@ export default class ChtSession {
   public readonly axiosInstance: AxiosInstance;
   public readonly sessionToken: string;
   public readonly chtCoreVersion: string;
+  public readonly isAdmin: boolean;
 
   private constructor(creationDetails: SessionCreationDetails) {
     this.authInfo = creationDetails.authInfo;
@@ -36,6 +37,7 @@ export default class ChtSession {
     this.facilityIds = creationDetails.facilityIds;
     this.sessionToken = creationDetails.sessionToken;
     this.chtCoreVersion = creationDetails.chtCoreVersion;
+    this.isAdmin = this.facilityIds.includes(ADMIN_FACILITY_ID);
     
     this.axiosInstance = axios.create({
       baseURL: ChtSession.createUrl(creationDetails.authInfo, ''),
@@ -45,10 +47,6 @@ export default class ChtSession {
     if (!this.sessionToken || !this.authInfo.domain || !this.username || this.facilityIds.length === 0) {
       throw new Error('invalid CHT session information');
     }
-  }
-
-  public get isAdmin(): boolean {
-    return this.facilityIds.includes(ADMIN_FACILITY_ID);
   }
 
   public static async create(authInfo: AuthenticationInfo, username : string, password: string): Promise<ChtSession> {

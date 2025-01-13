@@ -41,7 +41,7 @@ export default async function sessionCache(fastify: FastifyInstance) {
 
     return resp.view('src/liquid/app/view.html', tmplData);
   });
-  
+
   fastify.get('/app/list', async (req, resp) => {
     const contactTypes = Config.contactTypes();
     const sessionCache: SessionCache = req.sessionCache;
@@ -111,9 +111,48 @@ export default async function sessionCache(fastify: FastifyInstance) {
       expires: Auth.cookieExpiry(),
       path: '/',
       secure: true,
-      
+
     });
-    
+
     resp.header('HX-Redirect', '/');
+  });
+
+  fastify.get('/app/config', async (req, resp) => {
+    const contactTypes = Config.contactTypes();
+    const placeData = contactTypes.map((item) => {
+      return {
+        ...item,
+        hierarchy: Config.getHierarchyWithReplacement(item, 'desc'),
+        userRoleProperty: Config.getUserRoleConfig(item),
+      };
+    });
+    const tmplData = {
+      view: 'add',
+      logo: Config.getLogoBase64(),
+      session: req.chtSession,
+      op: 'config',
+      contactTypes,
+    };
+
+    return resp.view('src/liquid/app/view.html', tmplData);
+  });
+
+  fastify.post('/app/config', async (req, res) => {
+    try {
+      const fileData = await req.file();
+      if (!fileData) {
+        throw Error('no file data');
+      }
+
+      //const csvBuf = await fileData.toBuffer();
+      //await PlaceFactory.createFromCsv(csvBuf, contactType, sessionCache, chtApi);
+      res.header('HX-Redirect', '/');
+    } catch (error) {
+      return fastify.view('src/liquid/app/config_upload.html', {
+        errors: {
+          message: error,
+        },
+      });
+    }
   });
 }
