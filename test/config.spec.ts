@@ -48,7 +48,7 @@ describe('config', () => {
     await expect(Config.assertValid(mockConfig)).to.be.rejectedWith('with "unique" values');
   });
 
-  it('parent hierarchy level is required',async () => {
+  it('parent hierarchy level is required', async () => {
     const mockConfig = mockPartnerConfig();
     mockConfig.config.contact_types[0].hierarchy[0].level = 2;
     await expect(Config.assertValid(mockConfig)).to.be.rejectedWith('with parent level');
