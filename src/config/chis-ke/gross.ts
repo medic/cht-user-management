@@ -30,7 +30,7 @@ export default async function mutate(payload: PlacePayload, chtApi: ChtApi, isRe
     payload[chpKey] = result;
   };
 
-  const contactType = Config.getContactType(payload.contact_type);
+  const contactType = await Config.getContactType(payload.contact_type);
   const { parent: chu, sibling } = await chtApi.getParentAndSibling(payload.parent, contactType);
   if (!chu && !sibling) {
     throw Error(`CHU does not exist`);

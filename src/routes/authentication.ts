@@ -30,7 +30,7 @@ export default async function authentication(fastify: FastifyInstance) {
     const data: any = req.body;
     const { username, password, domain } = data;
 
-    const authInfo = Config.getAuthenticationInfo(domain);
+    const authInfo = await Config.getAuthenticationInfo(domain);
     let chtSession;
     try {
       chtSession = await ChtSession.create(authInfo, username, password);

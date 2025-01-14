@@ -23,7 +23,7 @@ export default async function place(fastify: FastifyInstance) {
 
     const data: any = req.body;
 
-    const contactType = Config.getContactType(type);
+    const contactType = await Config.getContactType(type);
     const sessionCache: SessionCache = req.sessionCache;
     const place = sessionCache.getPlace(placeId);
     if (!place && op === 'edit') {
@@ -64,7 +64,7 @@ export default async function place(fastify: FastifyInstance) {
       throw new Error('result must be known');
     }
 
-    const contactType = Config.getContactType(data.place_type);
+    const contactType = await Config.getContactType(data.place_type);
     let moveModel;
     if (HIERARCHY_ACTIONS.includes(op)) {
       moveModel = hierarchyViewModel(op, contactType);

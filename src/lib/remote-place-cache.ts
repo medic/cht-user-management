@@ -87,7 +87,7 @@ export default class RemotePlaceCache {
 
   // fetch docs of type and convert to RemotePlace
   private static async fetchRemotePlacesAtLevel(chtApi: ChtApi, hierarchyLevel: HierarchyConstraint): Promise<RemotePlace[]> {
-    const uniqueKeyProperties = Config.getUniqueProperties(hierarchyLevel.contact_type);
+    const uniqueKeyProperties = await Config.getUniqueProperties(hierarchyLevel.contact_type);
     const docs = await chtApi.getPlacesWithType(hierarchyLevel.contact_type);
     return docs.map((doc: any) => this.convertContactToRemotePlace(doc, uniqueKeyProperties, hierarchyLevel));
   }
