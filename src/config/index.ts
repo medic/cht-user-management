@@ -69,18 +69,21 @@ const {
   CHT_DEV_HTTP
 } = process.env;
 
-const partnerConfig = getConfigByKey(CONFIG_NAME);
-const { config } = partnerConfig;
+async function init(): Promise<PartnerConfig> {
+  return await getConfigByKey(CONFIG_NAME);
+}
 
 export class Config {
   private constructor() {}
 
-  public static contactTypes(): ContactType[] {
+  public static async contactTypes(): Promise<ContactType[]> {
+    const {config} = await init();
     return config.contact_types;
   }
 
-  public static getContactType(name: string) : ContactType {
-    const contactMatch = config.contact_types.find(c => c.name === name);
+  public static async getContactType(name: string) : Promise<ContactType> {
+    const {config} = await init();
+    const contactMatch = config.contact_types.find(c => c?.name === name);
     if (!contactMatch) {
       throw new Error(`unrecognized contact type: "${name}"`);
     }
@@ -90,7 +93,7 @@ export class Config {
   public static getParentProperty(contactType: ContactType): HierarchyConstraint {
     const parentMatch = contactType.hierarchy.find(c => c.level === 1);
     if (!parentMatch) {
-      throw new Error(`hierarchy at level 1 is required: "${contactType.name}"`);
+      throw new Error(`hierarchy at level 1 is required: "${contactType?.name}"`);
     }
 
     return parentMatch;
@@ -136,18 +139,20 @@ export class Config {
   }
 
   public static async mutate(payload: PlacePayload, chtApi: ChtApi, isReplacement: boolean): Promise<PlacePayload | undefined> {
+    const partnerConfig = await init();
     return partnerConfig.mutate && partnerConfig.mutate(payload, chtApi, isReplacement);
   }
 
-  public static getAuthenticationInfo(domain: string) : AuthenticationInfo {
-    const domainMatch = Config.getDomains().find(c => c.domain === domain);
+  public static async getAuthenticationInfo(domain: string) : Promise<AuthenticationInfo> {
+    const domainMatch = (await Config.getDomains()).find(c => c.domain === domain);
     if (!domainMatch) {
       throw new Error(`unrecognized domain: "${domain}"`);
     }
     return domainMatch;
   }
 
-  public static getLogoBase64() : string {
+  public static async getLogoBase64() : Promise<string> {
+    const {config} = await init();
     return config.logoBase64;
   }
 
@@ -174,7 +179,8 @@ export class Config {
     ];
   }
 
-  public static getDomains() : AuthenticationInfo[] {
+  public static async getDomains() : Promise<AuthenticationInfo[]> {
+    const {config} = await init();
     const domains = [...config.domains];
 
     // because all .env vars imported as strings, let's get the AuthenticationInfo object a boolean
@@ -194,15 +200,22 @@ export class Config {
     return _.sortBy(domains, 'friendly');
   }
 
-  public static getUniqueProperties(contactTypeName: string): ContactProperty[] {
+  public static async getUniqueProperties(contactTypeName: string): Promise<ContactProperty[]> {
+    const {config} = await init();
     const contactMatch = config.contact_types.find(c => c.name === contactTypeName);
     const uniqueProperties = contactMatch?.place_properties.filter(prop => prop.unique);
     return uniqueProperties || [];
   }
 
   // TODO: Joi? Chai?
-  public static assertValid({ config }: PartnerConfig = partnerConfig) {
-    for (const contactType of config.contact_types) {
+  public static async assertValid(config?: PartnerConfig) {
+    const { config: assertionConfig } = config || await init();
+
+    if (!assertionConfig.contact_types || assertionConfig.contact_types.length === 0) {
+      throw Error(`invalid configuration: 'contact_types' property is empty`);
+    }
+
+    for (const contactType of assertionConfig.contact_types) {
       const allHierarchyProperties = [...contactType.hierarchy, contactType.replacement_property];
       const allProperties = [
         ...contactType.place_properties,

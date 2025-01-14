@@ -1,0 +1,67 @@
+<div id="app_config_upload_parent">
+  <section class="section is-small">
+    <form 
+      id="app_config_upload" 
+      hx-encoding='multipart/form-data' 
+      autocomplete="off"
+      hx-post="/app/config"
+      hx-disabled-elt="button#config_upload_submit, a#cancel"
+      hx-indicator="#config_upload_submit_progress"
+      hx-target="this" 
+      hx-swap="outerHTML" 
+    >
+  
+        {% if errors %}
+          <div class="notification is-danger">
+            {{errors.message}}
+          </div>
+        {% endif %}
+        
+        <div id="config-upload-file" class="file has-name is-centered">
+          <label class="file-label">
+            <input required class="file-input" type="file" name="resume" accept=".json">
+            <span class="file-cta">
+              <span class="file-icon">
+                <i class="fas fa-upload"></i>
+              </span>
+              <span class="file-label">
+                Choose a file…
+              </span>
+            </span>
+            <span class="file-name">
+              No file uploaded
+            </span>
+          </label>
+        </div><br/>
+        <div class="field is-grouped is-grouped-centered">
+          <div class="control">
+              <button id="config_upload_submit" class="button is-link">Upload</button>
+          </div>
+          <div class="control">
+              <a href="/" id="cancel" class="button">Cancel</a>
+          </div>
+        </div>
+        <div>
+          <progress id="config_upload_submit_progress" class="progress is-small is-primary htmx-indicator" max="100"></progress>
+        </div>
+  
+        <div class="field">
+          <div class="control">
+              This action will override the current configuration.
+              For more infomation on how to create a configuration file see
+              <a target="_blank" href="https://github.com/medic/cht-user-management#using-this-tool-with-your-cht-project">documentation</a>
+          </div>
+        </div>
+  
+        <script>
+          const fileInput = document.querySelector('#app_config_upload input[type=file]');
+          fileInput.onchange = () => {
+            if (fileInput.files.length > 0) {
+              const fileName = document.querySelector('#app_config_upload .file-name');
+              fileName.textContent = fileInput.files[0].name;
+            }
+          }
+        </script>
+    </form>
+  </section>
+</div>

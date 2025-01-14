@@ -86,7 +86,7 @@ export const mockSimpleContactType = (
 };
 
 export async function createChu(subcounty: ChtDoc, chu_name: string, sessionCache: any, chtApi: ChtApi, dataOverrides?: any): Promise<Place> {
-  const chuType = Config.getContactType('c_community_health_unit');
+  const chuType = await Config.getContactType('c_community_health_unit');
   const chuData = Object.assign({
     hierarchy_SUBCOUNTY: subcounty.name,
     place_name: chu_name,

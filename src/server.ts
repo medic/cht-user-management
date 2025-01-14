@@ -71,6 +71,11 @@ const build = (opts: FastifyServerOptions): FastifyInstance => {
 
     try {
       const chtSession = Auth.createCookieSession(cookieToken);
+      if (!chtSession?.isAdmin && req.routeOptions.url === '/app/config') {
+        reply.status(401).send({ error: 'unauthorized' });
+        console.error('Unauthorized access to config. User must be admin');
+        return;
+      }
       req.chtSession = chtSession;
       req.sessionCache = SessionCache.getForSession(chtSession);
     } catch (e) {

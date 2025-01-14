@@ -6,6 +6,7 @@
     {% elsif op == "merge" %} Merge Two
     {% elsif op == "delete" %} Delete a
     {% elsif op == "edit" %} Edit
+    {% elsif op == "config" %} Upload Configuration file
     {% else %} New
     {% endif %}
   {% endcapture %}
@@ -40,6 +41,8 @@
     {% include "place/bulk_create_form.html" %}
   {% elsif op == "move" or op == "merge" or op == "delete" %}
     {% include "place/manage_hierarchy_form.html" %}
+  {% elsif op == "config" %}
+    {% include "app/config_upload.html" %}
   {% else %}
     {% include "place/create_form.html" %}
   {% endif %}

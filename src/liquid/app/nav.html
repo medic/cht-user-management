@@ -77,7 +77,13 @@
       
         <div class="navbar-dropdown is-right">
           {% include "components/button_upload.html" className="navbar-item" %}
-          {% include "components/button_save_credentials.html" className="navbar-item" %}    
+          {% include "components/button_save_credentials.html" className="navbar-item" %}
+          <hr>
+          {% if session.isAdmin %}
+            <a class="navbar-item" href="/app/config">
+              <span class="material-symbols-outlined">settings</span> Upload Configuration
+            </a>
+          {% endif %}
           <a class="navbar-item" href="/logout">
             <span class="material-symbols-outlined">logout</span> Logout
           </a>
