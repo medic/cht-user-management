@@ -76,7 +76,7 @@ describe('warnings', () => {
       const sessionCache = new SessionCache();
       const chtApi = mockChtApi([subcounty], [chuDoc], [chpDoc]);
 
-      const chuType = Config.getContactType('d_community_health_volunteer_area');
+      const chuType = await Config.getContactType('d_community_health_volunteer_area');
       const chpData = {
         hierarchy_SUBCOUNTY: subcounty.name,
         hierarchy_CHU: chuDoc.name,
@@ -94,7 +94,7 @@ describe('warnings', () => {
       const sessionCache = new SessionCache();
       const chtApi = mockChtApi([subcounty], [chuDoc], [chpDoc]);
 
-      const chuType = Config.getContactType('d_community_health_volunteer_area');
+      const chuType = await Config.getContactType('d_community_health_volunteer_area');
       const chpData: any = {
         hierarchy_SUBCOUNTY: subcounty.name,
         hierarchy_CHU: chuDoc.name,
@@ -120,7 +120,7 @@ describe('warnings', () => {
       const sessionCache = new SessionCache();
       const chtApi = mockChtApi([subcounty], [chuDoc], [chpDoc]);
 
-      const chuType = Config.getContactType('d_community_health_volunteer_area');
+      const chuType = await Config.getContactType('d_community_health_volunteer_area');
       const chpData: any = {
         hierarchy_SUBCOUNTY: subcounty.name,
         hierarchy_CHU: chuDoc.name,
@@ -145,7 +145,7 @@ describe('warnings', () => {
       const sessionCache = new SessionCache();
       const chtApi = mockChtApi([subcounty], [chuDoc], [chpDoc]);
 
-      const chuType = Config.getContactType('d_community_health_volunteer_area');
+      const chuType = await Config.getContactType('d_community_health_volunteer_area');
       const chpData: any = {
         hierarchy_SUBCOUNTY: subcounty.name,
         hierarchy_CHU: chuDoc.name,
@@ -193,7 +193,7 @@ describe('warnings', () => {
       const sessionCache = new SessionCache();
       const chtApi = mockChtApi([subcounty], [chuDoc], [chpDoc]);
   
-      const chuType = Config.getContactType('d_community_health_volunteer_area');
+      const chuType = await Config.getContactType('d_community_health_volunteer_area');
       const chuData = {
         hierarchy_SUBCOUNTY: subcounty.name,
         hierarchy_CHU: chuDoc.name,
@@ -209,7 +209,7 @@ describe('warnings', () => {
       const sessionCache = new SessionCache();
       const chtApi = mockChtApi([subcounty], [chuDoc], [chpDoc]);
 
-      const chuType = Config.getContactType('d_community_health_volunteer_area');
+      const chuType = await Config.getContactType('d_community_health_volunteer_area');
       const chpData: any = {
         hierarchy_SUBCOUNTY: subcounty.name,
         hierarchy_CHU: 'dne1',
@@ -235,7 +235,7 @@ describe('warnings', () => {
     const chtApi = mockChtApi([subcounty], [chuDoc], []);
 
     const singleCsvBuffer = fs.readFileSync('./test/multiple.csv');
-    const chpType = Config.getContactType('d_community_health_volunteer_area');
+    const chpType = await Config.getContactType('d_community_health_volunteer_area');
     
     const places: Place[] = await PlaceFactory.createFromCsv(singleCsvBuffer, chpType, sessionCache, chtApi);
     expect(places).to.have.property('length', 2);
@@ -250,7 +250,7 @@ describe('warnings', () => {
     const sessionCache = new SessionCache();
     const chtApi = mockChtApi([subcounty], [chuDoc], [chpDoc]);
 
-    const chuType = Config.getContactType('d_community_health_volunteer_area');
+    const chuType = await Config.getContactType('d_community_health_volunteer_area');
     const chpData = {
       hierarchy_SUBCOUNTY: subcounty.name,
       hierarchy_CHU: chuDoc.name,
@@ -275,7 +275,7 @@ describe('warnings', () => {
     const sessionCache = new SessionCache();
     const chtApi = mockChtApi([subcounty], [chuDoc], [chpDoc]);
 
-    const chuType = Config.getContactType('d_community_health_volunteer_area');
+    const chuType = await Config.getContactType('d_community_health_volunteer_area');
     const chpData = {
       hierarchy_SUBCOUNTY: subcounty.name,
       hierarchy_CHU: chuDoc.name,
@@ -297,7 +297,7 @@ describe('warnings', () => {
   it('warn if a created place has same phone number as staged place', async () => {
     const sessionCache = new SessionCache();
     const chtApi = mockChtApi([subcounty], [chuDoc], []);
-    const chuType = Config.getContactType('d_community_health_volunteer_area');
+    const chuType = await Config.getContactType('d_community_health_volunteer_area');
     const chpData = {
       hierarchy_SUBCOUNTY: subcounty.name,
       hierarchy_CHU: chuDoc.name,
@@ -330,7 +330,7 @@ describe('warnings', () => {
     };
     const chtApi = mockChtApi([subcounty], [chuDoc, secondChu]);
 
-    const chuType = Config.getContactType('c_community_health_unit');
+    const chuType = await Config.getContactType('c_community_health_unit');
     const chuData = {
       hierarchy_SUBCOUNTY: subcounty.name,
       hierarchy_replacement: chuDoc.name,

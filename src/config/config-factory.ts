@@ -36,8 +36,8 @@ export default async function getConfigByKey(key: string = 'CHIS-KE'): Promise<P
 }
 
 export function getConfigUploadDirectory (): string {
-  const configDir = path.join(__dirname,'..', 'config_uploads');
-  if(!fs.existsSync(configDir)) {
+  const configDir = path.join(__dirname, '..', 'config_uploads');
+  if (!fs.existsSync(configDir)) {
     fs.mkdirSync(configDir);
   }
   return configDir;

@@ -186,7 +186,7 @@ describe('services/upload-manager.ts', () => {
       .onSecondCall().resolves([]);
 
     const chu_name = 'new chu';
-    const chpType = Config.getContactType('d_community_health_volunteer_area');
+    const chpType = await Config.getContactType('d_community_health_volunteer_area');
     const chpData = {
       hierarchy_CHU: chu_name,
       place_name: 'new chp',
