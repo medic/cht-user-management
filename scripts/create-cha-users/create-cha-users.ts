@@ -16,39 +16,47 @@ const authInfo = {
 };
 const username = 'medic';
 const password = 'password';
+const csvFilePath = './Test CHAs.csv';
 
 (async function() {
-  const singleCsvBuffer = fs.readFileSync('./Test CHAs.csv');
-  const chuType = Config.getContactType('c_community_health_unit');
-  chuType.username_from_place = false;
-  
   const session = await ChtSession.create(authInfo, username, password);
   const chtApi = new ChtApi(session);
-  const sessionCache = SessionCache.getForSession(session);
-  const places: Place[] = await PlaceFactory.createFromCsv(singleCsvBuffer, chuType, sessionCache, chtApi);
+  const places: Place[] = await loadFromCsv(session, chtApi);
   
   assertAllPlacesValid(places);
 
   const chusByCha = _.groupBy(places, 'contact.name');
   const chaNames = Object.keys(chusByCha);
 
+  const results: any[] = [];
   for (const chaName of chaNames) {
     const chus = chusByCha[chaName];
-    const chuIds = chus.map(chu => chu.resolvedHierarchy[0]?.id).filter(Boolean) as string[];
-    const resolvedChuNames = chus.map(chu => chu.resolvedHierarchy[0]?.name.formatted);
-    console.log(`CHA: ${chaName} has ${chus.length} CHUs: ${resolvedChuNames}`);
+    const chuNames = chus.map(chu => chu.resolvedHierarchy[0]?.name.formatted);
+    console.log(`CHA: ${chaName} has ${chus.length} CHUs: ${chuNames}`);
     
-    const [place] = chus;
     const contactDocId = chus.find(chu => chu.resolvedHierarchy[0]?.contactId)?.resolvedHierarchy[0]?.contactId;
     if (!contactDocId) {
       throw Error(`Unresolved contact id`);
     }
-
-    const userPayload = new UserPayload(place, chuIds, contactDocId);
-    const { username, password } = await userPayload.create(chtApi);
-    console.log(`Username: ${username} Password: ${password}`);
+      
+    const chuIds = chus.map(chu => chu.resolvedHierarchy[0]?.id).filter(Boolean) as string[];
+    const userPayload = new UserPayload(chus[0], chuIds, contactDocId);
+    const result = await userPayload.create(chtApi);
+    console.log(`Username: ${result.username} Password: ${result.password}`);
+    results.push(_.pick(result, ['fullname', 'username', 'password']));
   }
+
+  console.table(results);
 })();
+
+function loadFromCsv(session: ChtSession, chtApi: ChtApi): Promise<Place[]> {
+  const csvBuffer = fs.readFileSync(csvFilePath);
+  const chuType = Config.getContactType('c_community_health_unit');
+  chuType.username_from_place = false;
+
+  const sessionCache = SessionCache.getForSession(session);
+  return PlaceFactory.createFromCsv(csvBuffer, chuType, sessionCache, chtApi);
+}
 
 function assertAllPlacesValid(places: Place[]) {
   const withErrors = places.filter(place => place.hasValidationErrors);
@@ -63,5 +71,10 @@ function assertAllPlacesValid(places: Place[]) {
 
   if (withErrors.length) {
     throw Error('Some places had validation errors. See logs.');
+  }
+
+  const notReplacement = places.find(place => !place.resolvedHierarchy[0]);
+  if (notReplacement) {
+    throw Error('Invalid CSV Format. Some rows are not CHU replacements');
   }
 }
