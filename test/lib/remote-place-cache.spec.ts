@@ -22,27 +22,47 @@ describe('lib/remote-place-cache.ts', () => {
   };
 
   const contactType = mockSimpleContactType('string', undefined);
-  const hierarchyLevel = contactType.hierarchy[0];
 
   it('cache miss', async () => {
-    const chtApi = mockChtApi([doc]);
-    const actual = await RemotePlaceCache.getPlacesWithType(chtApi, contactType, hierarchyLevel);
+    const chtApi = mockChtApi([doc], [], [doc], []);
+    await RemotePlaceCache.getRemotePlaces(chtApi, contactType);
+    RemotePlaceCache.clear(chtApi);
+    const actual = await RemotePlaceCache.getRemotePlaces(chtApi, contactType);
     expect(actual).to.have.property('length', 1);
     expect(actual[0]).to.deep.nested.include(docAsRemotePlace);
-    expect(chtApi.getPlacesWithType.calledOnce).to.be.true;
+    expect(chtApi.getPlacesWithType.callCount).to.eq(4);
   });
 
   it('cache hit', async () => {
     const chtApi = mockChtApi([doc]);
     
-    await RemotePlaceCache.getPlacesWithType(chtApi, contactType, hierarchyLevel);
-    const second = await RemotePlaceCache.getPlacesWithType(chtApi, contactType, hierarchyLevel);
+    await RemotePlaceCache.getRemotePlaces(chtApi, contactType);
+    expect(chtApi.getPlacesWithType.callCount).to.eq(2);
+
+    const second = await RemotePlaceCache.getRemotePlaces(chtApi, contactType);
     expect(second).to.have.property('length', 1);
     expect(second[0]).to.deep.nested.include(docAsRemotePlace);
-    expect(chtApi.getPlacesWithType.calledOnce).to.be.true;
+    expect(chtApi.getPlacesWithType.callCount).to.eq(2);
   });
 
   it('add', async () => {
+    const contactType = mockSimpleContactType('string', undefined);
+    const place = mockPlace(contactType, 'prop');
+    const chtApi = mockChtApi([doc]);
+    
+    await RemotePlaceCache.getRemotePlaces(chtApi, contactType);
+    expect(chtApi.getPlacesWithType.callCount).to.eq(2);
+    
+    RemotePlaceCache.add(place, chtApi);
+
+    const second = await RemotePlaceCache.getRemotePlaces(chtApi, contactType);
+    expect(second).to.have.property('length', 2);
+    expect(second[0]).to.deep.nested.include(docAsRemotePlace);
+    expect(second[1].id).to.eq(place.asRemotePlace().id);
+    expect(chtApi.getPlacesWithType.callCount).to.eq(2);
+  });
+
+  it('clear', async () => {
     const contactType = mockSimpleContactType('string', undefined);
     const place = mockPlace(contactType, 'prop');
     const chtApi = mockChtApi([doc]);
@@ -55,14 +75,10 @@ describe('lib/remote-place-cache.ts', () => {
       required: true,
       level: 0,
     };
-    await RemotePlaceCache.getPlacesWithType(chtApi, contactType, contactTypeAsHierarchyLevel);
+    await RemotePlaceCache.getRemotePlaces(chtApi, contactType, contactTypeAsHierarchyLevel);
     RemotePlaceCache.add(place, chtApi);
-
-    const second = await RemotePlaceCache.getPlacesWithType(chtApi, contactType, contactTypeAsHierarchyLevel);
-    expect(second).to.have.property('length', 2);
-    expect(second[0]).to.deep.nested.include(docAsRemotePlace);
-    expect(second[1].id).to.eq(place.asRemotePlace().id);
-    expect(chtApi.getPlacesWithType.calledOnce).to.be.true;
+    
+    chtApi.chtSession.authInfo.domain = 'http://other';
+    RemotePlaceCache.clear(chtApi, 'other');
   });
 });
-

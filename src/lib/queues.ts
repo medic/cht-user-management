@@ -35,8 +35,8 @@ export class BullQueue implements IQueue {
   }
 }
 
-export const getMoveContactQueue = () => new BullQueue(
-  WorkerConfig.moveContactQueue, 
+export const getChtConfQueue = () => new BullQueue(
+  WorkerConfig.chtConfQueueName, 
   WorkerConfig.redisConnection,
   WorkerConfig.defaultJobOptions
 );

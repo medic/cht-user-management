@@ -1,8 +1,9 @@
-import Place from '../services/place';
+import _ from 'lodash';
+
+import Place, { FormattedPropertyCollection } from '../services/place';
 import { ChtApi } from './cht-api';
-import { IPropertyValue } from '../property-value';
-import { ContactType, HierarchyConstraint } from '../config';
-import { NamePropertyValue } from '../property-value/name-property-value';
+import { IPropertyValue, RemotePlacePropertyValue } from '../property-value';
+import { Config, ContactProperty, ContactType, HierarchyConstraint } from '../config';
 
 type RemotePlacesByType = {
   [key: string]: RemotePlace[];
@@ -17,27 +18,37 @@ export type RemotePlace = {
   name: IPropertyValue;
   lineage: string[];
   ambiguities?: RemotePlace[];
+  placeType: string;
+  uniquePlaceValues: FormattedPropertyCollection;
+
+  // these are expensive to fetch on remote places; but are available on staged places
+  uniqueContactValues?: FormattedPropertyCollection;
 
   // sadly, sometimes invalid or uncreated objects "pretend" to be remote
   // should reconsider this naming
   type: 'remote' | 'local' | 'invalid';
-  doc?: any;
+  stagedPlace?: Place;
 };
 
 export default class RemotePlaceCache {
   private static cache: RemotePlaceDatastore = {};
 
-  public static async getPlacesWithType(chtApi: ChtApi, contactType: ContactType, hierarchyLevel: HierarchyConstraint)
-    : Promise<RemotePlace[]> {
-    const domainStore = await RemotePlaceCache.getDomainStore(chtApi, contactType, hierarchyLevel);
-    return domainStore;
+  public static async getRemotePlaces(chtApi: ChtApi, contactType: ContactType, atHierarchyLevel?: HierarchyConstraint): Promise<RemotePlace[]> {
+    const hierarchyLevels = Config.getHierarchyWithReplacement(contactType, 'desc');
+    const fetchAll = hierarchyLevels.map(hierarchyLevel => this.fetchCachedOrRemotePlaces(chtApi, hierarchyLevel));
+    const allRemotePlaces = _.flatten(await Promise.all(fetchAll));
+    if (!atHierarchyLevel) {
+      return allRemotePlaces;
+    }
+
+    return allRemotePlaces.filter(remotePlace => remotePlace.placeType === atHierarchyLevel.contact_type);
   }
 
   public static add(place: Place, chtApi: ChtApi): void {
     const { domain } = chtApi.chtSession.authInfo;
     const placeType = place.type.name;
 
-    const places = RemotePlaceCache.cache[domain]?.[placeType];
+    const places = this.cache[domain]?.[placeType];
     // if there is no cache existing, discard the value
     // it will be fetched if needed when the cache is built
     if (places) {
@@ -48,47 +59,63 @@ export default class RemotePlaceCache {
   public static clear(chtApi: ChtApi, contactTypeName?: string): void {
     const domain = chtApi?.chtSession?.authInfo?.domain;
     if (!domain) {
-      RemotePlaceCache.cache = {};
+      this.cache = {};
     } else if (!contactTypeName) {
-      delete RemotePlaceCache.cache[domain];
-    } else if (RemotePlaceCache.cache[domain]) {
-      delete RemotePlaceCache.cache[domain][contactTypeName];
+      delete this.cache[domain];
+    } else if (this.cache[domain]) {
+      delete this.cache[domain][contactTypeName];
     }
   }
 
-  private static async getDomainStore(chtApi: ChtApi, contactType: ContactType, hierarchyLevel: HierarchyConstraint)
+  // check if places are known and if they aren't, fetch via api
+  private static async fetchCachedOrRemotePlaces(chtApi: ChtApi, hierarchyLevel: HierarchyConstraint)
     : Promise<RemotePlace[]> {
     const { domain } = chtApi.chtSession.authInfo;
     const placeType = hierarchyLevel.contact_type;
     const { cache: domainCache } = RemotePlaceCache;
     const places = domainCache[domain]?.[placeType];
     if (!places) {
-      const fetchPlacesWithType = RemotePlaceCache.fetchRemotePlaces(chtApi, contactType, hierarchyLevel);
-      domainCache[domain] = {
-        ...domainCache[domain],
-        [placeType]: await fetchPlacesWithType,
-      };
+      const fetchPlacesWithType = this.fetchRemotePlacesAtLevel(chtApi, hierarchyLevel);
+      if (!domainCache[domain]) {
+        domainCache[domain] = {};
+      }
+      domainCache[domain][placeType] = await fetchPlacesWithType;
     }
 
     return domainCache[domain][placeType];
   }
 
-  private static async fetchRemotePlaces(chtApi: ChtApi, contactType: ContactType, hierarchyLevel: HierarchyConstraint): Promise<RemotePlace[]> {
-    function extractLineage(doc: any): string[] {
-      if (doc?.parent) {
-        return [doc.parent._id, ...extractLineage(doc.parent)];
+  // fetch docs of type and convert to RemotePlace
+  private static async fetchRemotePlacesAtLevel(chtApi: ChtApi, hierarchyLevel: HierarchyConstraint): Promise<RemotePlace[]> {
+    const uniqueKeyProperties = Config.getUniqueProperties(hierarchyLevel.contact_type);
+    const docs = await chtApi.getPlacesWithType(hierarchyLevel.contact_type);
+    return docs.map((doc: any) => this.convertContactToRemotePlace(doc, uniqueKeyProperties, hierarchyLevel));
+  }
+
+  private static convertContactToRemotePlace(doc: any, uniqueKeyProperties: ContactProperty[], hierarchyLevel: HierarchyConstraint): RemotePlace {
+    const uniqueKeyStringValues: FormattedPropertyCollection = {};
+    for (const property of uniqueKeyProperties) {
+      const value = doc[property.property_name];
+      if (value) {
+        uniqueKeyStringValues[property.property_name] = new RemotePlacePropertyValue(value, property);
       }
-    
-      return [];
     }
 
-    const docs = await chtApi.getPlacesWithType(hierarchyLevel.contact_type);
-    return docs.map((doc: any): RemotePlace => ({
+    return {
       id: doc._id,
-      name: new NamePropertyValue(doc.name, hierarchyLevel),
-      lineage: extractLineage(doc),
-      doc,
+      name: new RemotePlacePropertyValue(doc.name, hierarchyLevel),
+      placeType: hierarchyLevel.contact_type,
+      lineage: this.extractLineage(doc),
+      uniquePlaceValues: uniqueKeyStringValues,
       type: 'remote',
-    }));
+    };
+  }
+
+  private static extractLineage(doc: any): string[] {
+    if (doc?.parent) {
+      return [doc.parent._id, ...this.extractLineage(doc.parent)];
+    }
+
+    return [];
   }
 }

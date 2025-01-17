@@ -33,9 +33,24 @@ export const mockPlace = (contactType: ContactType, formDataOverride?: any) : Pl
   return place;
 };
 
-export const mockChtApi = (first: ChtDoc[] = [], second: ChtDoc[] = []): any => ({
+export const mockChtApi = (first: ChtDoc[] = [], second: ChtDoc[] = [], third: ChtDoc[] = [], fourth: ChtDoc[] = []): any => ({
   chtSession: mockChtSession(),
-  getPlacesWithType: sinon.stub().resolves(first).onSecondCall().resolves(second),
+  getPlacesWithType: sinon.stub()
+    .onFirstCall().resolves(first)
+    .onSecondCall().resolves(second)
+    .onThirdCall().resolves(third)
+    .onCall(3).resolves(fourth),
+  createPlace: sinon.stub().resolves({ placeId: 'created-place-id', contactId: 'created-contact-id' }),
+  createUser: sinon.stub().resolves(),
+  getParentAndSibling: sinon.stub().resolves({
+    parent: {
+      link_facility_code: '12345',
+      link_facility_name: 'facility',
+      name: 'chu',
+      code: '123456',
+    },
+    sibling: undefined,
+  }),
 });
 
 export const mockSimpleContactType = (
@@ -82,7 +97,9 @@ export async function createChu(subcounty: ChtDoc, chu_name: string, sessionCach
     contact_phone: '0712345678',
   }, dataOverrides);
   const chu = await PlaceFactory.createOne(chuData, chuType, sessionCache, chtApi);
-  expect(chu.validationErrors).to.be.empty;
+  if (!dataOverrides) {
+    expect(chu.validationErrors).to.be.empty;
+  }
   return chu;
 }
 
@@ -131,16 +148,20 @@ export const mockProperty = (type: string, parameter?: string | string[] | objec
 });
 
 //  Constructor of class ChtSession is private and only accessible within the class declaration.
-export const mockChtSession = (userFacilityId: string = '*') : ChtSession => new ChtSession(
-  {
-    friendly: 'domain',
-    domain: 'domain.com',
-    useHttp: true,
-  },
-  'session-token',
-  'username',
-  userFacilityId
-);
+export function mockChtSession(userFacilityId: string = '*') : ChtSession {
+  const creationDetails = {
+    authInfo: {
+      friendly: 'domain',
+      domain: 'domain.com',
+      useHttp: true,
+    },
+    sessionToken: 'session-token',
+    username: 'username',
+    facilityIds: [userFacilityId],
+    chtCoreVersion: '4.7.0',
+  };
+  return new ChtSession(creationDetails);
+}
 
 export function expectInvalidProperties(
   validationErrors: { [key: string]: string } | undefined,

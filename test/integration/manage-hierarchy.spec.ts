@@ -4,19 +4,19 @@ import chaiAsPromised from 'chai-as-promised';
 import { Job} from 'bullmq';
 import sinon from 'sinon';
 
-import MoveLib from '../../src/lib/move';
+import MoveLib from '../../src/lib/manage-hierarchy';
 
 import Auth from '../../src/lib/authentication';
 import { Config } from '../../src/config';
 import { BullQueue } from '../../src/lib/queues';
 import { mockChtApi, mockChtSession } from '../mocks';
-import { MoveContactWorker } from '../../src/worker/move-contact-worker';
+import { ChtConfWorker } from '../../src/worker/cht-conf-worker';
 import SessionCache from '../../src/services/session-cache';
 
 const { expect } = chai;
 chai.use(chaiAsPromised);
 
-describe('integration/move-contact',  function () {
+describe('integration/manage-hierarchy',  function () {
 
   const queueName = 'move_contact_queue';
   const connection = { host: '127.0.0.1', port: 6363 };
@@ -36,18 +36,18 @@ describe('integration/move-contact',  function () {
     moveContactQueue = new BullQueue(queueName, connection, defaultJobOptions);
     addStub = sandbox.stub(moveContactQueue, 'add');
 
-    handleJobStub = sandbox.stub(MoveContactWorker as any, 'handleJob');
-    shouldPostponeStub = sandbox.stub(MoveContactWorker as any, 'shouldPostpone');
-    executeCommandStub = sandbox.stub(MoveContactWorker as any, 'executeCommand');
+    handleJobStub = sandbox.stub(ChtConfWorker as any, 'handleJob');
+    shouldPostponeStub = sandbox.stub(ChtConfWorker as any, 'shouldPostpone');
+    executeCommandStub = sandbox.stub(ChtConfWorker as any, 'executeCommand');
 
     encodeTokenStub = sandbox.stub(Auth, 'encodeTokenForWorker');
-    decodeTokenStub = sandbox.stub(Auth, 'decodeTokenForWorker');
+    decodeTokenStub = sandbox.stub(Auth, 'createWorkerSession');
 
-    MoveContactWorker.processQueue(queueName, connection);
+    ChtConfWorker.processQueue(queueName, connection);
   });
 
   afterEach(async () => {
-    await MoveContactWorker.close();
+    await ChtConfWorker.close();
     await moveContactQueue.close();
     sandbox.restore();
   });
@@ -76,7 +76,7 @@ describe('integration/move-contact',  function () {
     encodeTokenStub.returns('encoded-token');
     decodeTokenStub.returns(session);
 
-    await MoveLib.move(
+    await MoveLib.scheduleJob(
       formData, contactType, sessionCache, chtApi(), moveContactQueue
     );
 
@@ -107,7 +107,7 @@ describe('integration/move-contact',  function () {
     encodeTokenStub.returns('encoded-token');
     decodeTokenStub.throws(new Error('Missing WORKER_PRIVATE_KEY'));
 
-    await MoveLib.move(
+    await MoveLib.scheduleJob(
       formData, contactType, sessionCache, chtApi(), moveContactQueue
     );
 
@@ -117,7 +117,7 @@ describe('integration/move-contact',  function () {
     await new Promise(resolve => setTimeout(resolve, 1000));
     
     // Check if the job has failed
-    const job = await moveContactQueue['bullQueue'].getJob(jobId) as Job;
+    const job = await moveContactQueue['bullQueue'].getJob(jobId) as unknown as Job;
     expect(await job.getState()).to.equal('failed');
   });
 });

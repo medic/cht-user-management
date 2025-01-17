@@ -60,6 +60,7 @@ property_name | string | Defines how the value will be stored on the object.
 type | ConfigPropertyType | Defines the validation rules, and auto-formatting rules. See [ConfigPropertyType](#ConfigPropertyType).
 parameter | any | See [ConfigPropertyType](#ConfigPropertyType).
 required | boolean | True if the object should not exist without this information.
+unique | 'all' or 'parent' | Dismissable warnings are flagged if a place already exists with this attribute's value. Values can be `all` (warns if any place has the same value) or `parent` (warns if a place with the same parent has the same value). This can only be defined on a `place_properties` or `contact_properties`.
 
 #### ConfigPropertyType
 The `ConfigPropertyType` defines a property's validation rules and auto-formatting rules. The optional `parameter` information alters the behavior of the `ConfigPropertyType`.
@@ -165,7 +166,7 @@ Variable | Description | Sample
 `WORKER_PRIVATE_KEY` | A string used to two-way encryption sensitive data passed to workers. Recommend to be different from `COOKIE_PRIVATE_KEY`. Production values need to be a secret. Suggest `uuidgen` to generate | `2b57pd5e-f272-og90-8u97-89a7589a7f23`
 `INTERFACE` | Interface to bind to. Leave as '0.0.0.0' for prod, suggest '127.0.0.1' for development | `127.0.0.1`
 `CHT_DEV_URL_PORT` | CHT instance when in `NODE_ENV===dev`. Needs URL and port | `192-168-1-26.local-ip.medicmobile.org:10463`
-`CHT_DEV_HTTP` |  'false' for http  'true' for https | `false`
+`CHT_DEV_HTTP` |  'true' for http  'false' for https | `false`
 `REDIS_HOST` | Redis server hostname use 'redis' for docker | `redis`
 `REDIS_PORT` | Redis server port | `6379`
 `CHT_USER_MANAGEMENT_IMAGE` | docker image for cht-user-management service (local development), leave empty to use published one | `cht-user-management:local `
