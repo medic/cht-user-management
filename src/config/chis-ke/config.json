@@ -238,7 +238,8 @@
           "property_name": "name",
           "type": "name",
           "parameter": ["\\sCommunity", "\\sHealth", "\\sUnit", "\\sCU", "\\sCHU"],
-          "required": true
+          "required": true,
+          "unique": "parent"
         },
         {
           "friendly_name": "CHU Code",

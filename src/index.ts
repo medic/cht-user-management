@@ -1,7 +1,7 @@
 import { Config, ContactType } from './config';
 import { ChtApi } from './lib/cht-api';
 import ChtSession from './lib/cht-session';
-import MoveLib from './lib/move';
+import ManageHierarchyLib from './lib/manage-hierarchy';
 import { RemotePlace } from './lib/remote-place-cache';
 import RemotePlaceCache from './lib/remote-place-cache';
 import RemotePlaceResolver from './lib/remote-place-resolver';
@@ -20,5 +20,5 @@ export {
   RemotePlaceCache,
   SessionCache,
   RemotePlaceResolver,
-  MoveLib
+  ManageHierarchyLib
 };
