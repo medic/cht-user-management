@@ -53,13 +53,13 @@ export async function createUserWithRetries(userPayload: UserPayload, chtApi: Ch
       // no idea when/why some instances yield "response.data" as JSON vs some as string
       const errorMessage = err.response?.data?.error?.message || err.response?.data;
       console.error('createUser retry because', errorMessage);
-      if (errorMessage.includes('already taken.')) {
+      if (errorMessage?.includes('already taken.')) {
         userPayload.makeUsernameMoreComplex();
         continue;
       }
 
       const RETRY_PASSWORD_STRINGS = ['The password must be at least', 'The password is too easy to guess.'];
-      if (RETRY_PASSWORD_STRINGS.find(str => errorMessage.includes(str))) {
+      if (RETRY_PASSWORD_STRINGS.find(str => errorMessage?.includes(str))) {
         userPayload.regeneratePassword();
         continue;
       }
