@@ -53,7 +53,8 @@ const password = 'password';
 function assertAllPlacesValid(places: Place[]) {
   const withErrors = places.filter(place => place.hasValidationErrors);
   for (const place of withErrors) {
-    console.log(`Place "${place.hierarchyProperties.replacement.original}" at "${place.hierarchyProperties.SUBCOUNTY.original}" has validation errors:`);
+    const placeDescription = `"${place.hierarchyProperties.replacement.original}" at "${place.hierarchyProperties.SUBCOUNTY.original}"`;
+    console.log(`Place ${placeDescription} has validation errors:`);
     const validationErrors = Object.values(place.validationErrors || {});
     for (const validationError of validationErrors) {
       console.log(`* ${validationError}`);
