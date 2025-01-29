@@ -1,3 +1,4 @@
+import _ from 'lodash';
 import { ChtApi, UserInfo } from './cht-api';
 
 const DEACTIVATION_ROLE = 'deactivated';
@@ -7,35 +8,86 @@ type UserApiPayload = {
   place?: string[];
 };
 
+export type PlaceReassignment = {
+  placeId: string;
+  toUsername: string;
+  deactivate: boolean;
+};
+
+type UserUpdate = {
+  userDoc: UserApiPayload;
+  placesToAdd: string[];
+  placesToRemove: string[];
+  deactivate: boolean;
+};
+
 export class DisableUsers {
   public static async disableUsersAt(placeId: string, chtApi: ChtApi): Promise<string[]> {
-    return this.processUsersAt(placeId, chtApi, false);
+    return this.processPlaceRemoval(placeId, chtApi, false);
   }
 
   public static async deactivateUsersAt(placeId: string, chtApi: ChtApi): Promise<string[]> {
-    return this.processUsersAt(placeId, chtApi, true);
+    return this.processPlaceRemoval(placeId, chtApi, true);
   }
 
-  private static async processUsersAt(placeId: string, chtApi: ChtApi, deactivate: boolean): Promise<string[]> {
-    const affectedUsers = await this.getAffectedUsers(placeId, chtApi);
-    if (affectedUsers.length === 0) {
-      return [];
+  public static async reassignPlaces(reassignments: PlaceReassignment[], chtApi: ChtApi): Promise<string[]> {
+    type UserUpdateDict = {
+      [key: string]: UserUpdate
+    };
+
+    const userUpdates: UserUpdateDict  = {};
+    function getUpdateFor(userDoc: UserApiPayload, deactivate: boolean) {
+      const { username } = userDoc;
+      if (!userUpdates[username]) {
+        userUpdates[username] = {
+          userDoc,
+          placesToAdd: [],
+          placesToRemove: [],
+          deactivate,
+        };
+      }
+
+      return userUpdates[username];
     }
 
-    await this.updateAffectedUsers(affectedUsers, deactivate, chtApi);
-    return affectedUsers.map(user => user.username);
+    for (const reassignment of reassignments) {
+      const loserUsersInfo = await this.getAffectedUsers(reassignment.placeId, chtApi);
+      for (const affectedUser of loserUsersInfo) {
+        const update = getUpdateFor(affectedUser, reassignment.deactivate);
+        update.placesToRemove.push(reassignment.placeId);
+      }
+
+      const gainerUserInfo = await chtApi.getUser(reassignment.toUsername);
+      if (!gainerUserInfo) {
+        throw Error(`Could not get user info for: "${reassignment.toUsername}"`)
+      }
+
+      const gainerUserPayload = this.toPostApiPayload(gainerUserInfo);
+      const update = getUpdateFor(gainerUserPayload, reassignment.deactivate);
+      update.placesToAdd.push(reassignment.placeId);
+    }
+    
+    const updates = Object.values(userUpdates);
+    await this.processPlaceUpdates(updates, chtApi);
+    return Object.keys(userUpdates);
+  }
+
+  private static async processPlaceRemoval(placeId: string, chtApi: ChtApi, deactivate: boolean): Promise<string[]> {
+    const affectedUsers = await this.getAffectedUsers(placeId, chtApi);
+    const placeUpdates = affectedUsers.map(userDoc => ({
+      userDoc,
+      placesToAdd: [],
+      placesToRemove: [placeId],
+      deactivate,
+    }));
+
+    await this.processPlaceUpdates(placeUpdates, chtApi);
+    return placeUpdates.map(update => update.userDoc.username);
   }
 
   private static async getAffectedUsers(facilityId: string, chtApi: ChtApi): Promise<UserApiPayload[]> {
-    const result: UserApiPayload[] = [];
     const userInfos = await chtApi.getUsersAtPlace(facilityId);
-    for (const userInfo of userInfos) {
-      const userPayload = this.toPostApiPayload(userInfo);
-      this.removeUserFromPlace(userPayload, facilityId);
-      result.push(userPayload);
-    } 
-
-    return result;
+    return userInfos.map(userInfo => this.toPostApiPayload(userInfo));
   }
 
   private static toPostApiPayload(apiResponse: UserInfo): UserApiPayload {
@@ -54,14 +106,13 @@ export class DisableUsers {
     };
   }
 
-  private static async updateAffectedUsers(userDocs: UserApiPayload[], deactivate: boolean, chtApi: ChtApi) {
-    for (const userDoc of userDocs) {
-      const places = userDoc.place && !Array.isArray(userDoc.place) ? [userDoc.place] : userDoc.place;
-      const noPlacesRemaining = !userDoc.place || places?.length === 0;
-      if (!noPlacesRemaining) {
+  private static async processPlaceUpdates(userUpdates: UserUpdate[], chtApi: ChtApi) {
+    for (const userUpdate of userUpdates) {
+      const userDoc = this.getUpdatedPayload(userUpdate);
+      if (userDoc.place?.length) {
         await chtApi.updateUser(userDoc);
       } else {
-        await this.disableUser(userDoc.username, deactivate, chtApi);
+        await this.disableUser(userDoc.username, userUpdate.deactivate, chtApi);
       }
     }
   }
@@ -79,11 +130,20 @@ export class DisableUsers {
     return chtApi.disableUser(username);
   }
 
-  private static removeUserFromPlace(userDoc: UserApiPayload, placeId: string) {
-    if (Array.isArray(userDoc.place)) {
-      userDoc.place = userDoc.place.filter(place => place !== placeId);
-    } else {
-      delete userDoc.place;
+  private static getUpdatedPayload(userUpdate: UserUpdate): UserApiPayload {
+    const alreadyAssigned = Array.isArray(userUpdate.userDoc.place) ? userUpdate.userDoc.place : [userUpdate.userDoc.place];
+    const updatedPlaces = new Set([...alreadyAssigned, ...userUpdate.placesToAdd]);
+    for (const remove of userUpdate.placesToRemove) {
+      updatedPlaces.delete(remove);
     }
+    
+    const result = _.cloneDeep(userUpdate.userDoc);
+    if (updatedPlaces.size) {
+      result.place = Array.from(updatedPlaces).filter(Boolean) as string[];
+    } else {
+      delete result.place;
+    }
+
+    return result;
   }
 }

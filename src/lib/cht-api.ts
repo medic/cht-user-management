@@ -184,6 +184,17 @@ export class ChtApi {
     }));
   }
 
+  async getUser(username: string): Promise<UserInfo | undefined> {
+    const url = `api/v2/users/${username}`;
+    console.log('axios.get', url);
+    const resp = await this.axiosInstance.get(url);
+    const doc = resp.data;
+    return doc ? {
+      username: doc.username,
+      place: doc.place,
+    } : undefined;
+  }
+
   async lastSyncAtPlace(placeId: string): Promise<DateTime> {
     const userIds = await this.getUsersAtPlace(placeId);
     const usernames = userIds.map(userId => userId.username);

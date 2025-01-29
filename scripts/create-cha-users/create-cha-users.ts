@@ -16,7 +16,7 @@ const authInfo = {
 };
 const username = 'medic';
 const password = 'password';
-const csvFilePath = './Test CHAs.csv';
+const csvFilePath = './Create CHAs.csv';
 
 (async function() {
   const session = await ChtSession.create(authInfo, username, password);
