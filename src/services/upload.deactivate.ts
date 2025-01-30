@@ -1,5 +1,5 @@
 import { ChtApi, CreatedPlaceResult, PlacePayload } from '../lib/cht-api';
-import { DisableUsers } from '../lib/disable-users';
+import { MultiplaceUsers } from '../lib/multiplace-users';
 import Place from './place';
 import { retryOnUpdateConflict } from '../lib/retry-logic';
 import { Uploader } from './upload-manager';
@@ -24,7 +24,7 @@ export class UploadReplacementWithDeactivation implements Uploader {
     }
 
     const updatedPlaceDoc = await retryOnUpdateConflict<any>(() => this.chtApi.updatePlace(payload, contactId));
-    await DisableUsers.deactivateUsersAt(placeId, this.chtApi);
+    await MultiplaceUsers.deactivateUsersAt(placeId, this.chtApi);
     return {
       placeId: updatedPlaceDoc._id,
       contactId,

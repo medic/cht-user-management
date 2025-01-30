@@ -7,7 +7,9 @@ import ChtSession from '../../src/lib/cht-session';
 import Place from '../../src/services/place';
 import PlaceFactory from '../../src/services/place-factory';
 import SessionCache from '../../src/services/session-cache';
-import { UserPayload } from '../../src/services/user-payload';
+import createUsersFromPlaces from './create-user';
+import UsernameDictionary from './cha-usernames';
+import reassignUsersFromPlaces from './reassign-chu-to-cha';
 
 const authInfo = {
   friendly: 'Local Dev',
@@ -16,7 +18,7 @@ const authInfo = {
 };
 const username = 'medic';
 const password = 'password';
-const csvFilePath = './Create CHAs.csv';
+const csvFilePath = './Import CHAs.csv';
 
 (async function() {
   const session = await ChtSession.create(authInfo, username, password);
@@ -25,28 +27,15 @@ const csvFilePath = './Create CHAs.csv';
   
   assertAllPlacesValid(places);
 
-  const chusByCha = _.groupBy(places, 'contact.name');
-  const chaNames = Object.keys(chusByCha);
+  const usernames = new UsernameDictionary();
+  
+  const {
+    true: placesNeedingNewUser,
+    false: placesNeedingReassign
+  } = _.groupBy(places, place => usernames.needsNewUser(place));
 
-  const results: any[] = [];
-  for (const chaName of chaNames) {
-    const chus = chusByCha[chaName];
-    const chuNames = chus.map(chu => chu.resolvedHierarchy[0]?.name.formatted);
-    console.log(`CHA: ${chaName} has ${chus.length} CHUs: ${chuNames}`);
-    
-    const contactDocId = chus.find(chu => chu.resolvedHierarchy[0]?.contactId)?.resolvedHierarchy[0]?.contactId;
-    if (!contactDocId) {
-      throw Error(`Unresolved contact id`);
-    }
-      
-    const chuIds = chus.map(chu => chu.resolvedHierarchy[0]?.id).filter(Boolean) as string[];
-    const userPayload = new UserPayload(chus[0], chuIds, contactDocId);
-    const result = await userPayload.create(chtApi);
-    console.log(`Username: ${result.username} Password: ${result.password}`);
-    results.push(_.pick(result, ['fullname', 'username', 'password']));
-  }
-
-  console.table(results);
+  await createUsersFromPlaces(placesNeedingNewUser, chtApi);
+  await reassignUsersFromPlaces(placesNeedingReassign, usernames, chtApi);
 })();
 
 function loadFromCsv(session: ChtSession, chtApi: ChtApi): Promise<Place[]> {

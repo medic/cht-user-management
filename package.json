@@ -63,7 +63,8 @@
     "rewire": "^7.0.0",
     "sinon": "^17.0.1",
     "ts-mocha": "^10.0.0",
-    "tsc-watch": "^6.0.4"
+    "tsc-watch": "^6.0.4",
+    "yesno": "^0.4.0"
   },
   "scripts": {
     "cp-package-json": "cp package.json ./src",

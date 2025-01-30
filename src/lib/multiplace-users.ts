@@ -21,7 +21,7 @@ type UserUpdate = {
   deactivate: boolean;
 };
 
-export class DisableUsers {
+export class MultiplaceUsers {
   public static async disableUsersAt(placeId: string, chtApi: ChtApi): Promise<string[]> {
     return this.processPlaceRemoval(placeId, chtApi, false);
   }
