@@ -32,7 +32,7 @@ export class MultiplaceUsers {
 
   public static async reassignPlaces(reassignments: PlaceReassignment[], chtApi: ChtApi): Promise<string[]> {
     type UserUpdateDict = {
-      [key: string]: UserUpdate
+      [key: string]: UserUpdate;
     };
 
     const userUpdates: UserUpdateDict  = {};
@@ -59,7 +59,7 @@ export class MultiplaceUsers {
 
       const gainerUserInfo = await chtApi.getUser(reassignment.toUsername);
       if (!gainerUserInfo) {
-        throw Error(`Could not get user info for: "${reassignment.toUsername}"`)
+        throw Error(`Could not get user info for: "${reassignment.toUsername}"`);
       }
 
       const gainerUserPayload = this.toPostApiPayload(gainerUserInfo);

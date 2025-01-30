@@ -17,26 +17,32 @@ export interface Uploader {
    handlePlacePayload (place: Place, payload: PlacePayload) : Promise<CreatedPlaceResult>;
 }
 
+export type UploadOptions = {
+  ignoreWarnings?: boolean;
+  contactsOnly?: boolean;
+};
+
 export class UploadManager extends EventEmitter {
-  doUpload = async (places: Place[], chtApi: ChtApi, ignoreWarnings: boolean = false) => {
+  public async doUpload(places: Place[], chtApi: ChtApi, options: UploadOptions = {}) {
+    const { ignoreWarnings = false } = options;
     const placesNeedingUpload = places.filter(p => !p.isCreated && !p.hasValidationErrors && (ignoreWarnings || !p.warnings.length));
     this.eventedPlaceStateChange(placesNeedingUpload, PlaceUploadState.SCHEDULED);
 
     const independants = placesNeedingUpload.filter(p => !p.isDependant);
     const dependants = placesNeedingUpload.filter(p => p.isDependant);
-    await this.uploadPlacesInBatches(independants, chtApi);
-    await this.uploadPlacesInBatches(dependants, chtApi);
-  };
+    await this.uploadPlacesInBatches(independants, chtApi, options);
+    await this.uploadPlacesInBatches(dependants, chtApi, options);
+  }
 
-  private async uploadPlacesInBatches(places: Place[], chtApi: ChtApi) {
+  private async uploadPlacesInBatches(places: Place[], chtApi: ChtApi, options: UploadOptions) {
     for (let batchStartIndex = 0; batchStartIndex < places.length; batchStartIndex += UPLOAD_BATCH_SIZE) {
       const batchEndIndex = Math.min(batchStartIndex + UPLOAD_BATCH_SIZE, places.length);
       const batch = places.slice(batchStartIndex, batchEndIndex);
-      await Promise.all(batch.map(place => this.uploadSinglePlace(place, chtApi)));
+      await Promise.all(batch.map(place => this.uploadSinglePlace(place, chtApi, options)));
     }
   }
 
-  private async uploadSinglePlace(place: Place, chtApi: ChtApi) {
+  private async uploadSinglePlace(place: Place, chtApi: ChtApi, options: UploadOptions) {
     this.eventedPlaceStateChange(place, PlaceUploadState.IN_PROGRESS);
 
     try {
@@ -59,7 +65,7 @@ export class UploadManager extends EventEmitter {
         throw Error('creationDetails.contactId not set');
       }
 
-      if (!place.creationDetails.username) {
+      if (!place.creationDetails.username && !options.contactsOnly) {
         const userPayload = new UserPayload(place, place.creationDetails.placeId, place.creationDetails.contactId);
         const { username, password } = await RetryLogic.createUserWithRetries(userPayload, chtApi);
         place.creationDetails.username = username;

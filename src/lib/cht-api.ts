@@ -173,6 +173,18 @@ export class ChtApi {
     const resp = await this.axiosInstance.get(url);
     return resp.data;
   }
+
+  async getDocs(ids: string[]): Promise<any[]> {
+    const url = `medic/_all_docs`;
+    console.log('axios.post', url);
+    const payload = {
+      keys: ids,
+      include_docs: true,
+    };
+
+    const resp = await this.axiosInstance.post(url, payload);
+    return resp.data?.rows.map((row: any) => row.doc).filter(Boolean);
+  }
   
   async getUsersAtPlace(placeId: string): Promise<UserInfo[]> {
     const url = `api/v2/users?facility_id=${placeId}`;

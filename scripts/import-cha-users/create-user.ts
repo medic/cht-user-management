@@ -13,18 +13,18 @@ export type CreatedUser = {
 };
 
 export default async function createUsersFromPlaces(places: Place[], chtApi: ChtApi): Promise<CreatedUser[]> {
-  const chusByCha = _.groupBy(places, 'contact.name');
-  const chaNames = Object.keys(chusByCha);
-  if (!chaNames.length) {
+  const chusByCha = _.groupBy(places, place => groupByKey(place));
+  const chaKeys = Object.keys(chusByCha);
+  if (!chaKeys.length) {
     return [];
   }
 
-  await promptToCreate(chaNames);
+  await promptToCreate(chaKeys);
 
   const results: CreatedUser[] = [];
-  for (const chaName of chaNames) {
-    const chus = chusByCha[chaName];
-    const created = await createCha(chus, chaName, chtApi);
+  for (const chaKey of chaKeys) {
+    const chus = chusByCha[chaKey];
+    const created = await createCha(chus, chtApi);
     results.push(created);
   }
 
@@ -33,9 +33,16 @@ export default async function createUsersFromPlaces(places: Place[], chtApi: Cht
   return results;
 }
 
-async function createCha(chus: Place[], chaName: string, chtApi: ChtApi): Promise<CreatedUser> {
+function groupByKey(place: Place) {
+  const subcounty = place.resolvedHierarchy[1]?.name.formatted;
+  const contactName = place.contact.name;
+  return `${contactName}@${subcounty}`;
+}
+
+async function createCha(chus: Place[], chtApi: ChtApi): Promise<CreatedUser> {
+  const chaName = chus[0].contact.name;
   const chuNames = chus.map(chu => chu.resolvedHierarchy[0]?.name.formatted);
-  console.log(`CHA: ${chaName} has ${chus.length} CHUs: ${chuNames}`);
+  console.log(`Creating CHA: ${chaName} with ${chus.length} CHUs: ${chuNames}`);
 
   const contactDocId = chus.find(chu => chu.resolvedHierarchy[0]?.contactId)?.resolvedHierarchy[0]?.contactId;
   if (!contactDocId) {

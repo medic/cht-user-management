@@ -8,8 +8,8 @@ import Place from '../../src/services/place';
 import PlaceFactory from '../../src/services/place-factory';
 import SessionCache from '../../src/services/session-cache';
 import createUsersFromPlaces from './create-user';
-import UsernameDictionary from './cha-usernames';
-import reassignUsersFromPlaces from './reassign-chu-to-cha';
+import PrimaryContactDirectory from './primary-contact-directory';
+import ChaReassignment from './cha-reassignment';
 
 const authInfo = {
   friendly: 'Local Dev',
@@ -27,15 +27,17 @@ const csvFilePath = './Import CHAs.csv';
   
   assertAllPlacesValid(places);
 
-  const usernames = new UsernameDictionary();
+  const usernames = await PrimaryContactDirectory.construct(chtApi);
   
   const {
-    true: placesNeedingNewUser,
-    false: placesNeedingReassign
-  } = _.groupBy(places, place => usernames.needsNewUser(place));
+    false: placesNeedingNewUser,
+    true: placesNeedingReassign
+  } = _.groupBy(places, place => usernames.primaryContactExists(place));
 
   await createUsersFromPlaces(placesNeedingNewUser, chtApi);
-  await reassignUsersFromPlaces(placesNeedingReassign, usernames, chtApi);
+
+  const chaReassignment = new ChaReassignment(chtApi);
+  await chaReassignment.reassignUsersFromPlaces(placesNeedingReassign, usernames);
 })();
 
 function loadFromCsv(session: ChtSession, chtApi: ChtApi): Promise<Place[]> {

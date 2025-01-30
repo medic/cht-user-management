@@ -357,6 +357,33 @@ describe('services/upload-manager.ts', () => {
     expect(chtApi.disableUser.callCount).to.eq(1);
     expect(place.isCreated).to.be.true;
   });
+
+  it('ignoreWarnings: true', async () => {
+    const { fakeFormData, contactType, chtApi, sessionCache, subcounty } = await createMocks();
+    const place = await PlaceFactory.createOne(fakeFormData, contactType, sessionCache, chtApi);
+    place.warnings.push('warning');
+
+    const uploadManager = new UploadManager();
+    await uploadManager.doUpload([place], chtApi, { ignoreWarnings: true });
+
+    expect(chtApi.createPlace.calledOnce).to.be.true;
+    expect(chtApi.createUser.calledOnce).to.be.true;
+    expect(chtApi.deleteDoc.called).to.be.false;
+    expect(place.isCreated).to.be.true;
+  });
+
+  it('contactsOnly: true', async () => {
+    const { fakeFormData, contactType, chtApi, sessionCache, subcounty } = await createMocks();
+    const place = await PlaceFactory.createOne(fakeFormData, contactType, sessionCache, chtApi);
+
+    const uploadManager = new UploadManager();
+    await uploadManager.doUpload([place], chtApi, { contactsOnly: true });
+
+    expect(chtApi.createPlace.calledOnce).to.be.true;
+    expect(chtApi.createUser.calledOnce).to.be.false;
+    expect(chtApi.deleteDoc.called).to.be.false;
+    expect(place.isCreated).to.be.false;
+  });
 });
 
 async function createMocks() {
