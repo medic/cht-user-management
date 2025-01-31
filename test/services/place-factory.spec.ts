@@ -112,6 +112,7 @@ describe('services/place-factory.ts', () => {
       _id: 'id-replace',
       name: 'bob',
       parent: { _id: parentDoc._id },
+      contact: { _id: 'replace-contact' },
     };
 
     parentDoc.name = 'Chepalungu CHU';
@@ -154,6 +155,7 @@ describe('services/place-factory.ts', () => {
               propertyNameWithPrefix: 'place_name',
             }
           },
+          contactId: 'replace-contact',
         },
         {
           id: 'parent-id',
@@ -172,6 +174,7 @@ describe('services/place-factory.ts', () => {
               propertyNameWithPrefix: 'place_name',
             }
           },
+          contactId: 'parent-contact',
         },
       ],
       validationErrors: {},
@@ -519,6 +522,7 @@ function mockScenario() {
   const parentDoc: ChtDoc = {
     _id: 'parent-id',
     name: 'parent-name',
+    contact: 'parent-contact',
   };
   const sessionCache = new SessionCache();
   const chtApi = {

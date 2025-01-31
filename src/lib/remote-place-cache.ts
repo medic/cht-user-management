@@ -17,6 +17,7 @@ export type RemotePlace = {
   id: string;
   name: IPropertyValue;
   lineage: string[];
+  contactId: string;
   ambiguities?: RemotePlace[];
   placeType: string;
   uniquePlaceValues: FormattedPropertyCollection;
@@ -108,6 +109,7 @@ export default class RemotePlaceCache {
       lineage: this.extractLineage(doc),
       uniquePlaceValues: uniqueKeyStringValues,
       type: 'remote',
+      contactId: doc.contact?._id || doc.contact,
     };
   }
 
