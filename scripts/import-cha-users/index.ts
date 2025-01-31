@@ -7,7 +7,11 @@ import ChtSession from '../../src/lib/cht-session';
 import Place from '../../src/services/place';
 import PlaceFactory from '../../src/services/place-factory';
 import SessionCache from '../../src/services/session-cache';
-import { UserPayload } from '../../src/services/user-payload';
+import { UploadManager } from '../../src/services/upload-manager';
+
+import PrimaryContactDirectory from './primary-contact-directory';
+import createMultiplaceUsers from './create-user';
+import ChaReassignment from './cha-reassignment';
 
 const authInfo = {
   friendly: 'Local Dev',
@@ -16,7 +20,7 @@ const authInfo = {
 };
 const username = 'medic';
 const password = 'password';
-const csvFilePath = './Test CHAs.csv';
+const csvFilePath = './Import CHAs.csv';
 
 (async function() {
   const session = await ChtSession.create(authInfo, username, password);
@@ -25,28 +29,20 @@ const csvFilePath = './Test CHAs.csv';
   
   assertAllPlacesValid(places);
 
-  const chusByCha = _.groupBy(places, 'contact.name');
-  const chaNames = Object.keys(chusByCha);
+  const usernames = await PrimaryContactDirectory.construct(chtApi);
+  
+  const {
+    false: placesNeedingNewUser = [],
+    true: placesNeedingReassign = []
+  } = _.groupBy(places, place => usernames.primaryContactExists(place));
 
-  const results: any[] = [];
-  for (const chaName of chaNames) {
-    const chus = chusByCha[chaName];
-    const chuNames = chus.map(chu => chu.resolvedHierarchy[0]?.name.formatted);
-    console.log(`CHA: ${chaName} has ${chus.length} CHUs: ${chuNames}`);
-    
-    const contactDocId = chus.find(chu => chu.resolvedHierarchy[0]?.contactId)?.resolvedHierarchy[0]?.contactId;
-    if (!contactDocId) {
-      throw Error(`Unresolved contact id`);
-    }
-      
-    const chuIds = chus.map(chu => chu.resolvedHierarchy[0]?.id).filter(Boolean) as string[];
-    const userPayload = new UserPayload(chus[0], chuIds, contactDocId);
-    const result = await userPayload.create(chtApi);
-    console.log(`Username: ${result.username} Password: ${result.password}`);
-    results.push(_.pick(result, ['fullname', 'username', 'password']));
-  }
+  await createMultiplaceUsers(placesNeedingNewUser, chtApi);
 
-  console.table(results);
+  const chaReassignment = new ChaReassignment(chtApi);
+  await chaReassignment.reassignUsersFromPlaces(placesNeedingReassign, usernames);
+
+  const uploadManager = new UploadManager();
+  await uploadManager.doUpload(places, chtApi, { contactsOnly: true });
 })();
 
 function loadFromCsv(session: ChtSession, chtApi: ChtApi): Promise<Place[]> {
