@@ -3,7 +3,6 @@ import { ChtApi } from '../../src/lib/cht-api';
 import Place from '../../src/services/place';
 import { MultiplaceUsers, PlaceReassignment } from '../../src/lib/multiplace-users';
 import PrimaryContactDirectory from './primary-contact-directory';
-import { UploadManager } from '../../src/services/upload-manager';
 
 export default class ChaReassignment {
   private readonly chtApi: ChtApi;
@@ -17,8 +16,6 @@ export default class ChaReassignment {
     const reassignments = await Promise.all(reassignmentPromises);
     const filteredReassignments = _.flatten(reassignments).filter(Boolean) as PlaceReassignment[];
 
-    const uploadManager = new UploadManager();
-    await uploadManager.doUpload(places, this.chtApi, { contactsOnly: true });
     await MultiplaceUsers.reassignPlaces(filteredReassignments, this.chtApi);
   }
 

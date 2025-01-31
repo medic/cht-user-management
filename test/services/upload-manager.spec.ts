@@ -359,7 +359,7 @@ describe('services/upload-manager.ts', () => {
   });
 
   it('ignoreWarnings: true', async () => {
-    const { fakeFormData, contactType, chtApi, sessionCache, subcounty } = await createMocks();
+    const { fakeFormData, contactType, chtApi, sessionCache } = await createMocks();
     const place = await PlaceFactory.createOne(fakeFormData, contactType, sessionCache, chtApi);
     place.warnings.push('warning');
 
@@ -373,7 +373,7 @@ describe('services/upload-manager.ts', () => {
   });
 
   it('contactsOnly: true', async () => {
-    const { fakeFormData, contactType, chtApi, sessionCache, subcounty } = await createMocks();
+    const { fakeFormData, contactType, chtApi, sessionCache } = await createMocks();
     const place = await PlaceFactory.createOne(fakeFormData, contactType, sessionCache, chtApi);
 
     const uploadManager = new UploadManager();
@@ -382,6 +382,8 @@ describe('services/upload-manager.ts', () => {
     expect(chtApi.createPlace.calledOnce).to.be.true;
     expect(chtApi.createUser.calledOnce).to.be.false;
     expect(chtApi.deleteDoc.called).to.be.false;
+    expect(chtApi.disableUser.called).to.be.false;
+    expect(chtApi.updateUser.called).to.be.false;
     expect(place.isCreated).to.be.false;
   });
 });
@@ -401,7 +403,6 @@ async function createMocks() {
       .onThirdCall().resolves([]),
     // getPlacesWithType: sinon.stub().resolves([subcounty]),
     createPlace: sinon.stub().resolves({ placeId: 'created-place-id', contactId: 'created-contact-id' }),
-    updateContactParent: sinon.stub().resolves('created-contact-id'),
     createUser: sinon.stub().resolves(),
     
     getParentAndSibling: sinon.stub().resolves({ parent: {}, sibling: {} }),

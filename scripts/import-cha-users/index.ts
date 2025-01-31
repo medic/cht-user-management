@@ -7,8 +7,10 @@ import ChtSession from '../../src/lib/cht-session';
 import Place from '../../src/services/place';
 import PlaceFactory from '../../src/services/place-factory';
 import SessionCache from '../../src/services/session-cache';
-import createUsersFromPlaces from './create-user';
+import { UploadManager } from '../../src/services/upload-manager';
+
 import PrimaryContactDirectory from './primary-contact-directory';
+import createMultiplaceUsers from './create-user';
 import ChaReassignment from './cha-reassignment';
 
 const authInfo = {
@@ -30,14 +32,17 @@ const csvFilePath = './Import CHAs.csv';
   const usernames = await PrimaryContactDirectory.construct(chtApi);
   
   const {
-    false: placesNeedingNewUser,
-    true: placesNeedingReassign
+    false: placesNeedingNewUser = [],
+    true: placesNeedingReassign = []
   } = _.groupBy(places, place => usernames.primaryContactExists(place));
 
-  await createUsersFromPlaces(placesNeedingNewUser, chtApi);
+  await createMultiplaceUsers(placesNeedingNewUser, chtApi);
 
   const chaReassignment = new ChaReassignment(chtApi);
   await chaReassignment.reassignUsersFromPlaces(placesNeedingReassign, usernames);
+
+  const uploadManager = new UploadManager();
+  await uploadManager.doUpload(places, chtApi, { contactsOnly: true });
 })();
 
 function loadFromCsv(session: ChtSession, chtApi: ChtApi): Promise<Place[]> {

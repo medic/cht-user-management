@@ -186,5 +186,33 @@ describe('lib/multiplace-users.ts', () => {
       expect(cht.disableUser.called).to.be.false;
       expect(cht.updateUser.called).to.be.false;
     });
+
+    it('no disable when reassigning to same place', async () => {
+      const cht = mockChtApi([{
+        username: 'user',
+        place: { _id: PLACE_ID }
+      }]);
+
+      cht.getUser.resolves({
+        username: 'user',
+        place: [{ _id: PLACE_ID }]
+      });
+
+      const reassignment: PlaceReassignment = {
+        placeId: PLACE_ID,
+        toUsername: 'user',
+        deactivate: false,
+      };
+      const actual = await MultiplaceUsers.reassignPlaces([reassignment], cht);
+      expect(cht.disableUser.called).to.be.false;
+      expect(cht.updateUser.callCount).to.eq(1);
+      expect(cht.updateUser.args[0]).to.deep.eq([{
+        place: [PLACE_ID],
+        username: 'user',
+      }]);
+      expect(cht.getUser.callCount).to.eq(1);
+      expect(cht.getUser.args[0]).to.deep.eq(['user']);
+      expect(actual).to.deep.eq(['user']);
+    });
   });
 });

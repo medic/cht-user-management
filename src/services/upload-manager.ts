@@ -46,7 +46,7 @@ export class UploadManager extends EventEmitter {
     this.eventedPlaceStateChange(place, PlaceUploadState.IN_PROGRESS);
 
     try {
-      const uploader: Uploader = pickUploader(place, chtApi);
+      const uploader: Uploader = pickUploader(place, chtApi, options);
       const payload = place.asChtPayload(chtApi.chtSession.username);
       await Config.mutate(payload, chtApi, place.isReplacement);
 
@@ -112,13 +112,13 @@ function getErrorDetails(err: any) {
   return err.toString();
 }
 
-function pickUploader(place: Place, chtApi: ChtApi): Uploader {
+function pickUploader(place: Place, chtApi: ChtApi, options: UploadOptions): Uploader {
   if (!place.hierarchyProperties.replacement.original) {
     return new UploadNewPlace(chtApi);
   }
 
   return place.type.deactivate_users_on_replace ? 
-    new UploadReplacementWithDeactivation(chtApi) :
-    new UploadReplacementWithDeletion(chtApi);
+    new UploadReplacementWithDeactivation(chtApi, options) :
+    new UploadReplacementWithDeletion(chtApi, options);
 }
 

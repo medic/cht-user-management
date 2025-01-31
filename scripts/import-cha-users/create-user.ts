@@ -12,7 +12,7 @@ export type CreatedUser = {
   password: string;
 };
 
-export default async function createUsersFromPlaces(places: Place[], chtApi: ChtApi): Promise<CreatedUser[]> {
+export default async function createMultiplaceUsers(places: Place[], chtApi: ChtApi): Promise<CreatedUser[]> {
   const chusByCha = _.groupBy(places, place => groupByKey(place));
   const chaKeys = Object.keys(chusByCha);
   if (!chaKeys.length) {

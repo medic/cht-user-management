@@ -133,8 +133,13 @@ export class MultiplaceUsers {
   private static getUpdatedPayload(userUpdate: UserUpdate): UserApiPayload {
     const alreadyAssigned = Array.isArray(userUpdate.userDoc.place) ? userUpdate.userDoc.place : [userUpdate.userDoc.place];
     const updatedPlaces = new Set([...alreadyAssigned, ...userUpdate.placesToAdd]);
-    for (const remove of userUpdate.placesToRemove) {
-      updatedPlaces.delete(remove);
+
+    // dont remove if adding and removing at the same time
+    const placesToRemove = _.difference(userUpdate.placesToRemove, userUpdate.placesToAdd);
+    for (const remove of placesToRemove) {
+      if (!userUpdate.placesToAdd.includes(remove)) {
+        updatedPlaces.delete(remove);
+      }
     }
     
     const result = _.cloneDeep(userUpdate.userDoc);
