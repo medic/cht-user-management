@@ -11,7 +11,7 @@ export default class ChaReassignment {
     this.chtApi = chtApi;
   }
 
-  public async reassignUsersFromPlaces(places: Place[], usernames: PrimaryContactDirectory) {
+  public async reassignCHUs(places: Place[], usernames: PrimaryContactDirectory) {
     const reassignmentPromises = places.map(place => this.toReassignments(place, usernames));
     const reassignments = await Promise.all(reassignmentPromises);
     const filteredReassignments = _.flatten(reassignments).filter(Boolean) as PlaceReassignment[];

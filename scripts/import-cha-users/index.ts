@@ -10,7 +10,7 @@ import SessionCache from '../../src/services/session-cache';
 import { UploadManager } from '../../src/services/upload-manager';
 
 import PrimaryContactDirectory from './primary-contact-directory';
-import createMultiplaceUsers from './create-user';
+import createMultiplaceUsers from './create-multiplace-users';
 import ChaReassignment from './cha-reassignment';
 
 const authInfo = {
@@ -29,17 +29,17 @@ const csvFilePath = './Import CHAs.csv';
   
   assertAllPlacesValid(places);
 
-  const usernames = await PrimaryContactDirectory.construct(chtApi);
+  const pcDirectory = await PrimaryContactDirectory.construct(chtApi);
   
   const {
     false: placesNeedingNewUser = [],
     true: placesNeedingReassign = []
-  } = _.groupBy(places, place => usernames.primaryContactExists(place));
+  } = _.groupBy(places, place => pcDirectory.primaryContactExists(place));
 
   await createMultiplaceUsers(placesNeedingNewUser, chtApi);
 
   const chaReassignment = new ChaReassignment(chtApi);
-  await chaReassignment.reassignUsersFromPlaces(placesNeedingReassign, usernames);
+  await chaReassignment.reassignCHUs(placesNeedingReassign, pcDirectory);
 
   const uploadManager = new UploadManager();
   await uploadManager.doUpload(places, chtApi, { contactsOnly: true });
@@ -55,18 +55,22 @@ function loadFromCsv(session: ChtSession, chtApi: ChtApi): Promise<Place[]> {
 }
 
 function assertAllPlacesValid(places: Place[]) {
-  const withErrors = places.filter(place => place.hasValidationErrors);
-  for (const place of withErrors) {
+  const withErrorsOrWarnings = places.filter(place => place.hasValidationErrors || place.warnings.length);
+  for (const place of withErrorsOrWarnings) {
     const placeDescription = `"${place.hierarchyProperties.replacement.original}" at "${place.hierarchyProperties.SUBCOUNTY.original}"`;
     console.log(`Place ${placeDescription} has validation errors:`);
     const validationErrors = Object.values(place.validationErrors || {});
     for (const validationError of validationErrors) {
       console.log(`* ${validationError}`);
     }
+
+    for (const warning of place.warnings) {
+      console.log(`* WARN: ${warning}`);
+    }
   }
 
-  if (withErrors.length) {
-    throw Error('Some places had validation errors. See logs.');
+  if (withErrorsOrWarnings.length) {
+    throw Error('Some places have errors or warnings. See logs.');
   }
 
   const notReplacement = places.find(place => !place.resolvedHierarchy[0]);

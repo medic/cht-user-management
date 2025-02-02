@@ -372,7 +372,7 @@ describe('services/upload-manager.ts', () => {
     expect(place.isCreated).to.be.true;
   });
 
-  it('contactsOnly: true', async () => {
+  it('contactsOnly: true (new)', async () => {
     const { fakeFormData, contactType, chtApi, sessionCache } = await createMocks();
     const place = await PlaceFactory.createOne(fakeFormData, contactType, sessionCache, chtApi);
 
@@ -380,8 +380,40 @@ describe('services/upload-manager.ts', () => {
     await uploadManager.doUpload([place], chtApi, { contactsOnly: true });
 
     expect(chtApi.createPlace.calledOnce).to.be.true;
+    expect(chtApi.updatePlace.calledOnce).to.be.false;
     expect(chtApi.createUser.calledOnce).to.be.false;
     expect(chtApi.deleteDoc.called).to.be.false;
+    expect(chtApi.disableUser.called).to.be.false;
+    expect(chtApi.updateUser.called).to.be.false;
+    expect(place.isCreated).to.be.false;
+  });
+
+  it('contactsOnly: true (replace)', async () => {
+    const { subcounty, sessionCache, contactType, fakeFormData, chtApi } = await createMocks();
+    fakeFormData.hierarchy_replacement = 'to-replace';
+    fakeFormData.place_prop = ''; // required during creation, but can be empty (ui) or undefined (csv)
+    fakeFormData.place_name = undefined;
+
+    const toReplace: ChtDoc = {
+      _id: 'id-replace',
+      name: 'to-replace',
+      parent: { _id: subcounty._id },
+    };
+
+    chtApi.getPlacesWithType
+      .onFirstCall().resolves([])
+      .onSecondCall().resolves([subcounty])
+      .onThirdCall().resolves([toReplace]);
+
+    const place = await PlaceFactory.createOne(fakeFormData, contactType, sessionCache, chtApi);
+    expect(place.validationErrors).to.be.empty; // only parent is required when replacing
+
+    const uploadManager = new UploadManager();
+    await uploadManager.doUpload([place], chtApi, { contactsOnly: true });
+    expect(chtApi.createPlace.calledOnce).to.be.false;
+    expect(chtApi.updatePlace.calledOnce).to.be.true;
+    expect(chtApi.createUser.calledOnce).to.be.false;
+    expect(chtApi.deleteDoc.called).to.be.true;
     expect(chtApi.disableUser.called).to.be.false;
     expect(chtApi.updateUser.called).to.be.false;
     expect(place.isCreated).to.be.false;

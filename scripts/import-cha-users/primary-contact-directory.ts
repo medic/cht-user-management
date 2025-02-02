@@ -4,7 +4,7 @@ import { ChtApi, UserInfo } from '../../src/lib/cht-api';
 import RemotePlaceCache from '../../src/lib/remote-place-cache';
 import Place from '../../src/services/place';
 
-// DirectoryData['subcounty']['cha'] = 'facility_id'
+// DirectoryData['subcounty_id']['cha_name'] = 'facility_id'
 type DirectoryData = {
   [key: string]: {
     [key: string]: string;
@@ -40,10 +40,10 @@ export default class PrimaryContactDirectory {
     return new PrimaryContactDirectory(chtApi, data);
   }
 
-  public primaryContactExists(place: Place): boolean {
+  public contactExists(place: Place): boolean {
     const subcountyId = place.resolvedHierarchy[1]?.id;
     if (!subcountyId) {
-      return true;
+      return false;
     }
 
     const chaName = place.contact.name;
@@ -60,7 +60,7 @@ export default class PrimaryContactDirectory {
     const chuId = this.data[subcountyId]?.[chaName];
     if (!chuId) {
       const subcountyName = place.resolvedHierarchy[1]?.name.formatted;
-      throw Error(`Place contact is not known within ${subcountyName}`);
+      throw Error(`CHU ID is not known within ${subcountyName}`);
     }
 
     return this.chtApi.getUsersAtPlace(chuId);
