@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
 
-import { Config, ContactProperty, ContactType } from '../config';
+import { Config, ContactProperty, ContactType, SupersetConfig, SupersetMode } from '../config';
 import Contact from './contact';
 import { ContactPropertyValue, HierarchyPropertyValue, IPropertyValue, RemotePlacePropertyValue } from '../property-value';
 import { PlacePayload } from '../lib/cht-api';
@@ -29,6 +29,12 @@ export enum PlaceUploadState {
   IN_PROGRESS = 'in_progress',
 }
 
+export enum UploadState {
+  PENDING = 'pending',
+  SUCCESS = 'success',
+  FAILURE = 'failure',
+}
+
 const PLACE_PREFIX = 'place_';
 const CONTACT_PREFIX = 'contact_';
 const USER_PREFIX = 'user_';
@@ -46,7 +52,19 @@ export default class Place {
   public userRoleProperties: FormattedPropertyCollection;
   public warnings: string[];
 
+  public supersetProperties?: {
+    prefix: string;
+    roleTemplateId: string;
+    rlsTemplateId: string;
+    rlsGroupKey: string;
+    mode: SupersetMode;
+  };
+
   public state : PlaceUploadState;
+  
+  // Track CHT and Superset upload states
+  public chtUploadState: UploadState;
+  public supersetUploadState: UploadState;
 
   public validationErrors?: { [key: string]: string };
   public uploadError? : string;
@@ -58,6 +76,8 @@ export default class Place {
     this.properties = {};
     this.hierarchyProperties = {};
     this.state = PlaceUploadState.STAGED;
+    this.chtUploadState = UploadState.PENDING;
+    this.supersetUploadState = UploadState.PENDING;
     this.resolvedHierarchy = [];
     this.warnings = [];
     this.userRoleProperties = {};
@@ -105,6 +125,36 @@ export default class Place {
       // When multiple are selected, the form data is an array
       const userRoleValue = Array.isArray(roleFormData) ? roleFormData.join(' ') : roleFormData;
       this.userRoleProperties[propertyName] = new ContactPropertyValue(this, userRoleConfig, USER_PREFIX, userRoleValue);
+    }
+
+    if (this.type.superset) {
+      const supersetConfig: SupersetConfig = this.type.superset;
+      const modeProperty = supersetConfig.integration_mode_property;
+
+      this.supersetProperties = {
+        prefix: supersetConfig.prefix,
+        roleTemplateId: supersetConfig.role_template,
+        rlsTemplateId: supersetConfig.rls_template,
+        rlsGroupKey: supersetConfig.rls_group_key,
+        mode: SupersetMode.CHT_ONLY
+      };
+     
+      const integrationModeFromForm = formData[CONTACT_PREFIX + modeProperty];
+      if (integrationModeFromForm && Object.values(SupersetMode).includes(integrationModeFromForm)) {
+        this.supersetProperties!.mode = integrationModeFromForm as SupersetMode;
+      }
+
+      const emailProperty = this.type.contact_properties.find(p => p.property_name === 'email');
+      if (emailProperty) {
+        // Ensure email is required
+        emailProperty.required = true;
+
+        // Update contact properties, with email property required if Superset is enabled
+        this.contact.properties = {
+          ...this.contact.properties,
+          ...getPropertySetWithPrefix([emailProperty], CONTACT_PREFIX),
+        };
+      }
     }
   }
 
@@ -265,7 +315,61 @@ export default class Place {
   }
 
   public get isCreated(): boolean {
-    return !!this.creationDetails.password;
+    const iC = this.isChtCreated;
+    const iS = this.isSupersetCreated;
+    return iC && iS;
+  }
+
+  public get isChtCreated(): boolean {
+    return !!this.creationDetails.password && this.chtUploadState === UploadState.SUCCESS;
+  }
+
+  public get isSupersetCreated(): boolean {
+    return !!this.shouldUploadToSuperset() && !!this.creationDetails.password && this.supersetUploadState === UploadState.SUCCESS;
+  }
+
+  public isUploadPending(): boolean {
+    return this.chtUploadState === UploadState.PENDING || this.supersetUploadState === UploadState.PENDING;
+  }
+
+  public isUploadFailed(): boolean {
+    return this.chtUploadState === UploadState.FAILURE || this.supersetUploadState === UploadState.FAILURE;
+  }
+
+  public isFullyUploaded(): boolean {
+    const chtRequired = this.shouldUploadToCht();
+    const supersetRequired = this.shouldUploadToSuperset();
+  
+    if (chtRequired && supersetRequired) {
+      return this.chtUploadState === UploadState.SUCCESS && this.supersetUploadState === UploadState.SUCCESS;
+    } else if (chtRequired) {
+      return this.chtUploadState === UploadState.SUCCESS;
+    } else if (supersetRequired) {
+      return this.supersetUploadState === UploadState.SUCCESS;
+    }
+    return false;
+  }
+
+  public isChtUploadPendingOrFailed(): boolean {
+    return this.chtUploadState === UploadState.PENDING || this.chtUploadState === UploadState.FAILURE;
+  }
+
+  public isSupersetUploadPendingOrFailed(): boolean {
+    return this.supersetUploadState === UploadState.PENDING || this.supersetUploadState === UploadState.FAILURE;
+  }
+
+  public shouldUploadToCht(): boolean {
+    if (!this.supersetProperties) {
+      return true;
+    }
+    return this.supersetProperties.mode === SupersetMode.CHT_ONLY || this.supersetProperties.mode === SupersetMode.BOTH;
+  }
+
+  public shouldUploadToSuperset(): boolean {
+    if (!this.supersetProperties) {
+      return false;
+    }
+    return this.supersetProperties.mode === SupersetMode.SUP_ONLY || this.supersetProperties.mode === SupersetMode.BOTH;
   }
 
   private buildLineage() {
