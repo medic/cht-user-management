@@ -28,7 +28,7 @@ To use the User Management Tool with your CHT project, you'll need to create a n
 2. Create a `config.json` file and specify the values as defined below.
 3. Add reference to your configuration folder in `src/config/config-factory.ts`.
 
-Property | Type | Description
+ Property | Type | Description
 -- | -- | --
 `domains` | Array | Controls the list of instances which the user can login to
 `domains.friendly` | string | Friendly name for the instance (eg. "Migori")
@@ -60,6 +60,7 @@ property_name | string | Defines how the value will be stored on the object.
 type | ConfigPropertyType | Defines the validation rules, and auto-formatting rules. See [ConfigPropertyType](#ConfigPropertyType).
 parameter | any | See [ConfigPropertyType](#ConfigPropertyType).
 required | boolean | True if the object should not exist without this information.
+unique | 'all' or 'parent' | Dismissable warnings are flagged if a place already exists with this attribute's value. Values can be `all` (warns if any place has the same value) or `parent` (warns if a place with the same parent has the same value). This can only be defined on a `place_properties` or `contact_properties`.
 
 #### ConfigPropertyType
 The `ConfigPropertyType` defines a property's validation rules and auto-formatting rules. The optional `parameter` information alters the behavior of the `ConfigPropertyType`.
@@ -119,6 +120,12 @@ This tool is available via Docker by running `docker compose up`. Set the [Envir
 
 Create an environment file by `cp env.example .env`. Change `INTERFACE` to `127.0.0.1` and otherwise see [Environment Variables](#environment-variables) for more info.
 
+If you don't have redis running locally, you can start it with:
+
+```shell
+docker compose -f docker-compose.redis.yml up -d
+```
+
 Then run:
 
 ```
@@ -153,15 +160,15 @@ The `env.example` file has example values.  Here's what they mean:
 Variable | Description | Sample
 -- | -- | --
 `CONFIG_NAME` | Name of the configuration to use | `chis-ke`
-`EXTERNAL_PORT` | Port to use in docker compose when starting the web server | `3000`
-`PORT` | For localhost development environment | `3000`
+`EXTERNAL_PORT` | Port to use in docker compose when starting the web server | `3500`
+`PORT` | For localhost development environment | `3500`
 `COOKIE_PRIVATE_KEY` | A string used to two-way encryption of main app cookies. Production values need to be a secret. Suggest `uuidgen` to generate | `589a7f23-5bb2-4b77-ac78-f202b9b6d5e3`
 `WORKER_PRIVATE_KEY` | A string used to two-way encryption sensitive data passed to workers. Recommend to be different from `COOKIE_PRIVATE_KEY`. Production values need to be a secret. Suggest `uuidgen` to generate | `2b57pd5e-f272-og90-8u97-89a7589a7f23`
 `INTERFACE` | Interface to bind to. Leave as '0.0.0.0' for prod, suggest '127.0.0.1' for development | `127.0.0.1`
 `CHT_DEV_URL_PORT` | CHT instance when in `NODE_ENV===dev`. Needs URL and port | `192-168-1-26.local-ip.medicmobile.org:10463`
-`CHT_DEV_HTTP` |  'false' for http  'true' for https | `false`
+`CHT_DEV_HTTP` |  'true' for http  'false' for https | `false`
 `REDIS_HOST` | Redis server hostname use 'redis' for docker | `redis`
-`REDIS_PORT` | Redis server port | `6378`
+`REDIS_PORT` | Redis server port | `6379`
 `CHT_USER_MANAGEMENT_IMAGE` | docker image for cht-user-management service (local development), leave empty to use published one | `cht-user-management:local `
 `CHT_USER_MANAGEMENT_WORKER_IMAGE` | docker image for cht-user-management service (local development), leave empty to use published one | `cht-user-management-worker:local`
 

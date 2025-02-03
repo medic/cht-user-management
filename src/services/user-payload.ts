@@ -19,8 +19,8 @@ export class UserPayload {
     this.place = placeId;
     this.contact = contactId;
     this.fullname = place.contact.name;
-    this.phone = place.contact.properties.phone; // best guess
     this.email = place.contact.properties.email; // best guess
+    this.phone = place.contact.properties.phone?.formatted; // best guess
   }
 
   public regeneratePassword(): void {

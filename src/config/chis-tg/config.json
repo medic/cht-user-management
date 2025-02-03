@@ -151,7 +151,8 @@
           "property_name": "name",
           "type": "generated",
           "parameter": "{{ contact.last_name }} {{ contact.first_name }} ({{ lineage.sanitary_training }})",
-          "required": false
+          "required": false,
+          "unique": "parent"
         }
       ],
       "contact_properties": [

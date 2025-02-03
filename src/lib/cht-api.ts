@@ -1,8 +1,9 @@
 import _ from 'lodash';
+import { AxiosInstance } from 'axios';
 import ChtSession from './cht-session';
 import { Config, ContactType } from '../config';
+import { DateTime } from 'luxon';
 import { UserPayload } from '../services/user-payload';
-import { AxiosInstance } from 'axios';
 
 export type PlacePayload = {
   name: string;
@@ -18,15 +19,19 @@ export type PlacePayload = {
   [key: string]: any;
 };
 
-export type RemotePlace = {
-  id: string;
-  name: string;
-  lineage: string[];
-  ambiguities?: RemotePlace[];
+export type CreatedPlaceResult = {
+  placeId: string;
+  contactId?: string;
+};
 
-  // sadly, sometimes invalid or uncreated objects "pretend" to be remote
-  // should reconsider this naming
-  type: 'remote' | 'local' | 'invalid';
+export type CouchDoc = {
+  _id: string;
+};
+
+export type UserInfo = {
+  username: string;
+  place?: CouchDoc[] | CouchDoc | string[] | string;
+  roles?: string[];
 };
 
 export class ChtApi {
@@ -38,47 +43,30 @@ export class ChtApi {
     this.axiosInstance = session.axiosInstance;
   }
 
-  // workaround https://github.com/medic/cht-core/issues/8674
-  updateContactParent = async (parentId: string): Promise<string> => {
-    const parentDoc = await this.getDoc(parentId);
-    const contactId = parentDoc?.contact?._id;
-    if (!contactId) {
-      throw Error('cannot find id of contact');
-    }
-
-    const contactDoc = await this.getDoc(contactId);
-    if (!contactDoc || !parentDoc) {
-      throw Error('cannot find parent or contact docs');
-    }
-
-    contactDoc.parent = minify(parentDoc);
-
-    const putUrl = `medic/${contactId}`;
-    console.log('axios.put', putUrl);
-    const putResp = await this.axiosInstance.put(putUrl, contactDoc);
-    if (putResp.status !== 201) {
-      throw new Error(putResp.data);
-    }
-
-    return contactDoc._id;
-  };
-
-  createPlace = async (payload: PlacePayload): Promise<string> => {
+  async createPlace(payload: PlacePayload): Promise<CreatedPlaceResult> {
     const url = `api/v1/places`;
     console.log('axios.post', url);
     const resp = await this.axiosInstance.post(url, payload);
-    return resp.data.id;
-  };
+    return {
+      placeId: resp.data.id,
+      contactId: resp.data.contact?.id,
+    };
+  }
 
   // because there is no PUT for /api/v1/places
-  createContact = async (payload: PlacePayload): Promise<string> => {
+  async createContact(payload: PlacePayload): Promise<string> {
+    const payloadWithPlace = {
+      ...payload.contact,
+      place: payload._id,
+    };
+
     const url = `api/v1/people`;
     console.log('axios.post', url);
-    const resp = await this.axiosInstance.post(url, payload.contact);
+    const resp = await this.axiosInstance.post(url, payloadWithPlace);
     return resp.data.id;
-  };
+  }
 
-  updatePlace = async (payload: PlacePayload, contactId: string): Promise<any> => {
+  async updatePlace(payload: PlacePayload, contactId: string): Promise<any> {
     const doc: any = await this.getDoc(payload._id);
 
     const payloadClone:any = _.cloneDeep(payload);
@@ -101,9 +89,9 @@ export class ChtApi {
     }
 
     return doc;
-  };
+  }
 
-  deleteDoc = async (docId: string): Promise<void> => {
+  async deleteDoc(docId: string): Promise<void> {
     const doc: any = await this.getDoc(docId);
 
     const deleteContactUrl = `medic/${doc._id}?rev=${doc._rev}`;
@@ -112,49 +100,44 @@ export class ChtApi {
     if (!resp.data.ok) {
       throw Error('response from chtApi.deleteDoc was not OK');
     }
-  };
+  }
 
-  disableUsersWithPlace = async (placeId: string): Promise<string[]> => {
-    const usersToDisable: string[] = await this.getUsersAtPlace(placeId);
-    for (const userDocId of usersToDisable) {
-      await this.disableUser(userDocId);
-    }
-    return usersToDisable;
-  };
-
-  disableUser = async (docId: string): Promise<void> => {
-    const username = docId.substring('org.couchdb.user:'.length);
+  async disableUser(username: string): Promise<void> {
     const url = `api/v1/users/${username}`;
     console.log('axios.delete', url);
     return this.axiosInstance.delete(url);
-  };
+  }
 
-  deactivateUsersWithPlace = async (placeId: string): Promise<string[]> => {
-    const usersToDeactivate: string[] = await this.getUsersAtPlace(placeId);
-    for (const userDocId of usersToDeactivate) {
-      await this.deactivateUser(userDocId);
-    }
-    return usersToDeactivate;
-  };
-
-  deactivateUser = async (docId: string): Promise<void> => {
-    const username = docId.substring('org.couchdb.user:'.length);
-    const url = `api/v1/users/${username}`;
+  async updateUser(userInfo: UserInfo): Promise<void> {
+    const url = `api/v1/users/${userInfo.username}`;
     console.log('axios.post', url);
-    const deactivationPayload = { roles: ['deactivated' ]};
-    return this.axiosInstance.post(url, deactivationPayload);
-  };
+    return this.axiosInstance.post(url, userInfo);
+  }
 
-  createUser = async (user: UserPayload): Promise<void> => {
+  async countContactsUnderPlace(docId: string): Promise<number> {
+    const url = `medic/_design/medic/_view/contacts_by_depth`;
+    console.log('axios.get', url);
+    const resp = await this.axiosInstance.get(url, {
+      params: {
+        startkey: JSON.stringify([docId, 0]),
+        endkey: JSON.stringify([docId, 20]),
+        include_docs: false,
+      },
+    });
+
+    return resp.data?.rows?.length || 0;
+  }
+
+  async createUser(user: UserPayload): Promise<void> {
     const url = `api/v1/users`;
     console.log('axios.post', url);
     const axiosRequestionConfig = {
       'axios-retry': { retries: 0 }, // upload-manager handles retries for this
     };
     await this.axiosInstance.post(url, user, axiosRequestionConfig);
-  };
+  }
 
-  getParentAndSibling = async (parentId: string, contactType: ContactType): Promise<{ parent: any; sibling: any }> => {
+  async getParentAndSibling(parentId: string, contactType: ContactType): Promise<{ parent: any; sibling: any }> {
     const url = `medic/_design/medic/_view/contacts_by_depth`;
     console.log('axios.get', url);
     const resp = await this.axiosInstance.get(url, {
@@ -171,67 +154,64 @@ export class ChtApi {
     const parent = docs.find((d: any) => d.contact_type === parentType);
     const sibling = docs.find((d: any) => d.contact_type === contactType.name);
     return { parent, sibling };
-  };
+  }
 
-  getPlacesWithType = async (placeType: string)
-    : Promise<RemotePlace[]> => {
-    const url = `medic/_design/medic-client/_view/contacts_by_type_freetext`;
+  async getPlacesWithType(placeType: string): Promise<any[]> {
+    const url = `medic/_design/medic-client/_view/contacts_by_type`;
     const params = {
-      startkey: JSON.stringify([ placeType, 'name:']),
-      endkey: JSON.stringify([ placeType, 'name:\ufff0']),
+      key: JSON.stringify([placeType]),
       include_docs: true,
     };
     console.log('axios.get', url, params);
     const resp = await this.axiosInstance.get(url, { params });
+    return resp.data.rows.map((row: any) => row.doc);
+  }
 
-    return resp.data.rows
-      .map((row: any): RemotePlace => {
-        const nameData = row.key[1];
-        return {
-          id: row.id,
-          name: nameData.substring('name:'.length),
-          lineage: extractLineage(row.doc),
-          type: 'remote',
-        };
-      });
-  };
-
-  getDoc = async (id: string): Promise<any> => {
+  async getDoc(id: string): Promise<any> {
     const url = `medic/${id}`;
     console.log('axios.get', url);
     const resp = await this.axiosInstance.get(url);
     return resp.data;
-  };
+  }
+  
+  async getUsersAtPlace(placeId: string): Promise<UserInfo[]> {
+    const url = `api/v2/users?facility_id=${placeId}`;
+    console.log('axios.get', url);
+    const resp = await this.axiosInstance.get(url);
+    return resp.data?.map((doc: any): UserInfo => ({
+      username: doc.username,
+      place: doc.place,
+    }));
+  }
 
-  private async getUsersAtPlace(placeId: string): Promise<string[]> {
-    const url = `_users/_find`;
+  async lastSyncAtPlace(placeId: string): Promise<DateTime> {
+    const userIds = await this.getUsersAtPlace(placeId);
+    const usernames = userIds.map(userId => userId.username);
+    const result = await this.getLastSyncForUsers(usernames);
+    return result || DateTime.invalid('unknown');
+  }
+
+  private getLastSyncForUsers = async (usernames: string[]): Promise<DateTime | undefined> => {
+    if (!usernames?.length) {
+      return undefined;
+    }
+
+    const url = '/medic-logs/_all_docs';
+    const keys = usernames.map(username => `connected-user-${username}`);
     const payload = {
-      selector: {
-        facility_id: placeId,
-      },
+      keys,
+      include_docs: true,
     };
 
     console.log('axios.post', url);
     const resp = await this.axiosInstance.post(url, payload);
-    return resp.data?.docs?.map((d: any) => d._id);
-  }
-}
+    const timestamps = resp.data?.rows?.map((row: any) => row.doc?.timestamp);
 
-function minify(doc: any): any {
-  if (!doc) {
-    return;
-  }
+    if (!timestamps?.length) {
+      return undefined;
+    }
 
-  return {
-    _id: doc._id,
-    parent: minify(doc.parent),
+    const maxTimestamp = Math.max(timestamps);
+    return DateTime.fromMillis(maxTimestamp);
   };
-}
-
-function extractLineage(doc: any): string[] {
-  if (doc?.parent?._id) {
-    return [doc.parent._id, ...extractLineage(doc.parent)];
-  }
-
-  return [];
 }

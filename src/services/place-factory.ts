@@ -1,20 +1,18 @@
 import { parse } from 'csv';
 
 import { ChtApi } from '../lib/cht-api';
-import { Config, ContactType } from '../config';
-import Place from './place';
+import { Config, ContactProperty, ContactType } from '../config';
+import Place, { FormattedPropertyCollection } from './place';
 import SessionCache from './session-cache';
 import RemotePlaceResolver from '../lib/remote-place-resolver';
+import { HierarchyPropertyValue, ContactPropertyValue, IPropertyValue } from '../property-value';
+import WarningSystem from '../warnings';
 
 export default class PlaceFactory {
   public static async createFromCsv(csvBuffer: Buffer, contactType: ContactType, sessionCache: SessionCache, chtApi: ChtApi)
     : Promise<Place[]> {
     const places = await PlaceFactory.loadPlacesFromCsv(csvBuffer, contactType);
-    const validateAll = () => places.forEach(p => p.validate());
-
-    await RemotePlaceResolver.resolve(places, sessionCache, chtApi, { fuzz: true });
-    validateAll();
-    sessionCache.savePlaces(...places);
+    await PlaceFactory.finalizePlaces(places, sessionCache, chtApi, contactType);
     return places;
   }
 
@@ -22,10 +20,7 @@ export default class PlaceFactory {
     : Promise<Place> => {
     const place = new Place(contactType);
     place.setPropertiesFromFormData(formData, 'hierarchy_');
-
-    await RemotePlaceResolver.resolveOne(place, sessionCache, chtApi, { fuzz: true });
-    place.validate();
-    sessionCache.savePlaces(place);
+    await PlaceFactory.finalizePlaces([place], sessionCache, chtApi, contactType);
     return place;
   };
 
@@ -35,13 +30,18 @@ export default class PlaceFactory {
     if (!place || place.isCreated) {
       throw new Error('unknown place or place has already been created');
     }
-
     place.setPropertiesFromFormData(formData, 'hierarchy_');
-    await RemotePlaceResolver.resolveOne(place, sessionCache, chtApi, { fuzz: true });
-    place.validate();
 
+    await PlaceFactory.finalizePlaces([place], sessionCache, chtApi, place.type);
     return place;
   };
+
+  private static async finalizePlaces(places: Place[], sessionCache: SessionCache, chtApi: ChtApi, contactType: ContactType) {
+    await RemotePlaceResolver.resolve(places, sessionCache, chtApi, { fuzz: true });
+    places.forEach(place => place.validate());
+    sessionCache.savePlaces(...places);
+    await WarningSystem.setWarnings(contactType, chtApi, sessionCache);
+  }
 
   private static async loadPlacesFromCsv(csvBuffer: Buffer, contactType: ContactType) : Promise<Place[]> {
     const csvColumns: string[] = [];
@@ -58,26 +58,38 @@ export default class PlaceFactory {
         csvColumns.push(...row);
       } else {
         const place = new Place(contactType);
+        const lookupPropertyAndCreateValue = (
+          writeTo: FormattedPropertyCollection,
+          contactProperty: ContactProperty,
+          createFromValue: (value: string) => IPropertyValue
+        ) => {
+          const value = row[csvColumns.indexOf(contactProperty.friendly_name)] || '';
+          const validatedProperty = createFromValue(value);
+          writeTo[contactProperty.property_name] = validatedProperty;
+        };
+
+        for (const hierarchyConstraint of Config.getHierarchyWithReplacement(contactType)) {
+          const createFromValue = (value: string) => new HierarchyPropertyValue(place, hierarchyConstraint, 'hierarchy_', value);
+          lookupPropertyAndCreateValue(place.hierarchyProperties, hierarchyConstraint, createFromValue);
+        }
+
+        // place properties must be read after hierarchy constraints since validation logic is dependent on isReplacement
         for (const placeProperty of contactType.place_properties) {
-          place.properties[placeProperty.property_name] = row[csvColumns.indexOf(placeProperty.friendly_name)];
+          const createFromValue = (value: string) => new ContactPropertyValue(place, placeProperty, 'place_', value);
+          lookupPropertyAndCreateValue(place.properties, placeProperty, createFromValue);
         }
 
         for (const contactProperty of contactType.contact_properties) {
-          place.contact.properties[contactProperty.property_name] = row[csvColumns.indexOf(contactProperty.friendly_name)];
-        }
-
-        for (const hierarchyConstraint of Config.getHierarchyWithReplacement(contactType)) {
-          const columnIndex = csvColumns.indexOf(hierarchyConstraint.friendly_name);
-          place.hierarchyProperties[hierarchyConstraint.property_name] = row[columnIndex];
+          const createFromValue = (value: string) => new ContactPropertyValue(place, contactProperty, 'contact_', value);
+          lookupPropertyAndCreateValue(place.contact.properties, contactProperty, createFromValue);
         }
 
         if (Config.hasMultipleRoles(contactType)) {
           const userRoleProperty = Config.getUserRoleConfig(contactType);
-          place.userRoleProperties[userRoleProperty.property_name] = row[
-            csvColumns.indexOf(userRoleProperty.friendly_name)
-          ];
+          const createFromValue = (value: string) => new ContactPropertyValue(place, userRoleProperty, 'user_', value);
+          lookupPropertyAndCreateValue(place.userRoleProperties, userRoleProperty, createFromValue);
         }
-        
+
         places.push(place);
       }
       count++;
