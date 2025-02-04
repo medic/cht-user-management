@@ -16,11 +16,13 @@ hx-target="this" hx-swap="outerHTML">
       {% endif %}
     {% endfor %}
 
-    {% for prop in contactType.place_properties %}
-      {%
-        include "components/contact_type_property.html" prefix="place_" prop=prop place_type=contactType.name
-      %}
-    {% endfor %}
+    {%if op != 'replace'%}
+      {% for prop in contactType.place_properties %}
+        {%
+          include "components/contact_type_property.html" prefix="place_" prop=prop place_type=contactType.name
+        %}
+      {% endfor %}
+    {%endif%}
   </section>
   <section class="section is-small">
     {% for prop in contactType.contact_properties %}
