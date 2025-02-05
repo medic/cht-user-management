@@ -1,7 +1,7 @@
 import { PlaceUploadState } from './place';
 import SessionCache from './session-cache';
 
-const PlaceFilterCookieValues = ['staged', 'invalid', 'success', 'failure', undefined] as const;
+const PlaceFilterCookieValues = ['staged', 'invalid', 'success', 'failure', 'warning', undefined] as const;
 export type DirectiveFilter = typeof PlaceFilterCookieValues[number]; 
 
 export default class DirectiveModel {
@@ -12,6 +12,7 @@ export default class DirectiveModel {
   public readonly failureCount: number;
   public readonly inProgressCount: number;
   public readonly validationErrorCount: number;
+  public readonly warningCount: number;
   public readonly totalCount: number;
   public readonly hiddenCount: number;
 
@@ -21,6 +22,7 @@ export default class DirectiveModel {
     this.successCount = sessionCache.getPlaces({ filter: 'success' }).length;
     this.failureCount = sessionCache.getPlaces({ filter: 'failure' }).length;
     this.validationErrorCount = sessionCache.getPlaces({ filter: 'invalid' }).length;
+    this.warningCount = sessionCache.getPlaces({ filter: 'warning' }).length;
 
     const inProgressStates = [PlaceUploadState.IN_PROGRESS, PlaceUploadState.SCHEDULED];
     this.inProgressCount = sessionCache.getPlaces().filter(r => inProgressStates.includes(r.state)).length;

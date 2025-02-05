@@ -7,6 +7,7 @@ import SessionCache from '../services/session-cache';
 import RemotePlaceResolver from '../lib/remote-place-resolver';
 import { UploadManager } from '../services/upload-manager';
 import RemotePlaceCache from '../lib/remote-place-cache';
+import WarningSystem from '../warnings';
 
 export default async function addPlace(fastify: FastifyInstance) {
   fastify.get('/add-place', async (req, resp) => {
@@ -37,8 +38,8 @@ export default async function addPlace(fastify: FastifyInstance) {
     return resp.view('src/liquid/components/contact_type_property.html', {
       data: req.body,
       include: {
-        prefix: prefix,
-        place_type: place_type,
+        prefix,
+        place_type,
         prop: contactType
       }
     });
@@ -77,7 +78,6 @@ export default async function addPlace(fastify: FastifyInstance) {
 
       // back to places list
       resp.header('HX-Redirect', `/`);
-      resp.header('HX-Redirect', '/');
       return;
     }
 
@@ -137,7 +137,8 @@ export default async function addPlace(fastify: FastifyInstance) {
     RemotePlaceCache.clear(chtApi, place.type.name);
     await RemotePlaceResolver.resolveOne(place, sessionCache, chtApi, { fuzz: true });
     place.validate();
-    
+    await WarningSystem.setWarnings(place.type, chtApi, sessionCache);
+
     fastify.uploadManager.triggerRefresh(place.id);
   });
 
@@ -151,13 +152,19 @@ export default async function addPlace(fastify: FastifyInstance) {
 
     const chtApi = new ChtApi(req.chtSession);
     const uploadManager: UploadManager = fastify.uploadManager;
-    uploadManager.doUpload([place], chtApi);
+    uploadManager.doUpload([place], chtApi, true);
   });
 
   fastify.post('/place/remove/:id', async (req) => {
     const { id } = req.params as any;
     const sessionCache: SessionCache = req.sessionCache;
+    const place = sessionCache.getPlace(id);
     sessionCache.removePlace(id);
+    if (place) {
+      const chtApi = new ChtApi(req.chtSession);
+      await WarningSystem.setWarnings(place.type, chtApi, sessionCache);
+    }
+
     fastify.uploadManager.triggerRefresh(id);
   });
 }

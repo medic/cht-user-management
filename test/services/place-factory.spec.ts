@@ -36,7 +36,7 @@ describe('services/place-factory.ts', () => {
     const { parentDoc, sessionCache, fakeFormData, contactType, chtApi } = mockScenario();
     const secondParent = _.cloneDeep(parentDoc);
     secondParent._id = 'second-id';
-    chtApi.getPlacesWithType.resolves([parentDoc, secondParent]);
+    chtApi.getPlacesWithType.onSecondCall().resolves([parentDoc, secondParent]);
 
     const place: Place = await PlaceFactory.createOne(fakeFormData, contactType, sessionCache, chtApi);
     expectInvalidProperties(place.validationErrors, ['hierarchy_PARENT'], 'multiple');
@@ -88,8 +88,9 @@ describe('services/place-factory.ts', () => {
     };
 
     chtApi.getPlacesWithType
-      .resolves([parentDoc])
-      .onSecondCall().resolves([toReplace]);
+      .onFirstCall().resolves([])
+      .onSecondCall().resolves([parentDoc])
+      .onThirdCall().resolves([toReplace]);
 
     const place: Place = await PlaceFactory.createOne(fakeFormData, contactType, sessionCache, chtApi);
     expect(place.validationErrors).to.be.empty;
@@ -100,11 +101,6 @@ describe('services/place-factory.ts', () => {
   it('invalid when name doesnt match any remote place', async () => {
     const { parentDoc, sessionCache, contactType, fakeFormData, chtApi } = mockScenario();
     parentDoc.name = 'foobar';
-    
-    chtApi.getPlacesWithType
-      .resolves([parentDoc])
-      .onSecondCall().resolves([]);
-
     const place: Place = await PlaceFactory.createOne(fakeFormData, contactType, sessionCache, chtApi);
     expectInvalidProperties(place.validationErrors, ['hierarchy_PARENT'], 'Cannot find');
   });
@@ -121,10 +117,11 @@ describe('services/place-factory.ts', () => {
     parentDoc.name = 'Chepalungu CHU';
 
     chtApi.getPlacesWithType
-      .resolves([parentDoc])
-      .onSecondCall().resolves([toReplace]);
+      .onFirstCall().resolves([])
+      .onSecondCall().resolves([parentDoc])
+      .onThirdCall().resolves([toReplace]);
 
-    const singleCsvBuffer = fs.readFileSync('./test/single.csv');
+    const singleCsvBuffer = fs.readFileSync('./test/single-replace.csv');
     const chpType = Config.getContactType('d_community_health_volunteer_area');
     
     const places: Place[] = await PlaceFactory.createFromCsv(singleCsvBuffer, chpType, sessionCache, chtApi);
@@ -145,25 +142,42 @@ describe('services/place-factory.ts', () => {
           name: {
             formatted: 'Bob',
             original: 'bob',
-            propertyNameWithPrefix: 'place_name',
+            propertyNameWithPrefix: 'place_replacement',
           },
           lineage: ['parent-id'],
+          placeType: 'd_community_health_volunteer_area',
           type: 'remote',
+          uniquePlaceValues: {
+            name: {
+              original: 'bob',
+              formatted: 'bob',
+              propertyNameWithPrefix: 'place_name',
+            }
+          },
         },
         {
           id: 'parent-id',
           name: {
             formatted: 'Chepalungu',
             original: parentDoc.name,
-            propertyNameWithPrefix: 'place_name',
+            propertyNameWithPrefix: 'place_CHU',
           },
           type: 'remote',
           lineage: [],
+          placeType: 'c_community_health_unit',
+          uniquePlaceValues: {
+            name: {
+              original: 'Chepalungu CHU',
+              formatted: 'Chepalungu',
+              propertyNameWithPrefix: 'place_name',
+            }
+          },
         },
       ],
       validationErrors: {},
       userRoleProperties: {},
       state: 'staged',
+      warnings: [],
     });
   });
 
@@ -183,8 +197,9 @@ describe('services/place-factory.ts', () => {
     };
 
     chtApi.getPlacesWithType
-      .resolves([parentDoc, ambiguous])
-      .onSecondCall().resolves([toReplace]);
+      .onFirstCall().resolves([])
+      .onSecondCall().resolves([parentDoc, ambiguous])
+      .onThirdCall().resolves([toReplace]);
 
     const place: Place = await PlaceFactory.createOne(fakeFormData, contactType, sessionCache, chtApi);
     expect(place.validationErrors).to.be.empty;
@@ -214,8 +229,9 @@ describe('services/place-factory.ts', () => {
     };
 
     chtApi.getPlacesWithType
-      .resolves([greatParent, ambiguous])
-      .onSecondCall().resolves([parentDoc]);
+      .onFirstCall().resolves([greatParent, ambiguous])
+      .onSecondCall().resolves([parentDoc, ])
+      .onThirdCall().resolves([]);
 
     const place: Place = await PlaceFactory.createOne(fakeFormData, contactType, sessionCache, chtApi);
     expect(place.validationErrors).to.be.empty;
@@ -240,8 +256,9 @@ describe('services/place-factory.ts', () => {
     ambiguous.parent = { _id: 'not-grandpa' };
 
     chtApi.getPlacesWithType
-      .resolves([grandParent])
-      .onSecondCall().resolves([parentDoc, ambiguous]);
+      .onFirstCall().resolves([grandParent])
+      .onSecondCall().resolves([parentDoc, ambiguous])
+      .onThirdCall().resolves([]);
 
     const place: Place = await PlaceFactory.createOne(fakeFormData, contactType, sessionCache, chtApi);
     expect(place.validationErrors).to.be.empty;
@@ -260,8 +277,9 @@ describe('services/place-factory.ts', () => {
     fakeFormData.hierarchy_GRANDPARENT = 'no match';
 
     chtApi.getPlacesWithType
-      .resolves([grandParent])
-      .onSecondCall().resolves([parentDoc]);
+      .onFirstCall().resolves([grandParent])
+      .onSecondCall().resolves([parentDoc])
+      .onThirdCall().resolves([]);
 
     const place: Place = await PlaceFactory.createOne(fakeFormData, contactType, sessionCache, chtApi);
     expect(place.resolvedHierarchy[2]).to.eq(RemotePlaceResolver.NoResult);
@@ -279,8 +297,9 @@ describe('services/place-factory.ts', () => {
     fakeFormData.hierarchy_GRANDPARENT = 'no match';
 
     chtApi.getPlacesWithType
-      .resolves([grandParent])
-      .onSecondCall().resolves([parentDoc]);
+      .onFirstCall().resolves([grandParent])
+      .onSecondCall().resolves([parentDoc])
+      .onThirdCall().resolves([]);
 
     const place: Place = await PlaceFactory.createOne(fakeFormData, contactType, sessionCache, chtApi);
     expectInvalidProperties(place.validationErrors, ['hierarchy_PARENT', 'hierarchy_GRANDPARENT'], 'Cannot find');
@@ -313,8 +332,9 @@ describe('services/place-factory.ts', () => {
     ambiguous.parent = { _id: 'not-grandpa', parent: { _id: 'not-grandpa' } };
 
     chtApi.getPlacesWithType
-      .resolves([greatParent])
-      .onSecondCall().resolves([parentDoc, ambiguous]);
+      .onFirstCall().resolves([greatParent])
+      .onSecondCall().resolves([parentDoc, ambiguous])
+      .onThirdCall().resolves([]);
 
     const place: Place = await PlaceFactory.createOne(fakeFormData, contactType, sessionCache, chtApi);
     expect(place.validationErrors).to.be.empty;
@@ -337,12 +357,12 @@ describe('services/place-factory.ts', () => {
     };
 
     chtApi.getPlacesWithType
-      .resolves([parentDoc])
-      .onSecondCall()
-      .resolves([toReplace, ambiguous]);
+      .onFirstCall().resolves([])
+      .onSecondCall().resolves([parentDoc])
+      .onThirdCall().resolves([toReplace, ambiguous]);
 
     const place: Place = await PlaceFactory.createOne(fakeFormData, contactType, sessionCache, chtApi);
-    expect(chtApi.getPlacesWithType.args).to.deep.eq([['parent'], ['contacttype-name']]);
+    expect(chtApi.getPlacesWithType.args).to.deep.eq([['grandparent'], ['parent'], ['contacttype-name']]);
     expectInvalidProperties(place.validationErrors, ['hierarchy_replacement'], 'multiple');
     expect(place.resolvedHierarchy[1]?.id).to.eq('parent-id');
     expect(place.resolvedHierarchy[0]?.id).to.eq('multiple');
@@ -358,8 +378,9 @@ describe('services/place-factory.ts', () => {
     };
     fakeFormData.hierarchy_replacement = toReplace.name;
     chtApi.getPlacesWithType
-      .resolves([parentDoc])
-      .onSecondCall().resolves([toReplace]);
+      .onFirstCall().resolves([])
+      .onSecondCall().resolves([parentDoc])
+      .onThirdCall().resolves([toReplace]);
 
     const place: Place = await PlaceFactory.createOne(fakeFormData, contactType, sessionCache, chtApi);
     expectInvalidProperties(place.validationErrors, ['hierarchy_replacement'], 'Cannot find');
@@ -402,8 +423,9 @@ describe('services/place-factory.ts', () => {
     };
 
     chtApi.getPlacesWithType
-      .resolves([parentDoc])
-      .onSecondCall().resolves([toReplace, otherPlace]);
+      .onFirstCall().resolves([])
+      .onSecondCall().resolves([parentDoc])
+      .onThirdCall().resolves([toReplace, otherPlace]);
 
     const place: Place = await PlaceFactory.createOne(fakeFormData, contactType, sessionCache, chtApi);
     expectInvalidProperties(place.validationErrors, ['hierarchy_replacement'], 'Cannot find');
@@ -428,8 +450,9 @@ describe('services/place-factory.ts', () => {
     };
 
     chtApi.getPlacesWithType
-      .resolves([parentDoc])
-      .onSecondCall().resolves([toReplace]);
+      .onFirstCall().resolves([])
+      .onSecondCall().resolves([parentDoc])
+      .onThirdCall().resolves([toReplace]);
 
     const place: Place = await PlaceFactory.createOne(fakeFormData, contactType, sessionCache, chtApi);
     expect(place.validationErrors).to.be.empty;
@@ -500,9 +523,11 @@ function mockScenario() {
   const sessionCache = new SessionCache();
   const chtApi = {
     chtSession: mockChtSession(),
-    getPlacesWithType: sinon.stub().resolves([parentDoc]),
-    createPlace: sinon.stub().resolves('created-place-id'),
-    updateContactParent: sinon.stub().resolves('created-contact-id'),
+    getPlacesWithType: sinon.stub()
+      .onFirstCall().resolves([])
+      .onSecondCall().resolves([parentDoc])
+      .onThirdCall().resolves([]),
+    createPlace: sinon.stub().resolves({ placeId: 'created-place-id', contactId: 'created-contact-id' }),
     createUser: sinon.stub().resolves(),
   };
   const fakeFormData:any = {
