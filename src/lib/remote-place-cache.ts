@@ -95,7 +95,7 @@ export default class RemotePlaceCache {
   private static convertContactToRemotePlace(doc: any, uniqueKeyProperties: ContactProperty[], hierarchyLevel: HierarchyConstraint): RemotePlace {
     const uniqueKeyStringValues: FormattedPropertyCollection = {};
     for (const property of uniqueKeyProperties) {
-      const value = doc[property.property_name].toString();
+      const value = doc[property.property_name]?.toString();
       if (value) {
         uniqueKeyStringValues[property.property_name] = new RemotePlacePropertyValue(value, property);
       }
