@@ -30,6 +30,8 @@ const mockUserFacilityDoc = (facilityId: string = 'parent-id', roles:string[] = 
   }
 });
 
+const USER_MANAGER_ROLE = 'user_manager';
+
 let mockAxios;
 
 describe('lib/cht-session.ts', () => {
@@ -55,6 +57,7 @@ describe('lib/cht-session.ts', () => {
 
   describe('create', () => {
     it('nominal', async () => {
+      mockAxios.get.resolves(mockUserFacilityDoc('facility-id', [USER_MANAGER_ROLE]));
       const session = await ChtSession.default.create(mockAuthInfo, 'user', 'pwd');
       expect(mockAxios.post.args[0][0]).to.be.a('string');
       expect(session.sessionToken).to.eq('AuthSession=123');
@@ -73,28 +76,38 @@ describe('lib/cht-session.ts', () => {
     });
 
     it('throw if user-settings has no facility_id', async () => {
-      mockAxios.get.resolves(mockUserFacilityDoc('', []));
+      mockAxios.get.resolves(mockUserFacilityDoc('', [USER_MANAGER_ROLE]));
       await expect(ChtSession.default.create(mockAuthInfo, 'user', 'pwd')).to.eventually.be.rejectedWith('does not have a facility_id');
     });
 
+    it('throw if user does not have required role', async () => {
+      const user = 'user';
+      const errorMessage = `User ${user} role does not have the required permissions`;
+      mockAxios.get.resolves(mockUserFacilityDoc('facility-id', []));
+      const request = ChtSession.default.create(mockAuthInfo, user, 'pwd');
+      await expect(request).to.eventually.be.rejectedWith(errorMessage);
+    });
+
     it('throw if cht-core is 4.6.5', async () => {
+      mockAxios.get.resolves(mockUserFacilityDoc('facility-id', [USER_MANAGER_ROLE]));
       mockAxios.get.onSecondCall().resolves({ data: { version: { app: '4.6.5' } } });
       await expect(ChtSession.default.create(mockAuthInfo, 'user', 'pwd')).to.eventually.be.rejectedWith('CHT Core Version must be');
     });
   });
 
   it('createFromDataString', async () => {
+    mockAxios.get.resolves(mockUserFacilityDoc('facility-id', ['admin']));
     const session = await ChtSession.default.create(mockAuthInfo, 'user', 'pwd');
     const data = JSON.stringify(session);
     const actual = ChtSession.default.createFromDataString(data);
     expect(actual).to.deep.eq(session);
-    expect(session.isAdmin).to.be.false;
+    expect(session.isAdmin).to.be.true;
   });
 
   describe('isPlaceAuthorized', () => {
     const scenarios = [
-      { roles: [], facilityId: 'parent-id', isExpected: true },
-      { roles: [], facilityId: 'dne', isExpected: false },
+      { roles: [ USER_MANAGER_ROLE ], facilityId: 'parent-id', isExpected: true },
+      { roles: [ USER_MANAGER_ROLE ], facilityId: 'dne', isExpected: false },
 
       { roles: ['admin'], facilityId: 'parent-id', isExpected: true },
       { roles: ['admin'], facilityId: 'dne', isExpected: true },

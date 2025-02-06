@@ -2,7 +2,7 @@
   <!-- want to use tiles, they are super weird with forms in them -->
   <div class="box" style="margin: 20px; padding: 50px;">
     {% if errors %}
-      <span class='tag is-warning is-overlay'>Login Failed. Please Try Again</span>
+      <span class='tag is-warning is-overlay'>{{ errorMessage }}</span>
     {% endif %}
 
     <div class="field">

@@ -36,9 +36,11 @@ export default async function authentication(fastify: FastifyInstance) {
       chtSession = await ChtSession.create(authInfo, username, password);
     } catch (e: any) {
       console.error(`Login error: ${e}`);
+      const errorMessage = e.message?.includes('permissions') ? e.message : 'Login Failed. Please Try Again';
       return resp.view('src/liquid/auth/authentication_form.html', {
         domains: Config.getDomains(),
         errors: true,
+        errorMessage
       });
     }
 
