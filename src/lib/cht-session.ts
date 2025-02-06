@@ -108,9 +108,9 @@ export default class ChtSession {
   }
 
   private static validateUserRole(userDoc: any, username: string): void {
-    const hasRequiredRole = (roles: string[]): boolean => _.intersection(AUTHORIZED_ROLES, roles).length > 0;
+    const hasAuthorizedRole = (roles: string[]): boolean => _.intersection(AUTHORIZED_ROLES, roles).length > 0;
 
-    if (!hasRequiredRole(userDoc?.roles || [])) {
+    if (!hasAuthorizedRole(userDoc?.roles || [])) {
       throw Error(`User ${username} role does not have the required permissions`);
     }
   }
