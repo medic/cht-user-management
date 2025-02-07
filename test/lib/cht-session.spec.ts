@@ -31,6 +31,14 @@ const mockUserFacilityDoc = (facilityId: string = 'parent-id', roles:string[] = 
   }
 });
 
+const mockSettingsResponse = {
+  data: {
+    permissions: {
+      can_create_people: ['user_manager'],
+    }
+  }
+};
+
 const USER_MANAGER_ROLE = 'user_manager';
 
 let mockAxios;
@@ -48,7 +56,8 @@ describe('lib/cht-session.ts', () => {
       },
       post: sinon.stub().resolves(mockSessionResponse()),
       get: sinon.stub().resolves(mockUserFacilityDoc())
-        .onSecondCall().resolves({ data: { version: { app: '4.7.0' } } }),
+        .onSecondCall().resolves({ data: { version: { app: '4.7.0' } } })
+        .onThirdCall().resolves(mockSettingsResponse),
     };
     ChtSession.__set__('axios', {
       create: sinon.stub().returns(mockAxios),

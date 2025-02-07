@@ -6,6 +6,7 @@ import Validation from '../validation';
 export type ConfigSystem = {
   domains: AuthenticationInfo[];
   contact_types: ContactType[];
+  required_permissions: string[];
   logoBase64: string;
 };
 
@@ -77,6 +78,10 @@ export class Config {
 
   public static contactTypes(): ContactType[] {
     return config.contact_types;
+  }
+
+  public static getRequiredPermissions(): string[] {
+    return config.required_permissions;
   }
 
   public static getContactType(name: string) : ContactType {

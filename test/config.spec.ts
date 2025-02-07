@@ -8,6 +8,7 @@ const mockPartnerConfig = (): PartnerConfig => ({
   config: {
     domains: [],
     contact_types: [mockSimpleContactType('string')],
+    required_permissions: [''],
     logoBase64: '',
   }
 });
