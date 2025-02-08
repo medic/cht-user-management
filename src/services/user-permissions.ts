@@ -1,7 +1,7 @@
 import _ from 'lodash';
-import { Config } from '../config';
 
 import { ADMIN_ROLES } from '../lib/cht-session';
+const REQUIRED_PERMISSIONS = ['can_create_people'];
 
 export class UserPermissionService {
   public static validateUserPermissions(userDoc: any, username: string, permissions: any): void {
@@ -10,8 +10,6 @@ export class UserPermissionService {
     if (_.intersection(ADMIN_ROLES, userRoles).length > 0) {
       return;
     }
-
-    const REQUIRED_PERMISSIONS = Config.getRequiredPermissions();
 
     const hasAllRequiredPermissions = REQUIRED_PERMISSIONS.every(permission => {
       const rolesWithPermission = permissions[permission] || [];
