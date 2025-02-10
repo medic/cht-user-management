@@ -1,7 +1,18 @@
 import _ from 'lodash';
 
 import { ADMIN_ROLES } from '../lib/cht-session';
-const REQUIRED_PERMISSIONS = ['can_create_people'];
+export const REQUIRED_PERMISSIONS = [
+  'can_create_people',
+  'can_configure',
+  'can_create_places',
+  'can_create_users',
+  'can_delete_contacts',
+  'can_delete_users',
+  'can_edit',
+  'can_update_users',
+  'can_view_contacts',
+  'can_view_users'
+];
 
 export class UserPermissionService {
   public static validateUserPermissions(userDoc: any, username: string, permissions: any): void {
