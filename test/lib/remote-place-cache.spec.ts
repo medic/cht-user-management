@@ -81,4 +81,23 @@ describe('lib/remote-place-cache.ts', () => {
     chtApi.chtSession.authInfo.domain = 'http://other';
     RemotePlaceCache.clear(chtApi, 'other');
   });
+  
+  it('unique key properties', async () => {
+    const chtApi = mockChtApi([{_id: 'id', name: 1 }]);
+    const contactType = mockSimpleContactType('string', undefined);
+    contactType.place_properties.find(p => p.property_name === 'name').unique = 'all';
+    const contactTypeAsHierarchyLevel: HierarchyConstraint = {
+      contact_type: contactType.name,
+      property_name: 'level',
+      friendly_name: 'pretend another ContactType needs this',
+      type: 'name',
+      required: true,
+      level: 0,
+    };
+    try {
+      await RemotePlaceCache.getRemotePlaces(chtApi, contactType, contactTypeAsHierarchyLevel);
+    } catch (e) {
+      expect(e).to.be.undefined;
+    }
+  });
 });
