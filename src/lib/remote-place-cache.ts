@@ -103,7 +103,7 @@ export default class RemotePlaceCache {
 
     return {
       id: doc._id,
-      name: new RemotePlacePropertyValue(doc.name, hierarchyLevel),
+      name: new RemotePlacePropertyValue(doc.name?.toString(), hierarchyLevel),
       placeType: hierarchyLevel.contact_type,
       lineage: this.extractLineage(doc),
       uniquePlaceValues: uniqueKeyStringValues,
