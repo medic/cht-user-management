@@ -49,6 +49,8 @@ const scenarios: Scenario[] = [
   { type: 'name', prop: 'WELDON KO(E)CH \n', isValid: true, formatted: 'Weldon Ko(E)ch' },
   { type: 'name', prop: 'S \'am \'s', isValid: true, formatted: 'S\'am\'s' },
   { type: 'name', prop: 'ma-ma-(pa-pa)', isValid: true, formatted: 'Ma-Ma-(Pa-Pa)' },
+  { type: 'name', prop: 'mr.    ma-ma-(pa-pa)', isValid: true, formatted: 'Mr Ma-Ma-(Pa-Pa)' },
+  { type: 'name', prop: 'ma-#ma-(pa-pa)', isValid: true, formatted: 'Ma-Ma-(Pa-Pa)' },
   { type: 'name', prop: 'KYAMBOO/KALILUNI', isValid: true, formatted: 'Kyamboo / Kaliluni' },
   { type: 'name', prop: 'NZATANI / ILALAMBYU', isValid: true, formatted: 'Nzatani / Ilalambyu' },
   { type: 'name', prop: 'Sam\'s CHU', propertyParameter: ['CHU', 'Comm Unit'], isValid: true, formatted: 'Sam\'s' },
