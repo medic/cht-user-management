@@ -36,12 +36,34 @@ export default class ValidatorName implements IValidator {
   }
 
   private titleCase(value: string): string {
-    const words = value.toLowerCase().split(' ');
-    const titleCase = (word: string) => word[0].toUpperCase() + word.slice(1);
-    const isRomanNumeral = /^[ivx]+$/ig;
-    const titleCased = words
+    if (!value) {
+      return '';
+    }
+
+    const titleCase = (word: string) => word[0]?.toUpperCase() + word.slice(1);
+    const isRomanNumeral = /^[ivx]+$/i;
+
+    const processWord = (word: string) => {
+      if (word.match(isRomanNumeral)) {
+        return word.toUpperCase();
+      }
+      return word.includes('-')
+        ? word.split('-').map(titleCase).join('-')
+        : titleCase(word);
+    };
+
+    return value.toLowerCase()
+      .replace(/\//g, ' / ')
+      .replace(/\s*'\s*/g, '\'')
+      .replace(/\(([^)]+)\)/g, match => {
+        const innerWord = match.slice(1, -1);
+        return `(${processWord(innerWord)})`;
+      })
+      .split(' ')
       .filter(Boolean)
-      .map(word => word.match(isRomanNumeral) ? word.toUpperCase() : titleCase(word)).join(' ');
-    return titleCased.replace(/ '/g, '\'');
+      .map(word => word.match(isRomanNumeral) ? word.toUpperCase() : processWord(word))
+      .join(' ')
+      .replace(/\s+/g, ' ')
+      .trim();
   }
 }
