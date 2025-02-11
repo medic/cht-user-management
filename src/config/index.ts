@@ -63,17 +63,21 @@ export type AuthenticationInfo = {
 };
 
 export type SupersetConfig = {
+  friendly_name: string;
+  property_name: string;
+  type: ContactPropertyType;
+  required: boolean;
+  parameter? : string | string[] | object;
+
   prefix: string;
   role_template: string;
   rls_template: string;
   rls_group_key: string;
-  integration_mode_property: string; // New property to define the integration mode in the contact propery
 };
 
 export enum SupersetMode {
-  BOTH = 'both',
-  CHT_ONLY = 'cht_only',
-  SUP_ONLY = 'sup_only',
+  ENABLE = 'enable',
+  DISABLE = 'disable',
 }
 
 const {

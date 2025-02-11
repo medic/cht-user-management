@@ -3,7 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { Config, ContactProperty, ContactType, SupersetConfig, SupersetMode } from '../config';
 import Contact from './contact';
-import { ContactPropertyValue, HierarchyPropertyValue, IPropertyValue, RemotePlacePropertyValue } from '../property-value';
+import { ContactPropertyValue, HierarchyPropertyValue, SupersetPropertyValue, IPropertyValue, RemotePlacePropertyValue } from '../property-value';
 import { PlacePayload } from '../lib/cht-api';
 // can't use package.json because of rootDir in ts
 import { RemotePlace } from '../lib/remote-place-cache';
@@ -38,6 +38,7 @@ export enum UploadState {
 const PLACE_PREFIX = 'place_';
 const CONTACT_PREFIX = 'contact_';
 const USER_PREFIX = 'user_';
+const SUPERSET_PREFIX = 'superset_';
 
 
 export default class Place {
@@ -50,15 +51,8 @@ export default class Place {
   public properties: FormattedPropertyCollection;
   public hierarchyProperties: FormattedPropertyCollection;
   public userRoleProperties: FormattedPropertyCollection;
+  public supersetProperties: FormattedPropertyCollection;
   public warnings: string[];
-
-  public supersetProperties?: {
-    prefix: string;
-    roleTemplateId: string;
-    rlsTemplateId: string;
-    rlsGroupKey: string;
-    mode: SupersetMode;
-  };
 
   public state : PlaceUploadState;
   
@@ -81,6 +75,7 @@ export default class Place {
     this.resolvedHierarchy = [];
     this.warnings = [];
     this.userRoleProperties = {};
+    this.supersetProperties = {};
   }
 
   /*
@@ -129,20 +124,17 @@ export default class Place {
 
     if (this.type.superset) {
       const supersetConfig: SupersetConfig = this.type.superset;
-      const modeProperty = supersetConfig.integration_mode_property;
+      const propertyName = supersetConfig.property_name;
+      const supersetMode = formData[`${SUPERSET_PREFIX}${propertyName}`] ?? '';
 
-      this.supersetProperties = {
-        prefix: supersetConfig.prefix,
-        roleTemplateId: supersetConfig.role_template,
-        rlsTemplateId: supersetConfig.rls_template,
-        rlsGroupKey: supersetConfig.rls_group_key,
-        mode: SupersetMode.CHT_ONLY
+      this.contact.properties = {
+        ...this.contact.properties,
+        ...getPropertySetWithPrefix(this.type.contact_properties, CONTACT_PREFIX),
       };
-     
-      const integrationModeFromForm = formData[CONTACT_PREFIX + modeProperty];
-      if (integrationModeFromForm && Object.values(SupersetMode).includes(integrationModeFromForm)) {
-        this.supersetProperties!.mode = integrationModeFromForm as SupersetMode;
-      }
+
+      // validation of hierachies requires RemotePlaceResolver to do its thing
+      // at this point; these may report errors but that's ok as long as hierarchy properties are revalidated later 
+      this.supersetProperties[propertyName] = new SupersetPropertyValue(this, supersetConfig, SUPERSET_PREFIX, supersetMode);
 
       const emailProperty = this.type.contact_properties.find(p => p.property_name === 'email');
       if (emailProperty) {
@@ -179,6 +171,7 @@ export default class Place {
       ...addPrefixToPropertySet(this.properties, PLACE_PREFIX),
       ...addPrefixToPropertySet(this.contact.properties, CONTACT_PREFIX),
       ...addPrefixToPropertySet(this.userRoleProperties, USER_PREFIX),
+      ...addPrefixToPropertySet(this.supersetProperties, SUPERSET_PREFIX),
     };
   }
 
@@ -251,6 +244,7 @@ export default class Place {
     validateCollection(this.properties);
     validateCollection(this.contact.properties);
     validateCollection(this.userRoleProperties);
+    validateCollection(this.supersetProperties);
 
     const extractErrorsFromCollection = (properties: FormattedPropertyCollection) => Object.values(properties).filter(prop => prop.validationError);
     const propertiesWithErrors: IPropertyValue[] = [
@@ -258,6 +252,7 @@ export default class Place {
       ...extractErrorsFromCollection(this.contact.properties),
       ...extractErrorsFromCollection(this.userRoleProperties),
       ...extractErrorsFromCollection(this.hierarchyProperties),
+      ...extractErrorsFromCollection(this.supersetProperties),
     ];
 
     this.validationErrors = {};
@@ -314,18 +309,19 @@ export default class Place {
     return !!this.hierarchyProperties.replacement?.original;
   }
 
-  public get isCreated(): boolean {
-    const iC = this.isChtCreated;
-    const iS = this.isSupersetCreated;
-    return iC && iS;
-  }
-
   public get isChtCreated(): boolean {
     return !!this.creationDetails.password && this.chtUploadState === UploadState.SUCCESS;
   }
 
   public get isSupersetCreated(): boolean {
-    return !!this.shouldUploadToSuperset() && !!this.creationDetails.password && this.supersetUploadState === UploadState.SUCCESS;
+    return !this.shouldUploadToSuperset() || (!!this.creationDetails.password && this.supersetUploadState === UploadState.SUCCESS);
+  }
+
+  public get isCreated(): boolean {  
+    if (this.shouldUploadToSuperset()) {
+      return this.chtUploadState === UploadState.SUCCESS && this.supersetUploadState === UploadState.SUCCESS;
+    } 
+    return this.chtUploadState === UploadState.SUCCESS;
   }
 
   public isUploadPending(): boolean {
@@ -336,20 +332,6 @@ export default class Place {
     return this.chtUploadState === UploadState.FAILURE || this.supersetUploadState === UploadState.FAILURE;
   }
 
-  public isFullyUploaded(): boolean {
-    const chtRequired = this.shouldUploadToCht();
-    const supersetRequired = this.shouldUploadToSuperset();
-  
-    if (chtRequired && supersetRequired) {
-      return this.chtUploadState === UploadState.SUCCESS && this.supersetUploadState === UploadState.SUCCESS;
-    } else if (chtRequired) {
-      return this.chtUploadState === UploadState.SUCCESS;
-    } else if (supersetRequired) {
-      return this.supersetUploadState === UploadState.SUCCESS;
-    }
-    return false;
-  }
-
   public isChtUploadPendingOrFailed(): boolean {
     return this.chtUploadState === UploadState.PENDING || this.chtUploadState === UploadState.FAILURE;
   }
@@ -358,18 +340,11 @@ export default class Place {
     return this.supersetUploadState === UploadState.PENDING || this.supersetUploadState === UploadState.FAILURE;
   }
 
-  public shouldUploadToCht(): boolean {
-    if (!this.supersetProperties) {
-      return true;
-    }
-    return this.supersetProperties.mode === SupersetMode.CHT_ONLY || this.supersetProperties.mode === SupersetMode.BOTH;
-  }
-
   public shouldUploadToSuperset(): boolean {
     if (!this.supersetProperties) {
       return false;
     }
-    return this.supersetProperties.mode === SupersetMode.SUP_ONLY || this.supersetProperties.mode === SupersetMode.BOTH;
+    return this.supersetProperties.mode?.formatted === SupersetMode.ENABLE;
   }
 
   private buildLineage() {

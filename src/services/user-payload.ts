@@ -9,7 +9,7 @@ export class UserPayload {
   public contact: string;
   public fullname: string;
   public phone: string;
-  public email: string;
+  // public email: string;
   public roles: string[];
 
   constructor(place: Place, placeId: string, contactId: string) {
@@ -19,7 +19,7 @@ export class UserPayload {
     this.place = placeId;
     this.contact = contactId;
     this.fullname = place.contact.name;
-    this.email = place.contact.properties.email; // best guess
+    // this.email = place.contact.properties.email?.formatted; // best guess
     this.phone = place.contact.properties.phone?.formatted; // best guess
   }
 
@@ -54,7 +54,7 @@ export class UserPayload {
       active: true,
       first_name: firstName,
       last_name: lastName,
-      email: this.email,
+      email: 'this.email',
       username: this.username,
       password: this.password,
       roles: rolesId

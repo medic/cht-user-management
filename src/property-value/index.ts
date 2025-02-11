@@ -1,4 +1,4 @@
-import { HierarchyPropertyValue, ContactPropertyValue } from './validated-property-values';
+import { HierarchyPropertyValue, ContactPropertyValue, SupersetPropertyValue } from './validated-property-values';
 import UnvalidatedPropertyValue from './unvalidated-property-value';
 import { RemotePlacePropertyValue } from './remote-place-property-value';
 
@@ -72,3 +72,9 @@ export { RemotePlacePropertyValue };
  * When storing something that doesn't need validation
  */
 export { UnvalidatedPropertyValue };
+
+
+/**
+ * For validating superset integeration config of the hierarchy
+*/
+export { SupersetPropertyValue };

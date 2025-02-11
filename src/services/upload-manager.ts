@@ -43,7 +43,7 @@ export class UploadManager extends EventEmitter {
     this.eventedPlaceStateChange(place, PlaceUploadState.IN_PROGRESS);
   
     // Handle CHT upload if it's pending or failed and if CHT upload is required
-    if (place.isChtUploadPendingOrFailed() && place.shouldUploadToCht()) {
+    if (place.isChtUploadPendingOrFailed()) {
       try {
         this.eventedUploadStateChange(place, 'cht', UploadState.PENDING);
         const uploader: Uploader = pickUploader(place, chtApi);
@@ -106,7 +106,7 @@ export class UploadManager extends EventEmitter {
     }
   
     // Determine final upload state
-    if (place.isFullyUploaded()) {
+    if (place.isCreated) {
       RemotePlaceCache.add(place, chtApi);
       delete place.uploadError;
 
