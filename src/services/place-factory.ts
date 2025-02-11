@@ -24,6 +24,39 @@ export default class PlaceFactory {
     return place;
   };
 
+  public static createManyWithSingleUser = async (
+    formData: { [key: string]: string },
+    contactType: ContactType,
+    sessionCache: SessionCache,
+    chtApi: ChtApi
+  ): Promise<Place[]> => {
+    const list: string[] = [];
+    Object.keys(formData).forEach(k => {
+      if (k.startsWith('list_')) {
+        list.push(formData[k]);
+        delete formData[k];
+      }
+    });
+    const places: Place[] = [];
+    list.forEach((data, idx) => {
+      const parsed = JSON.parse(Buffer.from(data, 'base64').toString('utf8'));
+      const placeData = { ...parsed, ...formData };
+
+      const place = new Place(contactType);
+      place.setPropertiesFromFormData(placeData, 'hierarchy_');
+
+      if (idx > 0) {
+        place.contact = places[0].contact;
+        place.hasSharedUser = true;
+      }
+
+      places.push(place);
+    });
+
+    await PlaceFactory.finalizePlaces(places, sessionCache, chtApi, contactType);
+    return places;
+  };
+
   public static editOne = async (placeId: string, formData: any, sessionCache: SessionCache, chtApi: ChtApi)
     : Promise<Place> => {
     const place = sessionCache.getPlace(placeId);

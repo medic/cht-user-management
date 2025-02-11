@@ -1,8 +1,8 @@
-{% capture property_name %}{{ include.prefix | default: 'place_' }}{{ include.hierarchy.property_name }}{% endcapture %}
-<div class="field">
+{% capture property_name %}{{prefix | default: 'place_' }}{{ hierarchy.property_name }}{% endcapture %}
+<div class="field" id="div_{{property_name}}">
   <label class="label">
-    {{ include.hierarchy.friendly_name }}
-    {% if include.hierarchy.required %}*{% endif %}
+    {{ hierarchy.friendly_name }}
+    {% if hierarchy.required %}*{% endif %}
   </label>
   <div class="control">
     <input
@@ -10,13 +10,13 @@
       name="{{ property_name }}"
       type="search"
       class="input"
-      hx-post="/search?place_id={{place.id}}&type={{ include.type }}&op={{op}}&level={{ include.hierarchy.level }}&prefix={{ include.prefix }}"
+      hx-post="/search?place_id={{place.id}}&type={{ type }}&op={{op}}&level={{ hierarchy.level }}&prefix={{ prefix }}"
       hx-vals=""
       placeholder="start typing to see suggestions"
       hx-trigger="keyup changed delay:200ms, search"
       hx-target="#search_results_{{ property_name }}" hx-swap="innerHTML"
-      {% if include.required %} required {% endif %}
-      {% if include.data[property_name] %}value="{{ include.data[property_name] }}" {% endif %}
+      {% if required %} required {% endif %}
+      {% if data[property_name] %}value="{{ data[property_name] }}" {% endif %}
       hx-encoding="application/x-www-form-urlencoded"
     />
     <div id="search_results_{{ property_name }}" class="control"></div>

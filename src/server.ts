@@ -56,7 +56,7 @@ const build = (opts: FastifyServerOptions): FastifyInstance => {
   });
 
   Auth.assertEnvironmentSetup();
-  checkRedisConnection();
+  // checkRedisConnection();
 
   fastify.addHook('preValidation', async (req: FastifyRequest, reply: FastifyReply) => {
     if (req.unauthenticated || req.routeOptions.url === '/public/*' || req.routeOptions.url === '/metrics') {
