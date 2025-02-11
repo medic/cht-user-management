@@ -1,0 +1,67 @@
+<html>
+  <head>
+    <title>
+      New
+      {{ contactType.contact_friendly }}
+    </title>
+    <script src="/public/htmx.min.js"></script>
+    <link rel="stylesheet" href="/public/bulma.min.css">
+    <link rel="stylesheet" href="/public/material-symbols.css">
+  </head>
+  <body>
+    <nav class="navbar" role="navigation" aria-label="main navigation"></nav>
+    <div class="container is-max-desktop px-4" style="max-width: 48rem;">
+      <h3 class="is-size-4">New {{ contactType.contact_friendly }}</h3>
+      <form
+        class="mt-4"
+        autocomplete="off"
+        hx-post="/new?place_type={{contactType.name}}"
+      >
+        <input name="place_type" value={{contactType.name}} hidden>
+
+        <p>Contact details</p>
+        <div class="p-2">
+          {% for hierarchy in hierarchy %}
+            {% if hierarchy.level != 0 %}
+              {% render 'components/search_input.html',
+                type: contactType.name,
+                hierarchy: hierarchy,
+                prefix: 'hierarchy_',
+                data: data
+              %}
+            {% endif %}
+          {% endfor %}
+          {% for prop in contactType.contact_properties %}
+            {%
+              include "components/contact_type_property.html" prefix="contact_" prop=prop
+              place_type=contactType.name
+            %}
+          {% endfor %}
+        </div>
+        
+        {% if contactType.user_role.size > 1 %}
+          <div>
+            {% include "components/contact_type_property.html" prefix="user_" prop=userRoleProperty %}
+          </div>
+        {% endif %}
+
+        <div class="p-2 mt-4 mb-2" style="border-left: thick solid green;">
+          <p>
+            Click on the <span style="font-weight: bold;">New</span> button below to add places that you want to assign
+            to this user
+          </p>
+        </div>
+        <div id="place_new_parent" class="mt-2">
+          {% render 'new/new_place_btn.liquid' with contactType.name as place_type %}
+        </div>
+
+        <div class="field is-grouped is-grouped-right mt-4">
+          <div class="control">
+            <a href="/" class="button">Cancel</a>
+            <button id="place_create_submit" class="button is-link">Save</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </body>
+</html>

@@ -1,14 +1,14 @@
 import _ from 'lodash';
 import ChtSession from '../lib/cht-session';
 import { DirectiveFilter } from './directive-model';
-import Place, { PlaceUploadState } from './place';
-import { Config } from '../config';
+import Place, { PlaceUploadState, UserCreationDetails } from './place';
 
 export type SessionCacheUploadState = 'in_progress' | 'done' | 'staged';
 
 export default class SessionCache {
   private static caches: Map<string, SessionCache> = new Map();
   private places: { [key: string]: Place } = {};
+  private userCreatationDetails: { [key: string]: UserCreationDetails } = {};
 
   private constructor() {}
 
@@ -26,10 +26,14 @@ export default class SessionCache {
   public savePlaces = (...places: Place[]) => {
     for (const place of places) {
       this.places[place.id] = place;
+      this.userCreatationDetails[place.contact.id] = place.creationDetails;
     }
   };
 
   public getPlace = (id: string): Place | undefined => this.places[id];
+
+  public updateUserCreationDetails = (contactID: string, details: UserCreationDetails) => this.userCreatationDetails[contactID] = details;
+  public getUserCreationDetails = (contactID: string): UserCreationDetails => this.userCreatationDetails[contactID];
 
   public getPlaces = (options?: {
     type?: string;

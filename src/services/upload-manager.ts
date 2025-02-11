@@ -10,6 +10,7 @@ import { UploadReplacementWithDeletion } from './upload.replacement';
 import { UploadReplacementWithDeactivation } from './upload.deactivate';
 import { UserPayload } from './user-payload';
 import _ from 'lodash';
+import SessionCache from './session-cache';
 
 const UPLOAD_BATCH_SIZE = 15;
 
@@ -62,7 +63,9 @@ export class UploadManager extends EventEmitter {
 
     try {
       const uploader: Uploader = pickUploader(place, chtApi);
-      const payload = place.asChtPayload(chtApi.chtSession.username);
+      const store = SessionCache.getForSession(chtApi.chtSession);
+      const userDetails = store.getUserCreationDetails(place.contact.id);
+      const payload = place.asChtPayload(chtApi.chtSession.username, userDetails?.contactId);
       await Config.mutate(payload, chtApi, place.isReplacement);
 
       if (!place.creationDetails.contactId) {
@@ -73,20 +76,24 @@ export class UploadManager extends EventEmitter {
       if (!place.creationDetails.placeId) {
         const placeResult = await uploader.handlePlacePayload(place, payload);
         place.creationDetails.placeId = placeResult.placeId;
-        place.creationDetails.contactId ||= placeResult.contactId;
+        place.creationDetails.contactId ||= placeResult.contactId || userDetails?.contactId;
       }
 
       if (!place.creationDetails.contactId) {
         throw Error('creationDetails.contactId not set');
       }
 
-      if (!place.creationDetails.username) {
+      if (!place.creationDetails.username && !userDetails?.username) {
         const userPayload = new UserPayload(place, place.creationDetails.placeId, place.creationDetails.contactId);
         const { username, password } = await RetryLogic.createUserWithRetries(userPayload, chtApi);
         place.creationDetails.username = username;
         place.creationDetails.password = password;
+        store.updateUserCreationDetails(place.contact.id, place.creationDetails);
+      } else {
+        place.creationDetails.username = userDetails.username;
+        place.creationDetails.password = userDetails.password;
       }
-
+    
       RemotePlaceCache.add(place, chtApi);
       delete place.uploadError;
 
