@@ -1,8 +1,8 @@
 <form id="form_authenticate" hx-post="/authenticate" hx-target="this" hx-swap="outerHTML">
   <!-- want to use tiles, they are super weird with forms in them -->
   <div class="box" style="margin: 20px; padding: 50px;">
-    {% if errors %}
-      <span class='tag is-warning is-overlay'>Login Failed. Please Try Again</span>
+    {% if error %}
+      <span class='tag is-warning is-overlay'> {{ error }}</span>
     {% endif %}
 
     <div class="field">

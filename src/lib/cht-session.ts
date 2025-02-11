@@ -4,6 +4,7 @@ import { AxiosHeaders, AxiosInstance } from 'axios';
 import axiosRetry from 'axios-retry';
 import * as semver from 'semver';
 
+import { AuthErrors } from './authentication/errors/authentication-error';
 import { AuthenticationInfo } from '../config';
 import { axiosRetryConfig } from './retry-logic';
 import { RemotePlace } from './remote-place-cache';
@@ -51,15 +52,21 @@ export default class ChtSession {
     return this.facilityIds.includes(ADMIN_FACILITY_ID);
   }
 
-  public static async create(authInfo: AuthenticationInfo, username : string, password: string): Promise<ChtSession> {
-    const sessionToken = await ChtSession.createSessionToken(authInfo, username, password);
+  public static async create(authInfo: AuthenticationInfo, username: string, password: string): Promise<ChtSession> {
+    try {
+      const sessionToken = await ChtSession.createSessionToken(authInfo, username, password);
+      if (!sessionToken) {
+        throw new Error(`failed to obtain token for ${username} at ${authInfo.domain}`);
+      }
 
-    if (!sessionToken) {
-      throw new Error(`failed to obtain token for ${username} at ${authInfo.domain}`);
+      const creationDetails = await ChtSession.fetchCreationDetails(authInfo, username, sessionToken);
+      return new ChtSession(creationDetails);
+    } catch (e: any) {
+      if (e.response?.status === 401) {
+        throw AuthErrors.INVALID_CREDENTIALS();
+      }
+      throw e;
     }
-    
-    const creationDetails = await ChtSession.fetchCreationDetails(authInfo, username, sessionToken);
-    return new ChtSession(creationDetails);
   }
 
   public static createFromDataString(data: string): ChtSession {

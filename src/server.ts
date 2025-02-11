@@ -11,7 +11,7 @@ import { FastifySSEPlugin } from 'fastify-sse-v2';
 import path from 'path';
 const metricsPlugin = require('fastify-metrics');
 
-import Auth from './lib/authentication';
+import Auth from './lib/authentication/authentication';
 import SessionCache from './services/session-cache';
 import { checkRedisConnection } from './config/config-worker';
 

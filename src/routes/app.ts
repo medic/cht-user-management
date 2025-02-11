@@ -1,6 +1,6 @@
 import { FastifyInstance } from 'fastify';
 
-import Auth from '../lib/authentication';
+import Auth from '../lib/authentication/authentication';
 import { ChtApi } from '../lib/cht-api';
 import { Config } from '../config';
 import DirectiveModel from '../services/directive-model';

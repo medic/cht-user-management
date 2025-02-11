@@ -3,7 +3,7 @@ import chaiAsPromised from 'chai-as-promised';
 import { DateTime } from 'luxon';
 import sinon from 'sinon';
 
-import Auth from '../../src/lib/authentication';
+import Auth from '../../src/lib/authentication/authentication';
 import { Config } from '../../src/config';
 import { JobParams } from '../../src/lib/queues';
 import ManageHierarchyLib from '../../src/lib/manage-hierarchy';
