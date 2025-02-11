@@ -41,29 +41,29 @@ export default class ValidatorName implements IValidator {
     }
 
     const titleCase = (word: string) => word[0]?.toUpperCase() + word.slice(1);
-    const isRomanNumeral = /^[ivx]+$/i;
 
-    const processWord = (word: string) => {
-      if (word.match(isRomanNumeral)) {
-        return word.toUpperCase();
-      }
-      return word.includes('-')
-        ? word.split('-').map(titleCase).join('-')
-        : titleCase(word);
+    const isRomanNumeral = /^[ivx]+$/i;
+    const hasForwardSlash = /\//g;
+    const hasApostrophe = /\s*'\s*/g;
+    const hasParentheses = /\(([^)]+)\)/g;
+    const hasExtraSpaces = /\s+/g;
+
+    const splitAndProcess = (value: string, delimiter: string) => {
+      return value
+        .split(delimiter)
+        .map(word => word.match(isRomanNumeral) ? word.toUpperCase() : titleCase(word))
+        .join(delimiter);
     };
 
     return value.toLowerCase()
-      .replace(/\//g, ' / ')
-      .replace(/\s*'\s*/g, '\'')
-      .replace(/\(([^)]+)\)/g, match => {
-        const innerWord = match.slice(1, -1);
-        return `(${processWord(innerWord)})`;
-      })
+      .replace(hasForwardSlash, ' / ')
+      .replace(hasApostrophe, '\'')
+      .replace(hasParentheses, match => `(${titleCase(match.slice(1, -1))})`)
       .split(' ')
       .filter(Boolean)
-      .map(word => word.match(isRomanNumeral) ? word.toUpperCase() : processWord(word))
+      .map(word => splitAndProcess(word, '-'))
       .join(' ')
-      .replace(/\s+/g, ' ')
+      .replace(hasExtraSpaces, ' ')
       .trim();
   }
 }
