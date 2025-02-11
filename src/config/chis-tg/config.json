@@ -18,7 +18,7 @@
     {
       "name": "cf60_sanitary",
       "friendly": "Sanitary Training",
-      "contact_type": "cf60_sanitary",
+      "contact_type": "cf62_sanitary",
       "user_role": ["sanitary"],
       "username_from_place": false,
       "deactivate_users_on_replace": false,
@@ -45,7 +45,8 @@
           "property_name": "name",
           "type": "generated",
           "parameter": "{{ contact.last_name }} {{ contact.first_name }} ({{ lineage.followup_area }})",
-          "required": false
+          "required": false,
+          "unique": "parent"
         }
       ],
       "contact_properties": [
@@ -107,8 +108,8 @@
         "property_name": "superset_config",
         "type": "select_one",
         "parameter": {
-          "true": "Disable",
-          "false": "Enable"
+          "disable": "Disable",
+          "enable": "Enable"
         },
         "required": false,
         "prefix": "SN",

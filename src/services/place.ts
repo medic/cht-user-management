@@ -132,14 +132,12 @@ export default class Place {
         ...getPropertySetWithPrefix(this.type.contact_properties, CONTACT_PREFIX),
       };
 
-      // validation of hierachies requires RemotePlaceResolver to do its thing
-      // at this point; these may report errors but that's ok as long as hierarchy properties are revalidated later 
       this.supersetProperties[propertyName] = new SupersetPropertyValue(this, supersetConfig, SUPERSET_PREFIX, supersetMode);
 
       const emailProperty = this.type.contact_properties.find(p => p.property_name === 'email');
       if (emailProperty) {
         // Ensure email is required
-        emailProperty.required = true;
+        emailProperty.required = supersetMode === SupersetMode.ENABLE;
 
         // Update contact properties, with email property required if Superset is enabled
         this.contact.properties = {
@@ -341,10 +339,10 @@ export default class Place {
   }
 
   public shouldUploadToSuperset(): boolean {
-    if (!this.supersetProperties) {
+    if (!this.type.superset) {
       return false;
     }
-    return this.supersetProperties.mode?.formatted === SupersetMode.ENABLE;
+    return this.supersetProperties[this.type.superset.property_name].formatted === SupersetMode.ENABLE;
   }
 
   private buildLineage() {

@@ -146,6 +146,10 @@ export class Config {
     };
   }
 
+  public static getSupersetConfig(contactType: ContactType): SupersetConfig | undefined {
+    return contactType.superset;
+  }
+
   public static hasMultipleRoles(contactType: ContactType): boolean {
     if (!contactType.user_role.length || contactType.user_role.some(role => !role.trim())) {
       throw Error(`unvalidatable config: 'user_role' property is empty or contains empty strings`);
@@ -273,17 +277,17 @@ export class Config {
   }
 
   public static getSupersetBaseUrl(): string {
-    return `${Config.getSupersetConfigValue('SUPERSET_BASE_URL')}`;
+    return `${Config.getSupersetEnvVar('SUPERSET_BASE_URL')}`;
   }
 
   public static getSupersetCredentials(): { username: string; password: string } {
     return {
-      username: Config.getSupersetConfigValue('SUPERSET_ADMIN_USERNAME'),
-      password: Config.getSupersetConfigValue('SUPERSET_ADMIN_PASSWORD'),
+      username: Config.getSupersetEnvVar('SUPERSET_ADMIN_USERNAME'),
+      password: Config.getSupersetEnvVar('SUPERSET_ADMIN_PASSWORD'),
     };
   }
 
-  private static getSupersetConfigValue(envVar: string): string {
+  private static getSupersetEnvVar(envVar: string): string {
     if (!this.isSupersetEnabled()) {
       // Superset is not enabled for this contact type, return an empty string (or skip the integration)
       return '';
