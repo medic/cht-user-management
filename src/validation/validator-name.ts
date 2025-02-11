@@ -36,12 +36,34 @@ export default class ValidatorName implements IValidator {
   }
 
   private titleCase(value: string): string {
-    const words = value.toLowerCase().split(' ');
-    const titleCase = (word: string) => word[0].toUpperCase() + word.slice(1);
-    const isRomanNumeral = /^[ivx]+$/ig;
-    const titleCased = words
+    if (!value) {
+      return '';
+    }
+
+    const titleCase = (word: string) => word[0]?.toUpperCase() + word.slice(1);
+
+    const isRomanNumeral = /^[ivx]+$/i;
+    const hasForwardSlash = /\//g;
+    const hasApostrophe = /\s*'\s*/g;
+    const hasParentheses = /\(([^)]+)\)/g;
+    const hasExtraSpaces = /\s+/g;
+
+    const splitAndProcess = (value: string, delimiter: string) => {
+      return value
+        .split(delimiter)
+        .map(word => word.match(isRomanNumeral) ? word.toUpperCase() : titleCase(word))
+        .join(delimiter);
+    };
+
+    return value.toLowerCase()
+      .replace(hasForwardSlash, ' / ')
+      .replace(hasApostrophe, '\'')
+      .replace(hasParentheses, match => `(${titleCase(match.slice(1, -1))})`)
+      .split(' ')
       .filter(Boolean)
-      .map(word => word.match(isRomanNumeral) ? word.toUpperCase() : titleCase(word)).join(' ');
-    return titleCased.replace(/ '/g, '\'');
+      .map(word => splitAndProcess(word, '-'))
+      .join(' ')
+      .replace(hasExtraSpaces, ' ')
+      .trim();
   }
 }
