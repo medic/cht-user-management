@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import { DateTime } from 'luxon';
 
-import Auth from './authentication';
+import Auth from './authentication/authentication';
 import { ChtApi } from './cht-api';
 import { ChtConfJobData } from '../worker/cht-conf-worker';
 import { ContactType } from '../config';

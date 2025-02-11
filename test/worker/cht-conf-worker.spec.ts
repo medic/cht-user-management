@@ -3,7 +3,7 @@ import Sinon from 'sinon';
 import chaiAsPromised from 'chai-as-promised';
 Chai.use(chaiAsPromised);
 
-import Auth from '../../src/lib/authentication';
+import Auth from '../../src/lib/authentication/authentication';
 import { ChtConfWorker } from '../../src/worker/cht-conf-worker';
 import { HierarchyAction } from '../../src/lib/manage-hierarchy';
 import { mockChtSession } from '../mocks';

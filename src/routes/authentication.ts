@@ -1,6 +1,7 @@
-import { FastifyInstance, FastifyRequest } from 'fastify';
+import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 
-import Auth from '../lib/authentication';
+import Auth from '../lib/authentication/authentication';
+import { AuthError, AuthErrors } from '../lib/authentication/errors/authentication-error';
 import { Config } from '../config';
 import { version as appVersion } from '../package.json';
 import ChtSession from '../lib/cht-session';
@@ -10,6 +11,13 @@ export default async function authentication(fastify: FastifyInstance) {
     preParsing: async (req : FastifyRequest) => {
       req.unauthenticated = true;
     },
+  };
+
+  const renderAuthForm = (resp: FastifyReply, error: string) => {
+    return resp.view('src/liquid/auth/authentication_form.html', {
+      domains: Config.getDomains(),
+      error
+    });
   };
 
   fastify.get('/login', unauthenticatedOptions, async (req, resp) => {
@@ -30,28 +38,36 @@ export default async function authentication(fastify: FastifyInstance) {
     const data: any = req.body;
     const { username, password, domain } = data;
 
-    const authInfo = Config.getAuthenticationInfo(domain);
-    let chtSession;
     try {
-      chtSession = await ChtSession.create(authInfo, username, password);
-    } catch (e: any) {
-      console.error(`Login error: ${e}`);
-      return resp.view('src/liquid/auth/authentication_form.html', {
-        domains: Config.getDomains(),
-        errors: true,
+      const authInfo = Config.getAuthenticationInfo(domain);
+
+      if (!username || !password) {
+        throw AuthErrors.MISSING_CREDENTIALS();
+      }
+
+      const chtSession = await ChtSession.create(authInfo, username, password);
+      const tokenizedSession = Auth.encodeTokenForCookie(chtSession);
+
+      resp.setCookie(Auth.AUTH_COOKIE_NAME, tokenizedSession, {
+        signed: false,
+        httpOnly: true,
+        expires: Auth.cookieExpiry(),
+        secure: true
       });
+
+      resp.header('HX-Redirect', '/');
+    } catch (e: any ) {
+      if (e instanceof AuthError) {
+        console.error('Login error:', {
+          status: e.status,
+          message: e.errorMessage,
+        });
+        return renderAuthForm(resp, e.errorMessage);
+      }
+
+      console.error('Login error:', e);
+      return renderAuthForm(resp, 'Unexpected error logging in');
     }
-
-    const tokenizedSession = Auth.encodeTokenForCookie(chtSession);
-    const expires = Auth.cookieExpiry();
-    resp.setCookie(Auth.AUTH_COOKIE_NAME, tokenizedSession, {
-      signed: false,
-      httpOnly: true,
-      expires,
-      secure: true
-    });
-
-    resp.header('HX-Redirect', `/`);
   });
 
   fastify.get('/_healthz', unauthenticatedOptions, () => {
