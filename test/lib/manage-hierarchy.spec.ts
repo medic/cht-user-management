@@ -48,7 +48,7 @@ describe('lib/manage-hierarchy.ts', () => {
       const sessionCache = new SessionCache();
       
       const jobParams = await ManageHierarchyLib.getJobDetails(formData, contactType, sessionCache, chtApiWithDocs());
-      expect(jobParams).to.have.property('jobName').that.equals('move_[From Sub.C-h-u]_to_[To Sub]');
+      expect(jobParams).to.have.property('jobName').that.equals('move_[From Sub.C-H-U]_to_[To Sub]');
       expect(jobParams).to.have.property('jobData').that.deep.include({
         action: 'move',
         sourceId: 'from-chu-id',
@@ -113,7 +113,7 @@ describe('lib/manage-hierarchy.ts', () => {
       const sessionCache = new SessionCache();
       
       const jobParams = await ManageHierarchyLib.getJobDetails(formData, contactType, sessionCache, chtApiWithDocs());
-      expect(jobParams).to.have.property('jobName').that.equals('merge_[From Sub.C-h-u]_to_[To Sub.Destination]');
+      expect(jobParams).to.have.property('jobName').that.equals('merge_[From Sub.C-H-U]_to_[To Sub.Destination]');
       expect(jobParams).to.have.property('jobData').that.deep.include({
         action: 'merge',
         sourceId: 'from-chu-id',
@@ -135,7 +135,7 @@ describe('lib/manage-hierarchy.ts', () => {
       const sessionCache = new SessionCache();
       
       const jobParams = await ManageHierarchyLib.getJobDetails(formData, contactType, sessionCache, chtApiWithDocs());
-      expect(jobParams).to.have.property('jobName').that.equals('delete_[From Sub.C-h-u]');
+      expect(jobParams).to.have.property('jobName').that.equals('delete_[From Sub.C-H-U]');
       expect(jobParams).to.have.property('jobData').that.deep.include({
         action: 'delete',
         sourceId: 'from-chu-id',
