@@ -9,7 +9,7 @@ import { UploadNewPlace } from './upload.new';
 import { UploadReplacementWithDeletion } from './upload.replacement';
 import { UploadReplacementWithDeactivation } from './upload.deactivate';
 import { UserPayload } from './user-payload';
-import SessionCache from './session-cache';
+import _ from 'lodash';
 
 const UPLOAD_BATCH_SIZE = 15;
 
@@ -20,13 +20,22 @@ export interface Uploader {
 
 export class UploadManager extends EventEmitter {
   doUpload = async (places: Place[], chtApi: ChtApi, ignoreWarnings: boolean = false) => {
-    const placesNeedingUpload = places.filter(p => !p.isCreated && !p.hasValidationErrors && (ignoreWarnings || !p.warnings.length));
+    const placesNeedingUpload = places.filter(p => {
+      return !p.isCreated && !p.hasValidationErrors && !p.hasSharedUser && (ignoreWarnings || !p.warnings.length);
+    });
     this.eventedPlaceStateChange(placesNeedingUpload, PlaceUploadState.SCHEDULED);
 
     const independants = placesNeedingUpload.filter(p => !p.isDependant);
     const dependants = placesNeedingUpload.filter(p => p.isDependant);
     await this.uploadPlacesInBatches(independants, chtApi);
     await this.uploadPlacesInBatches(dependants, chtApi);
+  };
+
+  uploadWithSingleUser =  async (places: Place[], api: ChtApi) => {
+    const grouped = _.groupBy(places, place => place.contact.id);
+    Object.keys(grouped).forEach(async k => {
+      await this.uploadGroup(grouped[k], api);
+    });
   };
 
   private async uploadPlacesInBatches(places: Place[], chtApi: ChtApi) {
@@ -42,9 +51,7 @@ export class UploadManager extends EventEmitter {
 
     try {
       const uploader: Uploader = pickUploader(place, chtApi);
-      const store = SessionCache.getForSession(chtApi.chtSession);
-      const userDetails = store.getUserCreationDetails(place.contact.id);
-      const payload = place.asChtPayload(chtApi.chtSession.username, userDetails?.contactId);
+      const payload = place.asChtPayload(chtApi.chtSession.username);
       await Config.mutate(payload, chtApi, place.isReplacement);
 
       if (!place.creationDetails.contactId) {
@@ -55,24 +62,20 @@ export class UploadManager extends EventEmitter {
       if (!place.creationDetails.placeId) {
         const placeResult = await uploader.handlePlacePayload(place, payload);
         place.creationDetails.placeId = placeResult.placeId;
-        place.creationDetails.contactId ||= placeResult.contactId || userDetails?.contactId;
+        place.creationDetails.contactId ||= placeResult.contactId;
       }
 
       if (!place.creationDetails.contactId) {
         throw Error('creationDetails.contactId not set');
       }
 
-      if (!place.creationDetails.username && !userDetails?.username) {
+      if (!place.creationDetails.username) {
         const userPayload = new UserPayload(place, place.creationDetails.placeId, place.creationDetails.contactId);
         const { username, password } = await RetryLogic.createUserWithRetries(userPayload, chtApi);
         place.creationDetails.username = username;
         place.creationDetails.password = password;
-        store.updateUserCreationDetails(place.contact.id, place.creationDetails);
-      } else {
-        place.creationDetails.username = userDetails.username;
-        place.creationDetails.password = userDetails.password;
       }
-    
+
       RemotePlaceCache.add(place, chtApi);
       delete place.uploadError;
 
@@ -84,6 +87,36 @@ export class UploadManager extends EventEmitter {
       place.uploadError = errorDetails;
       this.eventedPlaceStateChange(place, PlaceUploadState.FAILURE);
     }
+  }
+
+  private async uploadGroup(places: Place[], api: ChtApi) {
+    let contactId;
+    const placeIds: string[] = [];
+    for (let i = 0; i < places.length; i++) {
+      const place = places[i];
+      this.eventedPlaceStateChange(place, PlaceUploadState.IN_PROGRESS);
+      const payload = place.asChtPayload(api.chtSession.username, contactId);
+      await Config.mutate(payload, api, place.isReplacement);
+      const result = await api.createPlace(payload);
+      if (!contactId) {
+        if (!result.contactId) {
+          throw new Error('expected contact id');
+        }
+        contactId = result.contactId;
+      }
+      place.creationDetails.contactId = result.contactId;
+      placeIds.push(result.placeId);
+    }
+    const userPayload = new UserPayload(places[0], placeIds, contactId!);
+    const { username, password } = await RetryLogic.createUserWithRetries(userPayload, api);
+    const created_at = new Date().getTime();
+    places.forEach(place => {
+      place.creationDetails.username = username;
+      place.creationDetails.password = password;
+      place.creationDetails.created_at = created_at;
+      this.eventedPlaceStateChange(place, PlaceUploadState.SUCCESS);
+    });
+    this.emit('refresh_grouped', contactId);
   }
 
   public triggerRefresh(place_id: string) {

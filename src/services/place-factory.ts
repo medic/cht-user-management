@@ -41,18 +41,14 @@ export default class PlaceFactory {
     list.forEach((data, idx) => {
       const parsed = JSON.parse(Buffer.from(data, 'base64').toString('utf8'));
       const placeData = { ...parsed, ...formData };
-
       const place = new Place(contactType);
       place.setPropertiesFromFormData(placeData, 'hierarchy_');
-
       if (idx > 0) {
         place.contact = places[0].contact;
         place.hasSharedUser = true;
       }
-
       places.push(place);
     });
-
     await PlaceFactory.finalizePlaces(places, sessionCache, chtApi, contactType);
     return places;
   };

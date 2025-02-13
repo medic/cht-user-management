@@ -19,6 +19,7 @@ export type UserCreationDetails = {
   password?: string;
   placeId?: string;
   contactId?: string;
+  created_at?: number;
 };
 
 export enum PlaceUploadState {

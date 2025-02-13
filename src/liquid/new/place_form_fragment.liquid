@@ -1,4 +1,10 @@
-<div id="place_fragment" class="pl-3 pr-3 mb-5">
+<form
+  id="place_fragment"
+  hx-post="/place_form?place_type={{contactType.name}}"
+  hx-target="#place_fragment"
+  hx-swap="outerHTML"
+  class="pl-3 pr-3 mb-5"
+>
   <p>Fill place details</p>
   <div class="p-2">
     {% for prop in contactType.place_properties %}
@@ -10,6 +16,7 @@
   </div>
   <div class="field is-grouped is-grouped-right p-2">
     <button
+      type="button"
       hx-get="/place_form?place_type={{contactType.name}}&action=cancel"
       class="button is-small mr-2"
       hx-target="#place_fragment"
@@ -17,14 +24,8 @@
     >
       Cancel
     </button>
-    <button
-      type="button"
-      class="button is-primary is-small"
-      hx-post="/place_form?place_type={{contactType.name}}"
-      hx-target="#place_fragment"
-      hx-swap="outerHTML"
-    >
+    <button class="button is-primary is-small">
       Add
     </button>
   </div>
-</div>
+</form>
