@@ -1,8 +1,10 @@
 import { FastifyInstance } from 'fastify';
 import { Config } from '../config';
-import PlaceFactory from '../services/place-factory';
-import SessionCache from '../services/session-cache';
 import { ChtApi } from '../lib/cht-api';
+import SessionCache from '../services/session-cache';
+import _ from 'lodash';
+import PlaceFactory from '../services/place-factory';
+import { UploadManager } from '../services/upload-manager';
 
 export default async function newHandler(fastify: FastifyInstance) {
   
@@ -12,21 +14,27 @@ export default async function newHandler(fastify: FastifyInstance) {
     const data = {
       hierarchy: Config.getHierarchyWithReplacement(contactType, 'desc'),
       contactType,
-      userRoleProperty: Config.getUserRoleConfig(contactType),
     };
     return resp.view('src/liquid/new/create_place.liquid', data);
   });
 
   fastify.post('/new', async (req, resp) => {
     const { place_type } = req.query as any;
-
     const contactType = Config.getContactType(place_type);
-    const sessionCache: SessionCache = req.sessionCache;
     const chtApi = new ChtApi(req.chtSession);
+    const sessionCache: SessionCache = req.sessionCache;
+    const uploadManager: UploadManager = fastify.uploadManager;
+    
+    const places = await PlaceFactory.createManyWithSingleUser(req.body as {[key:string]:string}, contactType, sessionCache, chtApi);
+    uploadManager.uploadWithSingleUser(places, chtApi);
 
-    await PlaceFactory.createManyWithSingleUser(req.body as {[key:string]:string}, contactType, sessionCache, chtApi);
+    const data = {
+      hierarchy: Config.getHierarchyWithReplacement(contactType, 'desc'),
+      contactType,
+      places
+    };
 
-    resp.header('HX-Redirect', '/');
+    return resp.view('src/liquid/new/create_form.liquid', data);
   });
 
   fastify.get('/place_form', async (req, resp) => {
@@ -49,6 +57,16 @@ export default async function newHandler(fastify: FastifyInstance) {
         name: place_name,
         value: Buffer.from(JSON.stringify(req.body)).toString('base64'),
       },
+    });
+  });
+
+  fastify.get('/new/table', async (req, resp) => {
+    const { contact } = req.query as any;
+    const sessionCache: SessionCache = req.sessionCache;
+    const places = sessionCache.getPlaces().filter(p => p.contact.id === contact);
+    return resp.view('src/liquid/new/place_list.liquid', {
+      contactType: places[0].type,
+      places
     });
   });
 }

@@ -50,6 +50,13 @@ export class UploadManager extends EventEmitter {
     }
   };
 
+  uploadWithSingleUser =  async (places: Place[], api: ChtApi) => {
+    const grouped = _.groupBy(places, place => place.contact.id);
+    Object.keys(grouped).forEach(async k => {
+      await this.uploadGrouped(grouped[k], api);
+    });
+  };
+
   private async uploadPlacesInBatches(places: Place[], chtApi: ChtApi) {
     for (let batchStartIndex = 0; batchStartIndex < places.length; batchStartIndex += UPLOAD_BATCH_SIZE) {
       const batchEndIndex = Math.min(batchStartIndex + UPLOAD_BATCH_SIZE, places.length);
@@ -63,9 +70,7 @@ export class UploadManager extends EventEmitter {
 
     try {
       const uploader: Uploader = pickUploader(place, chtApi);
-      const store = SessionCache.getForSession(chtApi.chtSession);
-      const userDetails = store.getUserCreationDetails(place.contact.id);
-      const payload = place.asChtPayload(chtApi.chtSession.username, userDetails?.contactId);
+      const payload = place.asChtPayload(chtApi.chtSession.username);
       await Config.mutate(payload, chtApi, place.isReplacement);
 
       if (!place.creationDetails.contactId) {
@@ -76,24 +81,20 @@ export class UploadManager extends EventEmitter {
       if (!place.creationDetails.placeId) {
         const placeResult = await uploader.handlePlacePayload(place, payload);
         place.creationDetails.placeId = placeResult.placeId;
-        place.creationDetails.contactId ||= placeResult.contactId || userDetails?.contactId;
+        place.creationDetails.contactId ||= placeResult.contactId;
       }
 
       if (!place.creationDetails.contactId) {
         throw Error('creationDetails.contactId not set');
       }
 
-      if (!place.creationDetails.username && !userDetails?.username) {
+      if (!place.creationDetails.username) {
         const userPayload = new UserPayload(place, place.creationDetails.placeId, place.creationDetails.contactId);
         const { username, password } = await RetryLogic.createUserWithRetries(userPayload, chtApi);
         place.creationDetails.username = username;
         place.creationDetails.password = password;
-        store.updateUserCreationDetails(place.contact.id, place.creationDetails);
-      } else {
-        place.creationDetails.username = userDetails.username;
-        place.creationDetails.password = userDetails.password;
       }
-    
+
       RemotePlaceCache.add(place, chtApi);
       delete place.uploadError;
 
