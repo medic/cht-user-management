@@ -9,9 +9,14 @@
   <div class="p-2">
     {% for prop in contactType.place_properties %}
       {%
-        include "components/contact_type_property.html" prefix="place_" prop=prop
+        include "components/contact_type_property.html" prefix="place_"
+        prop=prop
+        data=data
         place_type=contactType.name
       %}
+      {% if errors[prop.property_name] %}
+        <p class="mb-2" style="color: red;">{{ errors[prop.property_name] }}</p>
+      {% endif %}
     {% endfor %}
   </div>
   <div class="field is-grouped is-grouped-right p-2">
@@ -24,8 +29,6 @@
     >
       Cancel
     </button>
-    <button class="button is-primary is-small">
-      Add
-    </button>
+    <button class="button is-primary is-small">Add</button>
   </div>
 </form>
