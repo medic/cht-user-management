@@ -51,7 +51,9 @@
     </div>
   </form>
   {% if places.length > 0 %}
-    {% render 'new/place_list.liquid', places: places, contactType: contactType %}
+    {% for entry in places %}
+      {% render 'new/place_list.liquid', places: entry, contactType: contactType %}
+    {% endfor %}
   {% endif %}
   <div class="p-2">
     <a>view history</a>
