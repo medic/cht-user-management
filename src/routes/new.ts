@@ -5,16 +5,24 @@ import SessionCache from '../services/session-cache';
 import _ from 'lodash';
 import PlaceFactory from '../services/place-factory';
 import { UploadManager } from '../services/upload-manager';
+import Validation from '../validation';
 
 export default async function newHandler(fastify: FastifyInstance) {
   
   fastify.get('/new', async (req, resp) => {
     const { place_type } = req.query as any;
     const contactType = Config.getContactType(place_type);
+    const sessionCache: SessionCache = req.sessionCache;
+    
+    const grouped = Object.values(
+      _.groupBy(sessionCache.getPlaces({ type: contactType.name }), (p) => p.contact.id)
+    ).filter(p => p.length > 0).reverse();
     const data = {
       hierarchy: Config.getHierarchyWithReplacement(contactType, 'desc'),
       contactType,
+      places: grouped
     };
+
     return resp.view('src/liquid/new/create_place.liquid', data);
   });
 
@@ -28,10 +36,13 @@ export default async function newHandler(fastify: FastifyInstance) {
     const places = await PlaceFactory.createManyWithSingleUser(req.body as {[key:string]:string}, contactType, sessionCache, chtApi);
     uploadManager.uploadWithSingleUser(places, chtApi);
 
+    const grouped = Object.values(
+      _.groupBy(sessionCache.getPlaces({ type: contactType.name }), (p) => p.contact.id)
+    ).filter(p => p.length > 0).reverse();
     const data = {
       hierarchy: Config.getHierarchyWithReplacement(contactType, 'desc'),
       contactType,
-      places
+      places: grouped
     };
 
     return resp.view('src/liquid/new/create_form.liquid', data);
@@ -49,12 +60,29 @@ export default async function newHandler(fastify: FastifyInstance) {
   fastify.post('/place_form', async (req, resp) => {
     const { place_type } = req.query as any;
     const contactType = Config.getContactType(place_type);
-    const { place_name } = req.body as any;
+    const formData = req.body as { [key:string]: string };
+   
+    const errors: { [key:string]: string } = {};
+    contactType.place_properties.forEach(prop => {
+      const validator = Validation.getValidatorForType(prop.type);
+      const valid = validator?.isValid(formData['place_' + prop.property_name], prop);
+      if (typeof valid === 'string') {
+        throw new Error(valid);
+      }
+      if (!valid) {
+        errors[prop.property_name] = prop.errorDescription ?? 'invalid value';
+      }
+    });
+
+    if (Object.keys(errors).length > 0) {
+      return resp.view('src/liquid/new/place_form_fragment.liquid', { contactType, errors, data: formData });
+    }
+
     return resp.view('src/liquid/new/place_list_fragment.liquid', {
       contactType,
       item: {
-        id: place_name.toLowerCase().replaceAll(' ', '_'),
-        name: place_name,
+        id: formData.place_name.toLowerCase().replaceAll(' ', '_'),
+        name: formData.place_name,
         value: Buffer.from(JSON.stringify(req.body)).toString('base64'),
       },
     });
