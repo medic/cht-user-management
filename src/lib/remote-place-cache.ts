@@ -95,7 +95,7 @@ export default class RemotePlaceCache {
   private static convertContactToRemotePlace(doc: any, uniqueKeyProperties: ContactProperty[], hierarchyLevel: HierarchyConstraint): RemotePlace {
     const uniqueKeyStringValues: FormattedPropertyCollection = {};
     for (const property of uniqueKeyProperties) {
-      const value = doc[property.property_name];
+      const value = doc[property.property_name]?.toString();
       if (value) {
         uniqueKeyStringValues[property.property_name] = new RemotePlacePropertyValue(value, property);
       }
@@ -103,7 +103,7 @@ export default class RemotePlaceCache {
 
     return {
       id: doc._id,
-      name: new RemotePlacePropertyValue(doc.name, hierarchyLevel),
+      name: new RemotePlacePropertyValue(doc.name?.toString(), hierarchyLevel),
       placeType: hierarchyLevel.contact_type,
       lineage: this.extractLineage(doc),
       uniquePlaceValues: uniqueKeyStringValues,
