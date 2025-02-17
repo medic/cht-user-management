@@ -96,7 +96,7 @@ export default async function sessionCache(fastify: FastifyInstance) {
     const directiveModel = new DirectiveModel(sessionCache, req.cookies.filter);
 
     const chtApi = new ChtApi(req.chtSession);
-    uploadManager.doUpload(sessionCache.getPlaces(), chtApi, true);
+    uploadManager.doUpload(sessionCache.getPlaces(), chtApi, ignoreWarnings === 'true');
 
     return resp.view('src/liquid/place/directive.html', {
       directiveModel
