@@ -8,7 +8,7 @@ export class AuthError extends Error {
   }
 
   static INVALID_CREDENTIALS() {
-    return new AuthError(401, 'Invalid username or password');
+    return new AuthError(403, 'Invalid username or password');
   }
 
   static MISSING_CREDENTIALS() {

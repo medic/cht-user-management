@@ -96,7 +96,7 @@ export default class ChtSession {
       }
       return token;
     } catch (e: any) {
-      if (e?.response?.status === 401) {
+      if (e?.response?.status === 403) {
         throw AuthError.INVALID_CREDENTIALS();
       }
       throw e;
