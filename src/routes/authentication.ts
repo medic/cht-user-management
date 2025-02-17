@@ -40,10 +40,7 @@ export default async function authentication(fastify: FastifyInstance) {
 
     const getLoginErrorMessage = (error: unknown): string => {
       if (error instanceof AuthError) {
-        console.error('Login error:', {
-          status: error.status,
-          message: error.errorMessage,
-        });
+        console.error('Login error:', error.message);
         return error.errorMessage;
       }
 
