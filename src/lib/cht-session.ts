@@ -95,8 +95,11 @@ export default class ChtSession {
         throw AuthError.TOKEN_CREATION_FAILED(username, authInfo.domain);
       }
       return token;
-    } catch (e) {
-      AuthError.assertSessionCreationError(e);
+    } catch (e: any) {
+      if (e?.response?.status === 401) {
+        throw AuthError.INVALID_CREDENTIALS();
+      }
+      throw e;
     }
   }
   

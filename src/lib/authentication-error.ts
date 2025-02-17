@@ -30,12 +30,4 @@ export class AuthError extends Error {
   static CANNOT_PARSE_CHT_VERSION(chtCoreVersion: string, domain: string) {
     return new AuthError(401, `Cannot parse cht core version ${chtCoreVersion} for instance "${domain}"`);
   }
-
-  static assertSessionCreationError(e: unknown): never {
-    // @ts-expect-error
-    if (e?.response?.status === 401) {
-      throw AuthError.INVALID_CREDENTIALS();
-    }
-    throw e;
-  }
 }
