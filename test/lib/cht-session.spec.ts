@@ -64,7 +64,7 @@ describe('lib/cht-session.ts', () => {
     });
 
     it('throws AuthError for invalid credentials', async () => {
-      mockAxios.post.rejects({ response: { status: 403 } });
+      mockAxios.post.rejects({ response: { status: 401 } });
 
       await expect(ChtSession.default.create(mockAuthInfo, 'user', 'wrong_pwd'))
         .to.be.rejectedWith('Invalid username or password')
