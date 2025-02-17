@@ -4,13 +4,19 @@
       New
       {{ contactType.contact_friendly }}
     </title>
-    <script src="https://unpkg.com/htmx.org@2.0.4"></script>
-    <script src="https://unpkg.com/htmx-ext-sse@2.2.2/sse.js"></script>
+    <script src="/public/htmx.min.js"></script>
+    <script src="/public/sse.js"></script>
     <link rel="stylesheet" href="/public/bulma.min.css">
     <link rel="stylesheet" href="/public/material-symbols.css">
   </head>
   <body>
-    <nav class="navbar" role="navigation" aria-label="main navigation"></nav>
+    <nav class="navbar" role="navigation" aria-label="main navigation">
+      <div class="navbar-brand">
+        <a class="navbar-item" href="/">
+          <img src="{{ logo }}">
+        </a>
+      </div>
+    </nav>
     <div class="container is-max-desktop px-4" hx-ext="sse" sse-connect="/events/connection">
       {% render 'new/create_form.liquid', contactType: contactType, hierarchy: hierarchy, data: data, places: places %}
     </div>
