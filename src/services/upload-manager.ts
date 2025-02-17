@@ -3,7 +3,7 @@ import EventEmitter from 'events';
 import * as RetryLogic from '../lib/retry-logic';
 import { ChtApi, CreatedPlaceResult, PlacePayload } from '../lib/cht-api';
 import { Config } from '../config';
-import Place, { PlaceUploadState } from './place';
+import Place, { PlaceUploadState, UserCreationDetails } from './place';
 import RemotePlaceCache from '../lib/remote-place-cache';
 import { UploadNewPlace } from './upload.new';
 import { UploadReplacementWithDeletion } from './upload.replacement';
@@ -21,20 +21,25 @@ export interface Uploader {
 export class UploadManager extends EventEmitter {
   doUpload = async (places: Place[], chtApi: ChtApi, ignoreWarnings: boolean = false) => {
     const placesNeedingUpload = places.filter(p => {
-      return !p.isCreated && !p.hasValidationErrors && !p.hasSharedUser && (ignoreWarnings || !p.warnings.length);
+      return !p.isCreated && !p.hasValidationErrors && (ignoreWarnings || !p.warnings.length);
     });
     this.eventedPlaceStateChange(placesNeedingUpload, PlaceUploadState.SCHEDULED);
 
-    const independants = placesNeedingUpload.filter(p => !p.isDependant);
-    const dependants = placesNeedingUpload.filter(p => p.isDependant);
+    const independants = placesNeedingUpload.filter(p => !p.isDependant && !p.hasSharedUser);
+    const dependants = placesNeedingUpload.filter(p => p.isDependant && !p.hasSharedUser);
+
     await this.uploadPlacesInBatches(independants, chtApi);
     await this.uploadPlacesInBatches(dependants, chtApi);
+    await this.uploadGrouped(placesNeedingUpload, chtApi);
   };
 
-  uploadWithSingleUser =  async (places: Place[], api: ChtApi) => {
+  uploadGrouped =  async (places: Place[], api: ChtApi) => {
     const grouped = _.groupBy(places, place => place.contact.id);
     Object.keys(grouped).forEach(async k => {
-      await this.uploadGroup(grouped[k], api);
+      const places = grouped[k];
+      if (places.length > 1) {
+        await this.uploadGroup(places[0].creationDetails, places.slice(1), api);
+      }
     });
   };
 
@@ -89,34 +94,33 @@ export class UploadManager extends EventEmitter {
     }
   }
 
-  private async uploadGroup(places: Place[], api: ChtApi) {
-    let contactId;
-    const placeIds: string[] = [];
-    for (let i = 0; i < places.length; i++) {
-      const place = places[i];
+  private async uploadGroup(creationDetails: UserCreationDetails, places: Place[], api: ChtApi) {
+    if (!creationDetails.username || !creationDetails.placeId) {
+      throw new Error('creationDetails must not be empty');
+    }
+    const placeIds: {[key:string]: string} = { [creationDetails.placeId]: '' };
+    for (const place of places) {
       this.eventedPlaceStateChange(place, PlaceUploadState.IN_PROGRESS);
-      const payload = place.asChtPayload(api.chtSession.username, contactId);
+      const payload = place.asChtPayload(api.chtSession.username, creationDetails.contactId);
       await Config.mutate(payload, api, place.isReplacement);
       const result = await api.createPlace(payload);
-      if (!contactId) {
-        if (!result.contactId) {
-          throw new Error('expected contact id');
-        }
-        contactId = result.contactId;
-      }
+
       place.creationDetails.contactId = result.contactId;
-      placeIds.push(result.placeId);
+      place.creationDetails.placeId = result.placeId;
+      placeIds[result.placeId] = result.placeId;
     }
-    const userPayload = new UserPayload(places[0], placeIds, contactId!);
-    const { username, password } = await RetryLogic.createUserWithRetries(userPayload, api);
+  
+    await api.updateUser({ username: creationDetails.username!, place: Object.keys(placeIds)});
     const created_at = new Date().getTime();
     places.forEach(place => {
-      place.creationDetails.username = username;
-      place.creationDetails.password = password;
+      place.creationDetails.username = creationDetails.username;
+      place.creationDetails.password = creationDetails.password;
       place.creationDetails.created_at = created_at;
+
       this.eventedPlaceStateChange(place, PlaceUploadState.SUCCESS);
     });
-    this.emit('refresh_grouped', contactId);
+
+    this.emit('refresh_grouped', creationDetails.contactId);
   }
 
   public triggerRefresh(place_id: string) {

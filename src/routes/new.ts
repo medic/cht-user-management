@@ -4,8 +4,8 @@ import { ChtApi } from '../lib/cht-api';
 import SessionCache from '../services/session-cache';
 import _ from 'lodash';
 import PlaceFactory from '../services/place-factory';
-import { UploadManager } from '../services/upload-manager';
 import Validation from '../validation';
+import { PlaceUploadState } from '../services/place';
 
 export default async function newHandler(fastify: FastifyInstance) {
   
@@ -15,37 +15,36 @@ export default async function newHandler(fastify: FastifyInstance) {
     const sessionCache: SessionCache = req.sessionCache;
     
     const grouped = Object.values(
-      _.groupBy(sessionCache.getPlaces({ type: contactType.name }), (p) => p.contact.id)
-    ).filter(p => p.length > 0).reverse();
+      _.groupBy(sessionCache.getPlaces({ type: contactType.name }).filter(p => p.state === PlaceUploadState.STAGED), (p) => p.contact.id)
+    )
+      .filter(p => p.length > 0)
+      .reverse();
+
     const data = {
       hierarchy: Config.getHierarchyWithReplacement(contactType, 'desc'),
       contactType,
-      places: grouped
+      places: grouped,
+      logo: Config.getLogoBase64()
     };
 
     return resp.view('src/liquid/new/create_place.liquid', data);
   });
 
   fastify.post('/new', async (req, resp) => {
-    const { place_type } = req.query as any;
+    const { place_type, cont } = req.query as any;
+
     const contactType = Config.getContactType(place_type);
     const chtApi = new ChtApi(req.chtSession);
     const sessionCache: SessionCache = req.sessionCache;
-    const uploadManager: UploadManager = fastify.uploadManager;
     
-    const places = await PlaceFactory.createManyWithSingleUser(req.body as {[key:string]:string}, contactType, sessionCache, chtApi);
-    uploadManager.uploadWithSingleUser(places, chtApi);
-
-    const grouped = Object.values(
-      _.groupBy(sessionCache.getPlaces({ type: contactType.name }), (p) => p.contact.id)
-    ).filter(p => p.length > 0).reverse();
-    const data = {
-      hierarchy: Config.getHierarchyWithReplacement(contactType, 'desc'),
-      contactType,
-      places: grouped
-    };
-
-    return resp.view('src/liquid/new/create_form.liquid', data);
+    await PlaceFactory.createManyWithSingleUser(req.body as {[key:string]:string}, contactType, sessionCache, chtApi);
+    
+    if (cont) {
+      resp.header('HX-Redirect', `/new?place_type=${place_type}`);
+    } else {
+      resp.header('HX-Redirect', `/`); 
+    }
+    return;
   });
 
   fastify.get('/place_form', async (req, resp) => {
