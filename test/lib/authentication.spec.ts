@@ -2,7 +2,7 @@ import chai from 'chai';
 import chaiExclude from 'chai-exclude';
 import { mockChtSession } from '../mocks';
 import Auth from '../../src/lib/authentication';
-import { AuthError, AuthErrors } from '../../src/lib/authentication-error';
+import { AuthError } from '../../src/lib/authentication-error';
 
 chai.use(chaiExclude);
 const { expect } = chai;
@@ -42,20 +42,6 @@ describe('lib/authentication/authentication.ts', () => {
     delete session.username;
     const encoded = Auth.encodeTokenForWorker(session);
     expect(() => Auth.createWorkerSession(encoded)).to.throw('invalid CHT session information');
-  });
-
-  it('should create INVALID_CREDENTIALS error', () => {
-    const error = AuthErrors.INVALID_CREDENTIALS();
-    expect(error).to.be.instanceof(AuthError);
-    expect(error.status).to.equal(401);
-    expect(error.errorMessage).to.equal('Invalid username or password');
-  });
-
-  it('should create MISSING_CREDENTIALS error', () => {
-    const error = AuthErrors.MISSING_CREDENTIALS();
-    expect(error).to.be.instanceof(AuthError);
-    expect(error.status).to.equal(401);
-    expect(error.errorMessage).to.equal('Missing username or password');
   });
 });
 

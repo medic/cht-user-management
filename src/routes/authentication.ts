@@ -1,7 +1,7 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 
 import Auth from '../lib/authentication';
-import { AuthError, AuthErrors } from '../lib/authentication-error';
+import { AuthError } from '../lib/authentication-error';
 import { Config } from '../config';
 import { version as appVersion } from '../package.json';
 import ChtSession from '../lib/cht-session';
@@ -38,11 +38,24 @@ export default async function authentication(fastify: FastifyInstance) {
     const data: any = req.body;
     const { username, password, domain } = data;
 
+    const getLoginErrorMessage = (error: unknown): string => {
+      if (error instanceof AuthError) {
+        console.error('Login error:', {
+          status: error.status,
+          message: error.errorMessage,
+        });
+        return error.errorMessage;
+      }
+
+      console.error('Login error:', error);
+      return 'Unexpected error logging in';
+    };
+
     try {
       const authInfo = Config.getAuthenticationInfo(domain);
 
       if (!username || !password) {
-        throw AuthErrors.MISSING_CREDENTIALS();
+        throw AuthError.MISSING_CREDENTIALS();
       }
 
       const chtSession = await ChtSession.create(authInfo, username, password);
@@ -57,16 +70,7 @@ export default async function authentication(fastify: FastifyInstance) {
 
       resp.header('HX-Redirect', '/');
     } catch (e: any ) {
-      if (e instanceof AuthError) {
-        console.error('Login error:', {
-          status: e.status,
-          message: e.errorMessage,
-        });
-        return renderAuthForm(resp, e.errorMessage);
-      }
-
-      console.error('Login error:', e);
-      return renderAuthForm(resp, 'Unexpected error logging in');
+      return renderAuthForm(resp, getLoginErrorMessage(e));
     }
   });
 

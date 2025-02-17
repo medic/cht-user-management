@@ -74,7 +74,8 @@ describe('lib/cht-session.ts', () => {
 
     it('throw cht yields no authtoken', async () => {
       mockAxios.post.resolves(mockSessionResponse([]));
-      await expect(ChtSession.default.create(mockAuthInfo, 'user', 'pwd')).to.eventually.be.rejectedWith('failed to obtain token');
+      await expect(ChtSession.default.create(mockAuthInfo, 'user', 'pwd'))
+        .to.eventually.be.rejectedWith(`Failed to obtain token for user at ${mockAuthInfo.domain}`);
     });
 
     it('throw if no user doc', async () => {
@@ -90,6 +91,15 @@ describe('lib/cht-session.ts', () => {
     it('throw if cht-core is 4.6.5', async () => {
       mockAxios.get.onSecondCall().resolves({ data: { version: { app: '4.6.5' } } });
       await expect(ChtSession.default.create(mockAuthInfo, 'user', 'pwd')).to.eventually.be.rejectedWith('CHT Core Version must be');
+    });
+
+    it('throws if invalid credentials', async () => {
+      mockAxios.post.rejects({ response: { status: 401 } });
+
+      await expect(ChtSession.default.create(mockAuthInfo, 'user', 'wrong_pwd'))
+        .to.be.rejectedWith('Invalid username or password')
+        .and.to.eventually.be.instanceof(AuthError)
+        .and.to.have.property('status', 401);
     });
   });
 

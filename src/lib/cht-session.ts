@@ -4,7 +4,7 @@ import { AxiosHeaders, AxiosInstance } from 'axios';
 import axiosRetry from 'axios-retry';
 import * as semver from 'semver';
 
-import { AuthErrors } from './authentication-error';
+import { AuthError } from './authentication-error';
 import { AuthenticationInfo } from '../config';
 import { axiosRetryConfig } from './retry-logic';
 import { RemotePlace } from './remote-place-cache';
@@ -53,20 +53,9 @@ export default class ChtSession {
   }
 
   public static async create(authInfo: AuthenticationInfo, username: string, password: string): Promise<ChtSession> {
-    try {
-      const sessionToken = await ChtSession.createSessionToken(authInfo, username, password);
-      if (!sessionToken) {
-        throw new Error(`failed to obtain token for ${username} at ${authInfo.domain}`);
-      }
-
-      const creationDetails = await ChtSession.fetchCreationDetails(authInfo, username, sessionToken);
-      return new ChtSession(creationDetails);
-    } catch (e: any) {
-      if (e.response?.status === 401) {
-        throw AuthErrors.INVALID_CREDENTIALS();
-      }
-      throw e;
-    }
+    const sessionToken = await ChtSession.createSessionToken(authInfo, username, password);
+    const creationDetails = await ChtSession.fetchCreationDetails(authInfo, username, sessionToken);
+    return new ChtSession(creationDetails);
   }
 
   public static createFromDataString(data: string): ChtSession {
@@ -84,23 +73,31 @@ export default class ChtSession {
   }
 
   private static async createSessionToken(authInfo: AuthenticationInfo, username: string, password: string): Promise<string> {
-    const sessionUrl = ChtSession.createUrl(authInfo, '_session');
-    const resp = await axios.post(
-      sessionUrl,
-      {
-        name: username,
-        password,
-      },
-      {
-        auth: {
-          username,
-          password
+    try {
+      const sessionUrl = ChtSession.createUrl(authInfo, '_session');
+      const resp = await axios.post(
+        sessionUrl,
+        {
+          name: username,
+          password,
         },
+        {
+          auth: {
+            username,
+            password
+          },
+        }
+      );
+      const setCookieHeader = (resp.headers as AxiosHeaders).get('set-cookie') as AxiosHeaders;
+      const token =  setCookieHeader?.[0]?.split(';')
+        .find((header: string) => header.startsWith(COUCH_AUTH_COOKIE_NAME));
+      if (!token) {
+        throw AuthError.TOKEN_CREATION_FAILED(username, authInfo.domain);
       }
-    );
-    const setCookieHeader = (resp.headers as AxiosHeaders).get('set-cookie') as AxiosHeaders;
-    return setCookieHeader?.[0]?.split(';')
-      .find((header: string) => header.startsWith(COUCH_AUTH_COOKIE_NAME));
+      return token;
+    } catch (e) {
+      AuthError.assertSessionCreationError(e);
+    }
   }
   
   private static async fetchCreationDetails(authInfo: AuthenticationInfo, username: string, sessionToken: string): Promise<SessionCreationDetails> {
@@ -122,7 +119,7 @@ export default class ChtSession {
 
     const facilityIds = isAdmin ? [ADMIN_FACILITY_ID] : _.flatten([userDoc?.facility_id]).filter(Boolean);
     if (!facilityIds?.length) {
-      throw Error(`User ${username} does not have a facility_id connected to their user doc`);
+      throw AuthError.MISSING_FACILITY(username);
     }
 
     ChtSession.assertCoreVersion(chtCoreVersion, authInfo.domain);
@@ -139,11 +136,11 @@ export default class ChtSession {
   private static assertCoreVersion(chtCoreVersion: any, domain: string) {
     const coercedVersion = semver.valid(semver.coerce(chtCoreVersion));
     if (!coercedVersion) {
-      throw Error(`Cannot parse cht core version ${chtCoreVersion} for instance "${domain}"`);
+      throw AuthError.CANNOT_PARSE_CHT_VERSION(chtCoreVersion, domain);
     }
 
     if (semver.lt(coercedVersion, '4.7.0')) {
-      throw Error(`CHT Core Version must be 4.7.0 or higher. "${domain}" is running ${chtCoreVersion}.`);
+      throw AuthError.INCOMPATIBLE_CHT_CORE_VERSION(domain, chtCoreVersion);
     }
   }
 
