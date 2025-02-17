@@ -247,7 +247,7 @@ describe('services/upload-manager.ts', () => {
     expect(chu.creationDetails).to.deep.include({
       contactId: 'created-contact-id',
       placeId: 'created-place-id',
-      username: 'new'
+      username: 'new_cha'
     });
     expect(chu.creationDetails.password).to.not.be.undefined;
 

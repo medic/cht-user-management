@@ -152,14 +152,26 @@ export default async function addPlace(fastify: FastifyInstance) {
   fastify.post('/place/upload/:id', async (req) => {
     const { id } = req.params as any;
     const sessionCache: SessionCache = req.sessionCache;
+    const chtApi = new ChtApi(req.chtSession);
+    
     const place = sessionCache.getPlace(id);
     if (!place) {
       throw Error(`unable to find place ${id}`);
     }
+    const places = [];
+    if (place.hasSharedUser) {
+      const group = sessionCache.getPlaces({ type: place.type.name }).filter(p => p.contact.id === place.contact.id);
+      if (group.filter(p => p.isCreated).length > 0) {
+        places.push(...group.filter(p => p.isCreated), place);
+      } else {
+        places.push(group[0], place);
+      }
+    } else {
+      places.push(place);
+    }
 
-    const chtApi = new ChtApi(req.chtSession);
     const uploadManager: UploadManager = fastify.uploadManager;
-    uploadManager.doUpload([place], chtApi, true);
+    uploadManager.doUpload(places, chtApi, true);
   });
 
   fastify.post('/place/remove/:id', async (req) => {
