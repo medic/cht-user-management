@@ -1,7 +1,7 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 
-import Auth from '../lib/authentication/authentication';
-import { AuthError, AuthErrors } from '../lib/authentication/errors/authentication-error';
+import Auth from '../lib/authentication';
+import { AuthError, AuthErrors } from '../lib/authentication-error';
 import { Config } from '../config';
 import { version as appVersion } from '../package.json';
 import ChtSession from '../lib/cht-session';

@@ -6,7 +6,7 @@ import sinon from 'sinon';
 
 import MoveLib from '../../src/lib/manage-hierarchy';
 
-import Auth from '../../src/lib/authentication/authentication';
+import Auth from '../../src/lib/authentication';
 import { Config } from '../../src/config';
 import { BullQueue } from '../../src/lib/queues';
 import { mockChtApi, mockChtSession } from '../mocks';

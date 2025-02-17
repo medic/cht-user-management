@@ -1,6 +1,6 @@
 import process from 'process';
 import jwt from 'jsonwebtoken';
-import ChtSession from '../cht-session';
+import ChtSession from './cht-session';
 
 const LOGIN_EXPIRES_AFTER_MS = 4 * 24 * 60 * 60 * 1000;
 const QUEUE_SESSION_EXPIRATION = '96h';

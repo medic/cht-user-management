@@ -3,7 +3,7 @@ import { spawn } from 'child_process';
 import { Worker, Job, DelayedError, ConnectionOptions, MinimalJob } from 'bullmq';
 import { DateTime } from 'luxon';
 
-import Auth from '../lib/authentication/authentication';
+import Auth from '../lib/authentication';
 import { HierarchyAction } from '../lib/manage-hierarchy';
 
 export interface ChtConfJobData {

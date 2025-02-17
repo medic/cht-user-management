@@ -4,7 +4,7 @@ import sinon from 'sinon';
 
 import { AuthenticationInfo } from '../../src/config';
 import { RemotePlace } from '../../src/lib/remote-place-cache';
-import { AuthError } from '../../src/lib/authentication/errors/authentication-error';
+import { AuthError } from '../../src/lib/authentication-error';
 const ChtSession = rewire('../../src/lib/cht-session');
 
 import chaiAsPromised from 'chai-as-promised';

@@ -4,7 +4,7 @@ import { AxiosHeaders, AxiosInstance } from 'axios';
 import axiosRetry from 'axios-retry';
 import * as semver from 'semver';
 
-import { AuthErrors } from './authentication/errors/authentication-error';
+import { AuthErrors } from './authentication-error';
 import { AuthenticationInfo } from '../config';
 import { axiosRetryConfig } from './retry-logic';
 import { RemotePlace } from './remote-place-cache';
