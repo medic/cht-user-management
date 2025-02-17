@@ -10,7 +10,6 @@ import { UploadReplacementWithDeletion } from './upload.replacement';
 import { UploadReplacementWithDeactivation } from './upload.deactivate';
 import { UserPayload } from './user-payload';
 import _ from 'lodash';
-import SessionCache from './session-cache';
 
 const UPLOAD_BATCH_SIZE = 15;
 
@@ -48,13 +47,6 @@ export class UploadManager extends EventEmitter {
       }
       await this.uploadGroup(creationDetails, places, api);
     }
-  };
-
-  uploadWithSingleUser =  async (places: Place[], api: ChtApi) => {
-    const grouped = _.groupBy(places, place => place.contact.id);
-    Object.keys(grouped).forEach(async k => {
-      await this.uploadGrouped(grouped[k], api);
-    });
   };
 
   private async uploadPlacesInBatches(places: Place[], chtApi: ChtApi) {

@@ -1,15 +1,14 @@
 <div id="create_form_parent" class="is-flex is-flex-direction-column is-align-items-center">
-  <div>
-    <h3 class="is-size-4">New {{ contactType.contact_friendly }}</h3>
-  </div>
   <form
-    class="mt-4"
     autocomplete="off"
     hx-target="#create_form_parent"
     hx-swap="outerHTML"
     hx-post="/new?place_type={{contactType.name}}"
     style="max-width: 48rem;"
   >
+    <div>
+      <h3 class="is-size-4">New {{ contactType.contact_friendly }}</h3>
+    </div>
     <input name="place_type" value="{{contactType.name}}" hidden>
 
     <p>Contact details</p>
@@ -43,10 +42,13 @@
       {% render 'new/new_place_btn.liquid' with contactType.name as place_type %}
     </div>
 
-    <div class="field is-grouped is-grouped-right mt-4">
+    <div class="field mt-4 is-flex is-justify-content-space-between">
+      <button class="button is-small is-ghost px-0" hx-post="/new?place_type={{contactType.name}}&cont=1">
+        Save and continue
+      </button>
       <div class="control">
         <a href="/" class="button is-small">Cancel</a>
-        <button id="place_create_submit" class="button is-small is-link">Upload</button>
+        <button class="button is-small is-link">Save</button>
       </div>
     </div>
   </form>
@@ -55,7 +57,4 @@
       {% render 'new/place_list.liquid', places: entry, contactType: contactType %}
     {% endfor %}
   {% endif %}
-  <div class="p-2">
-    <a>view history</a>
-  </div>
 </div>
