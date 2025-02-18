@@ -20,7 +20,8 @@ export default class RemotePlaceResolver {
     placeType: 'invalid',
     type: 'invalid',
     uniquePlaceValues: {},
-    lineage: []
+    lineage: [],
+    contactId: '',
   };
   
   public static readonly Multiple: RemotePlace = {
@@ -29,7 +30,8 @@ export default class RemotePlaceResolver {
     placeType: 'invalid',
     type: 'invalid',
     uniquePlaceValues: {},
-    lineage: []
+    lineage: [],
+    contactId: '',
   };
 
   public static resolve = async (

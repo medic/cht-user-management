@@ -38,7 +38,7 @@ describe('services/upload-manager.ts', () => {
     const userPayload = chtApi.createUser.args[0][0];
     expect(userPayload).to.deep.include({
       contact: 'created-contact-id',
-      place: 'created-place-id',
+      place: ['created-place-id'],
       roles: ['role'],
       username: 'contact',
     });
@@ -325,7 +325,7 @@ describe('services/upload-manager.ts', () => {
     const userPayload = chtApi.createUser.args[0][0];
     expect(userPayload).to.deep.include({
       contact: 'created-contact-id',
-      place: 'created-place-id',
+      place: ['created-place-id'],
       roles: ['role1', 'role2'],
       username: 'contact',
     });
@@ -357,6 +357,35 @@ describe('services/upload-manager.ts', () => {
     expect(chtApi.disableUser.callCount).to.eq(1);
     expect(place.isCreated).to.be.true;
   });
+
+  it('ignoreWarnings: true', async () => {
+    const { fakeFormData, contactType, chtApi, sessionCache } = await createMocks();
+    const place = await PlaceFactory.createOne(fakeFormData, contactType, sessionCache, chtApi);
+    place.warnings.push('warning');
+
+    const uploadManager = new UploadManager();
+    await uploadManager.doUpload([place], chtApi, { ignoreWarnings: true });
+
+    expect(chtApi.createPlace.calledOnce).to.be.true;
+    expect(chtApi.createUser.calledOnce).to.be.true;
+    expect(chtApi.deleteDoc.called).to.be.false;
+    expect(place.isCreated).to.be.true;
+  });
+
+  it('contactsOnly: true', async () => {
+    const { fakeFormData, contactType, chtApi, sessionCache } = await createMocks();
+    const place = await PlaceFactory.createOne(fakeFormData, contactType, sessionCache, chtApi);
+
+    const uploadManager = new UploadManager();
+    await uploadManager.doUpload([place], chtApi, { contactsOnly: true });
+
+    expect(chtApi.createPlace.calledOnce).to.be.true;
+    expect(chtApi.createUser.calledOnce).to.be.false;
+    expect(chtApi.deleteDoc.called).to.be.false;
+    expect(chtApi.disableUser.called).to.be.false;
+    expect(chtApi.updateUser.called).to.be.false;
+    expect(place.isCreated).to.be.false;
+  });
 });
 
 async function createMocks() {
@@ -374,7 +403,6 @@ async function createMocks() {
       .onThirdCall().resolves([]),
     // getPlacesWithType: sinon.stub().resolves([subcounty]),
     createPlace: sinon.stub().resolves({ placeId: 'created-place-id', contactId: 'created-contact-id' }),
-    updateContactParent: sinon.stub().resolves('created-contact-id'),
     createUser: sinon.stub().resolves(),
     
     getParentAndSibling: sinon.stub().resolves({ parent: {}, sibling: {} }),
