@@ -31,17 +31,19 @@ export class UploadManager extends EventEmitter {
 
     await this.uploadPlacesInBatches(independants, chtApi);
     await this.uploadPlacesInBatches(dependants, chtApi);
-    await this.uploadGrouped(validPlaces, chtApi);
+    await this.uploadGrouped(validPlaces.filter(p => p.hasSharedUser), chtApi);
   };
 
   uploadGrouped =  async (places: Place[], api: ChtApi) => {
     const grouped = _.groupBy(places, place => place.contact.id);
     Object.keys(grouped).forEach(async k => {
       const places = grouped[k];
-      if (!places[0].creationDetails.username) {
+      let creationDetails = places.find(p => !!p.creationDetails.username)?.creationDetails;
+      if (!creationDetails) {
         await this.uploadSinglePlace(places[0], api);
+        creationDetails = places[0].creationDetails;
       }
-      await this.uploadGroup(places[0].creationDetails, places.slice(1), api);
+      await this.uploadGroup(creationDetails, places, api);
     });
   };
 
@@ -102,8 +104,8 @@ export class UploadManager extends EventEmitter {
     }
     const placeIds: {[key:string]: any} = { [creationDetails.placeId]: '' };
     for (const place of places) {
-      if (place.isCreated && place.creationDetails.placeId) {
-        placeIds[place.creationDetails.placeId] = undefined;
+      if (place.isCreated) {
+        placeIds[place.id] = undefined;
         continue;
       }
       this.eventedPlaceStateChange(place, PlaceUploadState.IN_PROGRESS);

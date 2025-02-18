@@ -139,14 +139,18 @@ export default async function addPlace(fastify: FastifyInstance) {
     if (!place) {
       throw Error(`unable to find place ${id}`);
     }
-
     const chtApi = new ChtApi(req.chtSession);
     RemotePlaceCache.clear(chtApi, place.type.name);
-    await RemotePlaceResolver.resolveOne(place, sessionCache, chtApi, { fuzz: true });
-    place.validate();
+    let places = [];
+    if (place.hasSharedUser) {
+      places = sessionCache.getPlaces({ type: place.type.name }).filter(p => p.contact.id === place.contact.id);
+    } else {
+      places = [place];
+    }
+    await RemotePlaceResolver.resolve(places, sessionCache, chtApi, { fuzz: true });
+    places.forEach(place => place.validate());
     await WarningSystem.setWarnings(place.type, chtApi, sessionCache);
-
-    fastify.uploadManager.triggerRefresh(place.id);
+    places.forEach(place => fastify.uploadManager.triggerRefresh(place.id));
   });
 
   fastify.post('/place/upload/:id', async (req) => {
@@ -158,16 +162,11 @@ export default async function addPlace(fastify: FastifyInstance) {
     if (!place) {
       throw Error(`unable to find place ${id}`);
     }
-    const places = [];
+    let places = [];
     if (place.hasSharedUser) {
-      const group = sessionCache.getPlaces({ type: place.type.name }).filter(p => p.contact.id === place.contact.id);
-      if (group.filter(p => p.isCreated).length > 0) {
-        places.push(...group.filter(p => p.isCreated), place);
-      } else {
-        places.push(group[0], place);
-      }
+      places = sessionCache.getPlaces({ type: place.type.name }).filter(p => p.contact.id === place.contact.id);
     } else {
-      places.push(place);
+      places = [place];
     }
 
     const uploadManager: UploadManager = fastify.uploadManager;

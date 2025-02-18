@@ -45,8 +45,8 @@ export default class PlaceFactory {
       place.setPropertiesFromFormData(placeData, 'hierarchy_');
       if (idx > 0) {
         place.contact = places[0].contact;
-        place.hasSharedUser = true;
       }
+      place.hasSharedUser = true;  
       places.push(place);
     });
     await PlaceFactory.finalizePlaces(places, sessionCache, chtApi, contactType);
@@ -60,8 +60,14 @@ export default class PlaceFactory {
       throw new Error('unknown place or place has already been created');
     }
     place.setPropertiesFromFormData(formData, 'hierarchy_');
+    let places = [];
+    if (place.hasSharedUser) {
+      places = sessionCache.getPlaces({ type: place.type.name }).filter(p => p.contact.id === place.contact.id);
+    } else {
+      places = [place];
+    }
 
-    await PlaceFactory.finalizePlaces([place], sessionCache, chtApi, place.type);
+    await PlaceFactory.finalizePlaces(places, sessionCache, chtApi, place.type);
     return place;
   };
 
