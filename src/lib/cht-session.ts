@@ -7,10 +7,11 @@ import * as semver from 'semver';
 import { AuthenticationInfo } from '../config';
 import { axiosRetryConfig } from './retry-logic';
 import { RemotePlace } from './remote-place-cache';
+import { UserPermissionService } from '../services/user-permissions';
 
 const COUCH_AUTH_COOKIE_NAME = 'AuthSession=';
 const ADMIN_FACILITY_ID = '*';
-const ADMIN_ROLES = ['admin', '_admin'];
+export const ADMIN_ROLES = ['admin', '_admin'];
 
 axiosRetry(axios, axiosRetryConfig);
 
@@ -98,7 +99,7 @@ export default class ChtSession {
   
   private static async fetchCreationDetails(authInfo: AuthenticationInfo, username: string, sessionToken: string): Promise<SessionCreationDetails> {
     // api/v2/users returns all users prior to 4.6 even with ?facility_id
-    const paths = [`medic/org.couchdb.user:${username}`, 'api/v2/monitoring'];
+    const paths = [`medic/org.couchdb.user:${username}`, 'api/v2/monitoring', 'api/v1/settings'];
     const fetches = paths.map(path => {
       const url = ChtSession.createUrl(authInfo, path);
       return axios.get(
@@ -108,10 +109,13 @@ export default class ChtSession {
     });
     const [
       { data: userDoc }, 
-      { data: { version: { app: chtCoreVersion } } }
+      { data: { version: { app: chtCoreVersion } } },
+      { data: settings }
     ] = await Promise.all(fetches);
 
     const isAdmin = _.intersection(ADMIN_ROLES, userDoc?.roles).length > 0;
+
+    UserPermissionService.validateUserPermissions(userDoc, username, settings.permissions);
 
     const facilityIds = isAdmin ? [ADMIN_FACILITY_ID] : _.flatten([userDoc?.facility_id]).filter(Boolean);
     if (!facilityIds?.length) {

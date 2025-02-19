@@ -5,6 +5,7 @@ import sinon from 'sinon';
 import { AuthenticationInfo } from '../../src/config';
 import { RemotePlace } from '../../src/lib/remote-place-cache';
 const ChtSession = rewire('../../src/lib/cht-session');
+import { REQUIRED_PERMISSIONS } from '../../src/services/user-permissions';
 
 import chaiAsPromised from 'chai-as-promised';
 Chai.use(chaiAsPromised);
@@ -23,12 +24,25 @@ const mockSessionResponse = (headers: Array<string> = ['AuthSession=123']) => ({
   },
 });
 
-const mockUserFacilityDoc = (facilityId: string = 'parent-id', roles:string[] = []) => ({
+const USER_MANAGER_ROLE = 'user_manager';
+
+const mockUserFacilityDoc = (facilityId: string = 'parent-id', roles:string[] = [USER_MANAGER_ROLE]) => ({
   data: {
     roles,
     facility_id: !facilityId ? undefined : facilityId,
   }
 });
+
+const mockSettingsResponse = {
+  data: {
+    permissions: Object.fromEntries(
+      REQUIRED_PERMISSIONS.map(permission => [
+        permission,
+        ['user_manager']
+      ])
+    )
+  }
+};
 
 let mockAxios;
 
@@ -45,7 +59,8 @@ describe('lib/cht-session.ts', () => {
       },
       post: sinon.stub().resolves(mockSessionResponse()),
       get: sinon.stub().resolves(mockUserFacilityDoc())
-        .onSecondCall().resolves({ data: { version: { app: '4.7.0' } } }),
+        .onSecondCall().resolves({ data: { version: { app: '4.7.0' } } })
+        .onThirdCall().resolves(mockSettingsResponse),
     };
     ChtSession.__set__('axios', {
       create: sinon.stub().returns(mockAxios),
@@ -73,8 +88,16 @@ describe('lib/cht-session.ts', () => {
     });
 
     it('throw if user-settings has no facility_id', async () => {
-      mockAxios.get.resolves(mockUserFacilityDoc('', []));
+      mockAxios.get.resolves(mockUserFacilityDoc('', [USER_MANAGER_ROLE]));
       await expect(ChtSession.default.create(mockAuthInfo, 'user', 'pwd')).to.eventually.be.rejectedWith('does not have a facility_id');
+    });
+
+    it('throw if user does not have required permissions', async () => {
+      const user = 'user';
+      const errorMessage = `User ${user} role does not have the required permissions`;
+      mockAxios.get.resolves(mockUserFacilityDoc('facility-id', []));
+      const request = ChtSession.default.create(mockAuthInfo, user, 'pwd');
+      await expect(request).to.eventually.be.rejectedWith(errorMessage);
     });
 
     it('throw if cht-core is 4.6.5', async () => {
@@ -93,8 +116,8 @@ describe('lib/cht-session.ts', () => {
 
   describe('isPlaceAuthorized', () => {
     const scenarios = [
-      { roles: [], facilityId: 'parent-id', isExpected: true },
-      { roles: [], facilityId: 'dne', isExpected: false },
+      { roles: [ USER_MANAGER_ROLE ], facilityId: 'parent-id', isExpected: true },
+      { roles: [ USER_MANAGER_ROLE ], facilityId: 'dne', isExpected: false },
 
       { roles: ['admin'], facilityId: 'parent-id', isExpected: true },
       { roles: ['admin'], facilityId: 'dne', isExpected: true },
