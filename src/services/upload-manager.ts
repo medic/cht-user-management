@@ -36,15 +36,16 @@ export class UploadManager extends EventEmitter {
 
   uploadGrouped =  async (places: Place[], api: ChtApi) => {
     const grouped = _.groupBy(places, place => place.contact.id);
-    Object.keys(grouped).forEach(async k => {
-      const places = grouped[k];
+    const keys = Object.keys(grouped);
+    for (let i = 0; i < keys.length; i++) {
+      const places = grouped[keys[i]];
       let creationDetails = places.find(p => !!p.creationDetails.username)?.creationDetails;
       if (!creationDetails) {
         await this.uploadSinglePlace(places[0], api);
         creationDetails = places[0].creationDetails;
       }
       await this.uploadGroup(creationDetails, places, api);
-    });
+    }
   };
 
   private async uploadPlacesInBatches(places: Place[], chtApi: ChtApi) {
