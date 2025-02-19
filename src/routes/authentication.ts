@@ -6,6 +6,14 @@ import { Config } from '../config';
 import { version as appVersion } from '../package.json';
 import ChtSession from '../lib/cht-session';
 
+const getLoginErrorMessage = (error: unknown): string => {
+  if (error instanceof AuthError) {
+    return error.errorMessage;
+  }
+
+  return 'Unexpected error logging in';
+};
+
 export default async function authentication(fastify: FastifyInstance) {
   const unauthenticatedOptions = {
     preParsing: async (req : FastifyRequest) => {
@@ -38,16 +46,6 @@ export default async function authentication(fastify: FastifyInstance) {
     const data: any = req.body;
     const { username, password, domain } = data;
 
-    const getLoginErrorMessage = (error: unknown): string => {
-      if (error instanceof AuthError) {
-        console.error('Login error:', error.message);
-        return error.errorMessage;
-      }
-
-      console.error('Login error:', error);
-      return 'Unexpected error logging in';
-    };
-
     try {
       const authInfo = Config.getAuthenticationInfo(domain);
 
@@ -67,6 +65,7 @@ export default async function authentication(fastify: FastifyInstance) {
 
       resp.header('HX-Redirect', '/');
     } catch (e: any ) {
+      console.error('Login error:', e instanceof AuthError ? e.errorMessage : e);
       return renderAuthForm(resp, getLoginErrorMessage(e));
     }
   });
