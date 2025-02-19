@@ -514,6 +514,32 @@ it('#165 - create a place when generated property is required', async () => {
   expect(place.validationErrors).to.be.empty;
 });
 
+it('create multiple places with single contact', async () => {
+  const genPlaceFormData = (contactType, uniqfix) => {
+    const data = {};
+    contactType.place_properties.forEach(p => data[`place_${p.property_name}`] = p.property_name + uniqfix);
+    return data;
+  };
+
+  const { sessionCache, contactType, fakeFormData, chtApi } = mockScenario();
+  console.log(contactType.place_properties.map(p => p.property_name));
+  
+  const placeCount = 3;
+  for (let i = 0; i < placeCount; i++) {
+    fakeFormData[`list_${i}`] = Buffer.from(JSON.stringify(genPlaceFormData(contactType, `${i}`))).toString('base64');
+  }
+  const places = await PlaceFactory.createManyWithSingleUser(fakeFormData, contactType, sessionCache, chtApi);
+  expect(places).lengthOf(placeCount);
+  const contact = places[0].contact.id;
+  for (let i = 0; i < placeCount; i++) {
+    const place = places[i];
+    expect(place.name).equals(`Name${i}`); 
+    expect(place.validationErrors).to.be.empty;
+    expect(place.contact.id).equals(contact);
+    expect(place.resolvedHierarchy[1]?.id).to.eq('parent-id');
+  }
+});
+
 function mockScenario() {
   const contactType = mockValidContactType('string', undefined);
   const parentDoc: ChtDoc = {

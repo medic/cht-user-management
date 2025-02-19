@@ -6,6 +6,7 @@ import _ from 'lodash';
 import PlaceFactory from '../services/place-factory';
 import Validation from '../validation';
 import { PlaceUploadState } from '../services/place';
+import crypto from 'crypto';
 
 export default async function newHandler(fastify: FastifyInstance) {
   
@@ -80,7 +81,7 @@ export default async function newHandler(fastify: FastifyInstance) {
     return resp.view('src/liquid/new/place_list_fragment.liquid', {
       contactType,
       item: {
-        id: formData.place_name.toLowerCase().replaceAll(' ', '_'),
+        id: crypto.randomUUID(),
         name: formData.place_name,
         value: Buffer.from(JSON.stringify(req.body)).toString('base64'),
       },

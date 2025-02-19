@@ -40,7 +40,7 @@ export default class PlaceFactory {
     const places: Place[] = [];
     list.forEach((data, idx) => {
       const parsed = JSON.parse(Buffer.from(data, 'base64').toString('utf8'));
-      const placeData = { ...parsed, ...formData };
+      const placeData = { ...formData, ...parsed };
       const place = new Place(contactType);
       place.setPropertiesFromFormData(placeData, 'hierarchy_');
       if (idx > 0) {
