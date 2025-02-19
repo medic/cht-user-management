@@ -129,7 +129,7 @@ export class ChtApi {
   }
 
   async createUser(user: UserPayload): Promise<void> {
-    const url = `api/v1/users`;
+    const url = `api/v3/users`;
     console.log('axios.post', url);
     const axiosRequestionConfig = {
       'axios-retry': { retries: 0 }, // upload-manager handles retries for this

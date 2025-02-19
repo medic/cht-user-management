@@ -1,0 +1,8 @@
+{% render 'new/new_place_btn.liquid' with contactType.name as place_type %}
+<div class="p-2 is-flex is-justify-content-space-between" style="border-top: 1px solid #d3d3d3;">
+  <div class="is-flex is-flex-direction-column is-justify-content-center">
+    <p class="has-text-weight-semibold">{{ item.name }}</p>
+  </div>
+  <button class="button is-small is-danger is-light">Remove</button>
+  <input name="list_{{ item.id }}" type="text" value="{{ item.value }}" hidden>
+</div>

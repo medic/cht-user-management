@@ -5,7 +5,8 @@
         <a
           class="dropdown-item"
           hx-post="/search/select?place_id={{place.id}}&result_name={{searchResult.name}}&level={{level}}&op={{op}}&prefix={{ prefix }}"
-          hx-target="#place_form_parent"
+          hx-target="#{{div}}"
+          hx-swap="outerHTML"
           hx-encoding="application/x-www-form-urlencoded"
         >
           {% if searchResult.type == 'local' %}

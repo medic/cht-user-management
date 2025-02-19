@@ -1,0 +1,72 @@
+<div
+  class="my-4"
+  style="border: 1px solid #d3d3d3; border-radius: 4px; width: 100%;"
+  hx-get="/new/table?contact={{places[0].contact.id}}"
+  hx-swap="outerHTML"
+  hx-trigger="sse:update-group"
+>
+  <div class="p-2 mt-1">
+    {% for contact_property in contactType.contact_properties %}
+      {% if contact_property.type != 'generated' %}
+        {% capture propertyName %}contact_{{ contact_property.property_name }}{% endcapture %}
+        <p class="m-1">
+          <span>
+            <strong>{{ contact_property.friendly_name }}: </strong>
+          </span>
+          <span>
+            {%
+              include "components/list_cell.html"
+              propertyName=propertyName
+              property=contact_property
+              values=places[0].contact.properties
+            -%}
+          </span>
+        </p>
+      {% endif %}
+    {% endfor %}
+  </div>
+  <table class="table is-fullwidth is-striped is-hoverable mb-1">
+    <thead>
+      <tr>
+        {% for property in contactType.place_properties %}
+          {% if property.type != 'generated' %}
+            <th id="place_{{property.property_name}}">{{ property.friendly_name }}</th>
+          {% endif %}
+        {% endfor %}
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for place in places %}
+        <tr id="{{place.id}}">
+          {% for property in contactType.place_properties %}
+            {% if property.type != 'generated' %}
+              {% capture propertyName %}place_{{ property.property_name }}{% endcapture %}
+              {%
+                include "components/list_cell.html"
+                propertyName=propertyName
+                property=property
+                values=place.properties
+              %}
+            {% endif %}
+          {% endfor %}
+          <td>
+            {% capture tag_class %}
+                {% if place.state == 'failure' %}is-danger
+                {% elsif place.state == 'success' %}is-success
+                {% endif %}
+            {% endcapture %}
+            <span
+              class="tag is-info {{ tag_class }}"
+              {% if place.uploadError %}
+                data-tooltip="{{ place.uploadError | escape }}"
+              {% endif %}
+            >
+              {{ place.state }}
+            </span>
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>

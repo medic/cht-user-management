@@ -60,6 +60,9 @@ export default async function events(fastify: FastifyInstance) {
     };
 
     uploadManager.on('refresh_table_row', placeChangeListener);
+    uploadManager.on('refresh_grouped', async () => {
+      resp.sse({ event: `update-group`, data: `update` });
+    });
 
     req.socket.on('close', () => {
       uploadManager.removeListener('refresh_table_row', placeChangeListener);

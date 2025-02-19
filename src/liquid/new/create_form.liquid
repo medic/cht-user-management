@@ -1,0 +1,60 @@
+<div id="create_form_parent" class="is-flex is-flex-direction-column is-align-items-center">
+  <form
+    autocomplete="off"
+    hx-target="#create_form_parent"
+    hx-swap="outerHTML"
+    hx-post="/new?place_type={{contactType.name}}"
+    style="max-width: 48rem;"
+  >
+    <div>
+      <h3 class="is-size-4">New {{ contactType.contact_friendly }}</h3>
+    </div>
+    <input name="place_type" value="{{contactType.name}}" hidden>
+
+    <p>Contact details</p>
+    <div class="p-2">
+      {% for hierarchy in hierarchy %}
+        {% if hierarchy.level != 0 %}
+          {% render 'components/search_input.html',
+            type: contactType.name,
+            hierarchy: hierarchy,
+            prefix: 'hierarchy_',
+            data: data
+          %}
+        {% endif %}
+      {% endfor %}
+      {% for prop in contactType.contact_properties %}
+        {%
+          include "components/contact_type_property.html" prefix="contact_" prop=prop
+          place_type=contactType.name
+        %}
+      {% endfor %}
+    </div>
+
+    <div class="p-2 mt-4 mb-2" style="border-left: thick solid green;">
+      <p>
+        Click on the <span style="font-weight: bold;">New</span> button below to add places that you want to assign to
+        this user
+      </p>
+    </div>
+
+    <div id="place_new_parent" class="mt-2">
+      {% render 'new/new_place_btn.liquid' with contactType.name as place_type %}
+    </div>
+
+    <div class="field mt-4 is-flex is-justify-content-space-between">
+      <button class="button is-small is-ghost px-0" hx-post="/new?place_type={{contactType.name}}&cont=1">
+        Save and continue
+      </button>
+      <div class="control">
+        <a href="/" class="button is-small">Cancel</a>
+        <button class="button is-small is-link">Save</button>
+      </div>
+    </div>
+  </form>
+  {% if places.length > 0 %}
+    {% for entry in places %}
+      {% render 'new/place_list.liquid', places: entry, contactType: contactType %}
+    {% endfor %}
+  {% endif %}
+</div>
