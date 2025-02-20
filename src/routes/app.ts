@@ -2,14 +2,13 @@ import { FastifyInstance } from 'fastify';
 
 import Auth from '../lib/authentication';
 import { ChtApi } from '../lib/cht-api';
-import { Config, ConfigSystem } from '../config';
+import { Config } from '../config';
 import DirectiveModel from '../services/directive-model';
 import RemotePlaceCache from '../lib/remote-place-cache';
 import RemotePlaceResolver from '../lib/remote-place-resolver';
 import SessionCache from '../services/session-cache';
 import { UploadManager } from '../services/upload-manager';
 import WarningSystem from '../warnings';
-import { writeConfig } from '../config/config-factory';
 
 export default async function sessionCache(fastify: FastifyInstance) {
   fastify.get('/', async (req, resp) => {

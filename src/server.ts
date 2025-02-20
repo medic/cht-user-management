@@ -83,7 +83,7 @@ const build = (opts: FastifyServerOptions): FastifyInstance => {
 
       const { isAdmin }: any = await Auth.apiAuth(username, password, domain);
 
-      if (isAdmin) {
+      if (isAdmin === true) {
         return;
       }
       reply.status(401).send({ error: 'unauthorized' });

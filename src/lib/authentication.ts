@@ -44,7 +44,7 @@ export default class Auth {
     return new Date(new Date().getTime() + LOGIN_EXPIRES_AFTER_MS);
   }
 
-  
+
   private static encodeToken(session: ChtSession, signingKey: string, expiresIn: string) {
     const data = JSON.stringify(session);
     return jwt.sign({ data }, signingKey, { expiresIn });
@@ -59,15 +59,15 @@ export default class Auth {
     return ChtSession.createFromDataString(data);
   }
 
-  public static async apiAuth (username: string, password: string, domain: string) {
+  public static async apiAuth(username: string, password: string, domain: string) {
     const authInfo = await Config.getAuthenticationInfo(domain);
-        try {
-          const chtSession = await ChtSession.create(authInfo, username, password);
-          return chtSession;
-        } catch (e: any) {
-          console.error(`Login error: ${e}`);
-          return {};
-        }
+    try {
+      const chtSession = await ChtSession.create(authInfo, username, password);
+      return chtSession;
+    } catch (error: any) {
+      console.error(`Login error: ${error}`);
+      return {};
+    }
   }
 
 }
