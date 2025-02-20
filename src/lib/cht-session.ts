@@ -99,6 +99,9 @@ export default class ChtSession {
       if (e?.response?.status === 401) {
         throw AuthError.INVALID_CREDENTIALS();
       }
+      if (e.code === 'ENOTFOUND' || e.errno === -3008) {
+        throw AuthError.INSTANCE_OFFLINE();
+      }
       throw e;
     }
   }

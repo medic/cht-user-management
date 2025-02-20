@@ -29,4 +29,8 @@ export class AuthError extends Error {
   static CANNOT_PARSE_CHT_VERSION(chtCoreVersion: string, domain: string) {
     return new AuthError(`Cannot parse cht core version ${chtCoreVersion} for instance "${domain}"`);
   }
+
+  static INSTANCE_OFFLINE() {
+    return new AuthError(`Unable to connect to instance. Please check instance availability.`);
+  }
 }
