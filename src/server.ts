@@ -68,7 +68,7 @@ const build = (opts: FastifyServerOptions): FastifyInstance => {
 
     if (authHeader && authHeader.startsWith('Basic ')) {
       if (!req.routeOptions.url?.startsWith('/api')) {
-        reply.send({error: 'not found'}).status(404);
+        reply.status(404).send({error: 'not found'});
         return;
       }
 
