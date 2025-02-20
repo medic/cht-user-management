@@ -1,4 +1,4 @@
-import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
+import { FastifyInstance } from 'fastify';
 
 import Auth from '../lib/authentication';
 import { ChtApi } from '../lib/cht-api';
@@ -116,48 +116,5 @@ export default async function sessionCache(fastify: FastifyInstance) {
     });
 
     resp.header('HX-Redirect', '/');
-  });
-
-  fastify.get('/app/config', async (req: FastifyRequest, resp: FastifyReply) => {
-    const contactTypes = await Config.contactTypes();
-    const tmplData = {
-      view: 'add',
-      logo: Config.getLogoBase64(),
-      session: req.chtSession,
-      op: 'config',
-      contactTypes,
-    };
-
-    return resp.view('src/liquid/app/view.html', tmplData);
-  });
-
-  fastify.post('/app/config', async (req: FastifyRequest, res: FastifyReply) => {
-    try {
-      const data = await req.file();
-      if (!data) {
-        res.status(400).send('No file uploaded');
-        throw new Error('No file uploaded');
-      }
-
-      if (data.mimetype !== 'application/json') {
-        res.status(400).send('Invalid file type');
-        throw new Error('Invalid file type');
-      }
-
-      const fileBuffer = await data.toBuffer();
-      const config = JSON.parse(fileBuffer.toString('utf-8')) as ConfigSystem;
-
-      await Config.assertValid({ config });
-      await writeConfig(config);
-
-      res.header('HX-Redirect', '/');
-    } catch (error) {
-      console.error('Route app/config: ', error);
-      return fastify.view('src/liquid/app/config_upload.html', {
-        errors: {
-          message: error,
-        },
-      });
-    }
   });
 }

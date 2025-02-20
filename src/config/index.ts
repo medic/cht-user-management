@@ -83,7 +83,7 @@ export class Config {
 
   public static async getContactType(name: string) : Promise<ContactType> {
     const {config} = await init();
-    const contactMatch = config.contact_types.find(c => c?.name === name);
+    const contactMatch = config.contact_types.find(c => c.name === name);
     if (!contactMatch) {
       throw new Error(`unrecognized contact type: "${name}"`);
     }
@@ -93,7 +93,7 @@ export class Config {
   public static getParentProperty(contactType: ContactType): HierarchyConstraint {
     const parentMatch = contactType.hierarchy.find(c => c.level === 1);
     if (!parentMatch) {
-      throw new Error(`hierarchy at level 1 is required: "${contactType?.name}"`);
+      throw new Error(`hierarchy at level 1 is required: "${contactType.name}"`);
     }
 
     return parentMatch;

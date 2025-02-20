@@ -1,6 +1,7 @@
 import process from 'process';
 import jwt from 'jsonwebtoken';
 import ChtSession from './cht-session';
+import { Config } from '../config';
 
 const LOGIN_EXPIRES_AFTER_MS = 4 * 24 * 60 * 60 * 1000;
 const QUEUE_SESSION_EXPIRATION = '96h';
@@ -57,4 +58,16 @@ export default class Auth {
     const { data } = jwt.verify(token, signingKey) as any;
     return ChtSession.createFromDataString(data);
   }
+
+  public static async apiAuth (username: string, password: string, domain: string) {
+    const authInfo = await Config.getAuthenticationInfo(domain);
+        try {
+          const chtSession = await ChtSession.create(authInfo, username, password);
+          return chtSession;
+        } catch (e: any) {
+          console.error(`Login error: ${e}`);
+          return {};
+        }
+  }
+
 }
