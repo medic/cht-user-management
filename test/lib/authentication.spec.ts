@@ -6,7 +6,7 @@ import Auth from '../../src/lib/authentication';
 chai.use(chaiExclude);
 const { expect } = chai;
 
-describe('lib/authentication.ts', () => {
+describe('lib/authentication/authentication.ts', () => {
   it('encode and decode for cookie', () => {
     const session = mockChtSession();
     const encoded = Auth.encodeTokenForCookie(session);
