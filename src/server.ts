@@ -64,14 +64,13 @@ const build = (opts: FastifyServerOptions): FastifyInstance => {
     }
 
     const authHeader = req.headers.authorization as string;
-    const { domain } = req.query as { [key: string]: string };
-
     if (authHeader && authHeader.startsWith('Basic ')) {
       if (!req.routeOptions.url?.startsWith('/api')) {
         reply.status(404).send({error: 'not found'});
         return;
       }
 
+      const { domain } = req.query as { [key: string]: string };
       if (!domain) {
         reply.send({ error: 'no authentication domain found' });
         return;
