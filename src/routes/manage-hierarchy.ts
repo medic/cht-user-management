@@ -11,7 +11,7 @@ export default async function sessionCache(fastify: FastifyInstance) {
     const placeType = params.placeType;
     const contactTypes = Config.contactTypes();
     
-    const contactType = Config.getContactType(placeType);
+    const contactType = await Config.getContactType(placeType);
     const tmplData = {
       view: 'manage-hierarchy',
       op: params.action,
@@ -29,7 +29,7 @@ export default async function sessionCache(fastify: FastifyInstance) {
     const formData:any = req.body;
 
     const sessionCache: SessionCache = req.sessionCache;
-    const contactType = Config.getContactType(formData.place_type);
+    const contactType = await Config.getContactType(formData.place_type);
     const chtApi = new ChtApi(req.chtSession);
     
     const tmplData: any = {

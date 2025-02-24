@@ -16,7 +16,7 @@
   ],
   "contact_types": [
     {
-      "name": "health_center",
+      "name": "c50-health_center",
       "friendly": "VHT Area",
       "contact_type": "person",
       "user_role": ["vht"],
@@ -24,9 +24,9 @@
       "deactivate_users_on_replace": true,
       "hierarchy": [
         {
-          "friendly_name": "Health Center",
-          "property_name": "HEALTHCENTER",
-          "contact_type": "district_hospital",
+          "friendly_name": "Parish",
+          "property_name": "PARISH",
+          "contact_type": "c40-parish",
           "type": "name",
           "required": true,
           "parameter": ["\\sH[ /]*C\\s"],
@@ -49,14 +49,6 @@
           "required": true,
           "unique": "parent"
         },
-
-        {
-          "friendly_name": "District",
-          "property_name": "district",
-          "type": "name",
-          "parameter": ["\\sdistrict\\s"],
-          "required": true
-        },
         {
           "friendly_name": "Sub District",
           "property_name": "sub_district",
@@ -76,13 +68,6 @@
           "property_name": "sub_county",
           "type": "name",
           "parameter": ["\\ssub\\s", "\\scounty\\s"],
-          "required": true
-        },
-        {
-          "friendly_name": "Parish",
-          "property_name": "parish",
-          "parameter": ["\\sparish\\s"],
-          "type": "name",
           "required": true
         },
         {

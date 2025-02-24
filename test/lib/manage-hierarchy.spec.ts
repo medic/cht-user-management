@@ -44,7 +44,7 @@ describe('lib/manage-hierarchy.ts', () => {
         source_SUBCOUNTY: 'from sub',
         destination_SUBCOUNTY: 'to sub',
       };
-      const contactType = Config.getContactType('c_community_health_unit');
+      const contactType = await Config.getContactType('c_community_health_unit');
       const sessionCache = new SessionCache();
       
       const jobParams = await ManageHierarchyLib.getJobDetails(formData, contactType, sessionCache, chtApiWithDocs());
@@ -64,7 +64,7 @@ describe('lib/manage-hierarchy.ts', () => {
         source_replacement: 'c-h-u',
         destination_SUBCOUNTY: 'to sub',
       };
-      const contactType = Config.getContactType('c_community_health_unit');
+      const contactType = await Config.getContactType('c_community_health_unit');
       const sessionCache = new SessionCache();
 
       const actual = ManageHierarchyLib.getJobDetails(formData, contactType, sessionCache, mockChtApi([], chuDocs));
@@ -78,7 +78,7 @@ describe('lib/manage-hierarchy.ts', () => {
         source_SUBCOUNTY: 'from SUB',
         destination_SUBCOUNTY: 'from sub',
       };
-      const contactType = Config.getContactType('c_community_health_unit');
+      const contactType = await Config.getContactType('c_community_health_unit');
       const sessionCache = new SessionCache();
 
       const actual = ManageHierarchyLib.getJobDetails(formData, contactType, sessionCache, chtApiWithDocs());
@@ -92,7 +92,7 @@ describe('lib/manage-hierarchy.ts', () => {
         source_SUBCOUNTY: 'from SUB',
         destination_SUBCOUNTY: 'invalid sub',
       };
-      const contactType = Config.getContactType('c_community_health_unit');
+      const contactType = await Config.getContactType('c_community_health_unit');
       const sessionCache = new SessionCache();
 
       const actual = ManageHierarchyLib.getJobDetails(formData, contactType, sessionCache, chtApiWithDocs());
@@ -109,7 +109,7 @@ describe('lib/manage-hierarchy.ts', () => {
         destination_SUBCOUNTY: 'to sub',
         destination_replacement: 'destination',
       };
-      const contactType = Config.getContactType('c_community_health_unit');
+      const contactType = await Config.getContactType('c_community_health_unit');
       const sessionCache = new SessionCache();
       
       const jobParams = await ManageHierarchyLib.getJobDetails(formData, contactType, sessionCache, chtApiWithDocs());
@@ -131,7 +131,7 @@ describe('lib/manage-hierarchy.ts', () => {
         source_replacement: 'c-h-u',
         source_SUBCOUNTY: 'from sub'
       };
-      const contactType = Config.getContactType('c_community_health_unit');
+      const contactType = await Config.getContactType('c_community_health_unit');
       const sessionCache = new SessionCache();
       
       const jobParams = await ManageHierarchyLib.getJobDetails(formData, contactType, sessionCache, chtApiWithDocs());
