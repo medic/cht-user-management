@@ -12,7 +12,7 @@ export default async function files(fastify: FastifyInstance) {
   fastify.get('/files/template/:placeType', async (req) => {
     const params: any = req.params;
     const placeType = params.placeType;
-    const columns = getCsvTemplateColumns(placeType);
+    const columns = await getCsvTemplateColumns(placeType);
     return stringify([columns]);
   });
 
