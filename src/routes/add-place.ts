@@ -19,12 +19,12 @@ export default async function addPlace(fastify: FastifyInstance) {
       ? Config.getContactType(queryParams.type)
       : contactTypes[contactTypes.length - 1];
 
-    if (semver.gte(req.chtSession.chtCoreVersion, '4.9.0') && contactType.can_assign_multiple) {
+    const op = queryParams.op || 'new';
+    if (semver.gte(req.chtSession.chtCoreVersion, '4.9.0') && contactType.can_assign_multiple && op === 'new') {
       resp.redirect(`/new?place_type=${queryParams.type}`);
       return;
     }
 
-    const op = queryParams.op || 'new';
     const tmplData = {
       view: 'add',
       logo: Config.getLogoBase64(),

@@ -18,7 +18,7 @@
       </div>
     </nav>
     <div class="container is-max-desktop px-4" hx-ext="sse" sse-connect="/events/connection">
-      {% render 'new/create_form.liquid', contactType: contactType, hierarchy: hierarchy, data: data, places: places %}
+      {% render 'new/form.liquid', contactType: contactType, hierarchy: hierarchy, data: data, places: places %}
     </div>
   </body>
 </html>
