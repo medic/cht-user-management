@@ -28,7 +28,7 @@ export default async function newHandler(fastify: FastifyInstance) {
       logo: Config.getLogoBase64()
     };
 
-    return resp.view('src/liquid/new/create_place.liquid', data);
+    return resp.view('src/liquid/new/index.liquid', data);
   });
 
   fastify.post('/new', async (req, resp) => {
