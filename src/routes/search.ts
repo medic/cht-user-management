@@ -50,6 +50,7 @@ export default async function place(fastify: FastifyInstance) {
     const queryParams: any = req.query;
     const {
       result_name: resultName,
+      place_id,
       prefix: dataPrefix,
     } = queryParams;
     const level = parseInt(queryParams.level);
@@ -59,6 +60,7 @@ export default async function place(fastify: FastifyInstance) {
       throw Error(`not hierarchy constraint at ${level}`);
     }
     data[`${dataPrefix}${hierarchyLevel.property_name}`] = resultName;
+    data.result_id = place_id;
     return resp.view('src/liquid/components/search_input.html', {
       type: contactType.name,
       prefix: 'hierarchy_',
