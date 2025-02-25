@@ -4,7 +4,7 @@
       {% for searchResult in searchResults %}
         <a
           class="dropdown-item"
-          hx-post="/search/select?place_id={{place.id}}&result_name={{searchResult.name}}&level={{level}}&op={{op}}&prefix={{ prefix }}"
+          hx-post="/search/select?place_id={{searchResult.id}}&result_name={{searchResult.name}}&level={{level}}&op={{op}}&prefix={{ prefix }}"
           hx-target="#{{div}}"
           hx-swap="outerHTML"
           hx-encoding="application/x-www-form-urlencoded"

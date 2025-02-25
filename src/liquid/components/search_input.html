@@ -20,6 +20,9 @@
       hx-encoding="application/x-www-form-urlencoded"
       {% if disabled == true %} disabled {% endif %}
     />
+    {% if data.result_id %} 
+      <input name="{{property_name}}_id" value="{{data.result_id}}" hidden>
+    {%endif%}
     <div id="search_results_{{ property_name }}" class="control"></div>
   </div>
 </div>
