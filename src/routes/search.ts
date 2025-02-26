@@ -61,7 +61,7 @@ export default async function place(fastify: FastifyInstance) {
       throw Error(`not hierarchy constraint at ${level}`);
     }
     data[`${dataPrefix}${hierarchyLevel.property_name}`] = resultName;
-    data.result_id = place_id;
+    data[`${dataPrefix}${hierarchyLevel.property_name}_id`] = place_id;
     return resp.view('src/liquid/components/search_input.html', {
       op,
       type: contactType.name,
