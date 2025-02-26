@@ -1,6 +1,6 @@
 import { parse } from 'csv';
 
-import { ChtApi } from '../lib/cht-api';
+import { ChtApi, CouchDoc, UserInfo } from '../lib/cht-api';
 import { Config, ContactProperty, ContactType } from '../config';
 import Place, { FormattedPropertyCollection } from './place';
 import SessionCache from './session-cache';
@@ -63,6 +63,33 @@ export default class PlaceFactory {
     });
     await PlaceFactory.finalizePlaces(places, sessionCache, chtApi, contactType);
     return places;
+  };
+
+  public static reassign = async (newContactId: string, placeId: string, api: ChtApi) => {
+    const user = await api.getUser(newContactId) as UserInfo & { place: CouchDoc[] };
+    if (!user) {
+      throw new Error('We did not find a user from the link provided. ' + 
+        'Please make sure the link is correct and the contact can login to the instance');
+    }
+    const updatedPlaces = [...user.place.map(d => d._id), placeId];
+    await api.updateUser({ username: user.username, place: updatedPlaces });
+    const place = await api.getDoc(placeId);
+    if (place.contact) {
+      const contactId = place.contact._id ?? place.contact;
+      const prevUser = await api.getUser(contactId) as UserInfo & {place: CouchDoc[]};
+      const prevUserPlaces = prevUser.place.map(p => p._id).filter(id => id !== placeId); 
+      if (prevUserPlaces.length > 0) {
+        await api.updateUser({ 
+          username: prevUser.username, 
+          place: prevUserPlaces
+        });
+      } else {
+        await api.disableUser(prevUser.username);
+        await api.deleteDoc(contactId);
+      }
+    }
+    place.contact = newContactId;
+    await api.setDoc(placeId, place);
   };
 
   public static editOne = async (placeId: string, formData: any, sessionCache: SessionCache, chtApi: ChtApi)
