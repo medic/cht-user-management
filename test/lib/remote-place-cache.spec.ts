@@ -82,10 +82,29 @@ describe('lib/remote-place-cache.ts', () => {
     RemotePlaceCache.clear(chtApi, 'other');
   });
 
+  it('unique key properties', async () => {
+    const chtApi = mockChtApi([{_id: 'id', name: 1 }]);
+    const contactType = mockSimpleContactType('string', undefined);
+    contactType.place_properties.find(p => p.property_name === 'name').unique = 'all';
+    const contactTypeAsHierarchyLevel: HierarchyConstraint = {
+      contact_type: contactType.name,
+      property_name: 'level',
+      friendly_name: 'pretend another ContactType needs this',
+      type: 'name',
+      required: true,
+      level: 0,
+    };
+    try {
+      await RemotePlaceCache.getRemotePlaces(chtApi, contactType, contactTypeAsHierarchyLevel);
+    } catch (e) {
+      expect(e).to.be.undefined;
+    }
+  });
+
   it('clears all place types when clearing domain', async () => {
     const chtApi = mockChtApi([doc]);
     const domain = chtApi.chtSession.authInfo.domain;
-    
+
     const contactTypeAsHierarchyLevel: HierarchyConstraint = {
       contact_type: contactType.name,
       property_name: 'level',
@@ -96,7 +115,7 @@ describe('lib/remote-place-cache.ts', () => {
     };
     await RemotePlaceCache.getPlacesWithType(chtApi, contactType, contactTypeAsHierarchyLevel);
     expect(RemotePlaceCache.hasData(domain, contactType.name)).to.be.true;
-    
+
     // Clear domain
     RemotePlaceCache.clear(chtApi);
     expect(RemotePlaceCache.hasData(domain, contactType.name)).to.be.false;
