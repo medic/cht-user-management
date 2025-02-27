@@ -20,12 +20,12 @@ General public is welcome to look at these instructions for who they might use t
 
 As each deployment needs its own configuration directory, DNS entry and deployment name, we'll list them here and the commands below can be used by replacing the correct value.
 
-| Name | Config | Values | EKS-Deployment | URL |
-|--    |--      |--      |--              |--   |   
-| MoH Kenya | `users-chis-ke`| `users-chis-ke.yaml` | `users-chis-ke-cht-user-management` | users-chis-ke.app.medicmobile.org | 
-| MoH Togo | `users-chis-tg`| `users-chis-tg.yaml` | `users-chis-tg-cht-user-management` | users-chis-tg.app.medicmobile.org | 
-| MoH Uganda | `users-chis-ug`| `users-chis-ug.yaml` | `users-chis-ug-cht-user-management` | users-chis-ug.app.medicmobile.org | 
-| MoH Mali CIV | `users-chis-civ`| `users-chis-civ.yaml` | `users-chis-civ-cht-user-management` | users-chis-civ.app.medicmobile.org | 
+| Name         | Config           | Values                | EKS-Deployment | URL |
+|--------------|------------------|-----------------------|--              |--   |   
+| MoH Kenya    | `users-chis-ke`  | `users-chis-ke.yaml`  | `users-chis-ke-cht-user-management` | users-chis-ke.app.medicmobile.org | 
+| MoH Togo     | `users-chis-tg`  | `users-chis-tg.yaml`  | `users-chis-tg-cht-user-management` | users-chis-tg.app.medicmobile.org | 
+| MoH Mali CIV | `users-chis-civ` | `users-chis-civ.yaml` | `users-chis-civ-cht-user-management` | users-chis-civ.app.medicmobile.org | 
+| MoH Mali CHW | `users-chis-ml`  | `users-chis-ml.yaml`   | `users-chis-ml-cht-user-management` | users-chis-ml.app.medicmobile.org | 
 
 ### Prepare a Deployment
 
