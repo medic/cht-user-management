@@ -4,6 +4,7 @@ import sinon from 'sinon';
 
 import { AuthenticationInfo } from '../../src/config';
 import { RemotePlace } from '../../src/lib/remote-place-cache';
+import { AuthError } from '../../src/lib/authentication-error';
 const ChtSession = rewire('../../src/lib/cht-session');
 
 import chaiAsPromised from 'chai-as-promised';
@@ -62,9 +63,18 @@ describe('lib/cht-session.ts', () => {
       expect(session.isAdmin).to.be.false;
     });
 
+    it('throws AuthError for invalid credentials', async () => {
+      mockAxios.post.rejects({ response: { status: 401 } });
+
+      await expect(ChtSession.default.create(mockAuthInfo, 'user', 'wrong_pwd'))
+        .to.be.rejectedWith('Invalid username or password')
+        .and.to.eventually.be.instanceof(AuthError);
+    });
+
     it('throw cht yields no authtoken', async () => {
       mockAxios.post.resolves(mockSessionResponse([]));
-      await expect(ChtSession.default.create(mockAuthInfo, 'user', 'pwd')).to.eventually.be.rejectedWith('failed to obtain token');
+      await expect(ChtSession.default.create(mockAuthInfo, 'user', 'pwd'))
+        .to.eventually.be.rejectedWith(`Failed to obtain token for user at ${mockAuthInfo.domain}`);
     });
 
     it('throw if no user doc', async () => {
