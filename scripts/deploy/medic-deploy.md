@@ -32,8 +32,8 @@ As each deployment needs its own configuration directory, DNS entry and deployme
 To prepare a deployment, use the following steps to ensure your environment is properly configured.
 The `helm install` and `helm upgrade` commands should be run in the `./scripts/deploy` directory in this repo.
 
-1. Check the image is [published](https://github.com/medic/cht-user-management/tree/main#publishing-new-docker-images) to [ECR](https://gallery.ecr.aws/medic/cht-user-management) 
-2. Update the `tag:` in the respective `values.yaml` file located in the [values folder](https://github.com/medic/cht-user-management/blob/main/scripts/deploy/values/) to match the version you wish to deploy.
+1. Check that the current main and work images are [published](https://github.com/medic/cht-user-management/tree/main#publishing-new-docker-images) to [ECR](https://gallery.ecr.aws/medic/cht-user-management) 
+2. Ensure the `tag:` in the respective `values.yaml` file located in the [values folder](https://github.com/medic/cht-user-management/blob/main/scripts/deploy/values/) is the version you wish to deploy.
 3. Ensure your local system has the latest charts by running:
 ```bash
 helm repo update medic
@@ -54,7 +54,7 @@ helm install \
 
 #### Upgrade 
 
-Run when ever you need to upgrade.  Replace `$VALUES` and `$CONFIG` from the [table](#known-cofigurations) above:
+While Upgrade can be done manually, normally this is done through CD.  Run manually if needed.  Replace `$VALUES` and `$CONFIG` from the [table](#known-cofigurations) above:
 
 ```shell
 helm upgrade \
