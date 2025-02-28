@@ -1,46 +1,103 @@
 import { expect } from 'chai';
 
-import { RemotePlace } from '../../src/lib/cht-api';
+import { ChtDoc, mockChtApi, mockPlace, mockSimpleContactType } from '../mocks';
+import { HierarchyConstraint } from '../../src/config';
 import RemotePlaceCache from '../../src/lib/remote-place-cache';
-import { mockChtApi, mockPlace, mockSimpleContactType } from '../mocks';
 
 describe('lib/remote-place-cache.ts', () => {
   beforeEach(() => {
     RemotePlaceCache.clear({});
   });
 
-  const remotePlace: RemotePlace = {
-    id: 'parent-id',
+  const doc: ChtDoc = {
+    _id: 'parent-id',
     name: 'parent',
+  };
+
+  const docAsRemotePlace = {
+    id: doc._id,
+    'name.original': doc.name,
     type: 'remote',
     lineage: [],
   };
 
+  const contactType = mockSimpleContactType('string', undefined);
+
   it('cache miss', async () => {
-    const chtApi = mockChtApi([remotePlace]);
-    const actual = await RemotePlaceCache.getPlacesWithType(chtApi, 'type');
-    expect(actual).to.deep.eq([remotePlace]);
-    expect(chtApi.getPlacesWithType.calledOnce).to.be.true;
+    const chtApi = mockChtApi([doc], [], [doc], []);
+    await RemotePlaceCache.getRemotePlaces(chtApi, contactType);
+    RemotePlaceCache.clear(chtApi);
+    const actual = await RemotePlaceCache.getRemotePlaces(chtApi, contactType);
+    expect(actual).to.have.property('length', 1);
+    expect(actual[0]).to.deep.nested.include(docAsRemotePlace);
+    expect(chtApi.getPlacesWithType.callCount).to.eq(4);
   });
 
   it('cache hit', async () => {
-    const chtApi = mockChtApi([remotePlace]);
-    await RemotePlaceCache.getPlacesWithType(chtApi, 'type');
-    const second = await RemotePlaceCache.getPlacesWithType(chtApi, 'type');
-    expect(second).to.deep.eq([remotePlace]);
-    expect(chtApi.getPlacesWithType.calledOnce).to.be.true;
+    const chtApi = mockChtApi([doc]);
+    
+    await RemotePlaceCache.getRemotePlaces(chtApi, contactType);
+    expect(chtApi.getPlacesWithType.callCount).to.eq(2);
+
+    const second = await RemotePlaceCache.getRemotePlaces(chtApi, contactType);
+    expect(second).to.have.property('length', 1);
+    expect(second[0]).to.deep.nested.include(docAsRemotePlace);
+    expect(chtApi.getPlacesWithType.callCount).to.eq(2);
   });
 
   it('add', async () => {
-    const contactType = mockSimpleContactType('unknown`', undefined);
+    const contactType = mockSimpleContactType('string', undefined);
     const place = mockPlace(contactType, 'prop');
+    const chtApi = mockChtApi([doc]);
+    
+    await RemotePlaceCache.getRemotePlaces(chtApi, contactType);
+    expect(chtApi.getPlacesWithType.callCount).to.eq(2);
+    
+    RemotePlaceCache.add(place, chtApi);
 
-    const chtApi = mockChtApi([remotePlace]);
-    await RemotePlaceCache.add(place, chtApi);
+    const second = await RemotePlaceCache.getRemotePlaces(chtApi, contactType);
+    expect(second).to.have.property('length', 2);
+    expect(second[0]).to.deep.nested.include(docAsRemotePlace);
+    expect(second[1].id).to.eq(place.asRemotePlace().id);
+    expect(chtApi.getPlacesWithType.callCount).to.eq(2);
+  });
 
-    const second = await RemotePlaceCache.getPlacesWithType(chtApi, contactType.name);
-    expect(second).to.deep.eq([remotePlace, place.asRemotePlace()]);
-    expect(chtApi.getPlacesWithType.calledOnce).to.be.true;
+  it('clear', async () => {
+    const contactType = mockSimpleContactType('string', undefined);
+    const place = mockPlace(contactType, 'prop');
+    const chtApi = mockChtApi([doc]);
+    
+    const contactTypeAsHierarchyLevel: HierarchyConstraint = {
+      contact_type: contactType.name,
+      property_name: 'level',
+      friendly_name: 'pretend another ContactType needs this',
+      type: 'name',
+      required: true,
+      level: 0,
+    };
+    await RemotePlaceCache.getRemotePlaces(chtApi, contactType, contactTypeAsHierarchyLevel);
+    RemotePlaceCache.add(place, chtApi);
+    
+    chtApi.chtSession.authInfo.domain = 'http://other';
+    RemotePlaceCache.clear(chtApi, 'other');
+  });
+  
+  it('unique key properties', async () => {
+    const chtApi = mockChtApi([{_id: 'id', name: 1 }]);
+    const contactType = mockSimpleContactType('string', undefined);
+    contactType.place_properties.find(p => p.property_name === 'name').unique = 'all';
+    const contactTypeAsHierarchyLevel: HierarchyConstraint = {
+      contact_type: contactType.name,
+      property_name: 'level',
+      friendly_name: 'pretend another ContactType needs this',
+      type: 'name',
+      required: true,
+      level: 0,
+    };
+    try {
+      await RemotePlaceCache.getRemotePlaces(chtApi, contactType, contactTypeAsHierarchyLevel);
+    } catch (e) {
+      expect(e).to.be.undefined;
+    }
   });
 });
-

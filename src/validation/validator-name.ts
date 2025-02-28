@@ -1,5 +1,5 @@
 import { ContactProperty } from '../config';
-import { IValidator } from './validation';
+import { IValidator } from '.';
 import ValidatorString from './validator-string';
 
 export default class ValidatorName implements IValidator {
@@ -15,20 +15,20 @@ export default class ValidatorName implements IValidator {
   format(input : string, property : ContactProperty) : string {
     input = input.replace(/\./g, ' ');
     input = input.replace(/\//g, ' / ');
-    let toAlter = input;
+    let toFormat = input;
     if (property.parameter) {
       if (!Array.isArray(property.parameter)) {
         throw Error(`property with type "name": parameter should be an array`);
       }
       
-      toAlter = property.parameter.reduce((agg, toRemove) => {
+      toFormat = property.parameter.reduce((agg, toRemove) => {
         const regex = new RegExp(toRemove, 'ig');
         return agg.replace(regex, '');
-      }, toAlter);
+      }, toFormat);
     }
     
     const validatorStr = new ValidatorString();
-    return this.titleCase(validatorStr.format(toAlter));
+    return this.titleCase(validatorStr.format(toFormat));
   }
 
   get defaultError(): string {
@@ -36,12 +36,34 @@ export default class ValidatorName implements IValidator {
   }
 
   private titleCase(value: string): string {
-    const words = value.toLowerCase().split(' ');
-    const titleCase = (word: string) => word[0].toUpperCase() + word.slice(1);
-    const isRomanNumeral = /^[ivx]+$/ig;
-    const titleCased = words
+    if (!value) {
+      return '';
+    }
+
+    const titleCase = (word: string) => word[0]?.toUpperCase() + word.slice(1);
+
+    const isRomanNumeral = /^[ivx]+$/i;
+    const hasForwardSlash = /\//g;
+    const hasApostrophe = /\s*'\s*/g;
+    const hasParentheses = /\(([^)]+)\)/g;
+    const hasExtraSpaces = /\s+/g;
+
+    const splitAndProcess = (value: string, delimiter: string) => {
+      return value
+        .split(delimiter)
+        .map(word => word.match(isRomanNumeral) ? word.toUpperCase() : titleCase(word))
+        .join(delimiter);
+    };
+
+    return value.toLowerCase()
+      .replace(hasForwardSlash, ' / ')
+      .replace(hasApostrophe, '\'')
+      .replace(hasParentheses, match => `(${titleCase(match.slice(1, -1))})`)
+      .split(' ')
       .filter(Boolean)
-      .map(word => word.match(isRomanNumeral) ? word.toUpperCase() : titleCase(word)).join(' ');
-    return titleCased.replace(/ '/g, '\'');
+      .map(word => splitAndProcess(word, '-'))
+      .join(' ')
+      .replace(hasExtraSpaces, ' ')
+      .trim();
   }
 }

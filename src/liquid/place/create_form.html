@@ -5,7 +5,7 @@ hx-target="this" hx-swap="outerHTML">
   <input name="place_type" value="{{contactType.name}}" hidden />
   <section class="section is-small">
     {% for hierarchy in hierarchy %}
-      {% if hierarchy.level != 0 or op == 'replace' or place.hierarchyProperties.replacement %}
+      {% if hierarchy.level != 0 or op == 'replace' or place.hierarchyProperties.replacement.original %}
         {%
           include "components/search_input.html"
             type=contactType.name
@@ -16,11 +16,13 @@ hx-target="this" hx-swap="outerHTML">
       {% endif %}
     {% endfor %}
 
-    {% for prop in contactType.place_properties %}
-      {%
-        include "components/contact_type_property.html" prefix="place_" prop=prop place_type=contactType.name
-      %}
-    {% endfor %}
+    {%if op != 'replace'%}
+      {% for prop in contactType.place_properties %}
+        {%
+          include "components/contact_type_property.html" prefix="place_" prop=prop place_type=contactType.name
+        %}
+      {% endfor %}
+    {%endif%}
   </section>
   <section class="section is-small">
     {% for prop in contactType.contact_properties %}

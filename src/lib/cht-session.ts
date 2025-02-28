@@ -1,16 +1,28 @@
 import _ from 'lodash';
 const axios = require('axios'); // require is needed for rewire
-
-import { AuthenticationInfo } from '../config';
 import { AxiosHeaders, AxiosInstance } from 'axios';
 import axiosRetry from 'axios-retry';
+import * as semver from 'semver';
+
+import { AuthError } from './authentication-error';
+import { AuthenticationInfo } from '../config';
 import { axiosRetryConfig } from './retry-logic';
-import { RemotePlace } from './cht-api';
+import { RemotePlace } from './remote-place-cache';
+import { UserPermissionService } from '../services/user-permissions';
 
 const COUCH_AUTH_COOKIE_NAME = 'AuthSession=';
 const ADMIN_FACILITY_ID = '*';
+export const ADMIN_ROLES = ['admin', '_admin'];
 
 axiosRetry(axios, axiosRetryConfig);
+
+type SessionCreationDetails = {
+  authInfo: AuthenticationInfo;
+  username: string;
+  sessionToken: string;
+  facilityIds: string[];
+  chtCoreVersion: string;
+};
 
 export default class ChtSession {
   public readonly authInfo: AuthenticationInfo;
@@ -18,16 +30,18 @@ export default class ChtSession {
   public readonly facilityIds: string[];
   public readonly axiosInstance: AxiosInstance;
   public readonly sessionToken: string;
+  public readonly chtCoreVersion: string;
 
-  private constructor(authInfo: AuthenticationInfo, sessionToken: string, username: string, facilityIds: string[]) {
-    this.authInfo = authInfo;
-    this.username = username;
-    this.facilityIds = facilityIds;
-    this.sessionToken = sessionToken;
+  private constructor(creationDetails: SessionCreationDetails) {
+    this.authInfo = creationDetails.authInfo;
+    this.username = creationDetails.username;
+    this.facilityIds = creationDetails.facilityIds;
+    this.sessionToken = creationDetails.sessionToken;
+    this.chtCoreVersion = creationDetails.chtCoreVersion;
     
     this.axiosInstance = axios.create({
-      baseURL: ChtSession.createUrl(authInfo, ''),
-      headers: { Cookie: sessionToken },
+      baseURL: ChtSession.createUrl(creationDetails.authInfo, ''),
+      headers: { Cookie: creationDetails.sessionToken },
     });
     axiosRetry(this.axiosInstance, axiosRetryConfig);
     if (!this.sessionToken || !this.authInfo.domain || !this.username || this.facilityIds.length === 0) {
@@ -35,84 +49,111 @@ export default class ChtSession {
     }
   }
 
-  public static async create(authInfo: AuthenticationInfo, username : string, password: string): Promise<ChtSession> {
-    const sessionToken = await ChtSession.createSessionToken(authInfo, username, password);
+  public get isAdmin(): boolean {
+    return this.facilityIds.includes(ADMIN_FACILITY_ID);
+  }
 
-    if (!sessionToken) {
-      throw new Error(`failed to obtain token for ${username} at ${authInfo.domain}`);
-    }
-    
-    const userDetails = await ChtSession.fetchUserDetails(authInfo, username, sessionToken);
-    const facilityIds = userDetails.isAdmin ? [ADMIN_FACILITY_ID] : userDetails.facilityId;
-    if (!facilityIds || facilityIds?.length === 0) {
-      throw Error(`User ${username} does not have a facility_id connected to their user doc`);
-    }
-    
-    return new ChtSession(authInfo, sessionToken, username, facilityIds);
+  public static async create(authInfo: AuthenticationInfo, username: string, password: string): Promise<ChtSession> {
+    const sessionToken = await ChtSession.createSessionToken(authInfo, username, password);
+    const creationDetails = await ChtSession.fetchCreationDetails(authInfo, username, sessionToken);
+    return new ChtSession(creationDetails);
   }
 
   public static createFromDataString(data: string): ChtSession {
-    const parsed: { 
-      authInfo: AuthenticationInfo;
-      sessionToken: string;
-      username: string;
-      facilityIds: string[]; 
-    } = JSON.parse(data);
-    return new ChtSession(parsed.authInfo, parsed.sessionToken, parsed.username, parsed.facilityIds);
+    const parsed: any = JSON.parse(data);
+    return new ChtSession(parsed);
   }
 
   isPlaceAuthorized(remotePlace: RemotePlace): boolean {
     return this.facilityIds?.length > 0 &&
       (
-        this.facilityIds.includes(ADMIN_FACILITY_ID) 
+        this.isAdmin
         || _.intersection(remotePlace?.lineage, this.facilityIds).length > 0
         || this.facilityIds.includes(remotePlace?.id)
       );
   }
 
   private static async createSessionToken(authInfo: AuthenticationInfo, username: string, password: string): Promise<string> {
-    const sessionUrl = ChtSession.createUrl(authInfo, '_session');
-    const resp = await axios.post(
-      sessionUrl,
-      {
-        name: username,
-        password,
-      },
-      {
-        auth: {
-          username,
-          password
+    try {
+      const sessionUrl = ChtSession.createUrl(authInfo, '_session');
+      const resp = await axios.post(
+        sessionUrl,
+        {
+          name: username,
+          password,
         },
+        {
+          auth: {
+            username,
+            password
+          },
+        }
+      );
+      const setCookieHeader = (resp.headers as AxiosHeaders).get('set-cookie') as AxiosHeaders;
+      const token =  setCookieHeader?.[0]?.split(';')
+        .find((header: string) => header.startsWith(COUCH_AUTH_COOKIE_NAME));
+      if (!token) {
+        throw AuthError.TOKEN_CREATION_FAILED(username, authInfo.domain);
       }
-    );
-    const setCookieHeader = (resp.headers as AxiosHeaders).get('set-cookie') as AxiosHeaders;
-    return setCookieHeader?.[0]?.split(';')
-      .find((header: string) => header.startsWith(COUCH_AUTH_COOKIE_NAME));
-  }
-  
-  private static async fetchUserDetails(authInfo: AuthenticationInfo, username: string, sessionToken: string): 
-  Promise<{isAdmin: boolean; facilityId?: string[]}> {
-    // would prefer to use the _users/org.couchdb.user:username doc
-    // only admins have access + GET api/v2/users returns all users and cant return just one
-    const sessionUrl = ChtSession.createUrl(authInfo, `medic/org.couchdb.user:${username}`);
-    const resp = await axios.get(
-      sessionUrl,
-      {
-        headers: { Cookie: sessionToken },
-      },
-    );
-  
-    const adminRoles = ['admin', '_admin'];
-    const isAdmin = _.intersection(adminRoles, resp.data?.roles).length > 0;
-    let facilityId;
-    if (typeof resp.data?.facility_id === 'string') {
-      facilityId = [resp.data.facility_id];
-    } else if (Array.isArray(resp.data?.facility_id)) {
-      facilityId = resp.data.facility_id;
+      return token;
+    } catch (e: any) {
+      if (e?.response?.status === 401) {
+        throw AuthError.INVALID_CREDENTIALS();
+      }
+      if (e.code === 'ENOTFOUND' || e.errno === -3008) {
+        throw AuthError.INSTANCE_OFFLINE();
+      }
+      throw e;
     }
-    return { isAdmin, facilityId };
   }
   
+  private static async fetchCreationDetails(authInfo: AuthenticationInfo, username: string, sessionToken: string): Promise<SessionCreationDetails> {
+    // api/v2/users returns all users prior to 4.6 even with ?facility_id
+    const paths = [`medic/org.couchdb.user:${username}`, 'api/v2/monitoring', 'api/v1/settings'];
+    const fetches = paths.map(path => {
+      const url = ChtSession.createUrl(authInfo, path);
+      return axios.get(
+        url,
+        { headers: { Cookie: sessionToken } },
+      );
+    });
+    const [
+      { data: userDoc }, 
+      { data: { version: { app: chtCoreVersion } } },
+      { data: settings }
+    ] = await Promise.all(fetches);
+
+    const isAdmin = _.intersection(ADMIN_ROLES, userDoc?.roles).length > 0;
+
+    UserPermissionService.validateUserPermissions(userDoc, username, settings.permissions);
+
+    const facilityIds = isAdmin ? [ADMIN_FACILITY_ID] : _.flatten([userDoc?.facility_id]).filter(Boolean);
+    if (!facilityIds?.length) {
+      throw AuthError.MISSING_FACILITY(username);
+    }
+
+    ChtSession.assertCoreVersion(chtCoreVersion, authInfo.domain);
+
+    return {
+      authInfo,
+      username,
+      sessionToken,
+      chtCoreVersion,
+      facilityIds,
+    };
+  }
+  
+  private static assertCoreVersion(chtCoreVersion: any, domain: string) {
+    const coercedVersion = semver.valid(semver.coerce(chtCoreVersion));
+    if (!coercedVersion) {
+      throw AuthError.CANNOT_PARSE_CHT_VERSION(chtCoreVersion, domain);
+    }
+
+    if (semver.lt(coercedVersion, '4.7.0')) {
+      throw AuthError.INCOMPATIBLE_CHT_CORE_VERSION(domain, chtCoreVersion);
+    }
+  }
+
   private static createUrl(authInfo: AuthenticationInfo, path: string) {
     const protocol = authInfo.useHttp ? 'http' : 'https';
     return `${protocol}://${authInfo.domain}${path ? '/' : ''}${path}`;

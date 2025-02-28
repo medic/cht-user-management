@@ -5,7 +5,7 @@ import togoConfig from './chis-tg';
 import civConfig from './chis-civ';
 import maliChwConfig from './chis-mali-chw';
 
-const CONFIG_MAP: { [key: string]: PartnerConfig } = {
+export const CONFIG_MAP: { [key: string]: PartnerConfig } = {
   'CHIS-KE': kenyaConfig,
   'CHIS-UG': ugandaConfig,
   'CHIS-TG': togoConfig,

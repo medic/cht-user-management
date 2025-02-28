@@ -5,3 +5,4 @@ dist
 src/package.json
 .eslintcache
 .DS_Store
+upload-docs*
