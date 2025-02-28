@@ -1,7 +1,12 @@
-<div class="is-flex is-flex-direction-column is-align-items-center">
+<div
+  class="is-flex is-flex-direction-column is-align-items-center"
+  id="form_reassign"
+>
   <form
     hx-post="/reassign"
     autocomplete="off"
+    hx-target="#form_reassign"
+    hx-swap="outerHTML"
     style="width: 38rem;"
   >
     <div>
@@ -10,6 +15,9 @@
     <p>{{ contactType.friendly }}</p>
     <input name="place_type" value="{{contactType.name}}" hidden>
 
+    <div class="p-2 mt-2" style="border-left: thick solid green;">
+      <p>Search and add a {{ contactType.friendly }} below</p>
+    </div>
     <div class="p-2">
       <div>
         {% for hierarchy in hierarchy %}
@@ -21,11 +29,56 @@
           %}
         {% endfor %}
       </div>
+      <div class="is-flex is-justify-content-end py-4">
+        <button
+          hx-post="/reassign/part"
+          hx-target="#form_reassign"
+          hx-swap="outerHTML"
+          class="button is-small is-primary"
+          {% if data.in_progress %}
+            disabled
+          {% endif %}
+        >
+          Add
+        </button>
+      </div>
     </div>
 
-    <div class="p-2 mt-4 mb-2" style="border-left: thick solid blue;">
+    {% if places and places.length > 0 %}
+      <div>
+        <div class="p-2 mb-4" style="border-left: thick solid green;">
+          <p>The following {{ contactType.friendly }}(s) are staged for reassignment. You can add more above</p>
+        </div>
+        {% for item in places %}
+          <div
+            class="is-flex is-justify-content-space-between is-align-items-center p-2"
+            style="border-bottom: 1px solid #dcdcdc;"
+          >
+            <div>
+              <p>{{ item.place.name }}</p>
+              <p class="is-size-7">{{ item.place.levels }}</p>
+            </div>
+            <div hx-sse="swap:update-{{item.place.id}}" hx-target="this" hx-swap="innerHTML">
+              {% if data.in_progress != true %}
+                <button
+                  hx-post="/reassign/part/delete?place_id={{item.place.id}}"
+                  hx-target="#form_reassign"
+                  hx-swap="outerHTML"
+                  class="button is-small is-light is-danger"
+                >
+                  Remove
+                </button>
+              {% endif %}
+            </div>
+          </div>
+          <input name="list_{{ item.place.id }}" value="{{ item.value }}" hidden>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    <div class="p-2 mt-6 mb-2" style="border-left: thick solid green;">
       <p>
-        Search for the {{ contactType.contact_friendly }} on
+        Finally, search for the {{ contactType.contact_friendly }} on
         <a
           href="https://{{session.authInfo.domain}}/#/contacts"
           target="_blank"
@@ -33,10 +86,10 @@
         >
           https://{{ session.authInfo.domain -}}
         </a>
-        then copy their link and paste it below.
+        then copy and paste their link below
       </p>
     </div>
-    <p><strong>Assign to</strong></p>
+    <p><strong>Assign to:</strong></p>
     <div class="p-2">
       <div class="field">
         <label class="label">Link to {{ contactType.contact_friendly }}</label>
@@ -46,11 +99,8 @@
             type="text"
             class="textarea"
             rows="3"
-            {% if data.contact %}
-              value="{{data.contact}}"
-            {% endif %}
             placeholder="https://{{session.authInfo.domain}}/#/contacts/19634c6118f13e43f685301e240036bc"
-          ></textarea>
+          >{% if data.contact %}{{data.contact}}{% endif %}</textarea>
           {% if errors.contact -%}
             <p style="color: red;">{{ errors.contact }}</p>
           {% endif %}
@@ -64,11 +114,19 @@
       </div>
     {% endif %}
 
-    <div class="field is-grouped is-grouped-right mt-4">
-      <div class="control">
-        <a href="/" class="button is-small">Cancel</a>
-        <button class="button is-small is-link">Reassign</button>
+    {% if data.in_progress != true %}
+      <div class="field is-grouped is-grouped-right mt-4">
+        <div class="control">
+          <a href="/" class="button is-small">Cancel</a>
+          <button class="button is-small is-link">Reassign</button>
+        </div>
       </div>
-    </div>
+    {% else %}
+      <div class="field is-grouped is-grouped-right mt-4">
+        <div class="control">
+          <a href="/" class="button is-small">Done</a>
+        </div>
+      </div>
+    {% endif %}
   </form>
 </div>

@@ -5,6 +5,7 @@ import DirectiveModel from '../services/directive-model';
 import SessionCache from '../services/session-cache';
 import { UploadManager } from '../services/upload-manager';
 import { minify } from 'html-minifier';
+import { PlaceUploadState } from '../services/place';
 
 export default async function events(fastify: FastifyInstance) {
   fastify.get('/events/connection', async (req, resp) => {
@@ -62,6 +63,16 @@ export default async function events(fastify: FastifyInstance) {
     uploadManager.on('refresh_table_row', placeChangeListener);
     uploadManager.on('refresh_grouped', async () => {
       resp.sse({ event: `update-group`, data: `update` });
+    });
+    uploadManager.on('refresh_place', async args => {
+      const { id, state, err } = args;
+      let statusText;
+      if (state === PlaceUploadState.FAILURE) {
+        statusText = `<span class="is-size-7 is-capitalized has-tooltip-multiline has-text-danger" data-tooltip="${err}">${state}</span>`;
+      } else {
+        statusText = `<span class="is-size-7 is-capitalized">${state}</span>`;
+      }
+      resp.sse({ event: `update-${id}`, data: statusText });
     });
 
     req.socket.on('close', () => {
