@@ -35,6 +35,6 @@ export class AuthError extends Error {
   }
 
   static MISSING_PERMISSIONS(username: string) {
-    return new AuthError(`User ${username} role does not have the required permissions`);
+    return new AuthError(`User ${username} does not have the required permissions`);
   }
 }
