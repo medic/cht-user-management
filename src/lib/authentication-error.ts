@@ -33,4 +33,8 @@ export class AuthError extends Error {
   static INSTANCE_OFFLINE() {
     return new AuthError(`Unable to connect to instance. Please check instance availability.`);
   }
+
+  static MISSING_PERMISSIONS(username: string) {
+    return new AuthError(`User ${username} does not have the required permissions`);
+  }
 }
