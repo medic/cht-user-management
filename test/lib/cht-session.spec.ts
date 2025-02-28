@@ -104,7 +104,7 @@ describe('lib/cht-session.ts', () => {
 
     it('throw if user does not have required permissions', async () => {
       const user = 'user';
-      const errorMessage = `User ${user} role does not have the required permissions`;
+      const errorMessage = `User ${user} does not have the required permissions`;
       mockAxios.get.resolves(mockUserFacilityDoc('facility-id', []));
       const request = ChtSession.default.create(mockAuthInfo, user, 'pwd');
       await expect(request).to.eventually.be.rejectedWith(errorMessage);
