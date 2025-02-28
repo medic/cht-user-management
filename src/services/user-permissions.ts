@@ -1,5 +1,7 @@
 import _ from 'lodash';
 
+import { AuthError } from '../lib/authentication-error';
+
 import { ADMIN_ROLES } from '../lib/cht-session';
 export const REQUIRED_PERMISSIONS = [
   'can_create_people',
@@ -22,13 +24,14 @@ export class UserPermissionService {
       return;
     }
 
-    const hasAllRequiredPermissions = REQUIRED_PERMISSIONS.every(permission => {
+    const missingPermissions = REQUIRED_PERMISSIONS.filter(permission => {
       const rolesWithPermission = permissions[permission] || [];
-      return _.intersection(userRoles, rolesWithPermission).length > 0;
+      return _.intersection(userRoles, rolesWithPermission).length === 0;
     });
 
-    if (!hasAllRequiredPermissions) {
-      throw new Error(`User ${username} role does not have the required permissions`);
+    if (missingPermissions.length > 0 ) {
+      console.error(`User ${username} is missing permissions:`, missingPermissions);
+      throw AuthError.MISSING_PERMISSIONS(username);
     }
   }
 }
