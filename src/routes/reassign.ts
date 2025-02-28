@@ -1,9 +1,7 @@
 import { FastifyInstance } from 'fastify';
 import { Config } from '../config';
 import { ChtApi } from '../lib/cht-api';
-import PlaceFactory from '../services/place-factory';
 import { UploadManager } from '../services/upload-manager';
-import place from './search';
 
 export default async function newHandler(fastify: FastifyInstance) {
   
