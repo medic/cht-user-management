@@ -1,14 +1,14 @@
 import { PartnerConfig } from '.';
-import ugandaConfig from './chis-ug';
 import kenyaConfig from './chis-ke';
 import togoConfig from './chis-tg';
 import civConfig from './chis-civ';
+import maliConfig from './chis-ml';
 
 export const CONFIG_MAP: { [key: string]: PartnerConfig } = {
   'CHIS-KE': kenyaConfig,
-  'CHIS-UG': ugandaConfig,
   'CHIS-TG': togoConfig,
-  'CHIS-CIV': civConfig
+  'CHIS-CIV': civConfig,
+  'CHIS-ML': maliConfig
 };
 
 export default function getConfigByKey(key: string = 'CHIS-KE'): PartnerConfig {
