@@ -1,9 +1,18 @@
 import { FastifyInstance } from 'fastify';
 import { Config } from '../config';
-import { ChtApi } from '../lib/cht-api';
+import { ChtApi, CouchDoc, UserInfo } from '../lib/cht-api';
 import { UploadManager } from '../services/upload-manager';
 
 export default async function newHandler(fastify: FastifyInstance) {
+
+  const getPlaces = (formData: { [key:string]: string }) => {
+    return Object.keys(formData).filter(k => k.startsWith('list_')).map(k => formData[k]).map(v => {
+      return {
+        place: JSON.parse(Buffer.from(v, 'base64').toString('utf8')), 
+        value: v 
+      }; 
+    });
+  };
   
   fastify.get('/reassign', async (req, resp) => {
     const { place_type } = req.query as any;
@@ -37,16 +46,8 @@ export default async function newHandler(fastify: FastifyInstance) {
     if (place.id) {
       places.push({ place, value: Buffer.from(JSON.stringify(place)).toString('base64') });
     }
-    Object.keys(body).filter(k => k.startsWith('list_')).map(k => body[k]).forEach(v => {
-      const item = { 
-        place: JSON.parse(Buffer.from(v, 'base64').toString('utf8')), 
-        value: v 
-      };
-      if (place.id !== item.place.id) {
-        places.push(item); 
-      }
-    });
-
+    places.push(...getPlaces(body).filter(p => p.place.id !== place.id));
+    
     return resp.view('src/liquid/reassign/form.liquid', {
       contactType,
       hierarchy,
@@ -63,12 +64,7 @@ export default async function newHandler(fastify: FastifyInstance) {
     
     const contactType = Config.getContactType(body.place_type);
     const hierarchy = Config.getHierarchyWithReplacement(contactType, 'desc');
-    const places = Object.keys(body).filter(k => k.startsWith('list_')).map(k => body[k]).map(v => {
-      return {
-        place: JSON.parse(Buffer.from(v, 'base64').toString('utf8')), 
-        value: v 
-      }; 
-    }).filter(item => item.place.id !== place_id);
+    const places = getPlaces(body).filter(item => item.place.id !== place_id);
 
     return resp.view('src/liquid/reassign/form.liquid', {
       contactType,
@@ -84,12 +80,7 @@ export default async function newHandler(fastify: FastifyInstance) {
     const body = req.body as { [key:string]: string };
     const contactType = Config.getContactType(body.place_type);
     const hierarchy = Config.getHierarchyWithReplacement(contactType, 'desc');
-    const places = Object.keys(body).filter(k => k.startsWith('list_')).map(k => body[k]).map(v => {
-      return {
-        place: JSON.parse(Buffer.from(v, 'base64').toString('utf8')), 
-        value: v 
-      }; 
-    });
+    const places = getPlaces(body);
 
     const uuidMatch = body.contact.match('/contacts/(?<uuid>[a-z0-9-]{32,36})');
     if (!uuidMatch?.groups?.uuid) {
@@ -105,10 +96,29 @@ export default async function newHandler(fastify: FastifyInstance) {
     }
 
     if (places.length > 0) {
-      const chtApi = new ChtApi(req.chtSession);
-      const contactId = uuidMatch.groups.uuid;
-      const uploadManager: UploadManager = fastify.uploadManager;
-      uploadManager.reassign(contactId, places.map(i => i.place.id), chtApi);
+      try {      
+        const contactId = uuidMatch.groups.uuid;
+        const chtApi = new ChtApi(req.chtSession);
+      
+        const user = await chtApi.getUser(contactId) as UserInfo & { place: CouchDoc[] };
+        if (!user) {
+          throw new Error('We did not find a user from the link provided. ' + 
+        'Please make sure the link is correct and the contact can login to the instance');
+        }
+        
+        const uploadManager: UploadManager = fastify.uploadManager;
+        uploadManager.reassign(contactId, user, places.map(i => i.place.id), chtApi);
+      } catch (err: any) {
+        const errors = { contact: err };
+        return resp.view('src/liquid/reassign/form.liquid', {
+          contactType,
+          hierarchy,
+          session: req.chtSession,
+          data: body,
+          places,
+          errors
+        });
+      }
     }
 
     return resp.view('src/liquid/reassign/form.liquid', {
