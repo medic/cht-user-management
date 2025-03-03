@@ -49,12 +49,7 @@ export class UploadManager extends EventEmitter {
     }
   };
 
-  reassign = async (contactId: string, places: string[], api: ChtApi) => {
-    const user = await api.getUser(contactId) as UserInfo & { place: CouchDoc[] };
-    if (!user) {
-      throw new Error('We did not find a user from the link provided. ' + 
-        'Please make sure the link is correct and the contact can login to the instance');
-    }
+  reassign = async (contactId: string, user: UserInfo & { place: CouchDoc[] }, places: string[], api: ChtApi) => {
     try {
       places.forEach(p => {  
         this.emit('refresh_place', { id: p, state: PlaceUploadState.IN_PROGRESS });
@@ -63,7 +58,7 @@ export class UploadManager extends EventEmitter {
       await this.updateContact(contactId, places, api);
     } catch (err: any) {
       places.forEach(p => {  
-        this.emit('refresh_place', { id: p, state: PlaceUploadState.FAILURE, err: err.message });
+        this.emit('refresh_place', { id: p, state: PlaceUploadState.FAILURE, err: err.response?.data?.error?.message ?? err.message });
       });     
     }
   };
@@ -92,7 +87,7 @@ export class UploadManager extends EventEmitter {
         await api.setDoc(places[i], place);
         this.emit('refresh_place', { id: places[i], state: PlaceUploadState.SUCCESS });
       } catch (err: any) {
-        this.emit('refresh_place', { id: places[i], state: PlaceUploadState.FAILURE, err: err.message });
+        this.emit('refresh_place', { id: places[i], state: PlaceUploadState.FAILURE, err: err.response?.data?.error?.message ?? err.message });
       }
     }
   }
