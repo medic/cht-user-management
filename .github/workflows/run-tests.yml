@@ -1,6 +1,10 @@
 name: Run Build and Tests
 
-on: push
+on: [push, pull_request]
+
+concurrency:
+  group: ${{ github.event.pull_request.head.sha || github.sha }}
+  cancel-in-progress: true
 
 jobs:
   test:
