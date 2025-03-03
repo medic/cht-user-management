@@ -24,12 +24,12 @@ const build = (opts: FastifyServerOptions): FastifyInstance => {
   fastify.register(fastifyCompress);
   fastify.register(view, {
     engine: {
-      liquid: new Liquid({ 
-        extname: '.html', 
-        root: 'src/liquid', 
-        cache: process.env.NODE_ENV === 'production', 
-        jekyllInclude: true, 
-        dynamicPartials: true 
+      liquid: new Liquid({
+        extname: '.html',
+        root: 'src/liquid',
+        cache: process.env.NODE_ENV === 'production',
+        jekyllInclude: true,
+        dynamicPartials: true
       }),
     },
   });
@@ -44,7 +44,7 @@ const build = (opts: FastifyServerOptions): FastifyInstance => {
     prefix: '/public/',
     serve: true,
   });
-  
+
   fastify.register(metricsPlugin, {
     endpoint: '/metrics',
     routeMetrics: {
@@ -63,6 +63,32 @@ const build = (opts: FastifyServerOptions): FastifyInstance => {
       return;
     }
 
+    const authHeader = req.headers.authorization as string;
+    if (authHeader && authHeader.startsWith('Basic ')) {
+      if (!req.routeOptions.url?.startsWith('/api')) {
+        reply.status(404).send({error: 'not found'});
+        return;
+      }
+
+      const { domain } = req.query as { [key: string]: string };
+      if (!domain) {
+        reply.send({ error: 'no authentication domain found' });
+        return;
+      }
+
+      const credentialsBase64 = authHeader.split(' ')[1];
+      const credentials = Buffer.from(credentialsBase64, 'base64').toString('utf-8');
+      const [username, password] = credentials.split(':');
+
+      const { isAdmin }: any = await Auth.apiAuth(username, password, domain);
+
+      if (isAdmin === true) {
+        return;
+      }
+      reply.status(401).send({ error: 'unauthorized' });
+      return;
+    }
+
     const cookieToken = req.cookies[Auth.AUTH_COOKIE_NAME] as string;
     if (!cookieToken) {
       reply.redirect('/login');
@@ -71,6 +97,10 @@ const build = (opts: FastifyServerOptions): FastifyInstance => {
 
     try {
       const chtSession = Auth.createCookieSession(cookieToken);
+      if (req.routeOptions.url === '/api/config' && !chtSession?.isAdmin) {
+        reply.status(401).send({ error: 'unauthorized' });
+        return;
+      }
       req.chtSession = chtSession;
       req.sessionCache = SessionCache.getForSession(chtSession);
     } catch (e) {
