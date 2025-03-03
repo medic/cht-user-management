@@ -2,13 +2,10 @@ name: Run Build and Tests
 
 on: [push, pull_request]
 
-concurrency:
-  group: ${{ github.event.pull_request.head.sha || github.sha }}
-  cancel-in-progress: true
-
 jobs:
   test:
     name: Run Build and Tests
+    if: ${{ github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
