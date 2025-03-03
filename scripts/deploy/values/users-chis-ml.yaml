@@ -5,17 +5,17 @@ cht-user-management:
     enabled: true
   image:
     repository: public.ecr.aws/medic/cht-user-management
-    tag: "1.4.2"  # Set this to the version of the docker image
+    tag: "2.1.5"  # Set this to the version of the docker image
 
   # Environment variablues to set in the pod, for example:
   # env:
   #   CONFIG_NAME: changeme
-  
-  env: 
+
+  env:
     NODE_ENV: production
     CHT_DEV_HTTP: false
-    CONFIG_NAME: chis-ug
-    REDIS_HOST: users-chis-ug-redis-master.users-chis-prod.svc.cluster.local
+    CONFIG_NAME: chis-ml
+    REDIS_HOST: users-chis-ml-redis-master.users-chis-prod.svc.cluster.local
     REDIS_PORT: 6379
   envSecrets:
     # COOKIE/WORKER_PRIVATE_KEY will be automatically generated if it doesn't exist
@@ -38,7 +38,7 @@ cht-user-management:
       alb.ingress.kubernetes.io/certificate-arn: arn:aws:iam::720541322708:server-certificate/2024-wildcard-app-medicmobile-org-chain
     className: alb
     hosts:
-      - host: users-chis-ug.app.medicmobile.org
+      - host: users-chis-ml.app.medicmobile.org
         paths:
           - path: /
             pathType: Prefix
@@ -51,10 +51,10 @@ cht-user-management-worker:
   replicaCount: 1
   image:
     repository: public.ecr.aws/medic/cht-user-management-worker
-    tag: "1.4.2"
-  env: 
+    tag: "2.1.5"
+  env:
     NODE_ENV: production
-    REDIS_HOST: users-chis-ug-redis-master.users-chis-prod.svc.cluster.local
+    REDIS_HOST: users-chis-ml-redis-master.users-chis-prod.svc.cluster.local
     REDIS_PORT: 6379
   envSecrets:
     - env: WORKER_PRIVATE_KEY
