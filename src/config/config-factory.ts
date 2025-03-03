@@ -1,4 +1,4 @@
-import { Config, ConfigSystem, PartnerConfig } from '.';
+import { ConfigSystem, PartnerConfig } from '.';
 import ugandaConfig from './chis-ug';
 import kenyaConfig from './chis-ke';
 import togoConfig from './chis-tg';
@@ -19,7 +19,6 @@ export const DEFAULT_CONFIG_MAP: { [key: string]: PartnerConfig } = {
 export default async function getConfigByKey(key: string = 'CHIS-KE'): Promise<PartnerConfig> {
   if (fs.existsSync(uploadedConfigFilePath)) {
     const uploadedConfig = await readConfig();
-    await Config.assertValid(uploadedConfig);
     console.log(`Using uploaded configuration: ${uploadedConfigFilePath}`);
     return uploadedConfig;
   }

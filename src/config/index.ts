@@ -69,20 +69,16 @@ const {
   CHT_DEV_HTTP
 } = process.env;
 
-async function init(): Promise<PartnerConfig> {
-  return await getConfigByKey(CONFIG_NAME);
-}
-
 export class Config {
   private constructor() {}
 
   public static async contactTypes(): Promise<ContactType[]> {
-    const {config} = await init();
+    const {config} = await getConfigByKey(CONFIG_NAME);
     return config.contact_types;
   }
 
   public static async getContactType(name: string) : Promise<ContactType> {
-    const {config} = await init();
+    const {config} = await getConfigByKey(CONFIG_NAME);
     const contactMatch = config.contact_types.find(c => c.name === name);
     if (!contactMatch) {
       throw new Error(`unrecognized contact type: "${name}"`);
@@ -139,7 +135,7 @@ export class Config {
   }
 
   public static async mutate(payload: PlacePayload, chtApi: ChtApi, isReplacement: boolean): Promise<PlacePayload | undefined> {
-    const partnerConfig = await init();
+    const partnerConfig = await getConfigByKey(CONFIG_NAME);
     return partnerConfig.mutate && partnerConfig.mutate(payload, chtApi, isReplacement);
   }
 
@@ -152,7 +148,7 @@ export class Config {
   }
 
   public static async getLogoBase64() : Promise<string> {
-    const {config} = await init();
+    const {config} = await getConfigByKey(CONFIG_NAME);
     return config.logoBase64;
   }
 
@@ -180,7 +176,7 @@ export class Config {
   }
 
   public static async getDomains() : Promise<AuthenticationInfo[]> {
-    const {config} = await init();
+    const {config} = await getConfigByKey(CONFIG_NAME);
     const domains = [...config.domains];
 
     // because all .env vars imported as strings, let's get the AuthenticationInfo object a boolean
@@ -201,7 +197,7 @@ export class Config {
   }
 
   public static async getUniqueProperties(contactTypeName: string): Promise<ContactProperty[]> {
-    const {config} = await init();
+    const {config} = await getConfigByKey(CONFIG_NAME);
     const contactMatch = config.contact_types.find(c => c.name === contactTypeName);
     const uniqueProperties = contactMatch?.place_properties.filter(prop => prop.unique);
     return uniqueProperties || [];
@@ -209,7 +205,7 @@ export class Config {
 
   // TODO: Joi? Chai?
   public static async assertValid(config?: PartnerConfig) {
-    const { config: assertionConfig } = config || await init();
+    const { config: assertionConfig } = config || await getConfigByKey(CONFIG_NAME);
 
     if (!assertionConfig.contact_types || assertionConfig.contact_types.length === 0) {
       throw Error(`invalid configuration: 'contact_types' property is empty`);
