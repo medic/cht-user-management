@@ -43,11 +43,11 @@
     </div>
 
     <div class="field mt-4 is-flex is-justify-content-space-between">
-      <button class="button is-small is-ghost px-0" hx-post="/new?place_type={{contactType.name}}&cont=1">
-        Save and continue
+      <button class="button is-small" hx-post="/new?place_type={{contactType.name}}&cont=1">
+        Save and create another
       </button>
       <div class="control">
-        <a href="/" class="button is-small">Cancel</a>
+        <a href="/" class="button is-small is-danger is-light">Cancel</a>
         <button class="button is-small is-link">Save</button>
       </div>
     </div>
