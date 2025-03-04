@@ -87,6 +87,8 @@ export default async function newHandler(fastify: FastifyInstance) {
       },
     });
   });
+  
+  fastify.post('/new/part/delete/:id', async () => {});
 
   fastify.get('/new/table', async (req, resp) => {
     const { contact } = req.query as any;
