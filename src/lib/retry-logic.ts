@@ -39,7 +39,7 @@ export async function retryOnUpdateConflict<T>(funcWithGetAndPut: () => Promise<
 export async function createUserWithRetries(userPayload: UserPayload, chtApi: ChtApi): Promise<{ username: string; password: string }> {
   for (let retryCount = 0; retryCount < RETRY_COUNT; ++retryCount) {
     try {
-      await chtApi.createUser(userPayload);
+      await chtApi.createUser(userPayload, chtApi.chtSession?.chtCoreVersion);
       return userPayload;
     } catch (err: any) {      
       if (axiosRetryConfig.retryCondition(err)) {
