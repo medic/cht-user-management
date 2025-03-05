@@ -11,34 +11,55 @@ import crypto from 'crypto';
 export default async function newHandler(fastify: FastifyInstance) {
   
   fastify.get('/new', async (req, resp) => {
-    const { place_type } = req.query as any;
+    const { place_type, contact } = req.query as any;
     const contactType = Config.getContactType(place_type);
     const sessionCache: SessionCache = req.sessionCache;
     
-    const grouped = Object.values(
+    const shared = {
+      hierarchy: Config.getHierarchyWithReplacement(contactType, 'desc'),
+      contactType,
+      logo: Config.getLogoBase64(),
+      show_place_form: false,
+    };
+
+    if (contact) {
+      const placeData = sessionCache.getPlaces({ type: contactType.name }).find(p => p.contact.id === contact)?.asFormData('hierarchy_');
+      const placeFormData = {} as any;
+      Object.keys(placeData).filter(k => k.startsWith('contact_') || k.startsWith('hierarchy_') ).forEach(k => placeFormData[k]= placeData[k]);
+      const data = {
+        ...shared,
+        data: placeFormData,
+        show_place_form: true,
+        contact_id: contact, 
+        places: [ { items: sessionCache.getPlaces({ type: contactType.name }).filter(p => p.contact.id === contact), can_edit: false } ]
+      };
+      return resp.view('src/liquid/new/index.liquid', data);
+    }
+
+    const places = Object.values(
       _.groupBy(sessionCache.getPlaces({ type: contactType.name }).filter(p => p.state === PlaceUploadState.STAGED), (p) => p.contact.id)
     )
       .filter(p => p.length > 0)
-      .reverse();
+      .reverse()
+      .map(places => {
+        return {
+          items: places,
+          can_edit: !places.find(p => p.creationDetails.username)
+        };
+      });
 
-    const data = {
-      hierarchy: Config.getHierarchyWithReplacement(contactType, 'desc'),
-      contactType,
-      places: grouped,
-      logo: Config.getLogoBase64()
-    };
-
+    const data = { ...shared, places };
     return resp.view('src/liquid/new/index.liquid', data);
   });
 
   fastify.post('/new', async (req, resp) => {
-    const { place_type, cont } = req.query as any;
+    const { place_type, contact, cont } = req.query as any;
 
     const contactType = Config.getContactType(place_type);
     const chtApi = new ChtApi(req.chtSession);
     const sessionCache: SessionCache = req.sessionCache;
     
-    await PlaceFactory.createManyWithSingleUser(req.body as {[key:string]:string}, contactType, sessionCache, chtApi);
+    await PlaceFactory.createManyWithSingleUser(req.body as {[key:string]:string}, contactType, sessionCache, chtApi, contact);
     
     if (cont) {
       resp.header('HX-Redirect', `/new?place_type=${place_type}`);
@@ -63,6 +84,7 @@ export default async function newHandler(fastify: FastifyInstance) {
     const formData = req.body as { [key:string]: string };
    
     const errors: { [key:string]: string } = {};
+    const placeData: { [key:string]: string } = {};
     contactType.place_properties.forEach(prop => {
       const validator = Validation.getValidatorForType(prop.type);
       const valid = validator?.isValid(formData['place_' + prop.property_name], prop);
@@ -71,6 +93,8 @@ export default async function newHandler(fastify: FastifyInstance) {
       }
       if (!valid) {
         errors[prop.property_name] = prop.errorDescription ?? 'invalid value';
+      } else {
+        placeData['place_' + prop.property_name] = formData['place_' + prop.property_name];
       }
     });
 
@@ -82,8 +106,8 @@ export default async function newHandler(fastify: FastifyInstance) {
       contactType,
       item: {
         id: crypto.randomUUID(),
-        name: formData.place_name,
-        value: Buffer.from(JSON.stringify(req.body)).toString('base64'),
+        name: placeData.place_name,
+        value: Buffer.from(JSON.stringify(placeData)).toString('base64'),
       },
     });
   });
@@ -96,7 +120,8 @@ export default async function newHandler(fastify: FastifyInstance) {
     const places = sessionCache.getPlaces().filter(p => p.contact.id === contact);
     return resp.view('src/liquid/new/place_list.liquid', {
       contactType: places[0].type,
-      places
+      places,
+      can_edit: !places.find(p => p.creationDetails.username)
     });
   });
 }
