@@ -7,6 +7,7 @@ import SessionCache from './session-cache';
 import RemotePlaceResolver from '../lib/remote-place-resolver';
 import { HierarchyPropertyValue, ContactPropertyValue, IPropertyValue } from '../property-value';
 import WarningSystem from '../warnings';
+import Contact from './contact';
 
 export default class PlaceFactory {
   public static async createFromCsv(csvBuffer: Buffer, contactType: ContactType, sessionCache: SessionCache, chtApi: ChtApi)
@@ -24,6 +25,46 @@ export default class PlaceFactory {
     return place;
   };
 
+  public static createManyWithSingleUser = async (
+    formData: { [key: string]: string },
+    contactType: ContactType,
+    sessionCache: SessionCache,
+    chtApi: ChtApi,
+    contact?: string
+  ): Promise<Place[]> => {
+    const list: string[] = [];
+    Object.keys(formData).forEach(k => {
+      if (k.startsWith('list_')) {
+        list.push(formData[k]);
+        delete formData[k];
+      }
+    });
+    let existingContact: Contact | undefined;
+    if (contact) {
+      const p = sessionCache.getPlaces({type: contactType.name}).find(p => p.contact.id === contact);
+      existingContact = p?.contact;
+      formData = p?.asFormData('hierarchy_');
+    }
+    const places: Place[] = [];
+    list.forEach((data, idx) => {
+      const parsed = JSON.parse(Buffer.from(data, 'base64').toString('utf8'));
+      const placeData = { ...formData, ...parsed };
+      const place = new Place(contactType);
+      place.setPropertiesFromFormData(placeData, 'hierarchy_');
+      if (contact && existingContact) {
+        place.contact = existingContact;
+      } else {
+        if (idx > 0) {
+          place.contact = places[0].contact;
+        }
+      }
+      place.hasSharedUser = true;  
+      places.push(place);
+    });
+    await PlaceFactory.finalizePlaces(places, sessionCache, chtApi, contactType);
+    return places;
+  };
+
   public static editOne = async (placeId: string, formData: any, sessionCache: SessionCache, chtApi: ChtApi)
     : Promise<Place> => {
     const place = sessionCache.getPlace(placeId);
@@ -31,8 +72,14 @@ export default class PlaceFactory {
       throw new Error('unknown place or place has already been created');
     }
     place.setPropertiesFromFormData(formData, 'hierarchy_');
+    let places = [];
+    if (place.hasSharedUser) {
+      places = sessionCache.getPlaces({ type: place.type.name }).filter(p => p.contact.id === place.contact.id);
+    } else {
+      places = [place];
+    }
 
-    await PlaceFactory.finalizePlaces([place], sessionCache, chtApi, place.type);
+    await PlaceFactory.finalizePlaces(places, sessionCache, chtApi, place.type);
     return place;
   };
 
