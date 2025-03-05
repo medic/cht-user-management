@@ -1,8 +1,5 @@
-<form
+<div
   id="place_fragment"
-  hx-post="/place_form?place_type={{contactType.name}}"
-  hx-target="#place_fragment"
-  hx-swap="outerHTML"
   class="mb-5"
 >
   <p>Fill {{ contactType.friendly }} details</p>
@@ -29,6 +26,13 @@
     >
       Cancel
     </button>
-    <button class="button is-primary is-small">Add</button>
+    <button
+      class="button is-primary is-small"
+      hx-post="/place_form?place_type={{contactType.name}}"
+      hx-target="#place_fragment"
+      hx-swap="outerHTML"
+    >
+      Add
+    </button>
   </div>
-</form>
+</div>

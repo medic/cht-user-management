@@ -18,6 +18,7 @@
       {% if required %} required {% endif %}
       {% if data[property_name] %}value="{{ data[property_name] }}" {% endif %}
       hx-encoding="application/x-www-form-urlencoded"
+      {% if disabled == true %} disabled {% endif %}
     />
     <div id="search_results_{{ property_name }}" class="control"></div>
   </div>

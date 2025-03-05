@@ -8,7 +8,7 @@
     <script src="/public/sse.js"></script>
     <link rel="stylesheet" href="/public/bulma.min.css">
     <link rel="stylesheet" href="/public/material-symbols.css">
-    <link rel="stylesheet" href="/public/bulma-tooltip.min.css" />
+    <link rel="stylesheet" href="/public/bulma-tooltip.min.css">
   </head>
   <body>
     <nav class="navbar" role="navigation" aria-label="main navigation">
@@ -19,7 +19,14 @@
       </div>
     </nav>
     <div class="container is-max-desktop px-4" hx-ext="sse" sse-connect="/events/connection">
-      {% render 'new/form.liquid', contactType: contactType, hierarchy: hierarchy, data: data, places: places %}
+      {% render 'new/form.liquid',
+        contactType: contactType,
+        hierarchy: hierarchy,
+        data: data,
+        show_place_form: show_place_form,
+        contact_id: contact_id,
+        places: places
+      %}
     </div>
   </body>
 </html>

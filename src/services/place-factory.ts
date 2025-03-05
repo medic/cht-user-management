@@ -7,6 +7,7 @@ import SessionCache from './session-cache';
 import RemotePlaceResolver from '../lib/remote-place-resolver';
 import { HierarchyPropertyValue, ContactPropertyValue, IPropertyValue } from '../property-value';
 import WarningSystem from '../warnings';
+import Contact from './contact';
 
 export default class PlaceFactory {
   public static async createFromCsv(csvBuffer: Buffer, contactType: ContactType, sessionCache: SessionCache, chtApi: ChtApi)
@@ -28,7 +29,8 @@ export default class PlaceFactory {
     formData: { [key: string]: string },
     contactType: ContactType,
     sessionCache: SessionCache,
-    chtApi: ChtApi
+    chtApi: ChtApi,
+    contact?: string
   ): Promise<Place[]> => {
     const list: string[] = [];
     Object.keys(formData).forEach(k => {
@@ -37,14 +39,24 @@ export default class PlaceFactory {
         delete formData[k];
       }
     });
+    let existingContact: Contact | undefined;
+    if (contact) {
+      const p = sessionCache.getPlaces({type: contactType.name}).find(p => p.contact.id === contact);
+      existingContact = p?.contact;
+      formData = p?.asFormData('hierarchy_');
+    }
     const places: Place[] = [];
     list.forEach((data, idx) => {
       const parsed = JSON.parse(Buffer.from(data, 'base64').toString('utf8'));
       const placeData = { ...formData, ...parsed };
       const place = new Place(contactType);
       place.setPropertiesFromFormData(placeData, 'hierarchy_');
-      if (idx > 0) {
-        place.contact = places[0].contact;
+      if (contact && existingContact) {
+        place.contact = existingContact;
+      } else {
+        if (idx > 0) {
+          place.contact = places[0].contact;
+        }
       }
       place.hasSharedUser = true;  
       places.push(place);

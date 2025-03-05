@@ -3,7 +3,11 @@
     autocomplete="off"
     hx-target="#create_form_parent"
     hx-swap="outerHTML"
-    hx-post="/new?place_type={{contactType.name}}"
+    {% if show_place_form %}
+      hx-post="/new?place_type={{contactType.name}}&contact={{contact_id}}"
+    {% else %}
+      hx-post="/new?place_type={{contactType.name}}"
+    {% endif %}
     style="width: 38rem;"
   >
     <div>
@@ -15,11 +19,13 @@
     <div class="p-2">
       {% for hierarchy in hierarchy %}
         {% if hierarchy.level != 0 %}
-          {% render 'components/search_input.html',
+          {%
+            render 'components/search_input.html',
             type: contactType.name,
             hierarchy: hierarchy,
             prefix: 'hierarchy_',
-            data: data
+            data: data,
+            disabled: show_place_form == true
           %}
         {% endif %}
       {% endfor %}
@@ -27,23 +33,36 @@
         {%
           include "components/contact_type_property.html" prefix="contact_" prop=prop
           place_type=contactType.name
+          disabled=show_place_form ==  true
         %}
       {% endfor %}
     </div>
 
     <div class="p-2 mt-4 mb-2" style="border-left: thick solid green;">
       <p>
-        Click on the <span style="font-weight: bold;">New</span> button below to add places that you want to assign to
-        this user
+        Click on the <span style="font-weight: bold;">+ Add</span> button below to add all the
+        {{ contactType.friendly }}(s) that you want to assign to this user
       </p>
     </div>
 
     <div id="place_new_parent" class="mt-2">
-      {% render 'new/new_place_btn.liquid' with contactType.name as place_type %}
+      {% if show_place_form %}
+        {% render 'new/place_form_fragment.liquid', contactType: contactType, data: data %}
+      {% else %}
+        {% render 'new/new_place_btn.liquid' with contactType.name as place_type %}
+      {% endif %}
     </div>
 
     <div class="field mt-4 is-flex is-justify-content-space-between">
-      <button class="button is-small" hx-post="/new?place_type={{contactType.name}}&cont=1">
+      <button
+        class="button is-small"
+        type="button"
+        {% if show_place_form %}
+          hx-post="/new?place_type={{contactType.name}}&contact={{contact_id}}&cont=1"
+        {% else %}
+          hx-post="/new?place_type={{contactType.name}}&cont=1"
+        {% endif %}
+      >
         Save and create another
       </button>
       <div class="control">
@@ -54,7 +73,7 @@
   </form>
   {% if places.length > 0 %}
     {% for entry in places %}
-      {% render 'new/place_list.liquid', places: entry, contactType: contactType %}
+      {% render 'new/place_list.liquid', places: entry.items, can_edit: entry.can_edit, contactType: contactType %}
     {% endfor %}
   {% endif %}
 </div>
