@@ -188,6 +188,7 @@ export default class Place {
       type: this.isCreated ? 'remote' : 'local',
       uniquePlaceValues: this.getUniqueKeys(this.properties, this.type.place_properties),
       uniqueContactValues: this.getUniqueKeys(this.contact.properties, this.type.contact_properties),
+      contactId: this.contact.id,
       stagedPlace: this,
       lineage: this.buildLineage(),
     };

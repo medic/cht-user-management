@@ -53,7 +53,7 @@ describe('scripts/create-user-managers.ts', () => {
       fullname: 'Stan Lee (User Manager)',
       password: 'S3cret_abc',
       phone: undefined,
-      place: 'county_id',
+      place: ['county_id'],
       roles: ['user_manager', 'mm-online'],
       username: 'stan_lee_user_manager',
     });

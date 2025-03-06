@@ -152,7 +152,7 @@ export default async function addPlace(fastify: FastifyInstance) {
 
     const chtApi = new ChtApi(req.chtSession);
     const uploadManager: UploadManager = fastify.uploadManager;
-    uploadManager.doUpload([place], chtApi, true);
+    uploadManager.doUpload([place], chtApi, { ignoreWarnings: true });
   });
 
   fastify.post('/place/remove/:id', async (req) => {

@@ -309,7 +309,7 @@ describe('warnings', () => {
     expect(first.warnings).to.be.empty;
 
     const uploadManager = new UploadManager();
-    await uploadManager.doUpload([first], chtApi, false);
+    await uploadManager.doUpload([first], chtApi);
     expect(first.isCreated).to.be.true;
 
     chpData.contact_name = 'other chp';
