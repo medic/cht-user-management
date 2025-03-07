@@ -90,6 +90,12 @@ export default class PlaceFactory {
           lookupPropertyAndCreateValue(place.userRoleProperties, userRoleProperty, createFromValue);
         }
 
+        if (contactType.superset) {
+          const supersetProperty = contactType.superset;
+          const createFromValue = (value: string) => new ContactPropertyValue(place, supersetProperty, 'superset_', value);
+          lookupPropertyAndCreateValue(place.supersetProperties, supersetProperty, createFromValue);
+        }
+
         places.push(place);
       }
       count++;

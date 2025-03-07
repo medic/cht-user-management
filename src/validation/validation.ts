@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { Config, ContactProperty, HierarchyConstraint } from '../config';
+import { Config, ContactProperty, HierarchyConstraint, SupersetConfig } from '../config';
 import { IValidator } from '.';
 import Place from '../services/place';
 import RemotePlaceResolver from '../lib/remote-place-resolver';
@@ -13,6 +13,7 @@ import ValidatorSelectMultiple from './validator-select-multiple';
 import ValidatorSelectOne from './validator-select-one';
 import ValidatorSkip from './validator-skip';
 import ValidatorString from './validator-string';
+import ValidatorSelectSupersetMode from './validator-select-superset-mode';
 import { RemotePlace } from '../lib/remote-place-cache';
 
 type ValidatorMap = {
@@ -29,6 +30,7 @@ const TypeValidatorMap: ValidatorMap = {
   string: new ValidatorString(),
   select_one: new ValidatorSelectOne(),
   select_multiple: new ValidatorSelectMultiple(),
+  select_superset_mode: new ValidatorSelectSupersetMode(),
 };
 
 export class Validation {
@@ -97,6 +99,12 @@ export class Validation {
         return error;
       }
     }
+  }
+
+  public static validateSupersetConfig(place: Place, supersetConfig: SupersetConfig): string | undefined {
+    const data = place.supersetProperties[supersetConfig.property_name];
+    console.log('Data', data);
+    return;
   }
 
   public static getKnownContactPropertyTypes(): string[] {

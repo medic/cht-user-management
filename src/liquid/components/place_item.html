@@ -33,7 +33,7 @@
       %}
     {% endif %}
   {% endfor %}
-
+  
   {% if contactType.user_role.size > 1 %}
     {% capture propertyName %}user_{{ contactType.userRoleProperty.property_name }}{% endcapture %}
     {%
@@ -45,8 +45,19 @@
   {% endif %}
 
   <td>
-    {% capture tag_text %}{% if place.validationErrors == empty %}{{ place.state }}{% else %}invalid{% endif %}{%
-    endcapture %}
+    {% capture tag_text %}
+        {% if place.validationErrors == empty %}
+            {% if place.chtUploadState == 'failure' %}
+                cht upload failed
+            {% elsif place.supersetUploadState == 'failure' %}
+                superset upload failed
+            {% else %}
+                {{ place.state }}
+            {% endif %}
+        {% else %}
+            invalid
+        {% endif %}
+    {%endcapture %}
     {% capture tag_class %}
     {% if place.state == 'failure' %}is-danger
     {% elsif place.state == 'success' %}is-success
@@ -55,8 +66,8 @@
     {% if place.uploadError %}has-tooltip-arrow has-tooltipl-multiline{% endif %}
     {% endcapture %}
     <span class="tag is-info {{ tag_class }}" {% if place.uploadError
-      %}data-tooltip="{{ place.uploadError | escape }}" {% endif %}>
-      {{ tag_text }}
+        %}data-tooltip="{{ place.uploadError | escape }}" {% endif %}>
+        {{ tag_text }}
     </span>
 
     {% if place.warnings != empty %}
@@ -70,23 +81,23 @@
   </td>
 
   <td>
-    {% if place.creationDetails.password %}
+    {% if place.isCreated %}
     {% capture explanation %}Username: {{ place.creationDetails.username }} Password: {{ place.creationDetails.password }}{% endcapture %}
     <span class="has-tooltip-arrow has-tooltipl-multiline material-symbols-outlined"
-      data-tooltip="{{ explanation | escape }}"
-      onclick="navigator.clipboard.writeText(`{{ explanation | escape }}`);">
-      key
+        data-tooltip="{{ explanation | escape }}"
+        onclick="navigator.clipboard.writeText(`{{ explanation | escape }}`);">
+        key
     </span>
     {% else %}
     <a href="/place/edit/{{place.id}}" data-tooltip="Edit">
-      <span class="material-symbols-outlined">edit</span>
+        <span class="material-symbols-outlined">edit</span>
     </a>
     <a hx-post="/place/refresh/{{place.id}}" data-tooltip="Refresh" hx-target="this" hx-swap="none">
-      <span class="material-symbols-outlined">refresh</span>
+        <span class="material-symbols-outlined">refresh</span>
     </a>
     {% if place.validationErrors == empty %}
     <a hx-post="/place/upload/{{place.id}}" hx-target="this" hx-swap="none" data-tooltip="Upload">
-      <span class="material-symbols-outlined">upload</span>
+        <span class="material-symbols-outlined">upload</span>
     </a>
     {%endif%}
     {%endif%}
