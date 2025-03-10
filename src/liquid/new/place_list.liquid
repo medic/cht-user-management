@@ -41,17 +41,36 @@
   <table class="table is-fullwidth is-striped is-hoverable mb-1">
     <thead>
       <tr>
+        {% for hierarchy in contactType.hierarchy %}
+          {% if hierarchy.property_name != 'replacement' %}
+            <th id="hierarchy_{{ hierarchy.property_name }}">{{ hierarchy.friendly_name }}</th>
+          {% endif %}
+        {% endfor %}
         {% for property in contactType.place_properties %}
           {% if property.type != 'generated' %}
             <th id="place_{{property.property_name}}">{{ property.friendly_name }}</th>
           {% endif %}
         {% endfor %}
         <th></th>
+        <th></th>
       </tr>
     </thead>
     <tbody>
       {% for place in places %}
         <tr id="{{place.id}}">
+          {% for hierarchy in contactType.hierarchy %}
+            {% if hierarchy.property_name != 'replacement' %}
+              {% capture propertyName %}hierarchy_{{ hierarchy.property_name }}{% endcapture %}
+              {%
+                include "components/list_cell.html"
+                propertyName=propertyName
+                property=hierarchy
+                values=place.hierarchyProperties
+                linkTo=place.resolvedHierarchy[hierarchy.level]
+              %}
+            {% endif %}
+          {% endfor %}
+
           {% for property in contactType.place_properties %}
             {% if property.type != 'generated' %}
               {% capture propertyName %}place_{{ property.property_name }}{% endcapture %}
@@ -63,20 +82,66 @@
               %}
             {% endif %}
           {% endfor %}
+
           <td>
-            {% capture tag_class %}
+            <div class="is-flex is-justify-content-center">
+              {% capture tag_text %}{% if place.validationErrors == empty %}{{ place.state }}{% else %}invalid{% endif %}{% endcapture %}
+              {% capture tag_class %}
                 {% if place.state == 'failure' %}is-danger
-                {% elsif place.state == 'success' %}is-success
+                  {% elsif place.state == 'success' %}is-success
+                  {% elsif place.validationErrors != empty %}is-warning
                 {% endif %}
-            {% endcapture %}
-            <span
-              class="tag is-info {{ tag_class }}"
-              {% if place.uploadError %}
-                data-tooltip="{{ place.uploadError | escape }}"
+                {% if place.uploadError %}has-tooltip-arrow has-tooltipl-multiline{% endif %}
+              {% endcapture %}
+              <span
+                class="tag is-info {{ tag_class }}"
+                {% if place.uploadError %}
+                  data-tooltip="{{ place.uploadError | escape }}"
+                {% endif %}
+              >
+                {{ tag_text }}
+              </span>
+
+              {% if place.warnings != empty %}
+                <span
+                  class="material-symbols-outlined is-info has-tooltip-arrow has-tooltipl-multiline has-text-warning"
+                  data-tooltip="{{ place.warnings | join: '\n' | escape }}"
+                >
+                  warning
+                </span>
               {% endif %}
+            </div>
+          </td>
+          <td>
+            {% if place.creationDetails.password %}
+              {% capture explanation %}Username: {{ place.creationDetails.username }} Password: {{ place.creationDetails.password }}{% endcapture %}
+              <span
+                class="has-tooltip-arrow has-tooltipl-multiline material-symbols-outlined"
+                data-tooltip="{{ explanation | escape }}"
+                onclick="navigator.clipboard.writeText(`{{ explanation | escape }}`);"
+              >
+                key
+              </span>
+            {% else %}
+              <a href="/place/edit/{{place.id}}" data-tooltip="Edit">
+                <span class="material-symbols-outlined">edit</span>
+              </a>
+              <a hx-post="/place/refresh/{{place.id}}" data-tooltip="Refresh" hx-target="this" hx-swap="none">
+                <span class="material-symbols-outlined">refresh</span>
+              </a>
+              {% if place.validationErrors == empty %}
+                <a hx-post="/place/upload/{{place.id}}" hx-target="this" hx-swap="none" data-tooltip="Upload">
+                  <span class="material-symbols-outlined">upload</span>
+                </a>
+              {% endif %}
+            {% endif %}
+            <a
+              class="material-symbols-outlined"
+              data-tooltip="Forget"
+              hx-post="/place/remove/{{place.id}}"
+              hx-swap="none"
+              >delete</a
             >
-              {{ place.state }}
-            </span>
           </td>
         </tr>
       {% endfor %}

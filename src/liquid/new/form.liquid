@@ -71,9 +71,4 @@
       </div>
     </div>
   </form>
-  {% if places.length > 0 %}
-    {% for entry in places %}
-      {% render 'new/place_list.liquid', places: entry.items, can_edit: entry.can_edit, contactType: contactType %}
-    {% endfor %}
-  {% endif %}
 </div>

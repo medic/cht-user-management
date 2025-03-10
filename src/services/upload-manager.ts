@@ -105,7 +105,7 @@ export class UploadManager extends EventEmitter {
     }
     const placeIds: {[key:string]: any} = { [creationDetails.placeId]: '' };
     for (const place of places) {
-      if (place.isCreated) {
+      if (place.creationDetails.placeId) {
         placeIds[place.id] = undefined;
         continue;
       }
@@ -145,12 +145,10 @@ export class UploadManager extends EventEmitter {
     } catch (err) {
       const errorDetails = getErrorDetails(err);
       console.log('error when creating user', errorDetails);
-
-      places.forEach(place => {
+      places.filter(p => !p.creationDetails.username).forEach(place => {
         place.uploadError = errorDetails;
         this.eventedPlaceStateChange(place, PlaceUploadState.FAILURE);
       });
-
       this.emit('refresh_grouped', creationDetails.contactId);     
     }
    
@@ -158,6 +156,7 @@ export class UploadManager extends EventEmitter {
 
   public triggerRefresh(place_id: string) {
     this.emit('refresh_table_row', place_id);
+    this.emit('refresh_grouped');  
   }
 
   private eventedPlaceStateChange = (subject: Place | Place[], state: PlaceUploadState) => {
@@ -177,7 +176,7 @@ function getErrorDetails(err: any) {
   }
 
   if (err.response?.data?.error) {
-    return JSON.stringify(err.response.data.error);
+    return err.response.data.error.message ?? JSON.stringify(err.response.data.error);
   }
   
   return err.toString();
