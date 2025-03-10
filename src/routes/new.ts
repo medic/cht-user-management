@@ -5,7 +5,6 @@ import SessionCache from '../services/session-cache';
 import _ from 'lodash';
 import PlaceFactory from '../services/place-factory';
 import Validation from '../validation';
-import { PlaceUploadState } from '../services/place';
 import crypto from 'crypto';
 
 export default async function newHandler(fastify: FastifyInstance) {
@@ -30,25 +29,12 @@ export default async function newHandler(fastify: FastifyInstance) {
         ...shared,
         data: placeFormData,
         show_place_form: true,
-        contact_id: contact, 
-        places: [ { items: sessionCache.getPlaces({ type: contactType.name }).filter(p => p.contact.id === contact), can_edit: false } ]
+        contact_id: contact 
       };
       return resp.view('src/liquid/new/index.liquid', data);
     }
 
-    const places = Object.values(
-      _.groupBy(sessionCache.getPlaces({ type: contactType.name }).filter(p => p.state === PlaceUploadState.STAGED), (p) => p.contact.id)
-    )
-      .filter(p => p.length > 0)
-      .reverse()
-      .map(places => {
-        return {
-          items: places,
-          can_edit: !places.find(p => p.creationDetails.username)
-        };
-      });
-
-    const data = { ...shared, places };
+    const data = { ...shared  };
     return resp.view('src/liquid/new/index.liquid', data);
   });
 
