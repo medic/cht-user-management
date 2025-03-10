@@ -2,7 +2,6 @@ import { FastifyInstance } from 'fastify';
 import { Config } from '../config';
 import { ChtApi } from '../lib/cht-api';
 import SessionCache from '../services/session-cache';
-import _ from 'lodash';
 import PlaceFactory from '../services/place-factory';
 import Validation from '../validation';
 import crypto from 'crypto';
