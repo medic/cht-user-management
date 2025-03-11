@@ -74,9 +74,8 @@ export default async function newHandler(fastify: FastifyInstance) {
       const validator = Validation.getValidatorForType(prop.type);
       const valid = validator?.isValid(formData['place_' + prop.property_name], prop);
       if (typeof valid === 'string') {
-        throw new Error(valid);
-      }
-      if (!valid) {
+        errors[prop.property_name] = valid;
+      } else if (valid === false) {
         errors[prop.property_name] = prop.errorDescription ?? 'invalid value';
       } else {
         placeData['place_' + prop.property_name] = formData['place_' + prop.property_name];
@@ -108,5 +107,64 @@ export default async function newHandler(fastify: FastifyInstance) {
       places,
       can_edit: !places.find(p => p.creationDetails.username)
     });
+  });
+
+  fastify.get('/edit/contact/:id', async (req, resp) => {
+    const { id } =  req.params as any;
+    const sessionCache: SessionCache = req.sessionCache;
+    const place = sessionCache.getPlaces().find(p => p.contact.id === id);
+    if (!place) {
+      throw new Error('could not find place');
+    }
+    
+    const data = place.asFormData('hierarchy_');
+    return resp.view('src/liquid/edit/contact/index.liquid', {
+      logo: Config.getLogoBase64(),
+      contactType: place.type,
+      contact_id: place.contact.id,
+      data,
+      hierarchy: Config.getHierarchyWithReplacement(place.type, 'desc')
+    });
+  });
+
+
+  fastify.put('/contact/:id', async (req, resp) => {
+    const { id } =  req.params as any;
+    const body = req.body as {[key:string]: string};
+    const contactType = Config.getContactType(body.place_type);
+
+    const errors = {} as {[key:string]:string};
+    contactType.contact_properties.forEach(prop => {
+      const validator = Validation.getValidatorForType(prop.type);
+      const valid = validator?.isValid(body['contact_' + prop.property_name], prop);
+      if (typeof valid === 'string') {
+        errors[prop.property_name] = valid;
+      } else if (valid === false) {
+        errors[prop.property_name] = prop.errorDescription ?? 'invalid value';
+      }
+    });
+
+    if (Object.keys(errors).length > 0) {
+      return resp.view('src/liquid/edit/contact/form.liquid', {
+        logo: Config.getLogoBase64(),
+        contactType: contactType,
+        contact_id: id,
+        data: body,
+        errors,
+        hierarchy: Config.getHierarchyWithReplacement(contactType, 'desc')
+      });
+    }
+
+    const sessionCache: SessionCache = req.sessionCache;
+    const chtApi = new ChtApi(req.chtSession);
+    const places = sessionCache.getPlaces({ type: body.place_type }).filter(p => p.contact.id === id);
+    for (let i = 0; i < places.length; i++) {
+      const place = places[i];
+      const placeData = { ...place.asFormData('hierarchy_'), ...body };
+      await PlaceFactory.editOne(place.id, placeData, sessionCache, chtApi);
+    }
+    
+    resp.header('HX-Redirect', `/`);
+    return;
   });
 }
