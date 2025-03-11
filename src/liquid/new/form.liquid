@@ -11,7 +11,11 @@
     style="width: 38rem;"
   >
     <div>
-      <h3 class="is-size-4">New {{ contactType.contact_friendly }}</h3>
+      {% if contact_id %}
+        <h3 class="is-size-4">Add {{ contactType.friendly }}(s)</h3>
+      {% else %}
+        <h3 class="is-size-4">New {{ contactType.contact_friendly }}</h3>
+      {% endif %}
     </div>
     <input name="place_type" value="{{contactType.name}}" hidden>
 

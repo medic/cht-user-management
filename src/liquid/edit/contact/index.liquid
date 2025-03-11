@@ -1,0 +1,32 @@
+<html>
+  <head>
+    <title>
+      Edit
+      {{ contactType.contact_friendly }}
+    </title>
+    <script src="/public/htmx.min.js"></script>
+    <script src="/public/sse.js"></script>
+    <link rel="stylesheet" href="/public/bulma.min.css">
+    <link rel="stylesheet" href="/public/material-symbols.css">
+    <link rel="stylesheet" href="/public/bulma-tooltip.min.css">
+  </head>
+  <body>
+    <nav class="navbar" role="navigation" aria-label="main navigation">
+      <div class="navbar-brand">
+        <a class="navbar-item" href="/">
+          <img src="{{ logo }}">
+        </a>
+      </div>
+    </nav>
+    <div class="container is-max-desktop px-4">
+      <div class="is-flex is-flex-direction-column is-align-items-center">
+        {% render 'edit/contact/form.liquid',
+          contactType: contactType,
+          hierarchy: hierarchy,
+          data: data,
+          contact_id: contact_id
+        %}
+      </div>
+    </div>
+  </body>
+</html>

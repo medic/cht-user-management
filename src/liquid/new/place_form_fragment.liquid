@@ -16,23 +16,26 @@
       {% endif %}
     {% endfor %}
   </div>
-  <div class="field is-grouped is-grouped-right p-2">
-    <button
-      type="button"
-      hx-get="/place_form?place_type={{contactType.name}}&action=cancel"
-      class="button is-small is-danger is-light mr-2"
-      hx-target="#place_fragment"
-      hx-swap="outerHTML"
-    >
-      Cancel
-    </button>
-    <button
-      class="button is-primary is-small"
-      hx-post="/place_form?place_type={{contactType.name}}"
-      hx-target="#place_fragment"
-      hx-swap="outerHTML"
-    >
-      Add
-    </button>
+  <div class="is-flex is-justify-content-end is-align-items-center">
+    <span class="is-size-7 has-text-weight-semibold">Don't forget to click add before saving</span>
+    <div class="field is-grouped is-grouped-right p-2">
+      <button
+        type="button"
+        hx-get="/place_form?place_type={{contactType.name}}&action=cancel"
+        class="button is-small is-danger is-light mr-2"
+        hx-target="#place_fragment"
+        hx-swap="outerHTML"
+      >
+        Cancel
+      </button>
+      <button
+        class="button is-primary is-small"
+        hx-post="/place_form?place_type={{contactType.name}}"
+        hx-target="#place_fragment"
+        hx-swap="outerHTML"
+      >
+        Add
+      </button>
+    </div>
   </div>
 </div>

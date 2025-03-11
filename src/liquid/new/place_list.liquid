@@ -14,13 +14,13 @@
             <span>
               <strong>{{ contact_property.friendly_name }}: </strong>
             </span>
-            <span>
-              {%
-                include "components/list_cell.html"
-                propertyName=propertyName
-                property=contact_property
-                values=places[0].contact.properties
-              -%}
+            <span
+              {% if places[0].validationErrors[propertyName] %}
+                class="has-text-danger has-text-weight-semibold has-tooltip-arrow has-tooltipl-multiline"
+                data-tooltip="{{ places[0].validationErrors[propertyName] | escape }}"
+              {% endif %}
+            >
+              {{ places[0].contact.properties[contact_property.property_name] }}
             </span>
           </p>
         {% endif %}
@@ -29,13 +29,20 @@
     <div class="p-2 mt-1">
       {% if can_edit %}
         <a
-          class="button is-small"
-          data-tooltip="Add more {{places[0].type.friendly}}(s)"
-          href="/new?place_type={{places[0].type.name}}&contact={{places[0].contact.id}}"
+          class="button is-small me-2"
+          data-tooltip="Edit {{places[0].type.contact_friendly}}"
+          href="/edit/contact/{{places[0].contact.id}}"
         >
-          + Add
+          Edit
         </a>
       {% endif %}
+      <a
+        class="button is-small"
+        data-tooltip="Add more {{places[0].type.friendly}}(s)"
+        href="/new?place_type={{places[0].type.name}}&contact={{places[0].contact.id}}"
+      >
+        + Add
+      </a>
     </div>
   </div>
   <table class="table is-fullwidth is-striped is-hoverable mb-1">
@@ -67,6 +74,7 @@
                 property=hierarchy
                 values=place.hierarchyProperties
                 linkTo=place.resolvedHierarchy[hierarchy.level]
+                place=place
               %}
             {% endif %}
           {% endfor %}
@@ -79,12 +87,13 @@
                 propertyName=propertyName
                 property=property
                 values=place.properties
+                place=place
               %}
             {% endif %}
           {% endfor %}
 
           <td>
-            <div class="is-flex is-justify-content-center">
+            <div class="is-flex is-justify-content-start is-align-items-center">
               {% capture tag_text %}{% if place.validationErrors == empty %}{{ place.state }}{% else %}invalid{% endif %}{% endcapture %}
               {% capture tag_class %}
                 {% if place.state == 'failure' %}is-danger
