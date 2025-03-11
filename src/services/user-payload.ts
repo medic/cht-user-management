@@ -48,7 +48,7 @@ export class UserPayload {
   public toSupersetUserPayload(rolesId: string[]): SupersetUserPayload {
     // The name order be inverted (last name first) for some config
     // For now, can we assume the first part is the first name, acknowledging this as acceptable technical debt ?
-    const [firstName, ...lastNameParts] = this.fullname.split(' ');
+    const [firstName = '', ...lastNameParts] = this.fullname.split(' ');
     const lastName = lastNameParts.join(' ') || firstName;
     return {
       active: true,

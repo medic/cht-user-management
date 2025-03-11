@@ -62,23 +62,27 @@ export type AuthenticationInfo = {
   useHttp?: boolean;
 };
 
+export enum SupersetMode {
+  ENABLE = 'enable',
+  DISABLE = 'disable',
+}
+
+export type SupersetModeParameter = {
+  [K in SupersetMode]: string;
+};
+
 export type SupersetConfig = {
   friendly_name: string;
   property_name: string;
   type: ContactPropertyType;
   required: boolean;
-  parameter? : string | string[] | object;
+  parameter?: SupersetModeParameter;
 
   prefix: string;
   role_template: string;
   rls_template: string;
   rls_group_key: string;
 };
-
-export enum SupersetMode {
-  ENABLE = 'enable',
-  DISABLE = 'disable',
-}
 
 const {
   CONFIG_NAME,
@@ -277,36 +281,43 @@ export class Config {
   }
 
   public static getSupersetBaseUrl(): string {
-    return `${Config.getSupersetEnvVar('SUPERSET_BASE_URL')}`;
+    const baseUrl = Config.getSupersetEnvVar('SUPERSET_BASE_URL');
+    if (!baseUrl) {
+      throw new Error('SUPERSET_BASE_URL is not configured');
+    }
+    return baseUrl;
   }
 
   public static getSupersetCredentials(): { username: string; password: string } {
-    return {
-      username: Config.getSupersetEnvVar('SUPERSET_ADMIN_USERNAME'),
-      password: Config.getSupersetEnvVar('SUPERSET_ADMIN_PASSWORD'),
-    };
+    const username = Config.getSupersetEnvVar('SUPERSET_ADMIN_USERNAME');
+    const password = Config.getSupersetEnvVar('SUPERSET_ADMIN_PASSWORD');
+    
+    if (!username || !password) {
+      throw new Error('Superset credentials are not properly configured');
+    }
+    
+    return { username, password };
   }
 
   private static getSupersetEnvVar(envVar: string): string {
-    if (!this.isSupersetEnabled()) {
-      // Superset is not enabled for this contact type, return an empty string (or skip the integration)
+    if (!this.hasSupersetConfig()) {
       return '';
     }
 
     const envValue = process.env[envVar];
     if (!envValue) {
-      throw new Error(`Superset ${envVar} is not set in the environment variables.`);
+      throw new Error(`Required Superset environment variable ${envVar} is not set`);
     }
 
     return envValue;
   }
 
-  // Helper function to check if Superset is enabled for the current contact type
-  private static isSupersetEnabled(): boolean {
+  // Helper function to check if any contact type has Superset configuration
+  private static hasSupersetConfig(): boolean {
     const anyContactTypeWithSuperset = config.contact_types.find(
       (contactType) => contactType.superset !== undefined
     );
-    return !!anyContactTypeWithSuperset && !!anyContactTypeWithSuperset.superset;
+    return !!anyContactTypeWithSuperset;
   }
 }
 

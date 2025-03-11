@@ -1,4 +1,11 @@
-export type SupersetUserPayload = {
+/**
+ * Type definitions for Superset API payloads
+ */
+
+/**
+ * Payload for creating a user in Superset
+ */
+export interface SupersetUserPayload {
   active: boolean;
   first_name: string;
   last_name: string;
@@ -6,17 +13,33 @@ export type SupersetUserPayload = {
   username: string;
   password: string;
   roles: string[];
-};
+}
 
-export type SupersetRole = {
+/**
+ * Superset role definition
+ * Format: PREFIX_NAME (e.g., "CHA_ROLE_NAME")
+ */
+export interface SupersetRole {
   name: string;
-};
+}
 
-export type SupersetRls = {
+/**
+ * Superset row-level security rule
+ */
+export interface SupersetRls {
   clause: string;
-  filter_type: string;
+  filter_type: 'Regular' | 'Base';
   group_key: string;
   name: string;
   roles: string[];
   tables: string[];
-};
+}
+
+/**
+ * Table information from Superset API
+ */
+export interface SupersetTable {
+  id: string;
+  name: string;
+  schema: string;
+}

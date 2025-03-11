@@ -1,67 +1,102 @@
 import axios, { AxiosInstance } from 'axios';
 import { Config } from '../config';
 
-export class SupersetSession {
-  public sessionToken!: string;
-  public csrfToken!: string;
-  public cookie!: string;
-  public axiosInstance: AxiosInstance;
+const REQUEST_TIMEOUT = 10000; // 10 seconds timeout for API requests
+const MAX_RETRIES = 3;
+const RETRY_DELAY = 1000; // 1 second
 
-  private constructor(axiosInstance: AxiosInstance) {
-    this.axiosInstance = axiosInstance;
+export class SupersetSession {
+  public readonly axiosInstance: AxiosInstance;
+  private sessionToken: string = '';
+  private csrfToken: string = '';
+  private cookie: string = '';
+
+  private constructor(baseURL: string) {
+    this.axiosInstance = axios.create({
+      baseURL,
+      timeout: REQUEST_TIMEOUT,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      withCredentials: true,
+    });
   }
 
+  /**
+   * Creates and initializes a new Superset session
+   */
   public static async create(): Promise<SupersetSession> {
     const baseUrl = Config.getSupersetBaseUrl().replace(/\/+$/, '');
-
-    const axiosInstance = axios.create({
-      baseURL: `${baseUrl}/api/v1`,
-    });
-
-    const session = new SupersetSession(axiosInstance);
-    
-    // Perform login and initialize session tokens
+    const session = new SupersetSession(`${baseUrl}/api/v1`);
     await session.initializeSession();
-    
     return session;
   }
 
-  // Initialize session: login, get tokens, set headers
-  private async initializeSession(): Promise<void> {
-    // Step 1: Login to get the session token (Bearer Token)
-    const loginUrl = `/security/login`;
+  /**
+   * Initializes the session with proper token sequence
+   * @throws Error if initialization fails after max retries
+   */
+  private async initializeSession(retryCount = 0): Promise<void> {
+    try {
+      // Step 1: Login to get session token
+      await this.login();
+      // Step 2: Get CSRF token using session token
+      await this.fetchCsrfToken();
+      // Step 3: Setup axios defaults with all tokens
+      this.setupAxiosDefaults();
+    } catch (error: any) {
+      if (retryCount < MAX_RETRIES) {
+        // Exponential backoff: each retry waits longer than the previous one
+        await this.delay(RETRY_DELAY * (retryCount + 1));
+        await this.initializeSession(retryCount + 1);
+      } else {
+        throw new Error(`Failed to initialize Superset session after ${MAX_RETRIES} attempts: ${error.message}`);
+      }
+    }
+  }
+
+  /**
+   * Authenticates with Superset to get session token
+   */
+  private async login(): Promise<void> {
     const { username, password } = Config.getSupersetCredentials();
-    
-    const loginResponse = await this.axiosInstance.post(loginUrl, {
-      username: username,
-      password: password,
+    const loginResponse = await this.axiosInstance.post('/security/login', {
+      username,
+      password,
       provider: 'db',
+      refresh: true,
     });
-    console.log('axios.post', loginUrl);
-    
+
     this.sessionToken = loginResponse.data.access_token;
+    if (!this.sessionToken) {
+      throw new Error('Failed to obtain session token from Superset');
+    }
+  }
 
-    // Step 2: Get CSRF Token and Cookie
-    const csrfUrl = `/security/csrf_token/`;
-    const csrfResponse = await this.axiosInstance.get(csrfUrl, {
-      headers: {
-        Authorization: `Bearer ${this.sessionToken}`,
-      },
+  /**
+   * Fetches CSRF token using session token
+   */
+  private async fetchCsrfToken(): Promise<void> {
+    const csrfResponse = await this.axiosInstance.get('/security/csrf_token/', {
+      headers: { Authorization: `Bearer ${this.sessionToken}` },
     });
-    console.log('axios.get', csrfUrl);
-
 
     this.csrfToken = csrfResponse.data.result;
+    // Handle both array and string cookie formats from Superset
     this.cookie = Array.isArray(csrfResponse.headers['set-cookie'])
       ? csrfResponse.headers['set-cookie'].join('; ')
       : csrfResponse.headers['set-cookie'] || '';
 
-    // Step 3: Set axios default headers with tokens and cookies
-    this.axiosInstance.defaults.headers.common = this.getFormattedHeaders();
+    if (!this.csrfToken || !this.cookie) {
+      throw new Error('Failed to obtain CSRF token or cookie from Superset');
+    }
   }
 
-  private getFormattedHeaders(): Record<string, string> {
-    return {
+  /**
+   * Sets up axios defaults with all required tokens and headers
+   */
+  private setupAxiosDefaults(): void {
+    this.axiosInstance.defaults.headers.common = {
       Authorization: `Bearer ${this.sessionToken}`,
       'Content-Type': 'application/json',
       'X-CSRFToken': this.csrfToken,
@@ -69,5 +104,13 @@ export class SupersetSession {
       Referer: Config.getSupersetBaseUrl(),
       Origin: Config.getSupersetBaseUrl(),
     };
+  }
+
+  /**
+   * Utility method to delay execution
+   * @param ms Milliseconds to delay
+   */
+  private delay(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms));
   }
 }

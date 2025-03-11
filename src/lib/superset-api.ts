@@ -1,70 +1,153 @@
-import { AxiosInstance } from 'axios';
-import { SupersetRole, SupersetRls, SupersetUserPayload } from '../services/supertset-payload';
+import { AxiosInstance, AxiosError } from 'axios';
+import { 
+  SupersetRole, 
+  SupersetRls, 
+  SupersetUserPayload,
+  SupersetTable
+} from '../services/supertset-payload';
 import { SupersetSession } from './superset-session';
 
+// Centralize API endpoints for better maintainability
+const ENDPOINTS = {
+  ROLES: '/security/roles',
+  PERMISSIONS: (roleId: string) => `/security/roles/${roleId}/permissions`,
+  RLS: '/rowlevelsecurity',
+  RLS_BY_ID: (rlsId: string) => `/rowlevelsecurity/${rlsId}`,
+  USERS: '/security/users',
+} as const;
+
 export class SupersetApi {
-  private axiosInstance: AxiosInstance;
+  constructor(private readonly session: SupersetSession) {}
 
-  constructor(private session: SupersetSession) {
-    this.axiosInstance = session.axiosInstance; // Use the same axios instance with headers set
-  }
-
-  // Method to create a new role
+  /**
+   * Creates a new role in Superset
+   * @param prefix Organization prefix for the role name
+   * @param roleName Base name for the role
+   * @returns ID of the created role
+   */
   async createRole(prefix: string, roleName: string): Promise<string> {
-    const url = `/security/roles/`;
-    const rolePayload: SupersetRole = {
-      name: `${prefix}_${roleName}`.replace(/\s+/g, '_').toUpperCase(),
-    };
-    const response = await this.axiosInstance.post(url, rolePayload);
-    console.log('axios.post', url);
-    return response.data.id;
+    try {
+      const rolePayload: SupersetRole = {
+        name: `${prefix}_${roleName}`.toUpperCase(),
+      };
+
+      const response = await this.session.axiosInstance.post(
+        ENDPOINTS.ROLES,
+        rolePayload
+      );
+      return response.data.id;
+    } catch (error) {
+      throw this.handleError(error, `create role '${roleName}'`);
+    }
   }
 
-  // Method to assign permissions to a role
-  async assignPermissionsToRole(roleId: string, permissionIds: string[]): Promise<void> {
-    const url = `/security/roles/${roleId}/permissions`;
-    await this.axiosInstance.post(url, { permission_view_menu_ids: permissionIds });
-    console.log('axios.post', url);
-  }
-
-  // Method to fetch permissions by Role ID
+  /**
+   * Gets permissions associated with a role
+   * @param roleId ID of the role
+   * @returns Array of permission IDs
+   */
   async getPermissionsByRoleID(roleId: string): Promise<string[]> {
-    const url = `/security/roles/${roleId}/permissions/`;
-    const response = await this.axiosInstance.get(url);
-    console.log('axios.get', url);
-    return response.data.result.map((permission: { id: string }) => permission.id);
+    try {
+      const response = await this.session.axiosInstance.get(
+        ENDPOINTS.PERMISSIONS(roleId)
+      );
+      return response.data.result.map((permission: { id: string }) => permission.id);
+    } catch (error) {
+      throw this.handleError(error, `get permissions for role '${roleId}'`);
+    }
   }
 
-  // Method to create row-level security for a role
+  /**
+   * Assigns permissions to a role
+   * @param roleId ID of the role
+   * @param permissionIds Array of permission IDs to assign
+   */
+  async assignPermissionsToRole(roleId: string, permissionIds: string[]): Promise<void> {
+    try {
+      await this.session.axiosInstance.post(
+        ENDPOINTS.PERMISSIONS(roleId),
+        { permission_view_menu_ids: permissionIds }
+      );
+    } catch (error) {
+      throw this.handleError(error, `assign permissions to role '${roleId}'`);
+    }
+  }
+
+  /**
+   * Gets tables associated with a RLS rule
+   * @param rlsId ID of the RLS rule
+   * @returns Array of table information
+   */
+  async getTablesByRlsID(rlsId: string): Promise<SupersetTable[]> {
+    try {
+      const response = await this.session.axiosInstance.get(
+        ENDPOINTS.RLS_BY_ID(rlsId)
+      );
+      return response.data.result.tables;
+    } catch (error) {
+      throw this.handleError(error, `get tables for RLS '${rlsId}'`);
+    }
+  }
+
+  /**
+   * Creates a new RLS rule based on a template
+   * @param roleId ID of the role to associate with the RLS
+   * @param placeName Name of the place for filtering
+   * @param groupKey Key used for RLS grouping
+   * @param prefix Organization prefix for the RLS name
+   * @param tableIds Array of table IDs to apply RLS to
+   */
   async createRowLevelSecurityFromTemplate(
-    roleId: string, placeName: string, groupKey:string, prefix: string, tableIds: string[]
+    roleId: string,
+    placeName: string,
+    groupKey: string,
+    prefix: string,
+    tableIds: string[]
   ): Promise<void> {
-    const rlsPayload: SupersetRls = {
-      clause: `${groupKey}='${placeName}'`,
-      filter_type: 'Regular',
-      group_key: groupKey,
-      name: `${prefix}_${placeName}`.replace(/\s+/g, '_').toUpperCase(),
-      roles: [roleId],
-      tables: tableIds,
-    };
+    try {
+      const rlsPayload: SupersetRls = {
+        clause: `${groupKey}='${placeName}'`,
+        filter_type: 'Regular',
+        group_key: groupKey,
+        name: `${prefix}_${placeName}`.toUpperCase(),
+        roles: [roleId],
+        tables: tableIds,
+      };
 
-    const url = `/rowlevelsecurity/`;
-    await this.axiosInstance.post(url, rlsPayload);
-    console.log('axios.post', url);
+      await this.session.axiosInstance.post(ENDPOINTS.RLS, rlsPayload);
+    } catch (error) {
+      throw this.handleError(error, `create RLS for place '${placeName}'`);
+    }
   }
 
-  // Method to fetch tables by RLS ID
-  async getTablesByRlsID(rlsId: string): Promise<{ id: string }[]> {
-    const url = `/rowlevelsecurity/${rlsId}`;
-    const response = await this.axiosInstance.get(url);
-    console.log('axios.get', url);
-    return response.data.result.tables;
-  }
-
-  // Method to create a user in Superset
+  /**
+   * Creates a new user in Superset
+   * @param userPayload User information
+   */
   async createUser(userPayload: SupersetUserPayload): Promise<void> {
-    const url = `/security/users/`;
-    await this.axiosInstance.post(url, userPayload);
-    console.log('axios.post', url);
+    try {
+      await this.session.axiosInstance.post(ENDPOINTS.USERS, userPayload);
+    } catch (error) {
+      throw this.handleError(error, `create user '${userPayload.username}'`);
+    }
+  }
+
+  /**
+   * Handles API errors with context
+   * @param error The caught error
+   * @param operation Description of the failed operation
+   * @returns A new error with context
+   */
+  private handleError(error: unknown, operation: string): Error {
+    if (error instanceof AxiosError && error.response) {
+      const { status, data } = error.response;
+      return new Error(
+        `Failed to ${operation} (${status}): ${data.message || error.message}`
+      );
+    }
+    return new Error(
+      `Failed to ${operation}: ${error instanceof Error ? error.message : 'Unknown error'}`
+    );
   }
 }
+
