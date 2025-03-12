@@ -60,7 +60,7 @@ export default class Auth {
   }
 
   public static async apiAuth(username: string, password: string, domain: string) {
-    const authInfo = await Config.getAuthenticationInfo(domain);
+    const authInfo = Config.getAuthenticationInfo(domain);
     try {
       const chtSession = await ChtSession.create(authInfo, username, password);
       return chtSession;
