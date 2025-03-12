@@ -52,6 +52,14 @@ helm install \
       $CONFIG medic/cht-user-management
 ```
 
+To ensure the deployment gets auto updated via CD, be sure to add 3 lines to the end of the `deploy.yml` [file](https://github.com/medic/cht-user-management/blob/main/.github/workflows/deploy.yml).  Here's ane example for MoH Mali (`users-chis-ml`):
+
+```yaml
+      - name: Upgrade users-chis-ml
+        run: |
+          helm upgrade --namespace ${{vars.NAMESPACE}} --values scripts/deploy/values/users-chis-ml.yaml users-chis-ml medic/cht-user-management
+```
+
 #### Upgrade 
 
 While Upgrade can be done manually, normally this is done through CD.  Run manually if needed.  Replace `$VALUES` and `$CONFIG` from the [table](#known-cofigurations) above:
