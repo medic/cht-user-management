@@ -187,6 +187,15 @@ export class ChtApi {
     const resp = await this.axiosInstance.get(url);
     return resp.data;
   }
+
+  async setDoc(id:string, doc: CouchDoc): Promise<void> {
+    const url = `medic/${id}`;
+    console.log('axios.put', url);
+    const resp = await this.axiosInstance.put(url, doc);
+    if (!resp.data.ok) {
+      throw Error('response from chtApi.updatePlace was not OK');
+    }
+  }
   
   async getUsersAtPlace(placeId: string): Promise<UserInfo[]> {
     const url = `api/v2/users?facility_id=${placeId}`;
@@ -196,6 +205,16 @@ export class ChtApi {
       username: doc.username,
       place: doc.place,
     }));
+  }
+
+  async getUser(contactId: string): Promise<UserInfo> {
+    const url = `api/v2/users?contact_id=${contactId}`;
+    console.log('axios.get', url);
+    const resp = await this.axiosInstance.get(url);
+    return resp.data?.map((doc: any): UserInfo => ({
+      username: doc.username,
+      place: doc.place,
+    }))[0];
   }
 
   async lastSyncAtPlace(placeId: string): Promise<DateTime> {
