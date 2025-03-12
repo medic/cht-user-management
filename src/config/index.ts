@@ -68,16 +68,17 @@ const {
   CHT_DEV_HTTP
 } = process.env;
 
+const partnerConfig = ConfigFactory.getConfigFactory().loadConfig(CONFIG_NAME);
+const { config } = partnerConfig;
+
 export class Config {
   private constructor() { }
 
   public static contactTypes(): ContactType[] {
-    const { config } = ConfigFactory.getConfigFactory().loadConfig(CONFIG_NAME);//await getConfigByKey(CONFIG_NAME);
     return config.contact_types;
   }
 
   public static getContactType(name: string): ContactType {
-    const { config } = ConfigFactory.getConfigFactory().loadConfig(CONFIG_NAME);
     const contactMatch = config.contact_types.find(c => c.name === name);
     if (!contactMatch) {
       throw new Error(`unrecognized contact type: "${name}"`);
@@ -134,7 +135,6 @@ export class Config {
   }
 
   public static async mutate(payload: PlacePayload, chtApi: ChtApi, isReplacement: boolean): Promise<PlacePayload | undefined> {
-    const partnerConfig = ConfigFactory.getConfigFactory().loadConfig(CONFIG_NAME);
     return partnerConfig.mutate && partnerConfig.mutate(payload, chtApi, isReplacement);
   }
 
@@ -155,7 +155,6 @@ export class Config {
   }
 
   public static async getLogoBase64(): Promise<string> {
-    const { config } = ConfigFactory.getConfigFactory().loadConfig(CONFIG_NAME);
     return config.logoBase64;
   }
 
@@ -183,7 +182,6 @@ export class Config {
   }
 
   public static getDomains(): AuthenticationInfo[] {
-    const { config } = ConfigFactory.getConfigFactory().loadConfig(CONFIG_NAME);
     const domains = [...config.domains];
 
     // because all .env vars imported as strings, let's get the AuthenticationInfo object a boolean
@@ -204,7 +202,6 @@ export class Config {
   }
 
   public static getUniqueProperties(contactTypeName: string): ContactProperty[] {
-    const { config } = ConfigFactory.getConfigFactory().loadConfig(CONFIG_NAME);
     const contactMatch = config.contact_types.find(c => c.name === contactTypeName);
     const uniqueProperties = contactMatch?.place_properties.filter(prop => prop.unique);
     return uniqueProperties || [];
