@@ -2,6 +2,7 @@ import { FastifyInstance } from 'fastify';
 import { Config } from '../config';
 import { ChtApi, CouchDoc, UserInfo } from '../lib/cht-api';
 import { UploadManager } from '../services/upload-manager';
+import { isEqual } from 'lodash';
 
 export default async function newHandler(fastify: FastifyInstance) {
 
@@ -29,7 +30,10 @@ export default async function newHandler(fastify: FastifyInstance) {
     const body = req.body as { [key:string]: string };
     const contactType = Config.getContactType(body.place_type);
     const hierarchy = Config.getHierarchyWithReplacement(contactType, 'desc');
-   
+    
+    const places = getPlaces(body) ?? [];
+    const errors = {} as {[key:string]:string};
+    
     const place = { id: '', name: '', levels: [] as string[] };
     hierarchy.forEach(h => {
       if (h.property_name === 'replacement') {
@@ -42,18 +46,21 @@ export default async function newHandler(fastify: FastifyInstance) {
       delete body['hierarchy_' + h.property_name + '_id'];
     });
 
-    const places = [];
-    if (place.id) {
-      places.push({ place, value: Buffer.from(JSON.stringify(place)).toString('base64') });
+    if (places.length > 0 && !isEqual(places[0].place.levels, place.levels)) {
+      errors.part = `${contactType.friendly} must be within ${places[0].place.levels.join(' / ')}`;
+    } else {
+      if (place.id && !places.find(p => p.place.id === place.id)) {
+        places.push({ place, value: Buffer.from(JSON.stringify(place)).toString('base64') });
+      }
     }
-    places.push(...getPlaces(body).filter(p => p.place.id !== place.id));
     
     return resp.view('src/liquid/reassign/form.liquid', {
       contactType,
       hierarchy,
       session: req.chtSession,
       data: body,
-      places
+      places,
+      errors
     });
   });
 
