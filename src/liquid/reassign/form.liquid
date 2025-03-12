@@ -28,6 +28,11 @@
             data: data
           %}
         {% endfor %}
+        <div>
+          {% if errors.part %}
+            <span class="has-text-danger has-text-weight-medium" style="font-size: 0.9rem;">* {{ errors.part }}</span>
+          {% endif %}
+        </div>
       </div>
       <div class="is-flex is-justify-content-end py-4">
         <button
@@ -110,7 +115,7 @@
 
     {% if errors.form %}
       <div class="mt-2">
-        <p class="has-text-weight-medium" style="color: red; font-size: 0.9rem;">{{ errors.form }}</p>
+        <p class="has-text-danger has-text-weight-medium" style="font-size: 0.9rem;">{{ errors.form }}</p>
       </div>
     {% endif %}
 
