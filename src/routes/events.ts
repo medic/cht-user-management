@@ -68,9 +68,9 @@ export default async function events(fastify: FastifyInstance) {
       const { id, state, err } = args;
       let statusText;
       if (state === PlaceUploadState.FAILURE) {
-        statusText = `<span class="is-size-7 is-capitalized has-tooltip-multiline has-text-danger" data-tooltip="${err}">${state}</span>`;
+        statusText = `<span class="tag is-size-7 is-capitalized has-tooltip-multiline is-warning" data-tooltip="${err}">${state}</span>`;
       } else {
-        statusText = `<span class="is-size-7 is-capitalized">${state}</span>`;
+        statusText = `<span class="tag is-size-7 is-success is-capitalized">${state}</span>`;
       }
       resp.sse({ event: `update-${id}`, data: statusText });
     });
