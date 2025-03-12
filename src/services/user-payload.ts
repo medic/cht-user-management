@@ -1,5 +1,6 @@
 import * as crypto from 'crypto';
 import Place from './place';
+import { SupersetUserPayload } from './supertset-payload';
 
 export class UserPayload {
   public password: string;
@@ -8,6 +9,7 @@ export class UserPayload {
   public contact: string;
   public fullname: string;
   public phone: string;
+  public email: string;
   public roles: string[];
 
   constructor(place: Place, placeId: string, contactId: string) {
@@ -17,6 +19,7 @@ export class UserPayload {
     this.place = placeId;
     this.contact = contactId;
     this.fullname = place.contact.name;
+    this.email = place.contact.properties.email?.formatted;
     this.phone = place.contact.properties.phone?.formatted; // best guess
   }
 
@@ -39,5 +42,22 @@ export class UserPayload {
     );
     const characters = Array(LENGTH).fill('').map(pickRandomCharacter);
     return characters.join('');
+  }
+
+  // Method to convert UserPayload to SupersetUserPayload
+  public toSupersetUserPayload(rolesId: string[]): SupersetUserPayload {
+    // The name order be inverted (last name first) for some config
+    // For now, can we assume the first part is the first name, acknowledging this as acceptable technical debt ?
+    const [firstName, ...lastNameParts] = this.fullname.split(' ');
+    const lastName = lastNameParts.join(' ') || firstName;
+    return {
+      active: true,
+      first_name: firstName,
+      last_name: lastName,
+      email: this.email,
+      username: this.username,
+      password: this.password,
+      roles: rolesId
+    };
   }
 }
