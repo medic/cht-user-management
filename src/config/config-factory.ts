@@ -6,59 +6,102 @@ import maliConfig from './chis-ml';
 import path from 'path';
 import fs from 'fs';
 
-export const uploadedConfigFilePath: string = path.join(getConfigUploadDirectory(), 'config.json');
+export default class ConfigFactory<T = Record<string, any>> {
+  private config: PartnerConfig | null = null;
+  private static configFactoryInstance: ConfigFactory;
+  private filePath: string;
 
+  private DEFAULT_CONFIG_MAP: { [key: string]: PartnerConfig } = {
+    'CHIS-KE': kenyaConfig,
+    'CHIS-TG': togoConfig,
+    'CHIS-CIV': civConfig,
+    'CHIS-ML': maliConfig
+  };
 
-export const DEFAULT_CONFIG_MAP: { [key: string]: PartnerConfig } = {
-  'CHIS-KE': kenyaConfig,
-  'CHIS-TG': togoConfig,
-  'CHIS-CIV': civConfig,
-  'CHIS-ML': maliConfig
-};
-
-export default async function getConfigByKey(key: string = 'CHIS-KE'): Promise<PartnerConfig> {
-  if (fs.existsSync(uploadedConfigFilePath)) {
-    const uploadedConfig = await readConfig();
-    console.log(`Using uploaded configuration: ${uploadedConfigFilePath}`);
-    return uploadedConfig;
+  constructor() {
+    this.filePath = path.join(this.getConfigUploadDirectory(), 'config.json');
   }
 
-  const usingKey = key.toUpperCase();
-  console.log(`Using configuration: ${key}`);
-  const result = DEFAULT_CONFIG_MAP[usingKey];
-  if (!result) {
-    const available = JSON.stringify(Object.keys(DEFAULT_CONFIG_MAP));
-    throw Error(`Failed to start: Cannot find configuration "${usingKey}". Configurations available are ${available}`);
+  static getConfigFactory<T = Record<string, any>>(): ConfigFactory<T> {
+    if (!ConfigFactory.configFactoryInstance) {
+      ConfigFactory.configFactoryInstance = new ConfigFactory();
+    }
+
+    return ConfigFactory.configFactoryInstance as ConfigFactory<T>;
   }
 
-  return result;
-}
+  loadConfig(key?: string): PartnerConfig {
 
-export function getConfigUploadDirectory (): string {
-  const configDir = path.join(__dirname, '..', 'config_uploads');
-  if (!fs.existsSync(configDir)) {
-    fs.mkdirSync(configDir);
+    if (this.config) {
+      return this.config;
+    }
+
+    if (fs.existsSync(this.filePath)) {
+      this.config = this.readConfig();
+      console.log(`Using uploaded configuration: ${this.filePath}`);
+      return this.config;
+    }
+
+    //set default config
+    if (!key) {
+      console.log('no configuration found. Setting to default');
+      const defaultConfig = kenyaConfig;
+      defaultConfig.config.domains = [{
+        friendly: 'Localhost',
+        domain: 'localhost'
+      }];
+      return this.config = defaultConfig;
+    }
+
+    const usingKey = key.toUpperCase();
+    console.log(`Using configuration: ${key}`);
+    const result = this.DEFAULT_CONFIG_MAP[usingKey];
+    if (!result) {
+      const available = JSON.stringify(Object.keys(this.DEFAULT_CONFIG_MAP));
+      throw Error(`Failed to start: Cannot find configuration "${usingKey}". Configurations available are ${available}`);
+    }
+
+    this.config = result;
+    return this.config;
+
   }
-  return configDir;
-}
 
-export async function writeConfig(jsonConfigData: ConfigSystem): Promise<void> {
-  try {
-    const jsonString: string = JSON.stringify(jsonConfigData, null, 2);
-    await fs.promises.writeFile(uploadedConfigFilePath, jsonString);
-  } catch (error) {
-    throw new Error('writeConfig: Failed to write file');
+  refreshConfig(): PartnerConfig | null {
+    if (fs.existsSync(this.filePath)) {
+      this.config = this.readConfig();
+      console.log(`Using uploaded configuration: ${this.filePath}`);
+      return this.config;
+    }
+    return null;
   }
-}
 
-export async function readConfig(): Promise<PartnerConfig> {
-  try {
-    const fileContent = await fs.promises.readFile(uploadedConfigFilePath, 'utf-8');
+  writeConfig(jsonConfigData: ConfigSystem): void {
+    try {
+      const jsonString: string = JSON.stringify(jsonConfigData, null, 2);
+      fs.writeFileSync(this.filePath, jsonString);
+      this.refreshConfig();
+    } catch (error) {
+      throw new Error('writeConfig: Failed to write file');
+    }
+  }
 
-    const config = JSON.parse(fileContent);
-    return { config };
-  } catch (error) {
-    console.error('readConfig:Failed to read config file:', error);
-    throw error;
+  private getConfigUploadDirectory(): string {
+    const configDir = path.join(__dirname, '..', 'config_uploads');
+    if (!fs.existsSync(configDir)) {
+      fs.mkdirSync(configDir);
+    }
+    return configDir;
+  }
+
+  private readConfig(): PartnerConfig {
+    try {
+      const fileContent = fs.readFileSync(this.filePath, 'utf-8');
+
+      const config = JSON.parse(fileContent);
+      return { config };
+    } catch (error) {
+      console.error('readConfig:Failed to read config file:', error);
+      throw error;
+    }
   }
 }

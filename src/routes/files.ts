@@ -12,7 +12,7 @@ export default async function files(fastify: FastifyInstance) {
   fastify.get('/files/template/:placeType', async (req) => {
     const params: any = req.params;
     const placeType = params.placeType;
-    const columns = await getCsvTemplateColumns(placeType);
+    const columns = getCsvTemplateColumns(placeType);
     return stringify([columns]);
   });
 
@@ -20,7 +20,7 @@ export default async function files(fastify: FastifyInstance) {
     const sessionCache: SessionCache = req.sessionCache;
 
     const zip = new JSZip();
-    const files = getCredentialsFiles(sessionCache, await Config.contactTypes());
+    const files = getCredentialsFiles(sessionCache, Config.contactTypes());
     for (const file of files) {
       zip.file(file.filename, file.content);
     }
@@ -30,8 +30,8 @@ export default async function files(fastify: FastifyInstance) {
   });
 }
 
-async function getCsvTemplateColumns(placeType: string) {
-  const placeTypeConfig = await Config.getContactType(placeType);
+function getCsvTemplateColumns(placeType: string) {
+  const placeTypeConfig = Config.getContactType(placeType);
   const hierarchy = Config.getHierarchyWithReplacement(placeTypeConfig);
   const userRoleConfig = Config.getUserRoleConfig(placeTypeConfig);
 

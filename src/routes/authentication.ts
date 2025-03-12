@@ -47,7 +47,7 @@ export default async function authentication(fastify: FastifyInstance) {
     const { username, password, domain } = data;
 
     try {
-      const authInfo = await Config.getAuthenticationInfo(domain);
+      const authInfo = Config.getAuthenticationInfo(domain);
 
       if (!username || !password) {
         throw AuthError.MISSING_CREDENTIALS();

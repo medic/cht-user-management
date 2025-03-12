@@ -1,5 +1,5 @@
 import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
-import { readConfig, writeConfig } from '../config/config-factory';
+import ConfigFactory from '../config/config-factory';
 import { Config, ConfigSystem } from '../config';
 
 export default async function api(fastify: FastifyInstance) {
@@ -13,7 +13,7 @@ export default async function api(fastify: FastifyInstance) {
 
   fastify.get('/api/config', async (req: FastifyRequest, reply: FastifyReply) => {
     try {
-      const { config } = await readConfig();
+      const { config } = ConfigFactory.getConfigFactory().loadConfig();
       reply.status(200);
       return config;
     } catch (error) {
@@ -26,7 +26,7 @@ export default async function api(fastify: FastifyInstance) {
     try {
       const config = await req.body as ConfigSystem;
       await Config.assertValid({ config });
-      await writeConfig(config);
+      ConfigFactory.getConfigFactory().writeConfig(config);
       reply.send({ message: 'configuration updated' });
       return;
     } catch (error) {

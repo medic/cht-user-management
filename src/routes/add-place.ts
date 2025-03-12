@@ -13,9 +13,9 @@ export default async function addPlace(fastify: FastifyInstance) {
   fastify.get('/add-place', async (req, resp) => {
     const queryParams: any = req.query;
 
-    const contactTypes = await Config.contactTypes();
+    const contactTypes = Config.contactTypes();
     const contactType = queryParams.type
-      ? await Config.getContactType(queryParams.type)
+      ? Config.getContactType(queryParams.type)
       : contactTypes[contactTypes.length - 1];
     const op = queryParams.op || 'new';
     const tmplData = {
@@ -50,7 +50,7 @@ export default async function addPlace(fastify: FastifyInstance) {
   fastify.post('/place', async (req, resp) => {
     const { op, type: placeType } = req.query as any;
 
-    const contactType = await Config.getContactType(placeType);
+    const contactType = Config.getContactType(placeType);
     const sessionCache: SessionCache = req.sessionCache;
     const chtApi = new ChtApi(req.chtSession);
     if (op === 'new' || op === 'replace') {

@@ -43,7 +43,7 @@ export default async function sessionCache(fastify: FastifyInstance) {
   });
 
   fastify.get('/app/list', async (req, resp) => {
-    const contactTypes = await Config.contactTypes();
+    const contactTypes = Config.contactTypes();
     const sessionCache: SessionCache = req.sessionCache;
     const directiveModel = new DirectiveModel(sessionCache, req.cookies.filter);
     const placeData = contactTypes.map((item) => {
@@ -80,7 +80,7 @@ export default async function sessionCache(fastify: FastifyInstance) {
     await RemotePlaceResolver.resolve(places, sessionCache, chtApi, { fuzz: true });
     places.forEach(p => p.validate());
 
-    for (const contactType of await Config.contactTypes()) {
+    for (const contactType of Config.contactTypes()) {
       await WarningSystem.setWarnings(contactType, chtApi, sessionCache);
     }
 
