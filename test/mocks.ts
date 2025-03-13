@@ -56,10 +56,14 @@ export const mockChtApi = (first: ChtDoc[] = [], second: ChtDoc[] = [], third: C
 export const mockSimpleContactType = (
   propertyType: string,
   propertyValidator?: string | string[] | object,
-  errorDescription?: string
+  errorDescription?: string,
+  options?: { friendly_country_name?: string }
 ) : ContactType => {
-  const mockedProperty = mockProperty(propertyType, propertyValidator);
-  mockedProperty.errorDescription = errorDescription;
+  const mockedProperty = {
+    ...mockProperty(propertyType, propertyValidator),
+    ...(options || {}),
+    errorDescription
+  };
   return {
     name: 'contacttype-name',
     friendly: 'friendly',
