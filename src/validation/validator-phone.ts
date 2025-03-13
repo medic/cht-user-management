@@ -18,8 +18,8 @@ export default class ValidatorPhone implements IValidator {
       if (isValid) {
         return true;
       }
-
-      return `Not a valid phone number for country code ${property.parameter}`;
+      const countryName = property.friendly_country_name || property.parameter;
+      return `Not a valid phone number for country code ${countryName}`;
     } catch (e: any) {
       return e.toString();
     }

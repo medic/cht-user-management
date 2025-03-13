@@ -337,6 +337,7 @@
           "friendly_name": "CHP Phone",
           "property_name": "phone",
           "parameter": "KE",
+          "friendly_country_name": "Kenya",
           "type": "phone",
           "required": true,
           "unique": "all"
