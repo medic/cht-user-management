@@ -19,7 +19,7 @@ const mockPartnerConfig = (): PartnerConfig => ({
 describe('config', () => {
   before(() => {
     ConfigFactory.getConfigFactory().refreshConfig(mockPartnerConfig()); 
-  })
+  });
   it('mock partner config is valid', () => {
     const mockConfig = mockPartnerConfig();
     Config.assertValid(mockConfig);

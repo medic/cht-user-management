@@ -61,7 +61,7 @@ const build = (opts: FastifyServerOptions): FastifyInstance => {
   fastify.addHook('preValidation', async (req: FastifyRequest, reply: FastifyReply) => {
     if (req.routeOptions.url?.startsWith('/api') && req.method === 'POST') {
       const authHeader = req.headers.authorization as string;
-      if(!authHeader) {
+      if (!authHeader) {
         reply.status(401).send({ error: 'no credentials found' });
         return;
       }

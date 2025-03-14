@@ -7,7 +7,7 @@ import defaultConfig from './default-config';
 import path from 'path';
 import fs from 'fs';
 
-export default class ConfigFactory<T = Record<string, any>> {
+export default class ConfigFactory {
   private config: PartnerConfig | null = null;
   private static configFactoryInstance: ConfigFactory;
   private filePath: string;
@@ -17,19 +17,19 @@ export default class ConfigFactory<T = Record<string, any>> {
     'CHIS-TG': togoConfig,
     'CHIS-CIV': civConfig,
     'CHIS-ML': maliConfig,
-    'DEFAULT': defaultConfig
+    DEFAULT: defaultConfig
   };
 
   constructor() {
     this.filePath = path.join(this.getConfigUploadDirectory(), 'config.json');
   }
 
-  static getConfigFactory<T = Record<string, any>>(): ConfigFactory<T> {
+  static getConfigFactory(): ConfigFactory {
     if (!ConfigFactory.configFactoryInstance) {
       ConfigFactory.configFactoryInstance = new ConfigFactory();
     }
 
-    return ConfigFactory.configFactoryInstance as ConfigFactory<T>;
+    return ConfigFactory.configFactoryInstance as ConfigFactory;
   }
 
   loadConfig(key?: string): PartnerConfig {
@@ -47,7 +47,7 @@ export default class ConfigFactory<T = Record<string, any>> {
     //set default config
     if (!key) {
       console.log('no configuration found. Setting to default');
-      const defaultConfig = this.DEFAULT_CONFIG_MAP['DEFAULT'];
+      const defaultConfig = this.DEFAULT_CONFIG_MAP.DEFAULT;
       return this.config = defaultConfig;
     }
 

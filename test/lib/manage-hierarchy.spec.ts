@@ -21,7 +21,7 @@ describe('lib/manage-hierarchy.ts', () => {
 
   before(() => {
     ConfigFactory.getConfigFactory().refreshConfig(kenyaConfig);
-  })
+  });
   const subcountyDocs = [
     { _id: 'from-sub', name: 'From Sub' },
     { _id: 'to-sub', name: 'To Sub' }
