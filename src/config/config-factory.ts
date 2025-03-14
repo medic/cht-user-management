@@ -3,6 +3,7 @@ import kenyaConfig from './chis-ke';
 import togoConfig from './chis-tg';
 import civConfig from './chis-civ';
 import maliConfig from './chis-ml';
+import defaultConfig from './default-config';
 import path from 'path';
 import fs from 'fs';
 
@@ -15,7 +16,8 @@ export default class ConfigFactory<T = Record<string, any>> {
     'CHIS-KE': kenyaConfig,
     'CHIS-TG': togoConfig,
     'CHIS-CIV': civConfig,
-    'CHIS-ML': maliConfig
+    'CHIS-ML': maliConfig,
+    'DEFAULT': defaultConfig
   };
 
   constructor() {
@@ -45,11 +47,7 @@ export default class ConfigFactory<T = Record<string, any>> {
     //set default config
     if (!key) {
       console.log('no configuration found. Setting to default');
-      const defaultConfig = kenyaConfig;
-      defaultConfig.config.domains = [{
-        friendly: 'Localhost',
-        domain: 'localhost'
-      }];
+      const defaultConfig = this.DEFAULT_CONFIG_MAP['DEFAULT'];
       return this.config = defaultConfig;
     }
 
@@ -66,20 +64,20 @@ export default class ConfigFactory<T = Record<string, any>> {
 
   }
 
-  refreshConfig(): PartnerConfig | null {
+  refreshConfig(config: PartnerConfig): PartnerConfig {
     if (fs.existsSync(this.filePath)) {
       this.config = this.readConfig();
-      console.log(`Using uploaded configuration: ${this.filePath}`);
+      console.log(`Configuration refreshed: ${this.filePath}`);
       return this.config;
     }
-    return null;
+    return this.config = config;
   }
 
-  writeConfig(jsonConfigData: ConfigSystem): void {
+  writeConfig(config: ConfigSystem): void {
     try {
-      const jsonString: string = JSON.stringify(jsonConfigData, null, 2);
+      const jsonString: string = JSON.stringify(config, null, 2);
       fs.writeFileSync(this.filePath, jsonString);
-      this.refreshConfig();
+      this.refreshConfig({ config });
     } catch (error) {
       throw new Error('writeConfig: Failed to write file');
     }

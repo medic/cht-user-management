@@ -59,6 +59,17 @@ const build = (opts: FastifyServerOptions): FastifyInstance => {
   checkRedisConnection();
 
   fastify.addHook('preValidation', async (req: FastifyRequest, reply: FastifyReply) => {
+    if (req.routeOptions.url?.startsWith('/api') && req.method === 'POST') {
+      const authHeader = req.headers.authorization as string;
+      if(!authHeader) {
+        reply.status(401).send({ error: 'no credentials found' });
+        return;
+      }
+      return;
+    }
+  });
+
+  fastify.addHook('preHandler', async (req: FastifyRequest, reply: FastifyReply) => {
     if (req.unauthenticated || req.routeOptions.url === '/public/*' || req.routeOptions.url === '/metrics') {
       return;
     }
@@ -66,7 +77,7 @@ const build = (opts: FastifyServerOptions): FastifyInstance => {
     const authHeader = req.headers.authorization as string;
     if (authHeader && authHeader.startsWith('Basic ')) {
       if (!req.routeOptions.url?.startsWith('/api')) {
-        reply.status(404).send({error: 'not found'});
+        reply.status(404).send({ error: 'not found' });
         return;
       }
 

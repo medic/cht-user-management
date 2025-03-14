@@ -68,17 +68,16 @@ const {
   CHT_DEV_HTTP
 } = process.env;
 
-const partnerConfig = ConfigFactory.getConfigFactory().loadConfig(CONFIG_NAME);
-const { config } = partnerConfig;
-
 export class Config {
   private constructor() { }
 
   public static contactTypes(): ContactType[] {
+    const { config } = ConfigFactory.getConfigFactory().loadConfig(CONFIG_NAME);
     return config.contact_types;
   }
 
   public static getContactType(name: string): ContactType {
+    const { config } = ConfigFactory.getConfigFactory().loadConfig(CONFIG_NAME);
     const contactMatch = config.contact_types.find(c => c.name === name);
     if (!contactMatch) {
       throw new Error(`unrecognized contact type: "${name}"`);
@@ -135,15 +134,15 @@ export class Config {
   }
 
   public static async mutate(payload: PlacePayload, chtApi: ChtApi, isReplacement: boolean): Promise<PlacePayload | undefined> {
+    const partnerConfig = ConfigFactory.getConfigFactory().loadConfig(CONFIG_NAME);
     return partnerConfig.mutate && partnerConfig.mutate(payload, chtApi, isReplacement);
   }
 
   public static getAuthenticationInfo(domain: string): AuthenticationInfo {
     const availableDomains = Config.getDomains();
 
-    //if config has default config i.e a new install
-    //return passed domain for api config upload authentication
-    if (availableDomains.some(c => c.domain === 'localhost')) {
+    //allow overriding default configuration
+    if (this.isDefaultConfig()) {
       return { domain, friendly: '' };
     }
 
@@ -154,7 +153,8 @@ export class Config {
     return domainMatch;
   }
 
-  public static async getLogoBase64(): Promise<string> {
+  public static getLogoBase64(): string {
+    const { config } = ConfigFactory.getConfigFactory().loadConfig(CONFIG_NAME);
     return config.logoBase64;
   }
 
@@ -182,6 +182,7 @@ export class Config {
   }
 
   public static getDomains(): AuthenticationInfo[] {
+    const { config } = ConfigFactory.getConfigFactory().loadConfig(CONFIG_NAME);
     const domains = [...config.domains];
 
     // because all .env vars imported as strings, let's get the AuthenticationInfo object a boolean
@@ -202,14 +203,31 @@ export class Config {
   }
 
   public static getUniqueProperties(contactTypeName: string): ContactProperty[] {
+    const { config } = ConfigFactory.getConfigFactory().loadConfig(CONFIG_NAME);
     const contactMatch = config.contact_types.find(c => c.name === contactTypeName);
     const uniqueProperties = contactMatch?.place_properties.filter(prop => prop.unique);
     return uniqueProperties || [];
   }
 
+  public static isDefaultConfig(): boolean {
+    const { config } = ConfigFactory.getConfigFactory().loadConfig(CONFIG_NAME);
+    return config.domains.some(c => c.domain === 'default-configuration-domain');
+  }
+
   // TODO: Joi? Chai?
   public static assertValid(config?: PartnerConfig) {
     const { config: assertionConfig } = config || ConfigFactory.getConfigFactory().loadConfig(CONFIG_NAME);
+
+    if (!assertionConfig.domains || assertionConfig.domains.length === 0) {
+      throw Error(`invalid configuration: 'domains' property is empty`);
+    }
+
+    const availableDomains = Config.getDomains();
+    const newConfigHasExistingDomain = _.some(availableDomains,
+      existingDomain => _.some(assertionConfig.domains, newDomain => _.isMatch(existingDomain, newDomain)));
+    if (!this.isDefaultConfig() && !newConfigHasExistingDomain) {
+      throw Error(`Invalid configuration: 'domains' property doesn't contains any existing domain`);
+    }
 
     if (!assertionConfig.contact_types || assertionConfig.contact_types.length === 0) {
       throw Error(`invalid configuration: 'contact_types' property is empty`);

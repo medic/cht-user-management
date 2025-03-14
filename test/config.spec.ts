@@ -3,16 +3,23 @@ import { expect } from 'chai';
 import { Config, PartnerConfig } from '../src/config';
 import DEFAULT_CONFIG_MAP from '../src/config/config-factory';
 import { mockSimpleContactType } from './mocks';
+import ConfigFactory from '../src/config/config-factory';
 
 const mockPartnerConfig = (): PartnerConfig => ({
   config: {
-    domains: [],
+    domains: [{
+      domain: 'test',
+      friendly: 'Test Domain'
+    }],
     contact_types: [mockSimpleContactType('string')],
     logoBase64: '',
   }
 });
 
 describe('config', () => {
+  before(() => {
+    ConfigFactory.getConfigFactory().refreshConfig(mockPartnerConfig()); 
+  })
   it('mock partner config is valid', () => {
     const mockConfig = mockPartnerConfig();
     Config.assertValid(mockConfig);
@@ -23,6 +30,13 @@ describe('config', () => {
     mockConfig.config.contact_types[0].hierarchy[0].type = 'unknown';
     const assertion = () => Config.assertValid(mockConfig);
     expect(assertion).to.throw('type "unknown"');
+  });
+
+  it('assert on domain', () => {
+    const mockConfig = mockPartnerConfig();
+    mockConfig.config.domains = [];
+    const assertion = () => Config.assertValid(mockConfig);
+    expect(assertion).to.throw(`invalid configuration: 'domains' property is empty`);
   });
   
   it('place name is always required', () => {

@@ -12,7 +12,7 @@ import WarningSystem from '../warnings';
 
 export default async function sessionCache(fastify: FastifyInstance) {
   fastify.get('/', async (req, resp) => {
-    const contactTypes = await Config.contactTypes();
+    const contactTypes = Config.contactTypes();
     const {
       op = 'table',
       type: placeTypeName = contactTypes[0].name,
