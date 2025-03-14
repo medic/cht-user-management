@@ -9,11 +9,18 @@ import view from '@fastify/view';
 import { Liquid } from 'liquidjs';
 import { FastifySSEPlugin } from 'fastify-sse-v2';
 import path from 'path';
-const metricsPlugin = require('fastify-metrics');
+import metricsPlugin from 'fastify-metrics';
 
 import Auth from './lib/authentication';
 import SessionCache from './services/session-cache';
 import { checkRedisConnection } from './config/config-worker';
+import { getChtConfQueue } from './lib/queues';
+
+const UNAUTHENTICATED_ENDPOINTS = [
+  '/public/*',
+  '/fastify-metrics',
+  '/bullmq-metrics'
+];
 
 const build = (opts: FastifyServerOptions): FastifyInstance => {
   const fastify = Fastify(opts);
@@ -46,13 +53,19 @@ const build = (opts: FastifyServerOptions): FastifyInstance => {
   });
 
   fastify.register(metricsPlugin, {
-    endpoint: '/metrics',
+    endpoint: '/fastify-metrics',
     routeMetrics: {
       enabled: {
         histogram: true,
         summary: false
       }
     }
+  });
+
+  fastify.get('/bullmq-metrics', async (req, resp) => {
+    const promMetrics = await getChtConfQueue().bullQueue.exportPrometheusMetrics();
+    resp.header('Content-Type', 'text/plain');
+    resp.send(promMetrics);
   });
 
   Auth.assertEnvironmentSetup();
@@ -70,7 +83,11 @@ const build = (opts: FastifyServerOptions): FastifyInstance => {
   });
 
   fastify.addHook('preHandler', async (req: FastifyRequest, reply: FastifyReply) => {
-    if (req.unauthenticated || req.routeOptions.url === '/public/*' || req.routeOptions.url === '/metrics') {
+    if (req.unauthenticated) {
+      return;
+    }
+
+    if (req.routeOptions.url && UNAUTHENTICATED_ENDPOINTS.includes(req.routeOptions.url)) {
       return;
     }
 
