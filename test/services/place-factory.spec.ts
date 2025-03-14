@@ -5,7 +5,7 @@ import fs from 'fs';
 import sinon from 'sinon';
 
 import { ChtDoc, expectInvalidProperties, mockChtSession, mockParentPlace, mockProperty, mockValidContactType } from '../mocks';
-import { Config } from '../../src/config';
+import { Config, ContactType } from '../../src/config';
 import Place from '../../src/services/place';
 import PlaceFactory from '../../src/services/place-factory';
 import RemotePlaceCache from '../../src/lib/remote-place-cache';
@@ -513,6 +513,35 @@ it('#165 - create a place when generated property is required', async () => {
   const place: Place = await PlaceFactory.createOne(fakeFormData, contactType, sessionCache, chtApi);
   expect(place.validationErrors).to.be.empty;
 });
+
+it('create multiple places with single contact', async () => {
+  const { sessionCache, contactType, fakeFormData, chtApi } = mockScenario();
+  const placeCount = 3;
+  const formData = {...fakeFormData, ...mockGroupedFormData(contactType, placeCount)};
+  const places = await PlaceFactory.createManyWithSingleUser(formData, contactType, sessionCache, chtApi);
+  expect(places).lengthOf(placeCount);
+  const contact = places[0].contact.id;
+  for (let i = 0; i < placeCount; i++) {
+    const place = places[i];
+    expect(place.name).equals(`Name${i}`); 
+    expect(place.validationErrors).to.be.empty;
+    expect(place.contact.id).equals(contact);
+    expect(place.resolvedHierarchy[1]?.id).to.eq('parent-id');
+  }
+});
+
+export function mockGroupedFormData(contactType: ContactType, placeCount: number) {
+  const genPlaceFormData = (contactType, uniqfix) => {
+    const data = {};
+    contactType.place_properties.forEach(p => data[`place_${p.property_name}`] = p.property_name + uniqfix);
+    return data;
+  };
+  const formData = {};
+  for (let i = 0; i < placeCount; i++) {
+    formData[`list_${i}`] = Buffer.from(JSON.stringify(genPlaceFormData(contactType, `${i}`))).toString('base64');
+  }
+  return formData;
+}
 
 function mockScenario() {
   const contactType = mockValidContactType('string', undefined);

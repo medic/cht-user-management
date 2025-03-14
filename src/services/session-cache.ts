@@ -1,3 +1,4 @@
+import _ from 'lodash';
 import ChtSession from '../lib/cht-session';
 import { DirectiveFilter } from './directive-model';
 import Place, { PlaceUploadState } from './place';
@@ -46,6 +47,28 @@ export default class SessionCache {
       .filter(p => !options?.nameExact || p.name === options.nameExact)
       .filter(p => !options?.nameIncludes || p.name.toLowerCase().includes(options.nameIncludes.toLowerCase()))
       .filter(p => options?.created === undefined || !!p.isCreated === options.created);
+  };
+
+  public getPlacesForDisplay = (options?: {
+    type?: string;
+    state?: PlaceUploadState;
+    filter?: DirectiveFilter;
+    created?: boolean;
+    id?: string;
+    nameExact?: string;
+    nameIncludes?: string;
+  }): { canEdit?: boolean; places: Place[] }[] => {
+    const places =  this.getPlaces(options);
+    return Object.values(
+      _.groupBy(places, (p) => p.contact.id)
+    )
+      .reverse()
+      .map(places => {
+        return {
+          places,
+          canEdit: !places.find(p => p.creationDetails.username)
+        };
+      });
   };
 
   public removePlace = (placeId: string): void => {
