@@ -7,3 +7,7 @@ src/package.json
 .DS_Store
 json_docs
 upload-docs*
+*.rdb
+scripts/deploy/secrets/*.tmp
+.sops.yaml
+key.txt
