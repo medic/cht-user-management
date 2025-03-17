@@ -163,6 +163,39 @@ export function mockChtSession(userFacilityId: string = '*') : ChtSession {
   return new ChtSession(creationDetails);
 }
 
+export function mockSupersetContactType(withEmail: boolean = true): ContactType {
+  const contactType = mockValidContactType('string', undefined);
+  contactType.superset = {
+    friendly_name: 'Superset Integration',
+    property_name: 'superset_mode',
+    type: 'select_one',
+    required: true,
+    parameter: {
+      enable: 'Enable Superset Account Creation',
+      disable: 'Disable Superset Account Creation'
+    },
+    prefix: 'CHU',
+    role_template: 'cha_role',
+    rls_template: 'cha_rls',
+    rls_group_key: 'chu_name'
+  };
+  if (withEmail) {
+    contactType.contact_properties.push(
+      mockProperty(
+        'regex', '^[a-zA-Z0-9._+-]+@[a-zA-Z0-9.-]+.[a-zA-Z]{2,}$', 'email'
+      )
+    );
+  }
+  return contactType;
+}
+
+export function mockSupersetSession() {
+  return {
+    create: sinon.stub().resolves({ axiosInstance: {} })
+  };
+}
+
+
 export function expectInvalidProperties(
   validationErrors: { [key: string]: string } | undefined,
   expectedProperties: string[],

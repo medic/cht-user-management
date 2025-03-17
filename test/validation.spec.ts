@@ -1,7 +1,7 @@
 import { DateTime } from 'luxon';
 import { expect } from 'chai';
 
-import { mockPlace, mockSimpleContactType } from './mocks';
+import { mockPlace, mockSimpleContactType, mockSupersetContactType } from './mocks';
 import RemotePlaceResolver from '../src/lib/remote-place-resolver';
 import { UnvalidatedPropertyValue } from '../src/property-value';
 
@@ -204,6 +204,22 @@ describe('validation', () => {
     place.validate();
     expect(place.validationErrors).to.deep.eq({
       user_role: `Invalid values for property "Roles": stockmanager`
+    });
+  });
+
+  it('superset mode invalid throws', () => {
+    const contactType = mockSupersetContactType();
+
+    const place = mockPlace(contactType, {
+      place_prop: 'abc',
+      contact_name: 'efg',
+      contact_email: 'test@example.com',
+      superset_superset_mode: 'enabled',
+    });
+    
+    place.validate();
+    expect(place.validationErrors).to.deep.eq({
+      superset_superset_mode: 'Is Invalid allowed values: enable, disable'
     });
   });
 });
