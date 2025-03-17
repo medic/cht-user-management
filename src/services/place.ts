@@ -30,6 +30,7 @@ export enum PlaceUploadState {
 }
 
 export enum UploadState {
+  NOT_ATTEMPTED = 'not_attempted',
   PENDING = 'pending',
   SUCCESS = 'success',
   FAILURE = 'failure',
@@ -70,8 +71,8 @@ export default class Place {
     this.properties = {};
     this.hierarchyProperties = {};
     this.state = PlaceUploadState.STAGED;
-    this.chtUploadState = UploadState.PENDING;
-    this.supersetUploadState = UploadState.PENDING;
+    this.chtUploadState = UploadState.NOT_ATTEMPTED;
+    this.supersetUploadState = UploadState.NOT_ATTEMPTED;
     this.resolvedHierarchy = [];
     this.warnings = [];
     this.userRoleProperties = {};
@@ -330,19 +331,20 @@ export default class Place {
     return this.chtUploadState === UploadState.FAILURE || this.supersetUploadState === UploadState.FAILURE;
   }
 
-  public isChtUploadPendingOrFailed(): boolean {
-    return this.chtUploadState === UploadState.PENDING || this.chtUploadState === UploadState.FAILURE;
+  public isChtUploadIncomplete(): boolean {
+    return [UploadState.NOT_ATTEMPTED, UploadState.PENDING, UploadState.FAILURE].includes(this.chtUploadState);
   }
 
-  public isSupersetUploadPendingOrFailed(): boolean {
-    return this.supersetUploadState === UploadState.PENDING || this.supersetUploadState === UploadState.FAILURE;
+  public isSupersetUploadIncomplete(): boolean {
+    return [UploadState.NOT_ATTEMPTED, UploadState.PENDING, UploadState.FAILURE].includes(this.supersetUploadState);
   }
 
   public shouldUploadToSuperset(): boolean {
     if (!this.type.superset) {
       return false;
     }
-    return this.supersetProperties[this.type.superset.property_name].formatted === SupersetMode.ENABLE;
+    const supersetMode = this.supersetProperties[this.type.superset.property_name];
+    return supersetMode && supersetMode.formatted === SupersetMode.ENABLE.toString();
   }
 
   private buildLineage() {

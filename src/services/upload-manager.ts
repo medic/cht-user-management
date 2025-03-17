@@ -10,7 +10,6 @@ import { UploadReplacementWithDeletion } from './upload.replacement';
 import { UploadReplacementWithDeactivation } from './upload.deactivate';
 import { UserPayload } from './user-payload';
 import { SupersetApi } from '../lib/superset-api';
-import { SupersetSession } from '../lib/superset-session';
 import { UploadSuperset } from './upload-superset';
 
 const UPLOAD_BATCH_SIZE = 15;
@@ -21,29 +20,29 @@ export interface Uploader {
 }
 
 export class UploadManager extends EventEmitter {
-  doUpload = async (places: Place[], chtApi: ChtApi, ignoreWarnings: boolean = false) => {
+  doUpload = async (places: Place[], chtApi: ChtApi, supersetApi: SupersetApi, ignoreWarnings: boolean = false) => {
     const placesNeedingUpload = places.filter(p => !p.isCreated && !p.hasValidationErrors && (ignoreWarnings || !p.warnings.length));
     this.eventedPlaceStateChange(placesNeedingUpload, PlaceUploadState.SCHEDULED);
 
     const independants = placesNeedingUpload.filter(p => !p.isDependant);
     const dependants = placesNeedingUpload.filter(p => p.isDependant);
-    await this.uploadPlacesInBatches(independants, chtApi);
-    await this.uploadPlacesInBatches(dependants, chtApi);
+    await this.uploadPlacesInBatches(independants, chtApi, supersetApi);
+    await this.uploadPlacesInBatches(dependants, chtApi, supersetApi);
   };
 
-  private async uploadPlacesInBatches(places: Place[], chtApi: ChtApi) {
+  private async uploadPlacesInBatches(places: Place[], chtApi: ChtApi, supersetApi: SupersetApi) {
     for (let batchStartIndex = 0; batchStartIndex < places.length; batchStartIndex += UPLOAD_BATCH_SIZE) {
       const batchEndIndex = Math.min(batchStartIndex + UPLOAD_BATCH_SIZE, places.length);
       const batch = places.slice(batchStartIndex, batchEndIndex);
-      await Promise.all(batch.map(place => this.uploadSinglePlace(place, chtApi)));
+      await Promise.all(batch.map(place => this.uploadSinglePlace(place, chtApi, supersetApi)));
     }
   }
 
-  private async uploadSinglePlace(place: Place, chtApi: ChtApi) {
+  private async uploadSinglePlace(place: Place, chtApi: ChtApi, supersetApi: SupersetApi) {
     this.eventedPlaceStateChange(place, PlaceUploadState.IN_PROGRESS);
   
-    // Handle CHT upload if it's pending or failed and if CHT upload is required
-    if (place.isChtUploadPendingOrFailed()) {
+    // Handle CHT upload if the upload has not been attempted or is pending or failed
+    if (place.isChtUploadIncomplete()) {
       try {
         this.eventedUploadStateChange(place, 'cht', UploadState.PENDING);
         const uploader: Uploader = pickUploader(place, chtApi);
@@ -83,12 +82,10 @@ export class UploadManager extends EventEmitter {
       }
     }
   
-    // Handle Superset upload if it's pending or failed and if Superset upload is required
-    if (place.isSupersetUploadPendingOrFailed() && place.shouldUploadToSuperset()) {
+    // Handle Superset upload if not been attempted or is pending or failed and if Superset upload is required
+    if (place.chtUploadState === UploadState.SUCCESS && place.shouldUploadToSuperset() && place.isSupersetUploadIncomplete()) {
       try {
         this.eventedUploadStateChange(place, 'superset', UploadState.PENDING);
-        const supersetSession = await SupersetSession.create();
-        const supersetApi = new SupersetApi(supersetSession);
         const uploadSuperset = new UploadSuperset(supersetApi);
         const { username, password } = await uploadSuperset.handlePlace(place);
 
