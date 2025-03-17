@@ -44,9 +44,7 @@ The `manage-secrets.sh` script provides an interactive interface to manage addit
    ./manage-secrets.sh add chis-ke
    ```
    The script will:
-   - Prompt for Superset base URL
-   - Prompt for admin username
-   - Prompt securely for admin password
+   - Prompt for env var name and values
    - Create/update `scripts/deploy/secrets/users-chis-ke-secrets.yaml`
    - Encrypt using SOPS
    - The encrypted file should be committed to git

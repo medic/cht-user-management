@@ -44,6 +44,16 @@
     %}
   {% endif %}
 
+  {% if contactType.superset %}
+  {% capture propertyName %}superset_{{ contactType.superset.property_name }}{% endcapture %}
+  {%
+    include "components/list_cell.html"
+    propertyName=propertyName
+    property=contactType.superset
+    values=place.supersetProperties
+  %}
+{% endif %}
+
   <td>
     {% capture tag_text %}
         {% if place.validationErrors == empty %}

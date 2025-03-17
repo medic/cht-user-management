@@ -68,25 +68,25 @@ jobs:
           aws eks update-kubeconfig --name ${{vars.CLUSTER}} --region ${{vars.AWS_REGION}}
           helm repo add medic https://docs.communityhealthtoolkit.org/helm-charts
 
-      - name: Deploy chis-civ
+      - name: Upgrade chis-civ
         uses: ./.github/workflows/deploy-config.yml
         with:
           config: chis-civ
           namespace: ${{vars.NAMESPACE}}
 
-      - name: Deploy chis-tg
+      - name: Upgrade chis-tg
         uses: ./.github/workflows/deploy-config.yml
         with:
           config: chis-tg
           namespace: ${{vars.NAMESPACE}}
 
-      - name: Deploy chis-ke
+      - name: Upgrade chis-ke
         uses: ./.github/workflows/deploy-config.yml
         with:
           config: chis-ke
           namespace: ${{vars.NAMESPACE}}
 
-      - name: Deploy chis-ml
+      - name: Upgrade chis-ml
         uses: ./.github/workflows/deploy-config.yml
         with:
           config: chis-ml

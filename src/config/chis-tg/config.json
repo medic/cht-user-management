@@ -112,9 +112,10 @@
           "enable": "Enable"
         },
         "required": false,
+        "hint": "Enable to use the superset integration",
         "prefix": "SN",
-        "role_template": "2",
-        "rls_template": "1",
+        "role_template": "16",
+        "rls_template": "6",
         "rls_group_key": "sanitary_name"
       }
     },

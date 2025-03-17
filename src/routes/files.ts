@@ -44,6 +44,7 @@ function getCsvTemplateColumns(placeType: string) {
     ...extractColumns(placeTypeConfig.place_properties),
     ...extractColumns(placeTypeConfig.contact_properties),
     ...(Config.hasMultipleRoles(placeTypeConfig) ? [userRoleConfig.friendly_name] : []),
+    ...(placeTypeConfig.superset ? [placeTypeConfig.superset.friendly_name] : []),
   ]);
   return columns;
 }
