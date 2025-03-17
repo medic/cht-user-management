@@ -55,6 +55,10 @@ const build = (opts: FastifyServerOptions): FastifyInstance => {
   fastify.register(metricsPlugin, {
     endpoint: PROMETHEUS_ENDPOINT,
     routeMetrics: {
+      registeredRoutesOnly: false,
+      groupStatusCodes: false,
+      methodBlacklist: ['HEAD', 'OPTIONS', 'TRACE'],
+      invalidRouteGroup: '__unknown__',
       enabled: {
         histogram: true,
         summary: true,
