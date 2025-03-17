@@ -16,9 +16,10 @@ import SessionCache from './services/session-cache';
 import { checkRedisConnection } from './config/config-worker';
 import { getChtConfQueue } from './lib/queues';
 
+const PROMETHEUS_ENDPOINT = '/metrics';
 const UNAUTHENTICATED_ENDPOINTS = [
   '/public/*',
-  '/metrics',
+  PROMETHEUS_ENDPOINT,
 ];
 
 const build = (opts: FastifyServerOptions): FastifyInstance => {
@@ -52,7 +53,7 @@ const build = (opts: FastifyServerOptions): FastifyInstance => {
   });
   
   fastify.register(metricsPlugin, {
-    endpoint: '/metrics',
+    endpoint: PROMETHEUS_ENDPOINT,
     routeMetrics: {
       enabled: {
         histogram: true,
@@ -63,7 +64,7 @@ const build = (opts: FastifyServerOptions): FastifyInstance => {
 
   // hijack the response from fastify-metrics appending additional metrics
   fastify.addHook('onSend', async (request, reply, payload: string) => {
-    if (request.routerPath === '/metrics') {
+    if (request.routerPath === PROMETHEUS_ENDPOINT) {
       const bullmqMetrics = await getChtConfQueue().bullQueue.exportPrometheusMetrics();
       return payload + bullmqMetrics;
     }
