@@ -25,13 +25,13 @@ export default async function api(fastify: FastifyInstance) {
   fastify.post('/api/config', async (req: FastifyRequest, reply: FastifyReply) => {
     try {
       const config = await req.body as ConfigSystem;
-      await Config.assertValid({ config });
+      Config.assertValid({ config });
       ConfigFactory.getConfigFactory().writeConfig(config);
       reply.send({ message: 'configuration updated' });
       return;
     } catch (error) {
       console.error('Route api/config: ', error);
-      reply.send(error);
+      reply.status(400).send(error);
     }
   });
 }
