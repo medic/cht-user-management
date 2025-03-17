@@ -67,7 +67,7 @@ const build = (opts: FastifyServerOptions): FastifyInstance => {
       const bullmqMetrics = await getChtConfQueue().bullQueue.exportPrometheusMetrics();
       return payload + bullmqMetrics;
     }
-  })
+  });
 
   Auth.assertEnvironmentSetup();
   checkRedisConnection();
