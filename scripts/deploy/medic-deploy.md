@@ -15,8 +15,52 @@ General public is welcome to look at these instructions for who they might use t
 - Check out [helm chart repository](https://github.com/medic/helm-charts/tree/main#usage) so you can reference it locally
 - Be able to [authenticate to Medic kubernetes cluster (EKS)](https://github.com/medic/medic-infrastructure/blob/master/terraform/aws/dev/eks/access/README.md)
 
+### Managing Additionnal Secrets
 
-### Known cofigurations:
+The CHT User Management tool uses SOPS (Secrets OPerationS) for secure additionnal environment variables (eg: management of Superset credentials). Each configuration (e.g., `chis-ke`, `chis-tg`) has its own encrypted secrets file.
+
+#### Getting Started with Secrets
+
+1. **For Medic Hosted Deployment**:
+   - Get the existing SOPS private key from [1Password](https://start.1password.com/open/i?a=ZXKW4QPXKNF7LMQXIV73EG6Y5Q&v=dnrhbauihkhjs5ag6fwn2zhazi&i=4z4lw7l4nbhwrbfl3xqkf7h4ni&h=team-medic.1password.com)
+   - Save it as `key.txt` in your workspace
+   - Use `manage-secrets.sh` to manage secrets
+
+2. **For Self Hosted Deployment**:
+   - Generate a new SOPS key for your deployment:
+     ```bash
+     ./manage-secrets.sh init
+     ```
+   - This creates a `key.txt` file containing your private key
+   - Store this private key securely - it will be needed for future secret management
+   - Never commit the private key to version control
+
+#### Managing Configuration Secrets
+
+The `manage-secrets.sh` script provides an interactive interface to manage additional secrets without touch the helm chart:
+
+1. **Add/Update Secrets**:
+   ```bash
+   ./manage-secrets.sh add chis-ke
+   ```
+   The script will:
+   - Prompt for Superset base URL
+   - Prompt for admin username
+   - Prompt securely for admin password
+   - Create/update `scripts/deploy/secrets/users-chis-ke-secrets.yaml`
+   - Encrypt using SOPS
+   - The encrypted file should be committed to git
+
+2. **View Secrets**:
+   ```bash
+   ./manage-secrets.sh decrypt chis-ke
+   ```
+
+### Continuous Deployment
+
+The [GitHub Actions workflow](../.github/workflows/deploy.yml#L89-L93) automatically handles secret decryption and deployment. When changes are merged to main, the workflow decrypts the secrets using the SOPS key and includes them in the Helm deployment.
+
+### Known Configurations:
 
 As each deployment needs its own configuration directory, DNS entry and deployment name, we'll list them here and the commands below can be used by replacing the correct value.
 
