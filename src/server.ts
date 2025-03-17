@@ -52,7 +52,7 @@ const build = (opts: FastifyServerOptions): FastifyInstance => {
   });
   
   fastify.register(metricsPlugin, {
-    endpoint: '/metrics',
+    endpoint: '/fastify-metrics',
     routeMetrics: {
       enabled: {
         histogram: true,
