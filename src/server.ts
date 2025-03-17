@@ -18,8 +18,7 @@ import { getChtConfQueue } from './lib/queues';
 
 const UNAUTHENTICATED_ENDPOINTS = [
   '/public/*',
-  '/fastify-metrics',
-  '/bullmq-metrics'
+  '/metrics',
 ];
 
 const build = (opts: FastifyServerOptions): FastifyInstance => {
@@ -53,20 +52,22 @@ const build = (opts: FastifyServerOptions): FastifyInstance => {
   });
   
   fastify.register(metricsPlugin, {
-    endpoint: '/fastify-metrics',
+    endpoint: '/metrics',
     routeMetrics: {
       enabled: {
         histogram: true,
-        summary: false
+        summary: true,
       }
     }
   });
 
-  fastify.get('/bullmq-metrics', async (req, resp) => {
-    const promMetrics = await getChtConfQueue().bullQueue.exportPrometheusMetrics();
-    resp.header('Content-Type', 'text/plain');
-    resp.send(promMetrics);
-  });
+  // hijack the /metrics response from fastify-metrics appending additional metrics
+  fastify.addHook('onSend', async (request, reply, payload: string) => {
+    if (request.routerPath === '/metrics') {
+      const bullmqMetrics = await getChtConfQueue().bullQueue.exportPrometheusMetrics();
+      return payload + bullmqMetrics;
+    }
+  })
 
   Auth.assertEnvironmentSetup();
   checkRedisConnection();
