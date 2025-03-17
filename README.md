@@ -48,6 +48,7 @@ To use the User Management Tool with your CHT project, you'll need to create a n
 `contact_types.contact_properties` | Array<ConfigProperty> | Defines the attributes which are collected and set on the user's primary contact doc. See [ConfigProperty](#ConfigProperty).
 `contact_types.deactivate_users_on_replace` | boolean | Controls what should happen to the defunct contact and user documents when a user is replaced. When `false`, the contact and user account will be deleted. When `true`, the contact will be unaltered and the user account will be assigned the role `deactivated`. This allows for account restoration.
 `contact_types.hint` | string | Provide a brief hint or description to clarify the expected input for the property.
+`contact_types.superset_properties` | Object | Configuration for [Superset integration](#superset-configuration).
 `logoBase64` | Image in base64 | Logo image for your project
 
 #### ConfigProperty
@@ -111,6 +112,71 @@ place | Has the attributes from `place_properties.property_name`
 contact | Has the attributes from `contact_properties.property_name`
 lineage | Has the attributes from `hierarchy.property_name` 
 
+#### Superset Configuration
+
+The CHT User Management Tool supports integration with Apache Superset, allowing automatic user creation and access management in both CHT and Superset. 
+The `superset_properties` object in a contact type enables Superset integration:
+
+```json
+{
+  "contact_types": [
+    {
+      "name": "c_community_health_unit",
+      // ...
+      "superset": {
+        "friendly_name": "Superset Integration",
+        "property_name": "superset_config",
+        "type": "select_one",
+        "parameter": {
+          "disable": "Disable",
+          "enable": "Enable"
+        },
+        "required": false,
+        "prefix": "[]",
+        "role_template": "[]",
+        "rls_template": "[]",
+        "rls_group_key": "[]"
+      }
+    }
+  ]
+}
+```
+
+##### Superset Upload Upload Process
+
+When Superset integration is enabled for a place:
+
+1. The CHT upload is performed first
+2. If CHT upload succeeds and Superset is enabled for the place:
+   - Creates a role in Superset for the CHU
+   - Assigns necessary permissions from a template role
+   - Sets up row-level security for the CHU's data
+   - Creates a Superset user with appropriate access
+
+##### Superset Upload States
+
+Places track their upload state separately for CHT and Superset:
+- `chtUploadState`: Tracks the CHT upload status
+- `supersetUploadState`: Tracks the Superset upload status
+
+Both can be in one of these states:
+- `NOT_ATTEMPTED`: Upload hasn't been tried yet
+- `PENDING`: Upload is in progress
+- `SUCCESS`: Upload completed successfully
+- `FAILURE`: Upload failed
+
+##### Superset Error Handling
+
+- If CHT upload fails, Superset upload is not attempted
+- If Superset upload fails, it can be retried without affecting the CHT upload
+- Each system maintains its own error state and can be retried independently
+
+##### Superset Integration deployment
+Superset integration requires specific environment variables for each configuration. See [Superset Environment Variables](#superset-environment-variables) for the required variables and naming convention.
+
+For production deployment, Superset credentials are managed securely using SOPS encryption. See the [Medic Deployment Guide](scripts/deploy/medic-deploy.md#managing-superset-secrets) for detailed instructions.
+
+
 ### Deployment
 This tool is available via Docker by running `docker compose up`. Set the [Environment Variables](#environment-variables).
 
@@ -171,6 +237,18 @@ Variable | Description | Sample
 `REDIS_PORT` | Redis server port | `6379`
 `CHT_USER_MANAGEMENT_IMAGE` | docker image for cht-user-management service (local development), leave empty to use published one | `cht-user-management:local `
 `CHT_USER_MANAGEMENT_WORKER_IMAGE` | docker image for cht-user-management service (local development), leave empty to use published one | `cht-user-management-worker:local`
+
+### Superset Environment Variables
+
+For each configuration (e.g., `chis-ke`, `chis-tg`), the following environment variables are required for Superset integration:
+
+Variable | Description | Sample
+-- | -- | --
+`{CONFIG_NAME}_SUPERSET_BASE_URL` | Superset instance URL for this config | `CHIS_KE_SUPERSET_BASE_URL=https://superset.example.com`
+`{CONFIG_NAME}_SUPERSET_ADMIN_USERNAME` | Superset admin username for this config | `CHIS_KE_SUPERSET_ADMIN_USERNAME=admin`
+`{CONFIG_NAME}_SUPERSET_ADMIN_PASSWORD` | Superset admin password for this config | `CHIS_KE_SUPERSET_ADMIN_PASSWORD=password123`
+
+Note: Replace `{CONFIG_NAME}` with your configuration name in uppercase with hyphens replaced by underscores (e.g., `CHIS_KE` for `chis-ke`).
 
 ## Publishing new docker images
 
