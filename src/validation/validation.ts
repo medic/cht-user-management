@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { Config, ContactProperty, HierarchyConstraint, SupersetConfig } from '../config';
+import { Config, ContactProperty, HierarchyConstraint, SupersetConfig, SupersetMode } from '../config';
 import { IValidator } from '.';
 import Place from '../services/place';
 import RemotePlaceResolver from '../lib/remote-place-resolver';
@@ -103,8 +103,14 @@ export class Validation {
 
   public static validateSupersetConfig(place: Place, supersetConfig: SupersetConfig): string | undefined {
     const data = place.supersetProperties[supersetConfig.property_name];
-    console.log('Data', data);
-    return;
+
+    if (!data || !data.formatted) {
+      return 'Is Required';
+    }
+
+    if (!Object.values(SupersetMode).includes(data.formatted as SupersetMode)) {
+      return 'Is Invalid allowed values: ' + Object.values(SupersetMode).join(', ');
+    }
   }
 
   public static getKnownContactPropertyTypes(): string[] {

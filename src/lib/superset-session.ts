@@ -1,11 +1,12 @@
-import axios, { AxiosInstance } from 'axios';
+import { AxiosInstance } from 'axios';
 import { Config } from '../config';
+const axios = require('axios');
 
 const REQUEST_TIMEOUT = 10000; // 10 seconds timeout for API requests
 const MAX_RETRIES = 3;
 const RETRY_DELAY = 1000; // 1 second
 
-export class SupersetSession {
+export default class SupersetSession {
   public readonly axiosInstance: AxiosInstance;
   private sessionToken: string = '';
   private csrfToken: string = '';

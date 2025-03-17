@@ -1,7 +1,7 @@
 import { Config } from '../config';
 import { SupersetApi } from '../lib/superset-api';
 import Place from './place';
-import { UserPayload } from './user-payload';
+import { SupersetUserPayloadBuilder } from './superset-payload';
 
 export class UploadSuperset {
   constructor(private readonly supersetApi: SupersetApi) {}
@@ -32,6 +32,24 @@ export class UploadSuperset {
     }
   }
 
+  private validatePlaceForSuperset(place: Place) {
+    if (!Config.getSupersetConfig(place.type)) {
+      throw new Error(`Superset integration is not enabled for place: ${place.name}`);
+    }
+
+    if (!place.contact.properties.email) {
+      throw new Error(`Email is required for Superset integration, but is missing for place: ${place.name}`);
+    }
+
+    if (!place.creationDetails.username || !place.creationDetails.password) {
+      throw new Error(`Cannot create Superset user without CHT credentials for place: ${place.name}`);
+    }
+
+    if (!place.name) {
+      throw new Error('Place name is required for Superset integration');
+    }
+  }
+
   /**
    * Creates a role and copies permissions from template
    */
@@ -59,7 +77,7 @@ export class UploadSuperset {
   private async setupRowLevelSecurity(place: Place, roleId: string): Promise<void> {
     const supersetConfig = Config.getSupersetConfig(place.type)!;
 
-    // Get template tables
+    // Get tables from template
     const templateTables = await this.supersetApi.getTablesByRlsID(
       supersetConfig.rls_template
     );
@@ -82,35 +100,12 @@ export class UploadSuperset {
     place: Place,
     roleId: string
   ): Promise<{ username: string; password: string }> {
-    const userPayload = new UserPayload(place, 'place_id', 'contact_id');
-    const supersetUserPayload = userPayload.toSupersetUserPayload([roleId]);
-
+    const supersetUserPayload = SupersetUserPayloadBuilder.fromPlace(place, [roleId]);
     await this.supersetApi.createUser(supersetUserPayload);
+    
     return {
-      username: userPayload.username,
-      password: userPayload.password,
+      username: supersetUserPayload.username,
+      password: supersetUserPayload.password
     };
-  }
-
-  /**
-   * Validates that a place meets all requirements for Superset integration
-   * @throws Error if validation fails
-   */
-  private validatePlaceForSuperset(place: Place): void {
-    if (!Config.getSupersetConfig(place.type)) {
-      throw new Error(
-        `Superset integration is not enabled for contact type: ${place.type.name}`
-      );
-    }
-
-    if (!place.contact.properties.email?.formatted) {
-      throw new Error(
-        `Email is required for Superset integration but is missing for place: ${place.name}`
-      );
-    }
-
-    if (!place.name) {
-      throw new Error('Place name is required for Superset integration');
-    }
   }
 }

@@ -1,19 +1,19 @@
-import { AxiosInstance, AxiosError } from 'axios';
+import { AxiosError } from 'axios';
 import { 
   SupersetRole, 
   SupersetRls, 
   SupersetUserPayload,
   SupersetTable
-} from '../services/supertset-payload';
-import { SupersetSession } from './superset-session';
+} from '../services/superset-payload';
+import SupersetSession from './superset-session';
 
 // Centralize API endpoints for better maintainability
 const ENDPOINTS = {
-  ROLES: '/security/roles',
+  ROLES: '/security/roles/',
   PERMISSIONS: (roleId: string) => `/security/roles/${roleId}/permissions`,
-  RLS: '/rowlevelsecurity',
+  RLS: '/rowlevelsecurity/',
   RLS_BY_ID: (rlsId: string) => `/rowlevelsecurity/${rlsId}`,
-  USERS: '/security/users',
+  USERS: '/security/users/',
 } as const;
 
 export class SupersetApi {
@@ -21,14 +21,14 @@ export class SupersetApi {
 
   /**
    * Creates a new role in Superset
-   * @param prefix Organization prefix for the role name
+   * @param prefix level prefix for the role name
    * @param roleName Base name for the role
    * @returns ID of the created role
    */
   async createRole(prefix: string, roleName: string): Promise<string> {
     try {
       const rolePayload: SupersetRole = {
-        name: `${prefix}_${roleName}`.toUpperCase(),
+        name: `${prefix}_${roleName}`.replace(/\s+/g, '_').toUpperCase(),
       };
 
       const response = await this.session.axiosInstance.post(
@@ -49,7 +49,7 @@ export class SupersetApi {
   async getPermissionsByRoleID(roleId: string): Promise<string[]> {
     try {
       const response = await this.session.axiosInstance.get(
-        ENDPOINTS.PERMISSIONS(roleId)
+        `${ENDPOINTS.PERMISSIONS(roleId)}/`
       );
       return response.data.result.map((permission: { id: string }) => permission.id);
     } catch (error) {
@@ -94,7 +94,7 @@ export class SupersetApi {
    * @param roleId ID of the role to associate with the RLS
    * @param placeName Name of the place for filtering
    * @param groupKey Key used for RLS grouping
-   * @param prefix Organization prefix for the RLS name
+   * @param prefix level prefix for the RLS name
    * @param tableIds Array of table IDs to apply RLS to
    */
   async createRowLevelSecurityFromTemplate(
@@ -109,7 +109,7 @@ export class SupersetApi {
         clause: `${groupKey}='${placeName}'`,
         filter_type: 'Regular',
         group_key: groupKey,
-        name: `${prefix}_${placeName}`.toUpperCase(),
+        name: `${prefix}_${placeName}`.replace(/\s+/g, '_').toUpperCase(),
         roles: [roleId],
         tables: tableIds,
       };
