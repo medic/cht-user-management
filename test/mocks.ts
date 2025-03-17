@@ -167,7 +167,7 @@ export function mockSupersetContactType(withEmail: boolean = true): ContactType 
   const contactType = mockValidContactType('string', undefined);
   contactType.superset = {
     friendly_name: 'Superset Integration',
-    property_name: 'superset_mode',
+    property_name: 'mode',
     type: 'select_one',
     required: true,
     parameter: {

@@ -157,7 +157,7 @@ describe('services/place.ts', () => {
       
       const place = new Place(contactType);
       const formData = {
-        superset_superset_mode: 'enable'
+        superset_mode: 'enable'
       };
       
       place.setPropertiesFromFormData(formData, 'hierarchy_');
@@ -169,7 +169,7 @@ describe('services/place.ts', () => {
       
       const place = new Place(contactType);
       const formData = {
-        superset_superset_mode: 'enable',
+        superset_mode: 'enable',
       };
       
       place.setPropertiesFromFormData(formData, 'hierarchy_');
@@ -181,7 +181,7 @@ describe('services/place.ts', () => {
       
       const place = new Place(contactType);
       const formData = {
-        superset_superset_mode: 'enable',
+        superset_mode: 'enable',
         place_name: 'place',
         place_prop: 'prop',
         contact_name: 'contact',
@@ -205,7 +205,7 @@ describe('services/place.ts', () => {
       const place = new Place(contactType);
 
       const formData = {
-        superset_superset_mode: 'enable',
+        superset_mode: 'enable',
         contact_email: 'test@example.com',
       };
       

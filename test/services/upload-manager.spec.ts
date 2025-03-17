@@ -370,7 +370,7 @@ describe('services/upload-manager.ts', () => {
       const { sessionCache, fakeFormData, chtApi, supersetApi } = await createMocks();
       const formData = {
         ...fakeFormData,
-        superset_superset_mode: 'enable',
+        superset_mode: 'enable',
         contact_email: 'test@example.com',
       };
       const place = await PlaceFactory.createOne(formData, contactType, sessionCache, chtApi);
@@ -409,7 +409,7 @@ describe('services/upload-manager.ts', () => {
       const { sessionCache, fakeFormData, chtApi, supersetApi } = await createMocks();
       const formData = {
         ...fakeFormData,
-        superset_superset_mode: 'enable',
+        superset_mode: 'enable',
         contact_email: 'test@example.com',
       };
       const place = await PlaceFactory.createOne(formData, contactType, sessionCache, chtApi);      
@@ -444,7 +444,7 @@ describe('services/upload-manager.ts', () => {
       const { sessionCache, fakeFormData, chtApi, supersetApi } = await createMocks();
       const formData = {
         ...fakeFormData,
-        superset_superset_mode: 'enable',
+        superset_mode: 'enable',
         contact_email: 'test@example.com',
       };
       const place = await PlaceFactory.createOne(formData, contactType, sessionCache, chtApi);      
@@ -479,7 +479,7 @@ describe('services/upload-manager.ts', () => {
       const { sessionCache, fakeFormData, chtApi, supersetApi } = await createMocks();
       const formData = {
         ...fakeFormData,
-        superset_superset_mode: 'enable',
+        superset_mode: 'enable',
         contact_email: 'test@example.com',
       };
       const place = await PlaceFactory.createOne(formData, contactType, sessionCache, chtApi);      
