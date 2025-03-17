@@ -197,8 +197,8 @@ export class Config {
       const emailProperty = contactType.contact_properties.find(p => p.property_name === 'email');
       if (!emailProperty) {
         throw new Error(
-          `It looks like the contact type "${contactType.name}" has Superset integration enabled` +
-          `but missing the required "email" contact property. Please ensure 'email' is included` +
+          `It looks like the contact type "${contactType.name}" has Superset integration enabled ` +
+          `but missing the required "email" contact property. Please ensure 'email' is included ` +
           `to avoid issues with Superset integration later on.`
         );
       }
@@ -281,19 +281,21 @@ export class Config {
   }
 
   public static getSupersetBaseUrl(): string {
-    const baseUrl = Config.getSupersetEnvVar('SUPERSET_BASE_URL');
+    const configKey = CONFIG_NAME?.replace('-', '_').toUpperCase() || '';
+    const baseUrl = Config.getSupersetEnvVar(`${configKey}_SUPERSET_BASE_URL`);
     if (!baseUrl) {
-      throw new Error('SUPERSET_BASE_URL is not configured');
+      throw new Error(`${configKey}_SUPERSET_BASE_URL is not configured`);
     }
     return baseUrl;
   }
 
   public static getSupersetCredentials(): { username: string; password: string } {
-    const username = Config.getSupersetEnvVar('SUPERSET_ADMIN_USERNAME');
-    const password = Config.getSupersetEnvVar('SUPERSET_ADMIN_PASSWORD');
+    const configKey = CONFIG_NAME?.replace('-', '_').toUpperCase() || '';
+    const username = Config.getSupersetEnvVar(`${configKey}_SUPERSET_ADMIN_USERNAME`);
+    const password = Config.getSupersetEnvVar(`${configKey}_SUPERSET_ADMIN_PASSWORD`);
     
     if (!username || !password) {
-      throw new Error('Superset credentials are not properly configured');
+      throw new Error(`Superset credentials (${configKey}_SUPERSET_ADMIN_*) are not properly configured`);
     }
     
     return { username, password };
