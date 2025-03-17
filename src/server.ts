@@ -52,7 +52,7 @@ const build = (opts: FastifyServerOptions): FastifyInstance => {
   });
   
   fastify.register(metricsPlugin, {
-    endpoint: '/fastify-metrics',
+    endpoint: '/metrics',
     routeMetrics: {
       enabled: {
         histogram: true,
@@ -61,7 +61,7 @@ const build = (opts: FastifyServerOptions): FastifyInstance => {
     }
   });
 
-  // hijack the /metrics response from fastify-metrics appending additional metrics
+  // hijack the response from fastify-metrics appending additional metrics
   fastify.addHook('onSend', async (request, reply, payload: string) => {
     if (request.routerPath === '/metrics') {
       const bullmqMetrics = await getChtConfQueue().bullQueue.exportPrometheusMetrics();
