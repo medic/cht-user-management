@@ -103,6 +103,9 @@ export default class ChtSession {
       if (e.code === 'ENOTFOUND' || e.errno === -3008) {
         throw AuthError.INSTANCE_OFFLINE();
       }
+      if (e.code === 'ETIMEDOUT' || e?.cause?.code === 'ETIMEDOUT' || e?.cause?.code === 'ECONNREFUSED') {
+        throw AuthError.CONNECTION_TIMEOUT(authInfo.domain);
+      }
       throw e;
     }
   }
