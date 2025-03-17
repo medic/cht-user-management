@@ -1,6 +1,6 @@
 {
   "name": "cht-user-management",
-  "version": "2.1.5",
+  "version": "2.1.6",
   "main": "dist/index.js",
   "dependencies": {
     "@bull-board/api": "^5.17.0",
@@ -22,7 +22,7 @@
     "@types/uuid": "^9.0.6",
     "axios": "^1.5.1",
     "axios-retry": "^4.0.0",
-    "bullmq": "^5.7.6",
+    "bullmq": "^5.41.9",
     "cht-conf": "github:medic/cht-conf#653-merge-primaries",
     "csv": "^6.3.5",
     "dotenv": "^16.3.1",
