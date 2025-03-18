@@ -4,7 +4,6 @@ import ChtSession from './cht-session';
 import { Config, ContactType } from '../config';
 import { DateTime } from 'luxon';
 import { UserPayload } from '../services/user-payload';
-import semver from 'semver';
 
 export type PlacePayload = {
   name: string;
@@ -129,20 +128,7 @@ export class ChtApi {
     return resp.data?.rows?.length || 0;
   }
 
-  async createUser(user: UserPayload, chtVersion?: string): Promise<void> {
-    if (chtVersion && semver.gte(chtVersion, '4.7.0')) {
-      await this.createUserV3(user);
-      return;
-    }
-    const url = `api/v1/users`;
-    console.log('axios.post', url);
-    const axiosRequestionConfig = {
-      'axios-retry': { retries: 0 }, // upload-manager handles retries for this
-    };
-    await this.axiosInstance.post(url, user, axiosRequestionConfig);
-  }
-  
-  async createUserV3(user: UserPayload): Promise<void> {
+  async createUser(user: UserPayload): Promise<void> {
     const url = `api/v3/users`;
     console.log('axios.post', url);
     const axiosRequestionConfig = {
