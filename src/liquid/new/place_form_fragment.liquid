@@ -1,0 +1,41 @@
+<div
+  id="place_fragment"
+  class="mb-5"
+>
+  <p>{{ contactType.friendly }} details</p>
+  <div class="p-2">
+    {% for prop in contactType.place_properties %}
+      {%
+        include "components/contact_type_property.html" prefix="place_"
+        prop=prop
+        data=data
+        place_type=contactType.name
+      %}
+      {% if errors[prop.property_name] %}
+        <div class="notification is-danger is-light">{{ errors[prop.property_name] }}</div>
+      {% endif %}
+    {% endfor %}
+  </div>
+  <div class="is-flex is-justify-content-end is-align-items-center">
+    <span class="is-size-7 has-text-weight-semibold">Don't forget to click add before saving</span>
+    <div class="field is-grouped is-grouped-right p-2">
+      <button
+        type="button"
+        hx-get="/place_form?place_type={{contactType.name}}&action=cancel"
+        class="button is-small mr-2"
+        hx-target="#place_fragment"
+        hx-swap="outerHTML"
+      >
+        Cancel
+      </button>
+      <button
+        class="button is-primary is-small"
+        hx-post="/place_form?place_type={{contactType.name}}"
+        hx-target="#place_fragment"
+        hx-swap="outerHTML"
+      >
+        Add
+      </button>
+    </div>
+  </div>
+</div>
