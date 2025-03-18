@@ -37,7 +37,7 @@ export default async function place(fastify: FastifyInstance) {
     return resp.view('src/liquid/components/search_results.html', {
       op,
       place,
-      div: 'div_hierarchy_' + hierarchyLevel.property_name,
+      div: `div_${dataPrefix}${hierarchyLevel.property_name}`,
       prefix: dataPrefix,
       searchResults,
       level,
@@ -49,6 +49,7 @@ export default async function place(fastify: FastifyInstance) {
     const data: any = req.body;
     const queryParams: any = req.query;
     const {
+      op,
       result_name: resultName,
       prefix: dataPrefix,
     } = queryParams;
@@ -60,8 +61,9 @@ export default async function place(fastify: FastifyInstance) {
     }
     data[`${dataPrefix}${hierarchyLevel.property_name}`] = resultName;
     return resp.view('src/liquid/components/search_input.html', {
+      op,
       type: contactType.name,
-      prefix: 'hierarchy_',
+      prefix: dataPrefix,
       hierarchy: hierarchyLevel,
       data
     });

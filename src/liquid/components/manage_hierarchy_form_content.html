@@ -19,13 +19,13 @@
   <section class="section is-small">
     <h1 class="subtitle">{{ sourceDescription }}</h1>
     {% for hierarchy in sourceHierarchy %}
-      {%
-        include "components/search_input.html"
-          type=contactType.name
-          hierarchy=hierarchy
-          data=data
-          required=hierarchy.required
-          prefix="source_"
+      {% render 'components/search_input.html'
+          op: op
+          type: contactType.name
+          hierarchy: hierarchy
+          data: data
+          required: hierarchy.required
+          prefix: "source_"
       %}
     {% endfor %}
   </section>
@@ -34,13 +34,13 @@
     <section class="section is-small">
       <h1 class="subtitle">{{ destinationDescription }}</h1>
       {% for hierarchy in destinationHierarchy %}
-        {%
-          include "components/search_input.html"
-            type=contactType.name
-            hierarchy=hierarchy
-            data=data
-            required=hierarchy.required
-            prefix="destination_"
+        {% render 'components/search_input.html'
+            op: op
+            type: contactType.name
+            hierarchy: hierarchy
+            data: data
+            required: hierarchy.required
+            prefix: "destination_"
         %}
       {% endfor %}
     </section>
