@@ -35,7 +35,7 @@ describe('lib/credentials-file.ts', () => {
     expect(actual).to.deep.eq([{
       filename: 'contacttype-name.csv',
       content: `friendly replacement,friendly PARENT,friendly GRANDPARENT,friendly,name,phone,role,username,password
-,Parent-name,,Place,contact,0712 344321,role,,
+,Parent-Name,,Place,contact,0712 344321,role,,
 `
     }]);
   });
@@ -61,7 +61,7 @@ describe('lib/credentials-file.ts', () => {
     expect(actual).to.deep.eq([{
       filename: 'contacttype-name.csv',
       content: `friendly replacement,friendly PARENT,friendly GRANDPARENT,friendly,name,phone,role,username,password
-,Parent-name,,Place,contact,,role,,
+,Parent-Name,,Place,contact,,role,,
 `
     }]);
   });
