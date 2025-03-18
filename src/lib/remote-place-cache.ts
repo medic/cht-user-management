@@ -25,22 +25,8 @@ export type RemotePlace = {
 
 export default class RemotePlaceCache {
   private static cache: NodeCache;
-  private static readonly CACHE_TTL = 3600;
+  private static readonly CACHE_TTL = 60 * 60 * 12;
   private static readonly CACHE_CHECK_PERIOD = 120;
-  
-  public static async getPlacesWithType(chtApi: ChtApi, contactType: ContactType, hierarchyLevel: HierarchyConstraint)
-    : Promise<RemotePlace[]> {
-    const { domain } = chtApi.chtSession.authInfo;
-    const placeType = hierarchyLevel.contact_type;
-    const cacheKey = this.getCacheKey(domain, placeType);
-  
-    let places = this.getCache().get<RemotePlace[]>(cacheKey);
-    if (!places) {
-      places = await this.getRemotePlaces(chtApi, contactType, hierarchyLevel);
-      this.getCache().set(cacheKey, places);
-    }
-    return places;
-  }
 
   private static getCache(): NodeCache {
     if (!this.cache) {
@@ -71,11 +57,15 @@ export default class RemotePlaceCache {
     const { domain } = chtApi.chtSession.authInfo;
     const placeType = place.type.name;
     const cacheKey = this.getCacheKey(domain, placeType);
-    
-    const places = this.getCache().get<RemotePlace[]>(cacheKey) || [];
-    
-    if (places.length === 0) {
-      places.push(place.asRemotePlace());
+
+    const places = this.getCache().get<RemotePlace[]>(cacheKey);
+    if (places) {
+      const existingIndex = places.findIndex(p => p.id === place.id);
+      if (existingIndex >= 0) {
+        places[existingIndex] = place.asRemotePlace();
+      } else {
+        places.push(place.asRemotePlace());
+      }
       this.getCache().set(cacheKey, places);
     }
   }
@@ -91,11 +81,7 @@ export default class RemotePlaceCache {
       // Clear all keys matching domain prefix
       const keys = this.getCache().keys();
       const domainPrefix = `${domain}:`;
-      keys.forEach(key => {
-        if (key.startsWith(domainPrefix)) {
-          this.getCache().del(key);
-        }
-      });
+      keys.filter(key => key.startsWith(domainPrefix)).forEach(key => this.getCache().del(key));
     } else {
       const cacheKey = this.getCacheKey(domain, contactTypeName);
       this.getCache().del(cacheKey);
@@ -151,12 +137,5 @@ export default class RemotePlaceCache {
     }
 
     return [];
-  }
-
-  // For testing purposes
-  public static hasData(domain: string, placeType: string): boolean {
-    const cacheKey = this.getCacheKey(domain, placeType);
-    
-    return !!this.getCache().get(cacheKey);
   }
 }

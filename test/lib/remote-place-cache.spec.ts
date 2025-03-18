@@ -23,6 +23,13 @@ describe('lib/remote-place-cache.ts', () => {
 
   const contactType = mockSimpleContactType('string', undefined);
 
+  function hasDataInCache(domain: string, placeType: string): boolean {
+    // Access private members for testing
+    const cache = (RemotePlaceCache as any).getCache();
+    const key = (RemotePlaceCache as any).getCacheKey(domain, placeType);
+    return !!cache.get(key);
+  }
+
   it('cache miss', async () => {
     const chtApi = mockChtApi([doc], [], [doc], []);
     await RemotePlaceCache.getRemotePlaces(chtApi, contactType);
@@ -35,7 +42,7 @@ describe('lib/remote-place-cache.ts', () => {
 
   it('cache hit', async () => {
     const chtApi = mockChtApi([doc]);
-    
+
     await RemotePlaceCache.getRemotePlaces(chtApi, contactType);
     expect(chtApi.getPlacesWithType.callCount).to.eq(2);
 
@@ -66,7 +73,7 @@ describe('lib/remote-place-cache.ts', () => {
     const contactType = mockSimpleContactType('string', undefined);
     const place = mockPlace(contactType, 'prop');
     const chtApi = mockChtApi([doc]);
-    
+
     const contactTypeAsHierarchyLevel: HierarchyConstraint = {
       contact_type: contactType.name,
       property_name: 'level',
@@ -77,7 +84,7 @@ describe('lib/remote-place-cache.ts', () => {
     };
     await RemotePlaceCache.getRemotePlaces(chtApi, contactType, contactTypeAsHierarchyLevel);
     RemotePlaceCache.add(place, chtApi);
-    
+
     chtApi.chtSession.authInfo.domain = 'http://other';
     RemotePlaceCache.clear(chtApi, 'other');
   });
@@ -113,11 +120,11 @@ describe('lib/remote-place-cache.ts', () => {
       required: true,
       level: 0,
     };
-    await RemotePlaceCache.getPlacesWithType(chtApi, contactType, contactTypeAsHierarchyLevel);
-    expect(RemotePlaceCache.hasData(domain, contactType.name)).to.be.true;
+    await RemotePlaceCache.getRemotePlaces(chtApi, contactType, contactTypeAsHierarchyLevel);
+    expect(hasDataInCache(domain, contactType.name)).to.be.true;
 
     // Clear domain
     RemotePlaceCache.clear(chtApi);
-    expect(RemotePlaceCache.hasData(domain, contactType.name)).to.be.false;
+    expect(hasDataInCache(domain, contactType.name)).to.be.false;
   });
 });
