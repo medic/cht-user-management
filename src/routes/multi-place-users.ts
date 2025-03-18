@@ -14,7 +14,7 @@ export default async function newHandler(fastify: FastifyInstance) {
     const sessionCache: SessionCache = req.sessionCache;
     
     const shared = {
-      hierarchy: Config.getHierarchyWithReplacement(contactType, 'desc'),
+      hierarchy: contactType.hierarchy,
       contactType,
       logo: Config.getLogoBase64(),
       show_place_form: false,
@@ -123,7 +123,7 @@ export default async function newHandler(fastify: FastifyInstance) {
       contactType: place.type,
       contact_id: place.contact.id,
       data,
-      hierarchy: Config.getHierarchyWithReplacement(place.type, 'desc')
+      hierarchy: place.type.hierarchy
     });
   });
 
@@ -151,7 +151,7 @@ export default async function newHandler(fastify: FastifyInstance) {
         contact_id: id,
         data: body,
         errors,
-        hierarchy: Config.getHierarchyWithReplacement(contactType, 'desc')
+        hierarchy: contactType.hierarchy
       });
     }
 
