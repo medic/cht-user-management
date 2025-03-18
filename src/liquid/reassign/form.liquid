@@ -1,13 +1,9 @@
-<div
-  class="is-flex is-flex-direction-column is-align-items-center"
-  id="form_reassign"
->
+<div id="form_reassign">
   <form
     hx-post="/reassign"
     autocomplete="off"
     hx-target="#form_reassign"
     hx-swap="outerHTML"
-    style="width: 38rem;"
   >
     <div>
       <h3 class="is-size-4">Reassign {{ contactType.friendly }}</h3>
@@ -15,9 +11,7 @@
     <p>{{ contactType.friendly }}</p>
     <input name="place_type" value="{{contactType.name}}" hidden>
 
-    <div class="p-2 mt-2" style="border-left: thick solid green;">
-      <p>Search and add a {{ contactType.friendly }} below</p>
-    </div>
+    <div class="notification is-primary is-light my-0 mt-1">Add the CHUs to reassign</div>
     <div class="p-2">
       <div>
         {% for hierarchy in hierarchy %}
@@ -28,11 +22,9 @@
             data: data
           %}
         {% endfor %}
-        <div>
-          {% if errors.part %}
-            <span class="has-text-danger has-text-weight-medium" style="font-size: 0.9rem;">* {{ errors.part }}</span>
-          {% endif %}
-        </div>
+        {% if errors.part %}
+          <div class="has-text-danger">* {{ errors.part }}</div>
+        {% endif %}
       </div>
       <div class="is-flex is-justify-content-end py-4">
         <button
@@ -51,8 +43,8 @@
 
     {% if places and places.length > 0 %}
       <div>
-        <div class="p-2 mb-4" style="border-left: thick solid green;">
-          <p>The following {{ contactType.friendly }}(s) are staged for reassignment. You can add more above</p>
+        <div class="notification mb-2">
+          The following {{ contactType.friendly }}(s) are staged for reassignment. You can add more above
         </div>
         {% for item in places %}
           <div
@@ -81,18 +73,16 @@
       </div>
     {% endif %}
 
-    <div class="p-2 mt-6 mb-2" style="border-left: thick solid green;">
-      <p>
-        Finally, search for the {{ contactType.contact_friendly }} on
-        <a
-          href="https://{{session.authInfo.domain}}/#/contacts"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          https://{{ session.authInfo.domain -}}
-        </a>
-        then copy and paste their link below
-      </p>
+    <div class="notification is-primary is-light mt-5">
+      Finally, search for the {{ contactType.contact_friendly }} on
+      <a
+        href="https://{{session.authInfo.domain}}/#/contacts"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        https://{{ session.authInfo.domain -}}
+      </a>
+      then copy and paste their link below
     </div>
     <p><strong>Assign to:</strong></p>
     <div class="p-2">
