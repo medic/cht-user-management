@@ -1,7 +1,6 @@
 import { Command } from 'commander';
 
 import { AuthenticationInfo, ContactType } from '../../src/config';
-import { createUserWithRetries } from '../../src/lib/retry-logic';
 import Place from '../../src/services/place';
 import RemotePlaceCache, { RemotePlace } from '../../src/lib/remote-place-cache';
 import { PropertyValues, UnvalidatedPropertyValue } from '../../src/property-value';
@@ -72,7 +71,7 @@ async function createUserManager(username: string, placeDocId: string, chtApi: t
   }
 
   console.log(`Creating user with payload: ${JSON.stringify(userPayload)}`);
-  await createUserWithRetries(userPayload, chtApi);
+  await userPayload.create(chtApi);
   return userPayload;
 }
 

@@ -1,20 +1,23 @@
 import * as crypto from 'crypto';
+
+import { ChtApi } from '../lib/cht-api';
 import Place from './place';
+import { createUserWithRetries } from '../lib/retry-logic';
 
 export class UserPayload {
   public password: string;
   public username: string;
-  public place: string;
+  public place: string[];
   public contact: string;
   public fullname: string;
   public phone: string;
   public roles: string[];
 
-  constructor(place: Place, placeId: string, contactId: string) {
+  constructor(place: Place, placeIds: string | string[], contactId: string) {
     this.username = place.generateUsername();
     this.password = this.generatePassword();
     this.roles = place.userRoles;
-    this.place = placeId;
+    this.place = Array.isArray(placeIds) ? placeIds : [placeIds];
     this.contact = contactId;
     this.fullname = place.contact.name;
     this.phone = place.contact.properties.phone?.formatted; // best guess
@@ -39,5 +42,9 @@ export class UserPayload {
     );
     const characters = Array(LENGTH).fill('').map(pickRandomCharacter);
     return characters.join('');
+  }
+
+  public create(chtApi: ChtApi) {
+    return createUserWithRetries(this, chtApi);
   }
 }
