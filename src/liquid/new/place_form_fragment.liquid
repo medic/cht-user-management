@@ -2,7 +2,7 @@
   id="place_fragment"
   class="mb-5"
 >
-  <p>Fill {{ contactType.friendly }} details</p>
+  <p>{{ contactType.friendly }} details</p>
   <div class="p-2">
     {% for prop in contactType.place_properties %}
       {%
@@ -12,7 +12,7 @@
         place_type=contactType.name
       %}
       {% if errors[prop.property_name] %}
-        <p class="mb-2" style="color: red;">{{ errors[prop.property_name] }}</p>
+        <div class="notification is-danger is-light">{{ errors[prop.property_name] }}</div>
       {% endif %}
     {% endfor %}
   </div>
@@ -22,7 +22,7 @@
       <button
         type="button"
         hx-get="/place_form?place_type={{contactType.name}}&action=cancel"
-        class="button is-small is-danger is-light mr-2"
+        class="button is-small mr-2"
         hx-target="#place_fragment"
         hx-swap="outerHTML"
       >

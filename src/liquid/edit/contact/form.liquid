@@ -3,14 +3,13 @@
   hx-target="this"
   hx-swap="outerHTML"
   hx-put="/contact/{{contact_id}}"
-  style="width: 38rem;"
 >
   <div>
     <h3 class="is-size-4">Edit {{ contactType.contact_friendly }}</h3>
   </div>
   <input name="place_type" value="{{contactType.name}}" hidden>
 
-  <p>Contact details</p>
+  <h5>Contact Details</h5>
   <div class="p-2">
     {% for hierarchy in hierarchy %}
       {% if hierarchy.level != 0 %}
@@ -34,7 +33,7 @@
     {% endfor %}
   </div>
   <div class="field is-grouped is-grouped-right p-2">
-    <a href="/" class="button is-small is-danger is-light mr-2">Cancel</a>
+    <a href="/" class="button is-small mr-2">Cancel</a>
     <button class="button is-small is-link">Save</button>
   </div>
 </form>

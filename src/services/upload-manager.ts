@@ -28,10 +28,11 @@ export class UploadManager extends EventEmitter {
 
     const independants = placesNeedingUpload.filter(p => !p.isDependant && !p.hasSharedUser);
     const dependants = placesNeedingUpload.filter(p => p.isDependant && !p.hasSharedUser);
+    const sharedUserPlaces = validPlaces.filter(p => p.hasSharedUser);
 
     await this.uploadPlacesInBatches(independants, chtApi);
     await this.uploadPlacesInBatches(dependants, chtApi);
-    await this.uploadGrouped(validPlaces.filter(p => p.hasSharedUser), chtApi);
+    await this.uploadGrouped(sharedUserPlaces, chtApi);
   };
 
   uploadGrouped =  async (places: Place[], api: ChtApi) => {

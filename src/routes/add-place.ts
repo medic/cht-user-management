@@ -143,7 +143,7 @@ export default async function addPlace(fastify: FastifyInstance) {
     RemotePlaceCache.clear(chtApi, place.type.name);
     let places = [];
     if (place.hasSharedUser) {
-      places = sessionCache.getPlaces({ type: place.type.name }).filter(p => p.contact.id === place.contact.id);
+      places = sessionCache.getPlaces({ type: place.type.name, contactId: place.contact.id });
     } else {
       places = [place];
     }
@@ -164,7 +164,7 @@ export default async function addPlace(fastify: FastifyInstance) {
     }
     let places = [];
     if (place.hasSharedUser) {
-      places = sessionCache.getPlaces({ type: place.type.name }).filter(p => p.contact.id === place.contact.id);
+      places = sessionCache.getPlaces({ type: place.type.name, contactId: place.contact.id });
     } else {
       places = [place];
     }

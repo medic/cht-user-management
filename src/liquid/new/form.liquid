@@ -1,4 +1,4 @@
-<div id="create_form_parent" class="is-flex is-flex-direction-column is-align-items-center">
+<div id="create_form_parent">
   <form
     autocomplete="off"
     hx-target="#create_form_parent"
@@ -8,7 +8,6 @@
     {% else %}
       hx-post="/new?place_type={{contactType.name}}"
     {% endif %}
-    style="width: 38rem;"
   >
     <div>
       {% if contact_id %}
@@ -19,7 +18,7 @@
     </div>
     <input name="place_type" value="{{contactType.name}}" hidden>
 
-    <p>Contact details</p>
+    <h5>Contact Details</h5>
     <div class="p-2">
       {% for hierarchy in hierarchy %}
         {% if hierarchy.level != 0 %}
@@ -42,14 +41,12 @@
       {% endfor %}
     </div>
 
-    <div class="p-2 mt-4 mb-2" style="border-left: thick solid green;">
-      <p>
+    <div class="notification is-primary is-light">
         Click on the <span style="font-weight: bold;">+ Add</span> button below to add all the
         {{ contactType.friendly }}(s) that you want to assign to this user
-      </p>
     </div>
 
-    <div id="place_new_parent" class="mt-2">
+    <div id="place_new_parent">
       {% if show_place_form %}
         {% render 'new/place_form_fragment.liquid', contactType: contactType, data: data %}
       {% else %}
@@ -62,15 +59,15 @@
         class="button is-small"
         type="button"
         {% if show_place_form %}
-          hx-post="/new?place_type={{contactType.name}}&contact={{contact_id}}&cont=1"
+          hx-post="/new?place_type={{contactType.name}}&contact={{contact_id}}&another=1"
         {% else %}
-          hx-post="/new?place_type={{contactType.name}}&cont=1"
+          hx-post="/new?place_type={{contactType.name}}&another=1"
         {% endif %}
       >
         Save and create another
       </button>
       <div class="control">
-        <a href="/" class="button is-small is-danger is-light">Cancel</a>
+        <a href="/" class="button is-small">Cancel</a>
         <button class="button is-small is-link">Save</button>
       </div>
     </div>

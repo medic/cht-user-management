@@ -21,7 +21,7 @@ export default async function newHandler(fastify: FastifyInstance) {
     };
 
     if (contact) {
-      const placeData = sessionCache.getPlaces({ type: contactType.name }).find(p => p.contact.id === contact)?.asFormData('hierarchy_');
+      const placeData = sessionCache.getPlaces({ type: contactType.name, contactId: contact }).find(p => p !== undefined)?.asFormData('hierarchy_');
       const placeFormData = {} as any;
       Object.keys(placeData).filter(k => k.startsWith('contact_') || k.startsWith('hierarchy_') ).forEach(k => placeFormData[k]= placeData[k]);
       const data = {
@@ -38,7 +38,7 @@ export default async function newHandler(fastify: FastifyInstance) {
   });
 
   fastify.post('/new', async (req, resp) => {
-    const { place_type, contact, cont } = req.query as any;
+    const { place_type, contact, another } = req.query as any;
 
     const contactType = Config.getContactType(place_type);
     const chtApi = new ChtApi(req.chtSession);
@@ -46,7 +46,7 @@ export default async function newHandler(fastify: FastifyInstance) {
     
     await PlaceFactory.createManyWithSingleUser(req.body as {[key:string]:string}, contactType, sessionCache, chtApi, contact);
     
-    if (cont) {
+    if (another) {
       resp.header('HX-Redirect', `/new?place_type=${place_type}`);
     } else {
       resp.header('HX-Redirect', `/`); 
@@ -101,7 +101,7 @@ export default async function newHandler(fastify: FastifyInstance) {
   fastify.get('/new/table', async (req, resp) => {
     const { contact } = req.query as any;
     const sessionCache: SessionCache = req.sessionCache;
-    const places = sessionCache.getPlaces().filter(p => p.contact.id === contact);
+    const places = sessionCache.getPlaces({ contactId: contact });
     return resp.view('src/liquid/new/place_list.liquid', {
       contactType: places[0].type,
       places,
@@ -112,7 +112,7 @@ export default async function newHandler(fastify: FastifyInstance) {
   fastify.get('/edit/contact/:id', async (req, resp) => {
     const { id } =  req.params as any;
     const sessionCache: SessionCache = req.sessionCache;
-    const place = sessionCache.getPlaces().find(p => p.contact.id === id);
+    const place = sessionCache.getPlaces({contactId: id}).find(p => p !== undefined);
     if (!place) {
       throw new Error('could not find place');
     }
@@ -157,7 +157,7 @@ export default async function newHandler(fastify: FastifyInstance) {
 
     const sessionCache: SessionCache = req.sessionCache;
     const chtApi = new ChtApi(req.chtSession);
-    const places = sessionCache.getPlaces({ type: body.place_type }).filter(p => p.contact.id === id);
+    const places = sessionCache.getPlaces({ type: body.place_type, contactId: id });
     for (let i = 0; i < places.length; i++) {
       const place = places[i];
       const placeData = { ...place.asFormData('hierarchy_'), ...body };
