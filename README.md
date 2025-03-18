@@ -48,7 +48,7 @@ To use the User Management Tool with your CHT project, you'll need to create a n
 `contact_types.contact_properties` | Array<ConfigProperty> | Defines the attributes which are collected and set on the user's primary contact doc. See [ConfigProperty](#ConfigProperty).
 `contact_types.deactivate_users_on_replace` | boolean | Controls what should happen to the defunct contact and user documents when a user is replaced. When `false`, the contact and user account will be deleted. When `true`, the contact will be unaltered and the user account will be assigned the role `deactivated`. This allows for account restoration.
 `contact_types.hint` | string | Provide a brief hint or description to clarify the expected input for the property.
-`contact_types.superset_properties` | Object | Configuration for [Superset integration](#superset-configuration).
+`contact_types.superset_properties` | Object | Configuration for [Superset integration](#superset-configuration). Optional - if not provided, Superset integration is disabled for this contact type. When provided, enables runtime control of Superset integration through forms or CSV uploads.
 `logoBase64` | Image in base64 | Logo image for your project
 
 #### ConfigProperty
@@ -142,7 +142,29 @@ The `superset_properties` object in a contact type enables Superset integration:
 }
 ```
 
-##### Superset Upload Upload Process
+##### Superset Integration Requirements
+
+1. **Configuration Level (Contact Type Setting)**:
+   - The `superset` property in the contact type configuration determines if Superset integration is available
+   - If not set in the configuration, Superset integration is completely disabled for that contact type
+   - When set in the configuration, it enables the option to create Superset accounts during user creation
+
+2. **Runtime Control (Per-User Setting)**:
+   - Only available if Superset is configured for the contact type
+   - Controls whether a Superset account is created for each specific user
+   - Can be controlled through:
+     - A dropdown in the web interface form when creating/editing places
+     - The `superset_config` column in CSV uploads (values: "enable" or "disable")
+   - Effects when enabled for a user:
+     - Email becomes a required field for the contact
+     - A Superset account is created during upload
+     - Role and permissions are set up in Superset
+   - Effects when disabled for a user:
+     - Email is optional
+     - No Superset account or resources are created
+     - User only gets CHT access
+
+##### Superset Upload Process
 
 When Superset integration is enabled for a place:
 
@@ -240,7 +262,7 @@ Variable | Description | Sample
 
 ### Superset Environment Variables
 
-For each configuration (e.g., `chis-ke`, `chis-tg`), the following environment variables are required for Superset integration:
+For each configuration (e.g., `chis-ke`, `chis-tg`), the following environment variables are required for Superset integration. Since these contain sensitive credentials, for production deployments they should be managed using SOPS as described in the [Managing Additional Secrets](scripts/deploy/medic-deploy.md#managing-additionnal-secrets) section of the deployment documentation:
 
 Variable | Description | Sample
 -- | -- | --

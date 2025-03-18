@@ -111,7 +111,7 @@
           "disable": "Disable",
           "enable": "Enable"
         },
-        "required": false,
+        "required": true,
         "hint": "Enable to use the superset integration",
         "prefix": "SN",
         "role_template": "16",

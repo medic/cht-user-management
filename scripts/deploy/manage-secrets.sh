@@ -11,22 +11,29 @@ RED='\033[0;31m'
 YELLOW='\033[0;33m'
 NC='\033[0m'
 
-# Check for required tools and install if missing
-check_and_install_tools() {
+# Check if running from project root
+check_project_root() {
+    if [ ! -d "src" ]; then
+        echo -e "${RED}Error: Please run this script from the project root directory${NC}"
+        echo -e "${YELLOW}Current directory: $(pwd)${NC}"
+        exit 1
+    fi
+}
+
+# Check for required tools
+check_for_tools() {
     if ! command -v age-keygen &> /dev/null; then
-        echo -e "${RED}age-keygen not found. Installing...${NC}"
-        brew install age || sudo apt-get install age || {
-            echo -e "${RED}Failed to install age. Please install it manually.${NC}"
-            exit 1
-        }
+        echo -e "${RED}age-keygen not found. Please install before proceeding${NC}"
+        echo -e "${YELLOW}Installation instructions:${NC}"
+        echo -e "  See: https://github.com/FiloSottile/age#installation"
+        exit 1
     fi
 
     if ! command -v sops &> /dev/null; then
-        echo -e "${RED}sops not found. Installing...${NC}"
-        brew install sops || sudo apt-get install sops || {
-            echo -e "${RED}Failed to install sops. Please install it manually.${NC}"
-            exit 1
-        }
+        echo -e "${RED}sops not found. Please install before proceeding${NC}"
+        echo -e "${YELLOW}Installation instructions:${NC}"
+        echo -e "  See: https://github.com/getsops/sops#installation"
+        exit 1
     fi
 }
 
@@ -37,12 +44,16 @@ init_sops_key() {
         age-keygen -o "$AGE_KEY_FILE"
         echo -e "${GREEN}Created new SOPS key. Keep $AGE_KEY_FILE safe and never commit it!${NC}"
     else
-        echo -e "${BLUE}SOPS key already exists.${NC}"
+        echo -e "${BLUE}SOPS key already exists at ${AGE_KEY_FILE}, skipping creation.${NC}"
     fi
 }
 
 # Get available configs from CONFIG_MAP
 get_available_configs() {
+    if [ ! -f "src/config/config-factory.ts" ]; then
+        echo -e "${RED}Error: config-factory.ts not found. Are you in the project root?${NC}"
+        exit 1
+    fi
     grep -o "'CHIS-[A-Z][A-Z]':" src/config/config-factory.ts | tr -d "'" | tr -d ':' | tr '[:upper:]' '[:lower:]'
 }
 
@@ -52,12 +63,22 @@ create_secret() {
     local secret_file="${SECRETS_DIR}/users-${config}-secrets.yaml"
     local env_prefix=$(echo "$config" | tr '[:lower:]' '[:upper:]' | tr '-' '_')
     
+    # Check if key exists and is valid
+    if [ ! -f "$AGE_KEY_FILE" ]; then
+        echo -e "${RED}Error: SOPS key not found. Please run 'Initialize SOPS key' first.${NC}"
+        exit 1
+    fi
+
+    # Validate key format
+    if ! grep -q "AGE-SECRET-KEY" "$AGE_KEY_FILE"; then
+        echo -e "${RED}Error: Invalid SOPS key format in $AGE_KEY_FILE${NC}"
+        exit 1
+    fi
+    
     mkdir -p "$SECRETS_DIR"
     
-    # Create temporary file for building secrets
-    local tmp_file="${secret_file}.tmp"
-    echo "cht-user-management:" > "$tmp_file"
-    echo "  env:" >> "$tmp_file"
+    # Build secrets in memory
+    local secrets_content="cht-user-management:\n  env:"
     
     # Keep adding variables until user is done
     while true; do
@@ -75,16 +96,15 @@ create_secret() {
             read VAR_VALUE
         fi
         
-        echo "    ${env_prefix}_${VAR_NAME}: \"${VAR_VALUE}\"" >> "$tmp_file"
+        secrets_content+="\n    ${env_prefix}_${VAR_NAME}: \"${VAR_VALUE}\""
         echo -e "${GREEN}✓ Added ${env_prefix}_${VAR_NAME}${NC}\n"
     done
 
-    # Encrypt and cleanup
-    SOPS_AGE_KEY_FILE="$AGE_KEY_FILE" sops --encrypt \
+    # Write directly to encrypted file
+    echo -e "$secrets_content" | SOPS_AGE_KEY_FILE="$AGE_KEY_FILE" sops --encrypt \
         --input-type yaml \
         --output-type yaml \
-        "$tmp_file" > "$secret_file"
-    rm "$tmp_file"
+        /dev/stdin > "$secret_file"
     
     echo -e "${GREEN}Secrets encrypted in $secret_file${NC}"
 }
@@ -96,6 +116,18 @@ decrypt_secret() {
     
     if [ ! -f "$secret_file" ]; then
         echo -e "${RED}Secret file for ${config} does not exist.${NC}"
+        exit 1
+    fi
+
+    # Check if key exists and is valid
+    if [ ! -f "$AGE_KEY_FILE" ]; then
+        echo -e "${RED}Error: SOPS key not found. Please run 'Initialize SOPS key' first.${NC}"
+        exit 1
+    fi
+
+    # Validate key format
+    if ! grep -q "AGE-SECRET-KEY" "$AGE_KEY_FILE"; then
+        echo -e "${RED}Error: Invalid SOPS key format in $AGE_KEY_FILE${NC}"
         exit 1
     fi
 
@@ -112,6 +144,11 @@ select_config() {
     
     # Get configs without removing 'chis-' prefix
     configs=($(get_available_configs))
+    
+    if [ ${#configs[@]} -eq 0 ]; then
+        echo -e "${RED}No configurations found. Are you in the project root?${NC}"
+        exit 1
+    fi
     
     select config in "${configs[@]}" "quit"; do
         case $config in
@@ -132,7 +169,8 @@ select_config() {
 }
 
 # Main script
-check_and_install_tools
+check_project_root
+check_for_tools
 
 if [ "$1" ] && [ "$2" ]; then
     # Non-interactive mode
