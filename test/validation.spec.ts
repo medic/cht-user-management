@@ -13,7 +13,6 @@ type Scenario = {
   formatted?: string;
   propertyErrorDescription?: string;
   error?: string;
-  friendly_country_name?: string;
 };
 
 const EMAIL_REGEX = '^[a-zA-Z0-9._+-]+@[a-zA-Z0-9.-]+.[a-zA-Z]{2,}$';
@@ -34,15 +33,6 @@ const scenarios: Scenario[] = [
   { type: 'phone', prop: '712345678', isValid: true, formatted: '0712 345678', propertyParameter: 'KE' },
   { type: 'phone', prop: '+254712345678', isValid: false, formatted: '0712 345678', propertyParameter: 'UG', error: 'Not a valid' },
   { type: 'phone', prop: '+17058772274', isValid: false, formatted: '(705) 877-2274', propertyParameter: 'KE', error: 'KE' },
-  {
-    type: 'phone',
-    prop: '+17058772274',
-    isValid: false,
-    formatted: '(705) 877-2274',
-    propertyParameter: 'KE',
-    friendly_country_name: 'Kenya',
-    error: 'Kenya'
-  },
   
   { type: 'regex', prop: undefined, isValid: false, error: 'Required' },
   { type: 'regex', propertyParameter: '^\\d{6}$', prop: '123456', isValid: true },
@@ -106,12 +96,7 @@ const scenarios: Scenario[] = [
 describe('validation', () => {
   for (const scenario of scenarios) {
     it(`scenario: ${JSON.stringify(scenario)}`, () => {
-      const contactType = mockSimpleContactType(
-        scenario.type,
-        scenario.propertyParameter,
-        scenario.propertyErrorDescription,
-        { friendly_country_name: scenario.friendly_country_name }
-      );
+      const contactType = mockSimpleContactType(scenario.type, scenario.propertyParameter, scenario.propertyErrorDescription);
       contactType.contact_properties = [contactType.place_properties[0]];
       const place = mockPlace(contactType, { place_prop: scenario.prop });
 
