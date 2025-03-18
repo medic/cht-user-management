@@ -52,7 +52,6 @@ export type ContactProperty = {
   type: ContactPropertyType;
   required: boolean;
   parameter? : string | string[] | object;
-  friendly_country_name?: string;
   errorDescription? : string;
   unique?: string;
 };
