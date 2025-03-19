@@ -1,6 +1,6 @@
 import _ from 'lodash';
 import { ChtApi, PlacePayload } from '../lib/cht-api';
-import getConfigByKey from './config-factory';
+import ConfigFactory from './config-factory';
 import Validation from '../validation';
 
 export type ConfigSystem = {
@@ -31,17 +31,16 @@ export type ContactType = {
 };
 
 const KnownContactPropertyTypes = [...Validation.getKnownContactPropertyTypes()] as const;
-export type ContactPropertyType = typeof KnownContactPropertyTypes[number]; 
+export type ContactPropertyType = typeof KnownContactPropertyTypes[number];
 
 export type HierarchyConstraint = {
   friendly_name: string;
   property_name: string;
   type: ContactPropertyType;
   required: boolean;
-  parameter? : string | string[] | object;
-  errorDescription? : string;
+  parameter?: string | string[] | object;
+  errorDescription?: string;
   unique?: string;
-  
   contact_type: string;
   level: number;
 };
@@ -51,8 +50,8 @@ export type ContactProperty = {
   property_name: string;
   type: ContactPropertyType;
   required: boolean;
-  parameter? : string | string[] | object;
-  errorDescription? : string;
+  parameter?: string | string[] | object;
+  errorDescription?: string;
   unique?: string;
 };
 
@@ -70,17 +69,16 @@ const {
   CHT_DEV_HTTP
 } = process.env;
 
-const partnerConfig = getConfigByKey(CONFIG_NAME);
-const { config } = partnerConfig;
-
 export class Config {
-  private constructor() {}
+  private constructor() { }
 
   public static contactTypes(): ContactType[] {
+    const { config } = ConfigFactory.getConfigFactory().loadConfig(CONFIG_NAME);
     return config.contact_types;
   }
 
-  public static getContactType(name: string) : ContactType {
+  public static getContactType(name: string): ContactType {
+    const { config } = ConfigFactory.getConfigFactory().loadConfig(CONFIG_NAME);
     const contactMatch = config.contact_types.find(c => c.name === name);
     if (!contactMatch) {
       throw new Error(`unrecognized contact type: "${name}"`);
@@ -97,10 +95,10 @@ export class Config {
     return parentMatch;
   }
 
-  public static getHierarchyWithReplacement(contactType: ContactType, sortBy: 'asc'|'desc' = 'asc'): HierarchyConstraint[] {
+  public static getHierarchyWithReplacement(contactType: ContactType, sortBy: 'asc' | 'desc' = 'asc'): HierarchyConstraint[] {
     const replacementAsHierarchy: HierarchyConstraint = {
       ...contactType.replacement_property,
-      
+
       property_name: 'replacement',
       contact_type: contactType.name,
       level: 0,
@@ -137,22 +135,31 @@ export class Config {
   }
 
   public static async mutate(payload: PlacePayload, chtApi: ChtApi, isReplacement: boolean): Promise<PlacePayload | undefined> {
+    const partnerConfig = ConfigFactory.getConfigFactory().loadConfig(CONFIG_NAME);
     return partnerConfig.mutate && partnerConfig.mutate(payload, chtApi, isReplacement);
   }
 
-  public static getAuthenticationInfo(domain: string) : AuthenticationInfo {
-    const domainMatch = Config.getDomains().find(c => c.domain === domain);
+  public static getAuthenticationInfo(domain: string): AuthenticationInfo {
+    const availableDomains = Config.getDomains();
+
+    //allow overriding default configuration
+    if (this.isDefaultConfig()) {
+      return { domain, friendly: '' };
+    }
+
+    const domainMatch = availableDomains.find(c => c.domain === domain);
     if (!domainMatch) {
       throw new Error(`unrecognized domain: "${domain}"`);
     }
     return domainMatch;
   }
 
-  public static getLogoBase64() : string {
+  public static getLogoBase64(): string {
+    const { config } = ConfigFactory.getConfigFactory().loadConfig(CONFIG_NAME);
     return config.logoBase64;
   }
 
-  public static getPropertyWithName(properties: ContactProperty[], name: string) : ContactProperty {
+  public static getPropertyWithName(properties: ContactProperty[], name: string): ContactProperty {
     const property = properties.find(prop => prop.property_name === name);
     if (!property) {
       throw Error(`unable to find property_name:"${name}"`);
@@ -175,7 +182,8 @@ export class Config {
     ];
   }
 
-  public static getDomains() : AuthenticationInfo[] {
+  public static getDomains(): AuthenticationInfo[] {
+    const { config } = ConfigFactory.getConfigFactory().loadConfig(CONFIG_NAME);
     const domains = [...config.domains];
 
     // because all .env vars imported as strings, let's get the AuthenticationInfo object a boolean
@@ -196,14 +204,37 @@ export class Config {
   }
 
   public static getUniqueProperties(contactTypeName: string): ContactProperty[] {
+    const { config } = ConfigFactory.getConfigFactory().loadConfig(CONFIG_NAME);
     const contactMatch = config.contact_types.find(c => c.name === contactTypeName);
     const uniqueProperties = contactMatch?.place_properties.filter(prop => prop.unique);
     return uniqueProperties || [];
   }
 
+  public static isDefaultConfig(): boolean {
+    const { config } = ConfigFactory.getConfigFactory().loadConfig(CONFIG_NAME);
+    return config.domains.some(c => c.domain === 'default-configuration-domain');
+  }
+
   // TODO: Joi? Chai?
-  public static assertValid({ config }: PartnerConfig = partnerConfig) {
-    for (const contactType of config.contact_types) {
+  public static assertValid(config?: PartnerConfig) {
+    const { config: assertionConfig } = config || ConfigFactory.getConfigFactory().loadConfig(CONFIG_NAME);
+
+    if (!assertionConfig.domains || assertionConfig.domains.length === 0) {
+      throw Error(`invalid configuration: 'domains' property is empty`);
+    }
+
+    const availableDomains = Config.getDomains();
+    const newConfigHasExistingDomain = _.some(availableDomains,
+      existingDomain => _.some(assertionConfig.domains, newDomain => _.isMatch(existingDomain, newDomain)));
+    if (!this.isDefaultConfig() && !newConfigHasExistingDomain) {
+      throw Error(`Invalid configuration: 'domains' property doesn't contains any existing domain`);
+    }
+
+    if (!assertionConfig.contact_types || assertionConfig.contact_types.length === 0) {
+      throw Error(`invalid configuration: 'contact_types' property is empty`);
+    }
+
+    for (const contactType of assertionConfig.contact_types) {
       const allHierarchyProperties = [...contactType.hierarchy, contactType.replacement_property];
       const allProperties = [
         ...contactType.place_properties,
@@ -211,7 +242,7 @@ export class Config {
         ...allHierarchyProperties,
         Config.getUserRoleConfig(contactType),
       ];
-      
+
       Config.getPropertyWithName(contactType.place_properties, 'name');
       Config.getPropertyWithName(contactType.contact_properties, 'name');
 
