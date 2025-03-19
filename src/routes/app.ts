@@ -49,7 +49,7 @@ export default async function sessionCache(fastify: FastifyInstance) {
     const placeData = contactTypes.map((item) => {
       return {
         ...item,
-        places: sessionCache.getPlaces({
+        places: sessionCache.getPlacesForDisplay({
           type: item.name,
           filter: directiveModel.filter,
         }),

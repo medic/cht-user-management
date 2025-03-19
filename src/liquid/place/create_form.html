@@ -7,11 +7,11 @@ hx-target="this" hx-swap="outerHTML">
     {% for hierarchy in hierarchy %}
       {% if hierarchy.level != 0 or op == 'replace' or place.hierarchyProperties.replacement.original %}
         {%
-          include "components/search_input.html"
-            type=contactType.name
-            hierarchy=hierarchy
-            prefix="hierarchy_"
-            data=data
+          render "components/search_input.html",
+            type: contactType.name,
+            hierarchy: hierarchy,
+            prefix: "hierarchy_",
+            data: data
         %}
       {% endif %}
     {% endfor %}
