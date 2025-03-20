@@ -127,17 +127,17 @@ If you don't have redis running locally, you can start it with:
 docker compose -f docker-compose.redis.yml up -d
 ```
 
-Then run:
+Run these two commands  first to ensure the `./dist` folder is properly populated  and all required packages are installed:
 
-```
-npm run dev
-```
-
-or
-
-```
+```shell
+npm ci
 npm run build
-npm start
+```
+
+Then run this to start a local dev instance and reload the app when it sees changes to local files:
+
+```shell
+npm run dev
 ```
 
 ### Docker with static code
