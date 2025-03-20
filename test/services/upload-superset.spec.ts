@@ -17,10 +17,10 @@ describe('services/upload-superset.ts', () => {
 
   beforeEach(() => {
     supersetApi = {
-      createRole: sinon.stub().resolves('new-role-id') as unknown as SupersetApi['createRole'],
-      getPermissionsByRoleID: sinon.stub().resolves(['permission1', 'permission2']) as unknown as SupersetApi['getPermissionsByRoleID'],
+      createRole: sinon.stub().resolves(123) as unknown as SupersetApi['createRole'],
+      getPermissionsByRoleID: sinon.stub().resolves([1, 2]) as unknown as SupersetApi['getPermissionsByRoleID'],
       assignPermissionsToRole: sinon.stub().resolves() as unknown as SupersetApi['assignPermissionsToRole'],
-      getTablesByRlsID: sinon.stub().resolves([{ id: 'table1' }]) as unknown as SupersetApi['getTablesByRlsID'],
+      getTablesByRlsID: sinon.stub().resolves([{ id: 456 }]) as unknown as SupersetApi['getTablesByRlsID'],
       createRowLevelSecurityFromTemplate: sinon.stub().resolves() as unknown as SupersetApi['createRowLevelSecurityFromTemplate'],
       createUser: sinon.stub().resolves() as unknown as SupersetApi['createUser']
     } as SupersetApi;
@@ -40,25 +40,25 @@ describe('services/upload-superset.ts', () => {
     await uploadSuperset.handlePlace(mockPlace);
 
     sinon.assert.calledWith(supersetApi.createRole as sinon.SinonStub, 'CHU', 'Test Place');
-    sinon.assert.calledWith(supersetApi.getPermissionsByRoleID as sinon.SinonStub, 'cha_role');
+    sinon.assert.calledWith(supersetApi.getPermissionsByRoleID as sinon.SinonStub, 16); // role_template is "16" from the mockSupersetContactType
     sinon.assert.calledWith(
       supersetApi.assignPermissionsToRole as sinon.SinonStub,
-      'new-role-id',
-      ['permission1', 'permission2']
+      123,
+      [1, 2]
     );
   });
 
   it('should set up row-level security', async () => {
     await uploadSuperset.handlePlace(mockPlace);
 
-    sinon.assert.calledWith(supersetApi.getTablesByRlsID as sinon.SinonStub, 'cha_rls');
+    sinon.assert.calledWith(supersetApi.getTablesByRlsID as sinon.SinonStub, 6); // rls_template is "6" from the mockSupersetContactType
     sinon.assert.calledWith(
       supersetApi.createRowLevelSecurityFromTemplate as sinon.SinonStub,
-      'new-role-id',
+      123,
       'Test Place',
       'chu_name',
       'CHU',
-      ['table1']
+      [456]
     );
   });
 
@@ -71,7 +71,7 @@ describe('services/upload-superset.ts', () => {
       username: 'test_contact',
       password: 'password',
       email: 'test@example.com',
-      roles: ['new-role-id']
+      roles: [123]
     });
   });
 

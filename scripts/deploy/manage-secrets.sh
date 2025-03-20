@@ -1,8 +1,15 @@
 #!/bin/bash
 
+# SOPS uses a public/private key pair for encryption: the public key in .sops.yaml is used for encryption and should be committed to the repository, while the private key in key.txt is used for decryption and must be kept private.
+# The .sops.yaml file contains encryption rules and the public key, allowing anyone to encrypt files, but only those with the private key can decrypt them.
+# The SOPS_AGE_KEY_FILE environment variable points to the private key file, enabling decryption of the secrets.
+
+set -e
+
 # Constants
 SECRETS_DIR="./scripts/deploy/secrets"
-AGE_KEY_FILE="key.txt"  # The private key file
+AGE_KEY_FILE="${SECRETS_DIR}/key.txt"    # The private key file
+SOPS_KEY_FILE="${SECRETS_DIR}/.sops.yaml"  # SOPS configuration file
 
 # Colors for better UX
 GREEN='\033[0;32m'
@@ -37,32 +44,8 @@ check_for_tools() {
     fi
 }
 
-# Initialize SOPS key if not exists
-init_sops_key() {
-    if [ ! -f "$AGE_KEY_FILE" ]; then
-        # Generate a new age key pair
-        age-keygen -o "$AGE_KEY_FILE"
-        echo -e "${GREEN}Created new SOPS key. Keep $AGE_KEY_FILE safe and never commit it!${NC}"
-    else
-        echo -e "${BLUE}SOPS key already exists at ${AGE_KEY_FILE}, skipping creation.${NC}"
-    fi
-}
-
-# Get available configs from CONFIG_MAP
-get_available_configs() {
-    if [ ! -f "src/config/config-factory.ts" ]; then
-        echo -e "${RED}Error: config-factory.ts not found. Are you in the project root?${NC}"
-        exit 1
-    fi
-    grep -o "'CHIS-[A-Z][A-Z]':" src/config/config-factory.ts | tr -d "'" | tr -d ':' | tr '[:upper:]' '[:lower:]'
-}
-
-# Create or update a secret
-create_secret() {
-    local config=$1  # e.g., "chis-tg", "chis-ke", etc.
-    local secret_file="${SECRETS_DIR}/users-${config}-secrets.yaml"
-    local env_prefix=$(echo "$config" | tr '[:lower:]' '[:upper:]' | tr '-' '_')
-    
+# Check for required SOPS files
+check_required_files() {
     # Check if key exists and is valid
     if [ ! -f "$AGE_KEY_FILE" ]; then
         echo -e "${RED}Error: SOPS key not found. Please run 'Initialize SOPS key' first.${NC}"
@@ -75,6 +58,51 @@ create_secret() {
         exit 1
     fi
     
+    # Check if .sops.yaml exists
+    if [ ! -f "$SOPS_KEY_FILE" ]; then
+        echo -e "${RED}Error: SOPS config not found at $SOPS_KEY_FILE${NC}"
+        echo -e "${YELLOW}Please run 'Initialize SOPS key' first to create the config.${NC}"
+        exit 1
+    fi
+}
+
+# Initialize SOPS key if not exists
+init_sops_key() {
+    mkdir -p "$SECRETS_DIR"
+    
+    # Generate key if it doesn't exist
+    if [ ! -f "$AGE_KEY_FILE" ]; then
+        # Generate a new age key pair
+        age-keygen -o "$AGE_KEY_FILE"
+        # Extract public key and create SOPS config
+        PUBLIC_KEY=$(age-keygen -y "$AGE_KEY_FILE")
+        cat > "$SOPS_KEY_FILE" << EOF
+creation_rules:
+    - age: $PUBLIC_KEY
+EOF
+        echo -e "${GREEN}Created new SOPS key. Keep $AGE_KEY_FILE safe and never commit it!${NC}"
+        echo -e "${GREEN}Created $SOPS_KEY_FILE with your public key${NC}"
+    else
+        echo -e "${BLUE}SOPS key already exists at ${AGE_KEY_FILE}, skipping creation.${NC}"
+    fi
+}
+
+# Get available configs from CONFIG_MAP
+get_available_configs() {
+    if [ ! -f "src/config/config-factory.ts" ]; then
+        echo -e "${RED}Error: config-factory.ts not found. Are you in the project root?${NC}"
+        exit 1
+    fi
+    grep -o -E "'CHIS-[A-Z]+':" src/config/config-factory.ts | cut -d"'" -f2 | tr '[:upper:]' '[:lower:]'
+}
+
+# Create or update a secret
+create_secret() {
+    local config=$1  # e.g., "chis-tg", "chis-ke", etc.
+    local secret_file="${SECRETS_DIR}/users-${config}-secrets.yaml"
+    local env_prefix=$(echo "$config" | tr '[:lower:]' '[:upper:]' | tr '-' '_')
+    
+    check_required_files
     mkdir -p "$SECRETS_DIR"
     
     # Build secrets in memory
@@ -101,7 +129,7 @@ create_secret() {
     done
 
     # Write directly to encrypted file
-    echo -e "$secrets_content" | SOPS_AGE_KEY_FILE="$AGE_KEY_FILE" sops --encrypt \
+    echo -e "$secrets_content" | SOPS_AGE_KEY_FILE="$AGE_KEY_FILE" sops --config "$SOPS_KEY_FILE" --encrypt \
         --input-type yaml \
         --output-type yaml \
         /dev/stdin > "$secret_file"
@@ -119,20 +147,10 @@ decrypt_secret() {
         exit 1
     fi
 
-    # Check if key exists and is valid
-    if [ ! -f "$AGE_KEY_FILE" ]; then
-        echo -e "${RED}Error: SOPS key not found. Please run 'Initialize SOPS key' first.${NC}"
-        exit 1
-    fi
-
-    # Validate key format
-    if ! grep -q "AGE-SECRET-KEY" "$AGE_KEY_FILE"; then
-        echo -e "${RED}Error: Invalid SOPS key format in $AGE_KEY_FILE${NC}"
-        exit 1
-    fi
+    check_required_files
 
     # Decrypt using --input-type and --output-type to preserve YAML structure
-    SOPS_AGE_KEY_FILE="$AGE_KEY_FILE" sops --decrypt \
+    SOPS_AGE_KEY_FILE="$AGE_KEY_FILE" sops --config "$SOPS_KEY_FILE" --decrypt \
         --input-type yaml \
         --output-type yaml \
         "$secret_file"
@@ -221,6 +239,11 @@ else
         4)
             echo "Exiting..."
             ;;
+        *)
+            echo "Invalid option. Exiting..."
+            ;;
+    esac
+fi
         *)
             echo "Invalid option. Exiting..."
             ;;

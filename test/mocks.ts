@@ -175,8 +175,8 @@ export function mockSupersetContactType(withEmail: boolean = true): ContactType 
       disable: 'Disable Superset Account Creation'
     },
     prefix: 'CHU',
-    role_template: 'cha_role',
-    rls_template: 'cha_rls',
+    role_template: 16,
+    rls_template: 6,
     rls_group_key: 'chu_name'
   };
   if (withEmail) {

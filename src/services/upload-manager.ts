@@ -135,6 +135,7 @@ export class UploadManager extends EventEmitter {
     }
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   private async uploadGroup(creationDetails: UserCreationDetails, places: Place[], api: ChtApi, supersetApi: SupersetApi) {
     if (!creationDetails.username || !creationDetails.placeId) {
       throw new Error('creationDetails must not be empty');

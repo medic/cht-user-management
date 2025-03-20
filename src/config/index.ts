@@ -80,8 +80,8 @@ export type SupersetConfig = {
   parameter?: SupersetModeParameter;
 
   prefix: string;
-  role_template: string;
-  rls_template: string;
+  role_template: number;
+  rls_template: number;
   rls_group_key: string;
 };
 

@@ -32,6 +32,20 @@ export class UploadSuperset {
     }
   }
 
+  async handleGroup(places: Place[], username: string, password: string) {
+    // Create roles for each place
+    const roles = await Promise.all(
+      places.map(async place => {
+        const role = await this.createRoleForPlace(place);
+        await this.setRlsForPlace(place);
+        return role;
+      })
+    );
+
+    // Create user with all roles
+    await this.createUser(username, password, roles);
+  }
+
   private validatePlaceForSuperset(place: Place) {
     if (!Config.getSupersetConfig(place.type)) {
       throw new Error(`Superset integration is not enabled for place: ${place.name}`);
@@ -53,7 +67,7 @@ export class UploadSuperset {
   /**
    * Creates a role and copies permissions from template
    */
-  private async createRoleWithPermissions(place: Place): Promise<string> {
+  private async createRoleWithPermissions(place: Place): Promise<number> {
     const supersetConfig = Config.getSupersetConfig(place.type)!;
     
     // Create new role
@@ -74,7 +88,7 @@ export class UploadSuperset {
   /**
    * Sets up row-level security for the role
    */
-  private async setupRowLevelSecurity(place: Place, roleId: string): Promise<void> {
+  private async setupRowLevelSecurity(place: Place, roleId: number): Promise<void> {
     const supersetConfig = Config.getSupersetConfig(place.type)!;
 
     // Get tables from template
@@ -98,7 +112,7 @@ export class UploadSuperset {
    */
   private async createUserWithRole(
     place: Place,
-    roleId: string
+    roleId: number
   ): Promise<{ username: string; password: string }> {
     const supersetUserPayload = SupersetUserPayloadBuilder.fromPlace(place, [roleId]);
     await this.supersetApi.createUser(supersetUserPayload);

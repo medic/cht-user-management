@@ -10,9 +10,9 @@ import SupersetSession from './superset-session';
 // Centralize API endpoints for better maintainability
 const ENDPOINTS = {
   ROLES: '/security/roles/',
-  PERMISSIONS: (roleId: string) => `/security/roles/${roleId}/permissions`,
+  PERMISSIONS: (roleId: number) => `/security/roles/${roleId}/permissions`,
   RLS: '/rowlevelsecurity/',
-  RLS_BY_ID: (rlsId: string) => `/rowlevelsecurity/${rlsId}`,
+  RLS_BY_ID: (rlsId: number) => `/rowlevelsecurity/${rlsId}`,
   USERS: '/security/users/',
 } as const;
 
@@ -25,17 +25,17 @@ export class SupersetApi {
    * @param roleName Base name for the role
    * @returns ID of the created role
    */
-  async createRole(prefix: string, roleName: string): Promise<string> {
+  async createRole(prefix: string, roleName: string): Promise<number> {
     try {
       const rolePayload: SupersetRole = {
-        name: `${prefix}_${roleName}`.replace(/\s+/g, '_').toUpperCase(),
+        name: `${prefix}_${roleName}`.replace(/\s+/g, '_'),
       };
 
       const response = await this.session.axiosInstance.post(
         ENDPOINTS.ROLES,
         rolePayload
       );
-      return response.data.id;
+      return Number(response.data.id);
     } catch (error) {
       throw this.handleError(error, `create role '${roleName}'`);
     }
@@ -46,12 +46,12 @@ export class SupersetApi {
    * @param roleId ID of the role
    * @returns Array of permission IDs
    */
-  async getPermissionsByRoleID(roleId: string): Promise<string[]> {
+  async getPermissionsByRoleID(roleId: number): Promise<number[]> {
     try {
       const response = await this.session.axiosInstance.get(
         `${ENDPOINTS.PERMISSIONS(roleId)}/`
       );
-      return response.data.result.map((permission: { id: string }) => permission.id);
+      return response.data.result.map((permission: { id: number }) => Number(permission.id));
     } catch (error) {
       throw this.handleError(error, `get permissions for role '${roleId}'`);
     }
@@ -62,7 +62,7 @@ export class SupersetApi {
    * @param roleId ID of the role
    * @param permissionIds Array of permission IDs to assign
    */
-  async assignPermissionsToRole(roleId: string, permissionIds: string[]): Promise<void> {
+  async assignPermissionsToRole(roleId: number, permissionIds: number[]): Promise<void> {
     try {
       await this.session.axiosInstance.post(
         ENDPOINTS.PERMISSIONS(roleId),
@@ -78,12 +78,15 @@ export class SupersetApi {
    * @param rlsId ID of the RLS rule
    * @returns Array of table information
    */
-  async getTablesByRlsID(rlsId: string): Promise<SupersetTable[]> {
+  async getTablesByRlsID(rlsId: number): Promise<SupersetTable[]> {
     try {
       const response = await this.session.axiosInstance.get(
         ENDPOINTS.RLS_BY_ID(rlsId)
       );
-      return response.data.result.tables;
+      return response.data.result.tables.map((table: any) => ({
+        ...table,
+        id: Number(table.id)
+      }));
     } catch (error) {
       throw this.handleError(error, `get tables for RLS '${rlsId}'`);
     }
@@ -98,18 +101,18 @@ export class SupersetApi {
    * @param tableIds Array of table IDs to apply RLS to
    */
   async createRowLevelSecurityFromTemplate(
-    roleId: string,
+    roleId: number,
     placeName: string,
     groupKey: string,
     prefix: string,
-    tableIds: string[]
+    tableIds: number[]
   ): Promise<void> {
     try {
       const rlsPayload: SupersetRls = {
         clause: `${groupKey}='${placeName}'`,
         filter_type: 'Regular',
         group_key: groupKey,
-        name: `${prefix}_${placeName}`.replace(/\s+/g, '_').toUpperCase(),
+        name: `${prefix}_${placeName}`.replace(/\s+/g, '_'),
         roles: [roleId],
         tables: tableIds,
       };

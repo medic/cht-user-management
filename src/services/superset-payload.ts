@@ -11,7 +11,7 @@ export interface SupersetUserPayload {
   email: string;
   username: string;
   password: string;
-  roles: string[];
+  roles: number[];
 }
 
 /**
@@ -30,15 +30,15 @@ export interface SupersetRls {
   filter_type: 'Regular' | 'Base';
   group_key: string;
   name: string;
-  roles: string[];
-  tables: string[];
+  roles: number[];
+  tables: number[];
 }
 
 /**
  * Table information from Superset API
  */
 export interface SupersetTable {
-  id: string;
+  id: number;
   name: string;
   schema: string;
 }
@@ -46,7 +46,7 @@ export interface SupersetTable {
 export class SupersetUserPayloadBuilder {
   public static fromPlace(
     place: Place,
-    roleIds: string[],
+    roleIds: number[],
   ): SupersetUserPayload {
     // Get username/password from place's creation details
     const { username, password } = place.creationDetails;
