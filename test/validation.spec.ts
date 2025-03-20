@@ -20,7 +20,7 @@ const GENDER_OPTIONS = { male: 'Male', female: 'Female' };
 const CANDIES_OPTIONS = { chocolate: 'Chocolate', strawberry: 'Strawberry' };
 
 const scenarios: Scenario[] = [
-  { type: 'string', prop: undefined, isValid: false, error: 'Required' },
+  { type: 'string', prop: undefined, isValid: false, error: 'Required', formatted: '' },
   { type: 'string', prop: 'abc', isValid: true },
   { type: 'string', prop: ' ab\nc', isValid: true, formatted: 'abc' },
   { type: 'string', prop: 'Mr.  Sand(m-a-n)', isValid: true, formatted: 'Mr. Sand(m-a-n)' },
@@ -28,13 +28,13 @@ const scenarios: Scenario[] = [
   { type: 'string', prop: `Infirmière d'Etat`, isValid: true, formatted: `Infirmière d'Etat` },
   { type: 'string', prop: '', isValid: false, formatted: '', error: 'Required' },
   
-  { type: 'phone', prop: undefined, isValid: false, error: 'Required' },
+  { type: 'phone', prop: undefined, isValid: false, error: 'Required', formatted: '' },
   { type: 'phone', prop: '+254712345678', isValid: true, formatted: '0712 345678', propertyParameter: 'KE' },
   { type: 'phone', prop: '712345678', isValid: true, formatted: '0712 345678', propertyParameter: 'KE' },
   { type: 'phone', prop: '+254712345678', isValid: false, formatted: '0712 345678', propertyParameter: 'UG', error: 'Not a valid' },
   { type: 'phone', prop: '+17058772274', isValid: false, formatted: '(705) 877-2274', propertyParameter: 'KE', error: 'KE' },
   
-  { type: 'regex', prop: undefined, isValid: false, error: 'Required' },
+  { type: 'regex', prop: undefined, isValid: false, error: 'Required', formatted: '' },
   { type: 'regex', propertyParameter: '^\\d{6}$', prop: '123456', isValid: true },
   { type: 'regex', propertyParameter: '^\\d{6}$', prop: ' 123456 *&%', isValid: true, formatted: '123456' },
   { type: 'regex', propertyParameter: '^\\d{6}$', prop: '1234567', isValid: false, error: 'six digit', propertyErrorDescription: 'six digit number' },
@@ -42,7 +42,7 @@ const scenarios: Scenario[] = [
   { type: 'regex', propertyParameter: EMAIL_REGEX, prop: '.com', isValid: false, propertyErrorDescription: 'valid email address', error: 'email' },
   { type: 'regex', propertyParameter: undefined, prop: 'abc', isValid: false, error: 'missing parameter' },
   
-  { type: 'name', prop: undefined, isValid: false, error: 'Required' },
+  { type: 'name', prop: undefined, isValid: false, error: 'Required', formatted: '' },
   { type: 'name', prop: 'abc', isValid: true, formatted: 'Abc' },
   { type: 'name', prop: 'a b c', isValid: true, formatted: 'A B C' },
   { type: 'name', prop: 'Mr.  Sand(m-a-n)', isValid: true, formatted: 'Mr Sand(M-A-N)' },
@@ -58,7 +58,7 @@ const scenarios: Scenario[] = [
   { type: 'name', prop: 'Robert xiv', isValid: true, formatted: 'Robert XIV' },
   { type: 'name', prop: ' ', isValid: true, formatted: '' },
 
-  { type: 'dob', prop: undefined, isValid: false, error: 'Required' },
+  { type: 'dob', prop: undefined, isValid: false, error: 'Required', formatted: '' },
   { type: 'dob', prop: '', isValid: false },
   { type: 'dob', prop: '2016/05/25', isValid: false },
   { type: 'dob', prop: 'May 25, 2016', isValid: false },
@@ -74,14 +74,14 @@ const scenarios: Scenario[] = [
   { type: 'dob', prop: '1/2/1 985', isValid: true, formatted: '1985-02-01' },
   { type: 'dob', prop: '1/13/1985', isValid: false },
   
-  { type: 'select_one', prop: undefined, isValid: false, error: 'Required' },
+  { type: 'select_one', prop: undefined, isValid: false, error: 'Required', formatted: '' },
   { type: 'select_one', prop: ' male', isValid: true, propertyParameter: GENDER_OPTIONS },
   { type: 'select_one', prop: 'female ', isValid: true, propertyParameter: GENDER_OPTIONS },
   { type: 'select_one', prop: 'FeMale ', isValid: false, propertyParameter: GENDER_OPTIONS },
   { type: 'select_one', prop: 'f', isValid: false, propertyParameter: GENDER_OPTIONS },
   { type: 'select_one', prop: '', isValid: false, propertyParameter: GENDER_OPTIONS },
 
-  { type: 'select_multiple', prop: undefined, isValid: false, error: 'Required' },
+  { type: 'select_multiple', prop: undefined, isValid: false, error: 'Required', formatted: '' },
   { type: 'select_multiple', prop: 'chocolate', isValid: true, propertyParameter: CANDIES_OPTIONS },
   { type: 'select_multiple', prop: 'chocolate strawberry', isValid: true, propertyParameter: CANDIES_OPTIONS },
   { type: 'select_multiple', prop: ' chocolate  strawberry', isValid: true, propertyParameter: CANDIES_OPTIONS },
