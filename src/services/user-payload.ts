@@ -4,13 +4,13 @@ import Place from './place';
 export class UserPayload {
   public password: string;
   public username: string;
-  public place: string;
+  public place: string | string[];
   public contact: string;
   public fullname: string;
   public phone: string;
   public roles: string[];
 
-  constructor(place: Place, placeId: string, contactId: string) {
+  constructor(place: Place, placeId: string | string[], contactId: string) {
     this.username = place.generateUsername();
     this.password = this.generatePassword();
     this.roles = place.userRoles;

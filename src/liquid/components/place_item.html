@@ -22,18 +22,20 @@
     {% endif %}
   {% endfor %}
 
-  {% for contact_property in contactType.contact_properties %}
-    {% if contact_property.type != 'generated' %}
-      {% capture propertyName %}contact_{{ contact_property.property_name }}{% endcapture %}
-      {%
-        include "components/list_cell.html"
-        propertyName=propertyName
-        property=contact_property
-        values=place.contact.properties
-      %}
-    {% endif %}
-  {% endfor %}
-  
+  {% unless contactType.can_assign_multiple %}
+    {% for contact_property in contactType.contact_properties %}
+      {% if contact_property.type != 'generated' %}
+        {% capture propertyName %}contact_{{ contact_property.property_name }}{% endcapture %}
+        {%
+          include "components/list_cell.html"
+          propertyName=propertyName
+          property=contact_property
+          values=place.contact.properties
+        %}
+      {% endif %}
+    {% endfor %}
+  {% endunless %}
+
   {% if contactType.user_role.size > 1 %}
     {% capture propertyName %}user_{{ contactType.userRoleProperty.property_name }}{% endcapture %}
     {%
@@ -45,14 +47,14 @@
   {% endif %}
 
   {% if contactType.superset %}
-  {% capture propertyName %}superset_{{ contactType.superset.property_name }}{% endcapture %}
-  {%
-    include "components/list_cell.html"
-    propertyName=propertyName
-    property=contactType.superset
-    values=place.supersetProperties
-  %}
-{% endif %}
+    {% capture propertyName %}superset_{{ contactType.superset.property_name }}{% endcapture %}
+    {%
+      include "components/list_cell.html"
+      propertyName=propertyName
+      property=contactType.superset
+      values=place.supersetProperties
+    %}
+  {% endif %}
 
   <td>
     {% capture tag_text %}

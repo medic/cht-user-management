@@ -1,0 +1,39 @@
+<form
+  autocomplete="off"
+  hx-target="this"
+  hx-swap="outerHTML"
+  hx-put="/contact/{{contact_id}}"
+>
+  <div>
+    <h3 class="is-size-4">Edit {{ contactType.contact_friendly }}</h3>
+  </div>
+  <input name="place_type" value="{{contactType.name}}" hidden>
+
+  <h5>Contact Details</h5>
+  <div class="p-2">
+    {% for hierarchy in hierarchy %}
+      {% if hierarchy.level != 0 %}
+        {% render 'components/search_input.html',
+          type: contactType.name,
+          hierarchy: hierarchy,
+          prefix: 'hierarchy_',
+          data: data
+        %}
+      {% endif %}
+    {% endfor %}
+    {% for prop in contactType.contact_properties %}
+      {%
+        include "components/contact_type_property.html" prefix="contact_" prop=prop
+        place_type=contactType.name
+        disabled=show_place_form ==  true
+      %}
+      {% if errors[prop.property_name] %}
+        <p class="mb-2" style="color: red;">{{ errors[prop.property_name] }}</p>
+      {% endif %}
+    {% endfor %}
+  </div>
+  <div class="field is-grouped is-grouped-right p-2">
+    <a href="/" class="button is-small mr-2">Cancel</a>
+    <button class="button is-small is-link">Save</button>
+  </div>
+</form>

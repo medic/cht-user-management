@@ -35,6 +35,7 @@
             class="input"
             {% if false and include.prop.type == 'regex' %} pattern="{{ include.prop.parameter }}" {% endif %}
             {% if data[prop_name] %} value="{{ data[prop_name] }}" {% endif %}
+            {% if include.disabled == true %} disabled {% endif %}
           />
         {% endif %}
       </div>

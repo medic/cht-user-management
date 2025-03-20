@@ -19,6 +19,7 @@ export type UserCreationDetails = {
   password?: string;
   placeId?: string;
   contactId?: string;
+  created_at?: number;
 };
 
 export enum PlaceUploadState {
@@ -45,7 +46,8 @@ const SUPERSET_PREFIX = 'superset_';
 export default class Place {
   public readonly id: string;
   public readonly type: ContactType;
-  public readonly contact : Contact;
+  public contact : Contact;
+  public hasSharedUser: boolean = false;
   public readonly creationDetails : UserCreationDetails = {};
   public readonly resolvedHierarchy: (RemotePlace | undefined)[];
 
@@ -174,7 +176,7 @@ export default class Place {
     };
   }
 
-  public asChtPayload(creator: string): PlacePayload {
+  public asChtPayload(creator: string, contactId?: string): PlacePayload {
     const user_attribution = {
       tool: `cht-user-management-${appVersion}`,
       username: creator,
@@ -212,7 +214,7 @@ export default class Place {
       _id: this.isReplacement ? this.resolvedHierarchy[0]?.id : this.id,
       parent: this.resolvedHierarchy[1]?.id,
       user_attribution,
-      contact: {
+      contact: contactId ?? {
         ...filteredProperties(this.contact.properties),
         ...contactAttributes(this.contact.type.contact_type),
         name: this.contact.name,
@@ -296,7 +298,7 @@ export default class Place {
   }
 
   public get isDependant() : boolean {
-    return !!this.resolvedHierarchy.find(hierarchy => hierarchy?.type === 'local');
+    return !!this.resolvedHierarchy.find(hierarchy => hierarchy?.type === 'local') || this.hasSharedUser;
   }
 
   public get name() : string {

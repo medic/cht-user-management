@@ -16,6 +16,7 @@ import RemotePlaceResolver from '../../src/lib/remote-place-resolver';
 import { UploadManagerRetryScenario } from '../lib/retry-logic.spec';
 import { UploadState } from '../../src/services/place';
 import { PlaceUploadState } from '../../src/services/place';
+import { mockGroupedFormData } from './place-factory.spec';
 
 describe('services/upload-manager.ts', () => {
   beforeEach(() => {
@@ -253,7 +254,7 @@ describe('services/upload-manager.ts', () => {
     expect(chu.creationDetails).to.deep.include({
       contactId: 'created-contact-id',
       placeId: 'created-place-id',
-      username: 'new'
+      username: 'new_cha'
     });
     expect(chu.creationDetails.password).to.not.be.undefined;
   
@@ -385,10 +386,10 @@ describe('services/upload-manager.ts', () => {
 
       // Verify Superset upload sequence
       expect(supersetApi.createRole.calledOnce).to.be.true;
-      expect(supersetApi.createRole.args[0]).to.deep.equal([contactType.superset.prefix, place.name]);
+      expect(supersetApi.createRole.args[0]).to.deep.equal([contactType?.superset?.prefix, place.name]);
       
       expect(supersetApi.getPermissionsByRoleID.calledOnce).to.be.true;
-      expect(supersetApi.getPermissionsByRoleID.args[0][0]).to.equal(contactType.superset.role_template);
+      expect(supersetApi.getPermissionsByRoleID.args[0][0]).to.equal(contactType?.superset?.role_template);
       
       expect(supersetApi.assignPermissionsToRole.calledOnce).to.be.true;
       expect(supersetApi.assignPermissionsToRole.args[0]).to.deep.equal(['new-role-id', ['permission1', 'permission2']]);
@@ -547,6 +548,22 @@ describe('services/upload-manager.ts', () => {
       expect(place.isCreated).to.be.true;
     });
   });
+});
+
+it('mock group data is properly sent to chtApi - standard', async () => {
+  const { fakeFormData, contactType, chtApi, sessionCache  } = await createMocks();
+  const placeCount = 2;
+  const formData = {...fakeFormData, ...mockGroupedFormData(contactType, placeCount)};
+  const places = await PlaceFactory.createManyWithSingleUser(formData, contactType, sessionCache, chtApi);
+
+  const uploadManager = new UploadManager();
+  await uploadManager.doUpload(places, chtApi);
+
+  expect(chtApi.createPlace.callCount).equals(placeCount);
+  expect(chtApi.createUser.calledOnce).to.be.true;
+  expect(chtApi.updateUser.calledOnce).to.be.true;
+  const creationDetails = places[0].creationDetails;
+  places.forEach(p => expect(creationDetails.username).equals(p.creationDetails.username));
 });
 
 async function createMocks() {
