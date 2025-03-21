@@ -16,10 +16,10 @@ import SessionCache from './services/session-cache';
 import { checkRedisConnection } from './config/config-worker';
 import { getChtConfQueue } from './lib/queues';
 
+const PROMETHEUS_ENDPOINT = '/metrics';
 const UNAUTHENTICATED_ENDPOINTS = [
   '/public/*',
-  '/fastify-metrics',
-  '/bullmq-metrics'
+  PROMETHEUS_ENDPOINT,
 ];
 
 const build = (opts: FastifyServerOptions): FastifyInstance => {
@@ -53,19 +53,25 @@ const build = (opts: FastifyServerOptions): FastifyInstance => {
   });
   
   fastify.register(metricsPlugin, {
-    endpoint: '/fastify-metrics',
+    endpoint: PROMETHEUS_ENDPOINT,
     routeMetrics: {
+      registeredRoutesOnly: false,
+      groupStatusCodes: false,
+      methodBlacklist: ['HEAD', 'OPTIONS', 'TRACE'],
+      invalidRouteGroup: '__unknown__',
       enabled: {
         histogram: true,
-        summary: false
+        summary: true,
       }
     }
   });
 
-  fastify.get('/bullmq-metrics', async (req, resp) => {
-    const promMetrics = await getChtConfQueue().bullQueue.exportPrometheusMetrics();
-    resp.header('Content-Type', 'text/plain');
-    resp.send(promMetrics);
+  // hijack the response from fastify-metrics appending additional metrics
+  fastify.addHook('onSend', async (request, reply, payload: string) => {
+    if (request.routerPath === PROMETHEUS_ENDPOINT) {
+      const bullmqMetrics = await getChtConfQueue().bullQueue.exportPrometheusMetrics();
+      return payload + bullmqMetrics;
+    }
   });
 
   Auth.assertEnvironmentSetup();

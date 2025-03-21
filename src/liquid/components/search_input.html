@@ -1,5 +1,5 @@
 {% capture property_name %}{{prefix | default: 'place_' }}{{ hierarchy.property_name }}{% endcapture %}
-<div class="field" id="div_{{property_name}}">
+<div class="field" id="search_container_{{property_name}}">
   <label class="label">
     {{ hierarchy.friendly_name }}
     {% if hierarchy.required %}*{% endif %}
