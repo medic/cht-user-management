@@ -40,6 +40,14 @@ hx-target="this" hx-swap="outerHTML">
   </section>
   {% endif %}
 
+  {% if contactType.superset %}
+  <section class="section is-small">
+    {%
+      include "components/contact_type_property.html" prefix="superset_" prop=contactType.superset
+    %}
+  </section>
+  {% endif %}
+
   <div class=" field is-grouped is-grouped-right">
     <div class="control">
       <button id="place_create_submit" class="button is-link">Save</button>
