@@ -39,7 +39,7 @@ describe('services/upload-manager.ts', () => {
     const userPayload = chtApi.createUser.args[0][0];
     expect(userPayload).to.deep.include({
       contact: 'created-contact-id',
-      place: 'created-place-id',
+      place: ['created-place-id'],
       roles: ['role'],
       username: 'contact',
     });
@@ -326,7 +326,7 @@ describe('services/upload-manager.ts', () => {
     const userPayload = chtApi.createUser.args[0][0];
     expect(userPayload).to.deep.include({
       contact: 'created-contact-id',
-      place: 'created-place-id',
+      place: ['created-place-id'],
       roles: ['role1', 'role2'],
       username: 'contact',
     });
@@ -401,6 +401,7 @@ async function createMocks() {
     }]),
     disableUser: sinon.stub().resolves(),
     updateUser: sinon.stub().resolves(),
+    getUser: sinon.stub().resolves({ username: 'user', place: [{_id: 'id-replace'}] }),
     createContact: sinon.stub().resolves('replacement-contact-id'),
     updatePlace: sinon.stub().resolves({
       _id: 'updated-place-id',
