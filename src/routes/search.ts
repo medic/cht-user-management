@@ -37,7 +37,7 @@ export default async function place(fastify: FastifyInstance) {
     return resp.view('src/liquid/components/search_results.html', {
       op,
       place,
-      div: `div_${dataPrefix}${hierarchyLevel.property_name}`,
+      div: `search_container_${dataPrefix}${hierarchyLevel.property_name}`,
       prefix: dataPrefix,
       searchResults,
       level,
