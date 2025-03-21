@@ -1,4 +1,4 @@
-import { ChtApi, CreatedPlaceResult, PlacePayload } from '../lib/cht-api';
+import { ChtApi, CouchDoc, CreatedPlaceResult, PlacePayload } from '../lib/cht-api';
 import { DisableUsers } from '../lib/disable-users';
 import Place from './place';
 import { retryOnUpdateConflict } from '../lib/retry-logic';
@@ -24,9 +24,24 @@ export class UploadReplacementWithDeactivation implements Uploader {
     }
 
     const updatedPlaceDoc = await retryOnUpdateConflict<any>(() => this.chtApi.updatePlace(payload, contactId));
-    await DisableUsers.deactivateUsersAt(placeId, this.chtApi);
+    
+    let placeIds: string[] = [];
+    const previousPrimaryContact = updatedPlaceDoc.user_attribution?.previousPrimaryContacts?.pop();
+    if (previousPrimaryContact) {
+      const user = await this.chtApi.getUser(previousPrimaryContact);
+      if (Array.isArray(user.place) && user.place.length > 1) {
+        const places = (user.place as CouchDoc[]).map(p => p._id);
+        for (let i = 0; i < places.length; i++) {
+          await this.chtApi.updatePlace(places[i], contactId);
+        }
+        placeIds = places;
+      }
+    }
+    placeIds =  placeIds.filter(id => id !== placeId);
+    await DisableUsers.deactivateUsersAt([placeId, ...placeIds], this.chtApi);
     return {
       placeId: updatedPlaceDoc._id,
+      placeIds,
       contactId,
     };
   };

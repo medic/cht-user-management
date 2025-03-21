@@ -113,8 +113,9 @@ export class UploadManager extends EventEmitter {
         place.creationDetails.contactId = contactId;
       }
 
+      let placeResult;
       if (!place.creationDetails.placeId) {
-        const placeResult = await uploader.handlePlacePayload(place, payload);
+        placeResult = await uploader.handlePlacePayload(place, payload);
         place.creationDetails.placeId = placeResult.placeId;
         place.creationDetails.contactId ||= placeResult.contactId;
       }
@@ -124,7 +125,11 @@ export class UploadManager extends EventEmitter {
       }
 
       if (!place.creationDetails.username) {
-        const userPayload = new UserPayload(place, place.creationDetails.placeId, place.creationDetails.contactId);
+        const userPayload = new UserPayload(
+          place, 
+          [place.creationDetails.placeId, ...(placeResult?.placeIds ?? [])], 
+          place.creationDetails.contactId
+        );
         const { username, password } = await RetryLogic.createUserWithRetries(userPayload, chtApi);
         place.creationDetails.username = username;
         place.creationDetails.password = password;

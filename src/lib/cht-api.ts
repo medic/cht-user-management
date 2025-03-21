@@ -21,6 +21,7 @@ export type PlacePayload = {
 
 export type CreatedPlaceResult = {
   placeId: string;
+  placeIds?: string[];
   contactId?: string;
 };
 
@@ -66,22 +67,32 @@ export class ChtApi {
     return resp.data.id;
   }
 
-  async updatePlace(payload: PlacePayload, contactId: string): Promise<any> {
-    const doc: any = await this.getDoc(payload._id);
+  async updatePlace(payload: PlacePayload | string, contactId: string): Promise<any> {
+    let doc: any;
+    let placeId = '';
+    if (typeof payload === 'string') {
+      placeId = payload;
+      doc = await this.getDoc(payload);
+    } else {
+      payload = payload as PlacePayload;
+      placeId = payload._id;
+      doc = await this.getDoc(payload._id);
 
-    const payloadClone:any = _.cloneDeep(payload);
-    delete payloadClone.contact;
-    delete payloadClone.parent;
+      const payloadClone:any = _.cloneDeep(payload);
+      delete payloadClone.contact;
+      delete payloadClone.parent;
+      Object.assign(doc, payloadClone);
+    }
 
     const previousPrimaryContact = doc.contact?._id;
-    Object.assign(doc, payloadClone, { contact: { _id: contactId }});
+    Object.assign(doc, { contact: { _id: contactId }});
     doc.user_attribution ||= {};
     doc.user_attribution.previousPrimaryContacts ||= [];
     if (previousPrimaryContact) {
       doc.user_attribution.previousPrimaryContacts.push(previousPrimaryContact);
     }
 
-    const putUrl = `medic/${payload._id}`;
+    const putUrl = `medic/${placeId}`;
     console.log('axios.put', putUrl);
     const resp = await this.axiosInstance.put(putUrl, doc);
     if (!resp.data.ok) {
