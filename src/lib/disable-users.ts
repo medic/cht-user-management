@@ -8,15 +8,15 @@ type UserApiPayload = {
 };
 
 export class DisableUsers {
-  public static async disableUsersAt(placeId: string, chtApi: ChtApi): Promise<string[]> {
+  public static async disableUsersAt(placeId: string[], chtApi: ChtApi): Promise<string[]> {
     return this.processUsersAt(placeId, chtApi, false);
   }
 
-  public static async deactivateUsersAt(placeId: string, chtApi: ChtApi): Promise<string[]> {
+  public static async deactivateUsersAt(placeId: string[], chtApi: ChtApi): Promise<string[]> {
     return this.processUsersAt(placeId, chtApi, true);
   }
 
-  private static async processUsersAt(placeId: string, chtApi: ChtApi, deactivate: boolean): Promise<string[]> {
+  private static async processUsersAt(placeId: string[], chtApi: ChtApi, deactivate: boolean): Promise<string[]> {
     const affectedUsers = await this.getAffectedUsers(placeId, chtApi);
     if (affectedUsers.length === 0) {
       return [];
@@ -26,12 +26,14 @@ export class DisableUsers {
     return affectedUsers.map(user => user.username);
   }
 
-  private static async getAffectedUsers(facilityId: string, chtApi: ChtApi): Promise<UserApiPayload[]> {
+  private static async getAffectedUsers(facilityIds: string[], chtApi: ChtApi): Promise<UserApiPayload[]> {
     const result: UserApiPayload[] = [];
-    const userInfos = await chtApi.getUsersAtPlace(facilityId);
+    const userInfos = await chtApi.getUsersAtPlace(facilityIds[0]);
     for (const userInfo of userInfos) {
       const userPayload = this.toPostApiPayload(userInfo);
-      this.removeUserFromPlace(userPayload, facilityId);
+      for (let i = 0; i < facilityIds.length; i++) {
+        this.removeUserFromPlace(userPayload, facilityIds[i]);
+      }
       result.push(userPayload);
     } 
 

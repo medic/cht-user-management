@@ -36,13 +36,15 @@
           Edit
         </a>
       {% endif %}
-      <a
-        class="button is-small"
-        data-tooltip="Add more {{places[0].type.friendly}}(s)"
-        href="/new?place_type={{places[0].type.name}}&contact={{places[0].contact.id}}"
-      >
-        + Add
-      </a>
+      {% if places[0].hasSharedUser %}
+        <a
+          class="button is-small"
+          data-tooltip="Add more {{places[0].type.friendly}}(s)"
+          href="/new?place_type={{places[0].type.name}}&contact={{places[0].contact.id}}"
+        >
+          + Add
+        </a>
+      {% endif %}
     </div>
   </div>
   <table class="table is-fullwidth is-striped is-hoverable mb-1" style="table-layout: fixed;">
