@@ -10,6 +10,7 @@ import RemotePlaceCache from '../../src/lib/remote-place-cache';
 import { Config } from '../../src/config';
 import RemotePlaceResolver from '../../src/lib/remote-place-resolver';
 import { UploadManagerRetryScenario } from '../lib/retry-logic.spec';
+import { mockGroupedFormData } from './place-factory.spec';
 
 describe('services/upload-manager.ts', () => {
   beforeEach(() => {
@@ -247,7 +248,7 @@ describe('services/upload-manager.ts', () => {
     expect(chu.creationDetails).to.deep.include({
       contactId: 'created-contact-id',
       placeId: 'created-place-id',
-      username: 'new'
+      username: 'new_cha'
     });
     expect(chu.creationDetails.password).to.not.be.undefined;
 
@@ -357,6 +358,22 @@ describe('services/upload-manager.ts', () => {
     expect(chtApi.disableUser.callCount).to.eq(1);
     expect(place.isCreated).to.be.true;
   });
+});
+
+it('mock group data is properly sent to chtApi - standard', async () => {
+  const { fakeFormData, contactType, chtApi, sessionCache  } = await createMocks();
+  const placeCount = 2;
+  const formData = {...fakeFormData, ...mockGroupedFormData(contactType, placeCount)};
+  const places = await PlaceFactory.createManyWithSingleUser(formData, contactType, sessionCache, chtApi);
+
+  const uploadManager = new UploadManager();
+  await uploadManager.doUpload(places, chtApi);
+
+  expect(chtApi.createPlace.callCount).equals(placeCount);
+  expect(chtApi.createUser.calledOnce).to.be.true;
+  expect(chtApi.updateUser.calledOnce).to.be.true;
+  const creationDetails = places[0].creationDetails;
+  places.forEach(p => expect(creationDetails.username).equals(p.creationDetails.username));
 });
 
 async function createMocks() {

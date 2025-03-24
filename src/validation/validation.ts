@@ -116,12 +116,16 @@ export class Validation {
   }
 
   private static getValidator(property: ContactProperty) : IValidator {
-    const validator = TypeValidatorMap[property.type];
+    const validator = this.getValidatorForType(property.type);
     if (!validator) {
       throw Error(`unvalidatable type: '${property.friendly_name}' has type '${property.type}'`);
     }
 
     return validator;
+  }
+
+  public static getValidatorForType(propertyType: string) : IValidator | undefined {
+    return TypeValidatorMap[propertyType];
   }
 
   private static describeInvalidRemotePlace(
