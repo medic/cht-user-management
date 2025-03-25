@@ -1,6 +1,6 @@
 {
   "name": "cht-user-management",
-  "version": "2.1.9",
+  "version": "2.1.10",
   "main": "dist/index.js",
   "dependencies": {
     "@bull-board/api": "^5.17.0",
