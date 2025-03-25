@@ -8,6 +8,8 @@ import RemotePlaceResolver from '../lib/remote-place-resolver';
 import { UploadManager } from '../services/upload-manager';
 import RemotePlaceCache from '../lib/remote-place-cache';
 import WarningSystem from '../warnings';
+import { SupersetApi } from '../lib/superset-api';
+import SupersetSession from '../lib/superset-session';
 import semver from 'semver';
 
 export default async function addPlace(fastify: FastifyInstance) {
@@ -169,8 +171,9 @@ export default async function addPlace(fastify: FastifyInstance) {
       places = [place];
     }
 
+    const supersetApi = new SupersetApi(await SupersetSession.create());
     const uploadManager: UploadManager = fastify.uploadManager;
-    uploadManager.doUpload(places, chtApi, true);
+    uploadManager.doUpload(places, chtApi, supersetApi, true);
   });
 
   fastify.post('/place/remove/:id', async (req) => {
