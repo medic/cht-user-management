@@ -1,17 +1,10 @@
+import NodeCache from 'node-cache';
 import _ from 'lodash';
 
 import Place, { FormattedPropertyCollection } from '../services/place';
 import { ChtApi } from './cht-api';
 import { IPropertyValue, RemotePlacePropertyValue } from '../property-value';
 import { Config, ContactProperty, ContactType, HierarchyConstraint } from '../config';
-
-type RemotePlacesByType = {
-  [key: string]: RemotePlace[];
-};
-
-type RemotePlaceDatastore = {
-  [key: string]: RemotePlacesByType;
-};
 
 export type RemotePlace = {
   id: string;
@@ -31,8 +24,24 @@ export type RemotePlace = {
 };
 
 export default class RemotePlaceCache {
-  private static cache: RemotePlaceDatastore = {};
+  private static cache: NodeCache;
+  private static readonly CACHE_TTL = 60 * 60 * 12;
+  private static readonly CACHE_CHECK_PERIOD = 120;
 
+  private static getCache(): NodeCache {
+    if (!this.cache) {
+      this.cache = new NodeCache({ 
+        stdTTL: this.CACHE_TTL,
+        checkperiod: this.CACHE_CHECK_PERIOD 
+      });
+    }
+    return this.cache;
+  }
+
+  private static getCacheKey(domain: string, placeType: string): string {
+    return `${domain}:${placeType}`;
+  }
+  
   public static async getRemotePlaces(chtApi: ChtApi, contactType: ContactType, atHierarchyLevel?: HierarchyConstraint): Promise<RemotePlace[]> {
     const hierarchyLevels = Config.getHierarchyWithReplacement(contactType, 'desc');
     const fetchAll = hierarchyLevels.map(hierarchyLevel => this.fetchCachedOrRemotePlaces(chtApi, hierarchyLevel));
@@ -47,23 +56,35 @@ export default class RemotePlaceCache {
   public static add(place: Place, chtApi: ChtApi): void {
     const { domain } = chtApi.chtSession.authInfo;
     const placeType = place.type.name;
+    const cacheKey = this.getCacheKey(domain, placeType);
 
-    const places = this.cache[domain]?.[placeType];
-    // if there is no cache existing, discard the value
-    // it will be fetched if needed when the cache is built
+    const places = this.getCache().get<RemotePlace[]>(cacheKey);
     if (places) {
-      places.push(place.asRemotePlace());
+      const existingIndex = places.findIndex(p => p.id === place.id);
+      if (existingIndex >= 0) {
+        places[existingIndex] = place.asRemotePlace();
+      } else {
+        places.push(place.asRemotePlace());
+      }
+      this.getCache().set(cacheKey, places);
     }
   }
 
   public static clear(chtApi: ChtApi, contactTypeName?: string): void {
     const domain = chtApi?.chtSession?.authInfo?.domain;
     if (!domain) {
-      this.cache = {};
-    } else if (!contactTypeName) {
-      delete this.cache[domain];
-    } else if (this.cache[domain]) {
-      delete this.cache[domain][contactTypeName];
+      this.getCache().flushAll();
+      return;
+    }
+
+    if (!contactTypeName) {
+      // Clear all keys matching domain prefix
+      const keys = this.getCache().keys();
+      const domainPrefix = `${domain}:`;
+      keys.filter(key => key.startsWith(domainPrefix)).forEach(key => this.getCache().del(key));
+    } else {
+      const cacheKey = this.getCacheKey(domain, contactTypeName);
+      this.getCache().del(cacheKey);
     }
   }
 
@@ -72,17 +93,16 @@ export default class RemotePlaceCache {
     : Promise<RemotePlace[]> {
     const { domain } = chtApi.chtSession.authInfo;
     const placeType = hierarchyLevel.contact_type;
-    const { cache: domainCache } = RemotePlaceCache;
-    const places = domainCache[domain]?.[placeType];
-    if (!places) {
+    const cacheKey = this.getCacheKey(domain, placeType);
+    
+    const cacheData = this.getCache().get<RemotePlace[]>(cacheKey);
+    if (!cacheData) {
       const fetchPlacesWithType = this.fetchRemotePlacesAtLevel(chtApi, hierarchyLevel);
-      if (!domainCache[domain]) {
-        domainCache[domain] = {};
-      }
-      domainCache[domain][placeType] = await fetchPlacesWithType;
+      const places = await fetchPlacesWithType;
+      this.getCache().set(cacheKey, places);
+      return places;
     }
-
-    return domainCache[domain][placeType];
+    return cacheData;
   }
 
   // fetch docs of type and convert to RemotePlace
