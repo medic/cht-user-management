@@ -41,7 +41,7 @@ export default async function sessionCache(fastify: FastifyInstance) {
 
     return resp.view('src/liquid/app/view.html', tmplData);
   });
-  
+
   fastify.get('/app/list', async (req, resp) => {
     const contactTypes = Config.contactTypes();
     const sessionCache: SessionCache = req.sessionCache;
@@ -111,9 +111,9 @@ export default async function sessionCache(fastify: FastifyInstance) {
       expires: Auth.cookieExpiry(),
       path: '/',
       secure: true,
-      
+
     });
-    
+
     resp.header('HX-Redirect', '/');
   });
 }

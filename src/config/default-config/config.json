@@ -1,0 +1,77 @@
+{
+  "domains": [
+    {
+      "friendly": "Default (Upload configuration)",
+      "domain": "default-configuration-domain"
+    }
+  ],
+  "contact_types": [
+    {
+      "name": "health_center",
+      "friendly": "CHW Area",
+      "contact_type": "person",
+      "username_from_place": false,
+      "deactivate_users_on_replace": false,
+      "user_role": [
+        "chw"
+      ],
+      "hierarchy": [
+        {
+          "friendly_name": "Health Facility",
+          "property_name": "HEALTHFACILITY",
+          "contact_type": "district_hospital",
+          "type": "string",
+          "required": true,
+          "level": 1
+        }
+      ],
+      "replacement_property": {
+        "friendly_name": "Outgoing CHW",
+        "property_name": "REPLACEMENT",
+        "type": "name",
+        "required": true
+      },
+      "place_properties": [
+        {
+          "friendly_name": "Area Name",
+          "property_name": "name",
+          "type": "name",
+          "required": true
+        }
+      ],
+      "contact_properties": [
+        {
+          "friendly_name": "CHW Name",
+          "property_name": "name",
+          "type": "name",
+          "required": true
+        },
+        {
+          "friendly_name": "Phone Number",
+          "property_name": "phone",
+          "type": "phone",
+          "parameter": "UG",
+          "required": true,
+          "unique": "all"
+        },
+        {
+          "friendly_name": "Date of Birth",
+          "property_name": "date_of_birth",
+          "type": "dob",
+          "required": true
+        },
+        {
+          "friendly_name": "Sex",
+          "property_name": "sex",
+          "type": "select_one",
+          "parameter": {
+            "male": "Male",
+            "female": "Female"
+          },
+          "required": true
+        }
+      ]
+    }
+  ],
+  "logoBase64": ""
+}

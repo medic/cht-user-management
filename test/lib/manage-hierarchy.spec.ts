@@ -10,12 +10,18 @@ import ManageHierarchyLib from '../../src/lib/manage-hierarchy';
 import { mockChtApi, mockChtSession } from '../mocks';
 import RemotePlaceCache from '../../src/lib/remote-place-cache';
 import SessionCache from '../../src/services/session-cache';
+import ConfigFactory from '../../src/config/config-factory';
+import kenyaConfig from '../../src/config/chis-ke';
 
 Chai.use(chaiAsPromised);
 
 const { expect } = Chai;
 
 describe('lib/manage-hierarchy.ts', () => {
+
+  before(() => {
+    ConfigFactory.getConfigFactory().refreshConfig(kenyaConfig);
+  });
   const subcountyDocs = [
     { _id: 'from-sub', name: 'From Sub' },
     { _id: 'to-sub', name: 'To Sub' }
