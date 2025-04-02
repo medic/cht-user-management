@@ -201,6 +201,7 @@ export class ChtApi {
     return resp.data?.map((doc: any): UserInfo => ({
       username: doc.username,
       place: doc.place,
+      roles: doc.roles
     }));
   }
 
@@ -211,6 +212,7 @@ export class ChtApi {
     return resp.data?.map((doc: any): UserInfo => ({
       username: doc.username,
       place: doc.place,
+      roles: doc.roles
     }))[0];
   }
 
