@@ -3,6 +3,7 @@ import { Config } from '../config';
 import { ChtApi, CouchDoc, UserInfo } from '../lib/cht-api';
 import { UploadManager } from '../services/upload-manager';
 import { isEqual } from 'lodash';
+import _ from 'lodash';
 
 export default async function newHandler(fastify: FastifyInstance) {
 
@@ -112,6 +113,11 @@ export default async function newHandler(fastify: FastifyInstance) {
           throw new Error('We did not find a user from the link provided. ' + 
         'Please make sure the link is correct and the contact can login to the instance');
         }
+
+        if (_.intersection(contactType.user_role, user.roles).length <= 0) {
+          throw new Error(`User does not have the correct roles. ` + 
+            `Please make sure the user has the roles required for ${contactType.contact_friendly ?? contactType.friendly}(s)`);
+        } 
         
         const uploadManager: UploadManager = fastify.uploadManager;
         uploadManager.reassign(contactId, user, places.map(i => i.place.id), chtApi);
