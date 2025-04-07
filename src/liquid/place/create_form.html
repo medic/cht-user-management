@@ -4,6 +4,18 @@ id="form_place_create" autocomplete="off"
 hx-target="this" hx-swap="outerHTML">
   <input name="place_type" value="{{contactType.name}}" hidden />
   <section class="section is-small">
+
+  {% if errors.size > 0 %}
+  <div class="notification is-danger is-light">
+    <strong>Please fix the following errors:</strong>
+    <ul class="mt-2">
+      {% for error_entry in errors %}
+      <li><strong>{{ error_entry[0] }}:</strong> {{ error_entry[1] }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
     {% for hierarchy in hierarchy %}
       {% if hierarchy.level != 0 or op == 'replace' or place.hierarchyProperties.replacement.original %}
         {%

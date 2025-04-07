@@ -102,6 +102,21 @@ export default async function addPlace(fastify: FastifyInstance) {
     }
 
     const data = place.asFormData('hierarchy_');
+
+    const transformedErrors: { [key: string]: string } = {};
+
+    if (place.validationErrors) {
+      Object.entries(place.validationErrors).forEach(
+        ([fullKey, errorMessage]) => {
+          const prefixes = ['contact_', 'place_', 'hierarchy_', 'user_'];
+          const prefix = prefixes.find((p) => fullKey.startsWith(p));
+          const propertyName = prefix ? fullKey.substring(prefix.length) : fullKey;
+
+          transformedErrors[propertyName] = errorMessage;
+        }
+      );
+    }
+
     const tmplData = {
       view: 'edit',
       op: 'edit',
@@ -113,7 +128,8 @@ export default async function addPlace(fastify: FastifyInstance) {
       contactTypes: Config.contactTypes(),
       backend: `/place/edit/${id}`,
       data,
-      userRoleProperty: Config.getUserRoleConfig(place.type)
+      errors: transformedErrors,
+      userRoleProperty: Config.getUserRoleConfig(place.type),
     };
 
     resp.header('HX-Push-Url', `/place/edit/${id}`);
@@ -157,7 +173,7 @@ export default async function addPlace(fastify: FastifyInstance) {
     const { id } = req.params as any;
     const sessionCache: SessionCache = req.sessionCache;
     const chtApi = new ChtApi(req.chtSession);
-    
+
     const place = sessionCache.getPlace(id);
     if (!place) {
       throw Error(`unable to find place ${id}`);
