@@ -53,7 +53,7 @@ export default class SessionCache {
   };
 
   public getPlacesForDisplay = (options?: {
-    type: string;
+    type?: string;
     state?: PlaceUploadState;
     filter?: DirectiveFilter;
     created?: boolean;
