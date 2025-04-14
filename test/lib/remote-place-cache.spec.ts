@@ -3,6 +3,7 @@ import { expect } from 'chai';
 import { ChtDoc, mockChtApi, mockPlace, mockSimpleContactType } from '../mocks';
 import { HierarchyConstraint } from '../../src/config';
 import RemotePlaceCache from '../../src/lib/remote-place-cache';
+import sinon from 'sinon';
 
 describe('lib/remote-place-cache.ts', () => {
   beforeEach(() => {
@@ -126,5 +127,39 @@ describe('lib/remote-place-cache.ts', () => {
     // Clear domain
     RemotePlaceCache.clear(chtApi);
     expect(hasDataInCache(domain, contactType.name)).to.be.false;
+  });
+
+  it('should only make a single call when multiple requests happen', async () => {
+    const doc = { _id: 'parent-id', name: 'parent' };
+    const chtApi = mockChtApi([doc]);
+    
+    // Add a delay to the getPlacesWithType method to simulate a slow response
+    const originalGetPlacesWithType = chtApi.getPlacesWithType;
+    chtApi.getPlacesWithType = sinon.stub().callsFake(async function(...args) {
+      await new Promise(resolve => setTimeout(resolve, 50));
+      return originalGetPlacesWithType.apply(this, args);
+    });
+    
+    const promise1 = RemotePlaceCache.getRemotePlaces(chtApi, contactType);
+    const promise2 = RemotePlaceCache.getRemotePlaces(chtApi, contactType);
+    const promise3 = RemotePlaceCache.getRemotePlaces(chtApi, contactType);
+    
+    // call all promises
+    const [result1, result2, result3] = await Promise.all([promise1, promise2, promise3]);
+    
+    // Verify that all promises returned the same data
+    expect(result1).to.have.property('length', 1);
+    expect(result2).to.have.property('length', 1);
+    expect(result3).to.have.property('length', 1);
+    
+    expect(chtApi.getPlacesWithType.callCount).to.eq(2);
+    
+    expect(result1[0]).to.deep.equal(result2[0]);
+    expect(result2[0]).to.deep.equal(result3[0]);
+    expect(result1[0]).to.deep.nested.include({
+      id: doc._id,
+      'name.original': doc.name,
+      type: 'remote'
+    });
   });
 });

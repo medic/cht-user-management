@@ -28,6 +28,8 @@ export default class RemotePlaceCache {
   private static readonly CACHE_TTL = 60 * 60 * 12;
   private static readonly CACHE_CHECK_PERIOD = 120;
 
+  private static runningFetch: Map<string, Promise<RemotePlace[]>> = new Map();
+
   private static getCache(): NodeCache {
     if (!this.cache) {
       this.cache = new NodeCache({ 
@@ -81,7 +83,9 @@ export default class RemotePlaceCache {
       // Clear all keys matching domain prefix
       const keys = this.getCache().keys();
       const domainPrefix = `${domain}:`;
-      keys.filter(key => key.startsWith(domainPrefix)).forEach(key => this.getCache().del(key));
+      keys
+        .filter(key => key.startsWith(domainPrefix))
+        .forEach(key => this.getCache().del(key));
     } else {
       const cacheKey = this.getCacheKey(domain, contactTypeName);
       this.getCache().del(cacheKey);
@@ -93,16 +97,34 @@ export default class RemotePlaceCache {
     : Promise<RemotePlace[]> {
     const { domain } = chtApi.chtSession.authInfo;
     const placeType = hierarchyLevel.contact_type;
-    const cacheKey = this.getCacheKey(domain, placeType);
-    
+    const cacheKey = this.getCacheKey(domain, placeType);;
+
+    // Check if data is already in cache
     const cacheData = this.getCache().get<RemotePlace[]>(cacheKey);
-    if (!cacheData) {
-      const fetchPlacesWithType = this.fetchRemotePlacesAtLevel(chtApi, hierarchyLevel);
-      const places = await fetchPlacesWithType;
+    if (cacheData) {
+      return cacheData;
+    }
+
+    // Check if a fetch is already in progress
+    if (this.runningFetch.has(cacheKey)) {
+      return this.runningFetch.get(cacheKey)!;
+    }
+
+    // Initiate fetch and store the promise
+    const fetchPromise = (async () => {
+      const places = await this.fetchRemotePlacesAtLevel(chtApi, hierarchyLevel);
       this.getCache().set(cacheKey, places);
       return places;
+    })();
+
+    this.runningFetch.set(cacheKey, fetchPromise);
+
+    try {
+      return await fetchPromise;
+    } finally {
+      // Delete the promise from the map once resolved
+      this.runningFetch.delete(cacheKey);
     }
-    return cacheData;
   }
 
   // fetch docs of type and convert to RemotePlace
