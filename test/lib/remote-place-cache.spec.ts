@@ -24,13 +24,6 @@ describe('lib/remote-place-cache.ts', () => {
 
   const contactType = mockSimpleContactType('string', undefined);
 
-  function hasDataInCache(domain: string, placeType: string): boolean {
-    // Access private members for testing
-    const cache = (RemotePlaceCache as any).getCache();
-    const key = (RemotePlaceCache as any).getCacheKey(domain, placeType);
-    return !!cache.get(key);
-  }
-
   it('cache miss', async () => {
     const chtApi = mockChtApi([doc], [], [doc], []);
     await RemotePlaceCache.getRemotePlaces(chtApi, contactType);
@@ -122,11 +115,13 @@ describe('lib/remote-place-cache.ts', () => {
       level: 0,
     };
     await RemotePlaceCache.getRemotePlaces(chtApi, contactType, contactTypeAsHierarchyLevel);
-    expect(hasDataInCache(domain, contactType.name)).to.be.true;
+
+    const key = (RemotePlaceCache as any).getCacheKey(domain, contactType.name);
+    expect(!!(RemotePlaceCache as any).cache.get(key)).to.be.true;
 
     // Clear domain
     RemotePlaceCache.clear(chtApi);
-    expect(hasDataInCache(domain, contactType.name)).to.be.false;
+    expect(!!(RemotePlaceCache as any).cache.get(key)).to.be.false;
   });
 
   it('should only make a single call when multiple requests happen', async () => {

@@ -24,21 +24,14 @@ export type RemotePlace = {
 };
 
 export default class RemotePlaceCache {
-  private static cache: NodeCache;
   private static readonly CACHE_TTL = 60 * 60 * 12;
   private static readonly CACHE_CHECK_PERIOD = 120;
+  private static cache: NodeCache = new NodeCache({
+    stdTTL: this.CACHE_TTL,
+    checkperiod: this.CACHE_CHECK_PERIOD 
+});
 
   private static runningFetch: Map<string, Promise<RemotePlace[]>> = new Map();
-
-  private static getCache(): NodeCache {
-    if (!this.cache) {
-      this.cache = new NodeCache({ 
-        stdTTL: this.CACHE_TTL,
-        checkperiod: this.CACHE_CHECK_PERIOD 
-      });
-    }
-    return this.cache;
-  }
 
   private static getCacheKey(domain: string, placeType: string): string {
     return `${domain}:${placeType}`;
@@ -60,7 +53,7 @@ export default class RemotePlaceCache {
     const placeType = place.type.name;
     const cacheKey = this.getCacheKey(domain, placeType);
 
-    const places = this.getCache().get<RemotePlace[]>(cacheKey);
+    const places = this.cache.get<RemotePlace[]>(cacheKey);
     if (places) {
       const existingIndex = places.findIndex(p => p.id === place.id);
       if (existingIndex >= 0) {
@@ -68,27 +61,27 @@ export default class RemotePlaceCache {
       } else {
         places.push(place.asRemotePlace());
       }
-      this.getCache().set(cacheKey, places);
+      this.cache.set(cacheKey, places);
     }
   }
 
   public static clear(chtApi: ChtApi, contactTypeName?: string): void {
     const domain = chtApi?.chtSession?.authInfo?.domain;
     if (!domain) {
-      this.getCache().flushAll();
+      this.cache.flushAll();
       return;
     }
 
     if (!contactTypeName) {
       // Clear all keys matching domain prefix
-      const keys = this.getCache().keys();
+      const keys = this.cache.keys();
       const domainPrefix = `${domain}:`;
       keys
         .filter(key => key.startsWith(domainPrefix))
-        .forEach(key => this.getCache().del(key));
+        .forEach(key => this.cache.del(key));
     } else {
       const cacheKey = this.getCacheKey(domain, contactTypeName);
-      this.getCache().del(cacheKey);
+      this.cache.del(cacheKey);
     }
   }
 
@@ -97,10 +90,10 @@ export default class RemotePlaceCache {
     : Promise<RemotePlace[]> {
     const { domain } = chtApi.chtSession.authInfo;
     const placeType = hierarchyLevel.contact_type;
-    const cacheKey = this.getCacheKey(domain, placeType);;
+    const cacheKey = this.getCacheKey(domain, placeType);
 
     // Check if data is already in cache
-    const cacheData = this.getCache().get<RemotePlace[]>(cacheKey);
+    const cacheData = this.cache.get<RemotePlace[]>(cacheKey);
     if (cacheData) {
       return cacheData;
     }
@@ -113,7 +106,7 @@ export default class RemotePlaceCache {
     // Initiate fetch and store the promise
     const fetchPromise = (async () => {
       const places = await this.fetchRemotePlacesAtLevel(chtApi, hierarchyLevel);
-      this.getCache().set(cacheKey, places);
+      this.cache.set(cacheKey, places);
       return places;
     })();
 
