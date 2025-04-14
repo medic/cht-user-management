@@ -29,7 +29,7 @@ export default class RemotePlaceCache {
   private static cache: NodeCache = new NodeCache({
     stdTTL: this.CACHE_TTL,
     checkperiod: this.CACHE_CHECK_PERIOD 
-});
+  });
 
   private static runningFetch: Map<string, Promise<RemotePlace[]>> = new Map();
 
