@@ -1,17 +1,10 @@
+import NodeCache from 'node-cache';
 import _ from 'lodash';
 
 import Place, { FormattedPropertyCollection } from '../services/place';
 import { ChtApi } from './cht-api';
 import { IPropertyValue, RemotePlacePropertyValue } from '../property-value';
 import { Config, ContactProperty, ContactType, HierarchyConstraint } from '../config';
-
-type RemotePlacesByType = {
-  [key: string]: RemotePlace[];
-};
-
-type RemotePlaceDatastore = {
-  [key: string]: RemotePlacesByType;
-};
 
 export type RemotePlace = {
   id: string;
@@ -31,8 +24,19 @@ export type RemotePlace = {
 };
 
 export default class RemotePlaceCache {
-  private static cache: RemotePlaceDatastore = {};
+  private static readonly CACHE_TTL = 60 * 60 * 12;
+  private static readonly CACHE_CHECK_PERIOD = 120;
+  private static cache: NodeCache = new NodeCache({
+    stdTTL: this.CACHE_TTL,
+    checkperiod: this.CACHE_CHECK_PERIOD 
+  });
 
+  private static runningFetch: Map<string, Promise<RemotePlace[]>> = new Map();
+
+  private static getCacheKey(domain: string, placeType: string): string {
+    return `${domain}:${placeType}`;
+  }
+  
   public static async getRemotePlaces(chtApi: ChtApi, contactType: ContactType, atHierarchyLevel?: HierarchyConstraint): Promise<RemotePlace[]> {
     const hierarchyLevels = Config.getHierarchyWithReplacement(contactType, 'desc');
     const fetchAll = hierarchyLevels.map(hierarchyLevel => this.fetchCachedOrRemotePlaces(chtApi, hierarchyLevel));
@@ -47,23 +51,37 @@ export default class RemotePlaceCache {
   public static add(place: Place, chtApi: ChtApi): void {
     const { domain } = chtApi.chtSession.authInfo;
     const placeType = place.type.name;
+    const cacheKey = this.getCacheKey(domain, placeType);
 
-    const places = this.cache[domain]?.[placeType];
-    // if there is no cache existing, discard the value
-    // it will be fetched if needed when the cache is built
+    const places = this.cache.get<RemotePlace[]>(cacheKey);
     if (places) {
-      places.push(place.asRemotePlace());
+      const existingIndex = places.findIndex(p => p.id === place.id);
+      if (existingIndex >= 0) {
+        places[existingIndex] = place.asRemotePlace();
+      } else {
+        places.push(place.asRemotePlace());
+      }
+      this.cache.set(cacheKey, places);
     }
   }
 
   public static clear(chtApi: ChtApi, contactTypeName?: string): void {
     const domain = chtApi?.chtSession?.authInfo?.domain;
     if (!domain) {
-      this.cache = {};
-    } else if (!contactTypeName) {
-      delete this.cache[domain];
-    } else if (this.cache[domain]) {
-      delete this.cache[domain][contactTypeName];
+      this.cache.flushAll();
+      return;
+    }
+
+    if (!contactTypeName) {
+      // Clear all keys matching domain prefix
+      const keys = this.cache.keys();
+      const domainPrefix = `${domain}:`;
+      keys
+        .filter(key => key.startsWith(domainPrefix))
+        .forEach(key => this.cache.del(key));
+    } else {
+      const cacheKey = this.getCacheKey(domain, contactTypeName);
+      this.cache.del(cacheKey);
     }
   }
 
@@ -72,17 +90,35 @@ export default class RemotePlaceCache {
     : Promise<RemotePlace[]> {
     const { domain } = chtApi.chtSession.authInfo;
     const placeType = hierarchyLevel.contact_type;
-    const { cache: domainCache } = RemotePlaceCache;
-    const places = domainCache[domain]?.[placeType];
-    if (!places) {
-      const fetchPlacesWithType = this.fetchRemotePlacesAtLevel(chtApi, hierarchyLevel);
-      if (!domainCache[domain]) {
-        domainCache[domain] = {};
-      }
-      domainCache[domain][placeType] = await fetchPlacesWithType;
+    const cacheKey = this.getCacheKey(domain, placeType);
+
+    // Check if data is already in cache
+    const cacheData = this.cache.get<RemotePlace[]>(cacheKey);
+    if (cacheData) {
+      return cacheData;
     }
 
-    return domainCache[domain][placeType];
+    // Check if a fetch is already in progress
+    if (this.runningFetch.has(cacheKey)) {
+      return this.runningFetch.get(cacheKey)!;
+    }
+
+    // Initiate fetch and store the promise
+    const fetchPlaces = async () => {
+      const places = await this.fetchRemotePlacesAtLevel(chtApi, hierarchyLevel);
+      this.cache.set(cacheKey, places);
+      return places;
+    };
+    const promiseToFetch = fetchPlaces();
+
+    this.runningFetch.set(cacheKey, promiseToFetch);
+
+    try {
+      return await promiseToFetch;
+    } finally {
+      // Delete the promise from the map once resolved
+      this.runningFetch.delete(cacheKey);
+    }
   }
 
   // fetch docs of type and convert to RemotePlace
