@@ -48,6 +48,7 @@ To use the User Management Tool with your CHT project, you'll need to create a n
 `contact_types.contact_properties` | Array<ConfigProperty> | Defines the attributes which are collected and set on the user's primary contact doc. See [ConfigProperty](#ConfigProperty).
 `contact_types.deactivate_users_on_replace` | boolean | Controls what should happen to the defunct contact and user documents when a user is replaced. When `false`, the contact and user account will be deleted. When `true`, the contact will be unaltered and the user account will be assigned the role `deactivated`. This allows for account restoration.
 `contact_types.hint` | string | Provide a brief hint or description to clarify the expected input for the property.
+`contact_types.can_assign_multiple` | boolean | Requires CHT >=4.9.0. Enable support for assigning a single user to multiple places
 `logoBase64` | Image in base64 | Logo image for your project
 
 #### ConfigProperty
@@ -126,17 +127,17 @@ If you don't have redis running locally, you can start it with:
 docker compose -f docker-compose.redis.yml up -d
 ```
 
-Then run:
+Run these two commands  first to ensure the `./dist` folder is properly populated  and all required packages are installed:
 
-```
-npm run dev
-```
-
-or
-
-```
+```shell
+npm ci
 npm run build
-npm start
+```
+
+Then run this to start a local dev instance and reload the app when it sees changes to local files:
+
+```shell
+npm run dev
 ```
 
 ### Docker with static code

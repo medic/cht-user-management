@@ -30,8 +30,14 @@
     </div>
     <div class="field is-grouped is-grouped-right">
       <p class="control">
-        <button class="button is-primary">
-          Sign In
+        <button class="button is-primary" hx-indicator="this">
+          <style>
+            .htmx-request .htmx-indicator { display: inline; }
+            .htmx-request .sign-in-text { display: none; }
+            .htmx-indicator { display: none; }
+          </style>
+          <span class="htmx-indicator">Signing in...</span>
+          <span class="sign-in-text">Sign In</span>
         </button>
       </p>
     </div>

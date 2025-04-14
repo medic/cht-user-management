@@ -37,4 +37,8 @@ export class AuthError extends Error {
   static MISSING_PERMISSIONS(username: string) {
     return new AuthError(`User ${username} does not have the required permissions`);
   }
+
+  public static CONNECTION_TIMEOUT(domain: string): AuthError {
+    return new AuthError(`Connection to ${domain} timed out. Please check your network and instance availability.`);
+  }
 }

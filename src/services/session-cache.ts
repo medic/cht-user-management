@@ -1,6 +1,8 @@
+import _ from 'lodash';
 import ChtSession from '../lib/cht-session';
 import { DirectiveFilter } from './directive-model';
 import Place, { PlaceUploadState } from './place';
+import { Config } from '../config';
 
 export type SessionCacheUploadState = 'in_progress' | 'done' | 'staged';
 
@@ -37,15 +39,41 @@ export default class SessionCache {
     id?: string;
     nameExact?: string;
     nameIncludes?: string;
+    contactId?: string;
   }) : Place[] => {
     return Object.values(this.places)
       .filter(p => !options?.filter || getFilterFunction(options.filter)(p))
       .filter(p => !options?.type || p.type.name === options.type)
       .filter(p => !options?.state || p.state === options.state)
       .filter(p => !options?.id || p.id === options.id)
+      .filter(p => !options?.contactId || p.contact.id === options.contactId)
       .filter(p => !options?.nameExact || p.name === options.nameExact)
       .filter(p => !options?.nameIncludes || p.name.toLowerCase().includes(options.nameIncludes.toLowerCase()))
       .filter(p => options?.created === undefined || !!p.isCreated === options.created);
+  };
+
+  public getPlacesForDisplay = (options?: {
+    type?: string;
+    state?: PlaceUploadState;
+    filter?: DirectiveFilter;
+    created?: boolean;
+    id?: string;
+    nameExact?: string;
+    nameIncludes?: string;
+  }): { canEdit?: boolean; places: Place[] }[] => {
+    const places =  this.getPlaces(options);
+    if (options?.type && !Config.getContactType(options.type).can_assign_multiple) {
+      return  [{ places }];
+    }
+    return Object.values(
+      _.groupBy(places, (p) => p.contact.id)
+    )
+      .map(places => {
+        return {
+          places,
+          canEdit: !places.some(p => p.creationDetails.username)
+        };
+      });
   };
 
   public removePlace = (placeId: string): void => {
