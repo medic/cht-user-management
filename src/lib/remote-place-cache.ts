@@ -104,16 +104,17 @@ export default class RemotePlaceCache {
     }
 
     // Initiate fetch and store the promise
-    const fetchPromise = (async () => {
+    const fetchPlaces = async () => {
       const places = await this.fetchRemotePlacesAtLevel(chtApi, hierarchyLevel);
       this.cache.set(cacheKey, places);
       return places;
-    })();
+    };
+    const promiseToFetch = fetchPlaces();
 
-    this.runningFetch.set(cacheKey, fetchPromise);
+    this.runningFetch.set(cacheKey, promiseToFetch);
 
     try {
-      return await fetchPromise;
+      return await promiseToFetch;
     } finally {
       // Delete the promise from the map once resolved
       this.runningFetch.delete(cacheKey);
