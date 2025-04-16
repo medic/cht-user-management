@@ -11,13 +11,7 @@
     <link rel="stylesheet" href="/public/bulma-tooltip.min.css">
   </head>
   <body>
-    <nav class="navbar" role="navigation" aria-label="main navigation">
-      <div class="navbar-brand">
-        <a class="navbar-item" href="/">
-          <img src="{{ logo }}">
-        </a>
-      </div>
-    </nav>
+    {% include "app/nav.html" %}
     <div class="container is-max-desktop px-4" hx-ext="sse" sse-connect="/events/connection">
       {% render 'new/form.liquid',
         contactType: contactType,
