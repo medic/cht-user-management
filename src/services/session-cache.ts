@@ -2,6 +2,7 @@ import _ from 'lodash';
 import ChtSession from '../lib/cht-session';
 import { DirectiveFilter } from './directive-model';
 import Place, { PlaceUploadState } from './place';
+import { Config } from '../config';
 
 export type SessionCacheUploadState = 'in_progress' | 'done' | 'staged';
 

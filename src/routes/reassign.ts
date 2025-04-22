@@ -19,11 +19,13 @@ export default async function newHandler(fastify: FastifyInstance) {
   fastify.get('/reassign', async (req, resp) => {
     const { place_type } = req.query as any;
     const contactType = Config.getContactType(place_type);
+    const contactTypes = Config.contactTypes();
     return resp.view('src/liquid/reassign/index.liquid', {
       contactType,
       hierarchy: Config.getHierarchyWithReplacement(contactType, 'desc'),
       logo: Config.getLogoBase64(),
-      session: req.chtSession
+      session: req.chtSession,
+      contactTypes
     });
   });
 
