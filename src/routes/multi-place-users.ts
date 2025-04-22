@@ -106,7 +106,9 @@ export default async function newHandler(fastify: FastifyInstance) {
     const sessionCache: SessionCache = req.sessionCache;
     const places = sessionCache.getPlaces({ contactId: contact });
     return resp.view('src/liquid/new/place_list.liquid', {
-      contactType: places[0].type,
+      contactType: { 
+        ...places[0].type, 
+        hierarchy: Config.getHierarchyWithReplacement(places[0].type, 'desc') },
       places,
       can_edit: !places.find(p => p.creationDetails.username)
     });

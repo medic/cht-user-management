@@ -35,6 +35,9 @@
         </a>
         <div class="navbar-dropdown">
           {% for placeType in contactTypes %}
+            {% if placeType.can_assign_multiple %}
+              <a class="navbar-item" href="/reassign?place_type={{ placeType.name }}">Reassign {{placeType.friendly}}</a>
+            {% endif %}
             <a class="navbar-item" href="/manage-hierarchy/move/{{ placeType.name }}">Move a {{placeType.friendly}}</a>
             <a class="navbar-item" href="/manage-hierarchy/merge/{{ placeType.name }}">Merge Two {{placeType.friendly}}s</a>
             <a class="navbar-item" href="/manage-hierarchy/delete/{{ placeType.name }}">Delete a {{placeType.friendly}}</a>
