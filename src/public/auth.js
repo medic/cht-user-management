@@ -18,6 +18,8 @@ function togglePassword(event) {
     passwordInput.type = 'password';
     icon.textContent = 'visibility';
   }
+
+  passwordInput.focus();
 }
 
 document.addEventListener('DOMContentLoaded', initPasswordToggle);
