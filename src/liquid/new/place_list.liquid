@@ -49,10 +49,10 @@
     </div>
   </div>
   <table class="table is-fullwidth is-striped is-hoverable mb-1" style="table-layout: fixed;">
-    {% include "components/table_header.html" contactType=contactType %}
+    {% include "components/table_header.liquid" contactType=contactType %}
     <tbody>
       {% for place in places %}
-        {% include 'components/place_item.html' %}
+        {% include 'components/place_item.liquid' %}
       {% endfor %}
     </tbody>
   </table>

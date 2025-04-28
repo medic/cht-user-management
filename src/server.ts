@@ -32,7 +32,7 @@ const build = (opts: FastifyServerOptions): FastifyInstance => {
   fastify.register(view, {
     engine: {
       liquid: new Liquid({ 
-        extname: '.html', 
+        extname: '.liquid', 
         root: 'src/liquid', 
         cache: process.env.NODE_ENV === 'production', 
         jekyllInclude: true, 

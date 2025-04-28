@@ -1,14 +1,14 @@
-import { FastifyInstance } from 'fastify';
+import { FastifyInstance } from "fastify";
 
-import { Config } from '../config';
-import DirectiveModel from '../services/directive-model';
-import SessionCache from '../services/session-cache';
-import { UploadManager } from '../services/upload-manager';
-import { minify } from 'html-minifier';
-import { PlaceUploadState } from '../services/place';
+import { Config } from "../config";
+import DirectiveModel from "../services/directive-model";
+import SessionCache from "../services/session-cache";
+import { UploadManager } from "../services/upload-manager";
+import { minify } from "html-minifier";
+import { PlaceUploadState } from "../services/place";
 
 export default async function events(fastify: FastifyInstance) {
-  fastify.get('/events/connection', async (req, resp) => {
+  fastify.get("/events/connection", async (req, resp) => {
     const uploadManager: UploadManager = fastify.uploadManager;
     const sessionCache: SessionCache = req.sessionCache;
 
@@ -19,7 +19,7 @@ export default async function events(fastify: FastifyInstance) {
         sessionCache,
         req.cookies.filter
       );
-      const html = await fastify.view('src/liquid/place/directive.html', {
+      const html = await fastify.view("src/liquid/place/directive.liquid", {
         directiveModel,
       });
       resp.sse({
@@ -34,15 +34,15 @@ export default async function events(fastify: FastifyInstance) {
     const placeChangeListener = async (arg: string) => {
       const place = sessionCache.getPlace(arg);
       if (!place) {
-        resp.sse({ event: `update-${arg}`, data: '<tr></tr>' });
+        resp.sse({ event: `update-${arg}`, data: "<tr></tr>" });
       } else {
         const html = await fastify.view(
-          'src/liquid/components/place_item.html',
+          "src/liquid/components/place_item.liquid",
           {
             session: req.chtSession,
             contactType: {
               ...place.type,
-              hierarchy: Config.getHierarchyWithReplacement(place.type, 'desc'),
+              hierarchy: Config.getHierarchyWithReplacement(place.type, "desc"),
               userRoleProperty: Config.getUserRoleConfig(place.type),
             },
             place: place,
@@ -60,11 +60,11 @@ export default async function events(fastify: FastifyInstance) {
       await updateDirective();
     };
 
-    uploadManager.on('refresh_table_row', placeChangeListener);
-    uploadManager.on('refresh_grouped', async () => {
+    uploadManager.on("refresh_table_row", placeChangeListener);
+    uploadManager.on("refresh_grouped", async () => {
       resp.sse({ event: `update-group`, data: `update` });
     });
-    uploadManager.on('refresh_place', async args => {
+    uploadManager.on("refresh_place", async (args) => {
       const { id, state, err } = args;
       let statusText;
       if (state === PlaceUploadState.FAILURE) {
@@ -75,8 +75,8 @@ export default async function events(fastify: FastifyInstance) {
       resp.sse({ event: `update-${id}`, data: statusText });
     });
 
-    req.socket.on('close', () => {
-      uploadManager.removeListener('refresh_table_row', placeChangeListener);
+    req.socket.on("close", () => {
+      uploadManager.removeListener("refresh_table_row", placeChangeListener);
     });
   });
 }

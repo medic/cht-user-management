@@ -37,10 +37,10 @@
   </section>
 
   {% if op == "bulk" %}
-    {% include "place/bulk_create_form.html" %}
+    {% include "place/bulk_create_form.liquid" %}
   {% elsif op == "move" or op == "merge" or op == "delete" %}
-    {% include "place/manage_hierarchy_form.html" %}
+    {% include "place/manage_hierarchy_form.liquid" %}
   {% else %}
-    {% include "place/create_form.html" %}
+    {% include "place/create_form.liquid" %}
   {% endif %}
 </div>

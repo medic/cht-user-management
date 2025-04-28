@@ -11,7 +11,7 @@
     </label>
     {% if include.prop.type == 'dob' %}
       {%
-        include "components/contact_type_dob.html"
+        include "components/contact_type_dob.liquid"
           prop_name=prop_name
           isInYears=data['option_dob_unknown']
           place_type=include.place_type
@@ -23,7 +23,7 @@
       <div class="control">
         {% if include.prop.type == 'select_one' or include.prop.type == 'select_multiple' %}
           {%
-            include "components/contact_type_select.html"
+            include "components/contact_type_select.liquid"
               prop_name=prop_name
               prop=include.prop
               data=data

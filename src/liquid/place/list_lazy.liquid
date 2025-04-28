@@ -4,7 +4,7 @@
     <h2 class="title is-4">{{contactType.friendly}}</h2>
     <div>
       <table id="table_places" class="table is-fullwidth is-striped is-hoverable">
-        {% include "components/table_header.html" contactType=contactType %}
+        {% include "components/table_header.liquid" contactType=contactType %}
       </table>
       <div class="container p-6 is-flex is-justify-content-center is-align-content-center">
         <img src="/public/spinner.gif" alt="Loading data" />

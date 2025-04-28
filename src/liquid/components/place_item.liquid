@@ -2,7 +2,7 @@
   {% for hierarchy in contactType.hierarchy %}
     {% capture propertyName %}hierarchy_{{ hierarchy.property_name }}{% endcapture %}
     {% 
-      include "components/list_cell.html"
+      include "components/list_cell.liquid"
       propertyName=propertyName
       property=hierarchy
       values=place.hierarchyProperties
@@ -14,7 +14,7 @@
     {% if property.type != 'generated' %}
       {% capture propertyName %}place_{{ property.property_name }}{% endcapture %}
       {%
-        include "components/list_cell.html"
+        include "components/list_cell.liquid"
         propertyName=propertyName
         property=property
         values=place.properties
@@ -27,7 +27,7 @@
       {% if contact_property.type != 'generated' %}
         {% capture propertyName %}contact_{{ contact_property.property_name }}{% endcapture %}
         {%
-          include "components/list_cell.html"
+          include "components/list_cell.liquid"
           propertyName=propertyName
           property=contact_property
           values=place.contact.properties
@@ -39,7 +39,7 @@
   {% if contactType.user_role.size > 1 %}
     {% capture propertyName %}user_{{ contactType.userRoleProperty.property_name }}{% endcapture %}
     {%
-      include "components/list_cell.html"
+      include "components/list_cell.liquid"
       propertyName=propertyName
       property=contactType.userRoleProperty
       values=place.userRoleProperties

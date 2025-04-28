@@ -6,7 +6,7 @@
   <div class="p-2">
     {% for prop in contactType.place_properties %}
       {%
-        include "components/contact_type_property.html" prefix="place_"
+        include "components/contact_type_property.liquid" prefix="place_"
         prop=prop
         data=data
         place_type=contactType.name

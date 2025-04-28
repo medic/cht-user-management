@@ -20,14 +20,14 @@
 </head>
 
 <body>
-  {% include "app/nav.html" %}
+  {% include "app/nav.liquid" %}
 
   <div id="app" class="" style="min-height: 100vh">
     <div id="workflow-content" class="container tile is-parent">
       {% if view == "list" %}
-        {% include "app/fragment_home.html" %}
+        {% include "app/fragment_home.liquid" %}
       {% else %}
-        {% include "app/form_switch.html" %}
+        {% include "app/form_switch.liquid" %}
       {% endif %}
     </div>
   </div>

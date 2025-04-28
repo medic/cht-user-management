@@ -19,7 +19,7 @@
   <section class="section is-small">
     <h1 class="subtitle">{{ sourceDescription }}</h1>
     {% for hierarchy in sourceHierarchy %}
-      {% render 'components/search_input.html'
+      {% render 'components/search_input.liquid'
           op: op
           type: contactType.name
           hierarchy: hierarchy
@@ -34,7 +34,7 @@
     <section class="section is-small">
       <h1 class="subtitle">{{ destinationDescription }}</h1>
       {% for hierarchy in destinationHierarchy %}
-        {% render 'components/search_input.html'
+        {% render 'components/search_input.liquid'
             op: op
             type: contactType.name
             hierarchy: hierarchy
