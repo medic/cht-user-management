@@ -1,19 +1,19 @@
-import { Config } from "../config";
-import { ChtApi } from "../lib/cht-api";
-import { FastifyInstance } from "fastify";
-import ManageHierarchyLib from "../lib/manage-hierarchy";
-import SessionCache from "../services/session-cache";
-import { hierarchyViewModel } from "../services/hierarchy-view-model";
+import { Config } from '../config';
+import { ChtApi } from '../lib/cht-api';
+import { FastifyInstance } from 'fastify';
+import ManageHierarchyLib from '../lib/manage-hierarchy';
+import SessionCache from '../services/session-cache';
+import { hierarchyViewModel } from '../services/hierarchy-view-model';
 
 export default async function sessionCache(fastify: FastifyInstance) {
-  fastify.get("/manage-hierarchy/:action/:placeType", async (req, resp) => {
+  fastify.get('/manage-hierarchy/:action/:placeType', async (req, resp) => {
     const params: any = req.params;
     const placeType = params.placeType;
     const contactTypes = Config.contactTypes();
 
     const contactType = Config.getContactType(placeType);
     const tmplData = {
-      view: "manage-hierarchy",
+      view: 'manage-hierarchy',
       op: params.action,
       logo: Config.getLogoBase64(),
       contactTypes,
@@ -22,10 +22,10 @@ export default async function sessionCache(fastify: FastifyInstance) {
       ...hierarchyViewModel(params.action, contactType),
     };
 
-    return resp.view("src/liquid/app/view.liquid", tmplData);
+    return resp.view('src/liquid/app/view.liquid', tmplData);
   });
 
-  fastify.post("/manage-hierarchy", async (req, resp) => {
+  fastify.post('/manage-hierarchy', async (req, resp) => {
     const formData: any = req.body;
 
     const sessionCache: SessionCache = req.sessionCache;
@@ -33,7 +33,7 @@ export default async function sessionCache(fastify: FastifyInstance) {
     const chtApi = new ChtApi(req.chtSession);
 
     const tmplData: any = {
-      view: "manage-hierarchy",
+      view: 'manage-hierarchy',
       op: formData.op,
       logo: Config.getLogoBase64(),
       contactType,
@@ -43,7 +43,7 @@ export default async function sessionCache(fastify: FastifyInstance) {
     };
 
     try {
-      const isConfirmed = formData.confirmed === "true";
+      const isConfirmed = formData.confirmed === 'true';
       const job = await ManageHierarchyLib.getJobDetails(
         formData,
         contactType,
@@ -63,13 +63,13 @@ export default async function sessionCache(fastify: FastifyInstance) {
 
       tmplData.confirm = !isConfirmed;
       return resp.view(
-        "src/liquid/components/manage_hierarchy_form_content.liquid",
+        'src/liquid/components/manage_hierarchy_form_content.liquid',
         tmplData
       );
     } catch (e: any) {
       tmplData.error = e.toString();
       return resp.view(
-        "src/liquid/components/manage_hierarchy_form_content.liquid",
+        'src/liquid/components/manage_hierarchy_form_content.liquid',
         tmplData
       );
     }

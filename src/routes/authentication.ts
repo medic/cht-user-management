@@ -1,17 +1,17 @@
-import { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
+import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 
-import Auth from "../lib/authentication";
-import { AuthError } from "../lib/authentication-error";
-import { Config } from "../config";
-import { version as appVersion } from "../package.json";
-import ChtSession from "../lib/cht-session";
+import Auth from '../lib/authentication';
+import { AuthError } from '../lib/authentication-error';
+import { Config } from '../config';
+import { version as appVersion } from '../package.json';
+import ChtSession from '../lib/cht-session';
 
 const getLoginErrorMessage = (error: unknown): string => {
   if (error instanceof AuthError) {
     return error.errorMessage;
   }
 
-  return "Unexpected error logging in";
+  return 'Unexpected error logging in';
 };
 
 export default async function authentication(fastify: FastifyInstance) {
@@ -22,27 +22,27 @@ export default async function authentication(fastify: FastifyInstance) {
   };
 
   const renderAuthForm = (resp: FastifyReply, error: string) => {
-    return resp.view("src/liquid/auth/authentication_form.liquid", {
+    return resp.view('src/liquid/auth/authentication_form.liquid', {
       domains: Config.getDomains(),
       error,
     });
   };
 
-  fastify.get("/login", unauthenticatedOptions, async (req, resp) => {
+  fastify.get('/login', unauthenticatedOptions, async (req, resp) => {
     const tmplData = {
       logo: Config.getLogoBase64(),
       domains: Config.getDomains(),
     };
 
-    return resp.view("src/liquid/auth/view.liquid", tmplData);
+    return resp.view('src/liquid/auth/view.liquid', tmplData);
   });
 
-  fastify.get("/logout", unauthenticatedOptions, async (req, resp) => {
+  fastify.get('/logout', unauthenticatedOptions, async (req, resp) => {
     resp.clearCookie(Auth.AUTH_COOKIE_NAME);
-    return resp.redirect("/login");
+    return resp.redirect('/login');
   });
 
-  fastify.post("/authenticate", unauthenticatedOptions, async (req, resp) => {
+  fastify.post('/authenticate', unauthenticatedOptions, async (req, resp) => {
     const data: any = req.body;
     const { username, password, domain } = data;
 
@@ -63,21 +63,21 @@ export default async function authentication(fastify: FastifyInstance) {
         secure: true,
       });
 
-      resp.header("HX-Redirect", "/");
+      resp.header('HX-Redirect', '/');
     } catch (e: any) {
       console.error(
-        "Login error:",
+        'Login error:',
         e instanceof AuthError ? e.errorMessage : e
       );
       return renderAuthForm(resp, getLoginErrorMessage(e));
     }
   });
 
-  fastify.get("/_healthz", unauthenticatedOptions, () => {
-    return "OK";
+  fastify.get('/_healthz', unauthenticatedOptions, () => {
+    return 'OK';
   });
 
-  fastify.get("/version", unauthenticatedOptions, () => {
+  fastify.get('/version', unauthenticatedOptions, () => {
     return appVersion;
   });
 }

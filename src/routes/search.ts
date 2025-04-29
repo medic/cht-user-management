@@ -1,14 +1,14 @@
-import { FastifyInstance } from "fastify";
+import { FastifyInstance } from 'fastify';
 
-import { Config } from "../config";
-import { ChtApi } from "../lib/cht-api";
-import { RemotePlace } from "../lib/remote-place-cache";
-import SessionCache from "../services/session-cache";
-import SearchLib from "../lib/search";
+import { Config } from '../config';
+import { ChtApi } from '../lib/cht-api';
+import { RemotePlace } from '../lib/remote-place-cache';
+import SessionCache from '../services/session-cache';
+import SearchLib from '../lib/search';
 
 export default async function place(fastify: FastifyInstance) {
   // returns search results dropdown
-  fastify.post("/search", async (req, resp) => {
+  fastify.post('/search', async (req, resp) => {
     const queryParams: any = req.query;
     const { op, place_id: placeId, type, prefix: dataPrefix } = queryParams;
     const level = parseInt(queryParams.level);
@@ -18,8 +18,8 @@ export default async function place(fastify: FastifyInstance) {
     const contactType = Config.getContactType(type);
     const sessionCache: SessionCache = req.sessionCache;
     const place = sessionCache.getPlace(placeId);
-    if (!place && op === "edit") {
-      throw Error("must have place_id when editing");
+    if (!place && op === 'edit') {
+      throw Error('must have place_id when editing');
     }
 
     const chtApi = new ChtApi(req.chtSession);
@@ -38,7 +38,7 @@ export default async function place(fastify: FastifyInstance) {
       sessionCache
     );
 
-    return resp.view("src/liquid/components/search_results.liquid", {
+    return resp.view('src/liquid/components/search_results.liquid', {
       op,
       place,
       div: `search_container_${dataPrefix}${hierarchyLevel.property_name}`,
@@ -49,7 +49,7 @@ export default async function place(fastify: FastifyInstance) {
   });
 
   // when we select a place from search results
-  fastify.post("/search/select", async (req, resp) => {
+  fastify.post('/search/select', async (req, resp) => {
     const data: any = req.body;
     const queryParams: any = req.query;
     const {
@@ -68,7 +68,7 @@ export default async function place(fastify: FastifyInstance) {
     }
     data[`${dataPrefix}${hierarchyLevel.property_name}`] = resultName;
     data[`${dataPrefix}${hierarchyLevel.property_name}_id`] = place_id;
-    return resp.view("src/liquid/components/search_input.liquid", {
+    return resp.view('src/liquid/components/search_input.liquid', {
       op,
       type: contactType.name,
       prefix: dataPrefix,
