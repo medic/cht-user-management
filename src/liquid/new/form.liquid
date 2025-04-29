@@ -34,7 +34,10 @@
       {% endfor %}
       {% for prop in contactType.contact_properties %}
         {%
-          render "components/contact_type_property.liquid", prefix:"contact_", prop: prop,
+          render "components/contact_type_property.liquid",
+          prefix:"contact_",
+          data: data,
+          prop: prop,
           place_type: contactType.name,
           disabled: show_place_form ==  true
         %}
