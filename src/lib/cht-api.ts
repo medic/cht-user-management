@@ -21,6 +21,7 @@ export type PlacePayload = {
 
 export type CreatedPlaceResult = {
   placeId: string;
+  placeIds?: string[];
   contactId?: string;
 };
 
@@ -66,22 +67,32 @@ export class ChtApi {
     return resp.data.id;
   }
 
-  async updatePlace(payload: PlacePayload, contactId: string): Promise<any> {
-    const doc: any = await this.getDoc(payload._id);
+  async updatePlace(payload: PlacePayload | string, contactId: string): Promise<any> {
+    let doc: any;
+    let placeId = '';
+    if (typeof payload === 'string') {
+      placeId = payload;
+      doc = await this.getDoc(payload);
+    } else {
+      payload = payload as PlacePayload;
+      placeId = payload._id;
+      doc = await this.getDoc(payload._id);
 
-    const payloadClone:any = _.cloneDeep(payload);
-    delete payloadClone.contact;
-    delete payloadClone.parent;
+      const payloadClone:any = _.cloneDeep(payload);
+      delete payloadClone.contact;
+      delete payloadClone.parent;
+      Object.assign(doc, payloadClone);
+    }
 
     const previousPrimaryContact = doc.contact?._id;
-    Object.assign(doc, payloadClone, { contact: { _id: contactId }});
+    Object.assign(doc, { contact: { _id: contactId }});
     doc.user_attribution ||= {};
     doc.user_attribution.previousPrimaryContacts ||= [];
     if (previousPrimaryContact) {
       doc.user_attribution.previousPrimaryContacts.push(previousPrimaryContact);
     }
 
-    const putUrl = `medic/${payload._id}`;
+    const putUrl = `medic/${placeId}`;
     console.log('axios.put', putUrl);
     const resp = await this.axiosInstance.put(putUrl, doc);
     if (!resp.data.ok) {
@@ -173,6 +184,15 @@ export class ChtApi {
     const resp = await this.axiosInstance.get(url);
     return resp.data;
   }
+
+  async setDoc(id:string, doc: CouchDoc): Promise<void> {
+    const url = `medic/${id}`;
+    console.log('axios.put', url);
+    const resp = await this.axiosInstance.put(url, doc);
+    if (!resp.data.ok) {
+      throw Error('response from chtApi.updatePlace was not OK');
+    }
+  }
   
   async getUsersAtPlace(placeId: string): Promise<UserInfo[]> {
     const url = `api/v2/users?facility_id=${placeId}`;
@@ -181,7 +201,19 @@ export class ChtApi {
     return resp.data?.map((doc: any): UserInfo => ({
       username: doc.username,
       place: doc.place,
+      roles: doc.roles
     }));
+  }
+
+  async getUser(contactId: string): Promise<UserInfo> {
+    const url = `api/v2/users?contact_id=${contactId}`;
+    console.log('axios.get', url);
+    const resp = await this.axiosInstance.get(url);
+    return resp.data?.map((doc: any): UserInfo => ({
+      username: doc.username,
+      place: doc.place,
+      roles: doc.roles
+    }))[0];
   }
 
   async lastSyncAtPlace(placeId: string): Promise<DateTime> {

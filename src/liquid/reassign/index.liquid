@@ -1,26 +1,19 @@
 <html>
   <head>
     <title>
-      New
-      {{ contactType.contact_friendly }}
+      Reassign
+      {{ contactType.friendly }}
     </title>
     <script src="/public/htmx.min.js"></script>
     <script src="/public/sse.js"></script>
     <link rel="stylesheet" href="/public/bulma.min.css">
-    <link rel="stylesheet" href="/public/material-symbols.css">
     <link rel="stylesheet" href="/public/bulma-tooltip.min.css">
+    <link rel="stylesheet" href="/public/material-symbols.css">
   </head>
   <body>
     {% include "app/nav.html" %}
     <div class="container is-max-desktop px-4" hx-ext="sse" sse-connect="/events/connection">
-      {% render 'new/form.liquid',
-        contactType: contactType,
-        hierarchy: hierarchy,
-        data: data,
-        show_place_form: show_place_form,
-        contact_id: contact_id,
-        places: places
-      %}
+      {% render 'reassign/form.liquid', contactType: contactType, hierarchy: hierarchy, data: data, session: session %}
     </div>
   </body>
 </html>

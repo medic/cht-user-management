@@ -32,6 +32,7 @@ export default async function sessionCache(fastify: FastifyInstance) {
     const tmplData = {
       view: 'list',
       session: req.chtSession,
+      showListControls: true,
       logo: Config.getLogoBase64(),
       op,
       contactType,

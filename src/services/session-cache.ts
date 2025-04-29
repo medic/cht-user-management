@@ -2,6 +2,7 @@ import _ from 'lodash';
 import ChtSession from '../lib/cht-session';
 import { DirectiveFilter } from './directive-model';
 import Place, { PlaceUploadState } from './place';
+import { Config } from '../config';
 
 export type SessionCacheUploadState = 'in_progress' | 'done' | 'staged';
 
@@ -61,6 +62,9 @@ export default class SessionCache {
     nameIncludes?: string;
   }): { canEdit?: boolean; places: Place[] }[] => {
     const places =  this.getPlaces(options);
+    if (options?.type && !Config.getContactType(options.type).can_assign_multiple) {
+      return  [{ places }];
+    }
     return Object.values(
       _.groupBy(places, (p) => p.contact.id)
     )

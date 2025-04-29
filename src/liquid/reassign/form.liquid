@@ -1,0 +1,127 @@
+<div id="form_reassign">
+  <form
+    hx-post="/reassign"
+    autocomplete="off"
+    hx-target="#form_reassign"
+    hx-swap="outerHTML"
+  >
+    <div>
+      <h3 class="title is-size-4">Reassign {{ contactType.friendly }}</h3>
+    </div>
+    <p>{{ contactType.friendly }}</p>
+    <input name="place_type" value="{{contactType.name}}" hidden>
+
+    <div class="notification is-primary is-light my-0 mt-1">Add the CHUs to reassign</div>
+    <div class="p-2">
+      <div>
+        {% for hierarchy in hierarchy %}
+          {% render 'components/search_input.html',
+            type: contactType.name,
+            hierarchy: hierarchy,
+            prefix: 'hierarchy_',
+            data: data
+          %}
+        {% endfor %}
+        {% if errors.part %}
+          <div class="has-text-danger">* {{ errors.part }}</div>
+        {% endif %}
+      </div>
+      <div class="is-flex is-justify-content-end py-4">
+        <button
+          hx-post="/reassign/part"
+          hx-target="#form_reassign"
+          hx-swap="outerHTML"
+          class="button is-small is-primary"
+          {% if data.in_progress %}
+            disabled
+          {% endif %}
+        >
+          Add
+        </button>
+      </div>
+    </div>
+
+    {% if places and places.length > 0 %}
+      <div>
+        <div class="notification mb-2">
+          The following {{ contactType.friendly }}(s) are staged for reassignment. You can add more above
+        </div>
+        {% for item in places %}
+          <div
+            class="is-flex is-justify-content-space-between is-align-items-center p-2"
+            style="border-bottom: 1px solid #dcdcdc;"
+          >
+            <div>
+              <p>{{ item.place.name }}</p>
+              <p class="is-size-7">{{ item.place.levels }}</p>
+            </div>
+            <div hx-sse="swap:update-{{item.place.id}}" hx-target="this" hx-swap="innerHTML">
+              {% if data.in_progress != true %}
+                <button
+                  hx-post="/reassign/part/delete?place_id={{item.place.id}}"
+                  hx-target="#form_reassign"
+                  hx-swap="outerHTML"
+                  class="button is-small is-light is-danger"
+                >
+                  Remove
+                </button>
+              {% endif %}
+            </div>
+          </div>
+          <input name="list_{{ item.place.id }}" value="{{ item.value }}" hidden>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    <div class="notification is-primary is-light mt-5">
+      Finally, search for the {{ contactType.contact_friendly }} on
+      <a
+        href="https://{{session.authInfo.domain}}/#/contacts"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        https://{{ session.authInfo.domain -}}
+      </a>
+      then copy and paste their link below
+    </div>
+    <p><strong>Assign to:</strong></p>
+    <div class="p-2">
+      <div class="field">
+        <label class="label">Link to {{ contactType.contact_friendly }}</label>
+        <div class="control">
+          <textarea
+            name="contact"
+            type="text"
+            class="textarea"
+            rows="3"
+            placeholder="https://{{session.authInfo.domain}}/#/contacts/19634c6118f13e43f685301e240036bc"
+          >{% if data.contact %}{{data.contact}}{% endif %}</textarea>
+          {% if errors.contact -%}
+            <p style="color: red;">{{ errors.contact }}</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    {% if errors.form %}
+      <div class="mt-2">
+        <p class="has-text-danger has-text-weight-medium" style="font-size: 0.9rem;">{{ errors.form }}</p>
+      </div>
+    {% endif %}
+
+    {% if data.in_progress != true %}
+      <div class="field is-grouped is-grouped-right mt-4">
+        <div class="control">
+          <a href="/" class="button is-small">Cancel</a>
+          <button class="button is-small is-link">Reassign</button>
+        </div>
+      </div>
+    {% else %}
+      <div class="field is-grouped is-grouped-right mt-4">
+        <div class="control">
+          <a href="/" class="button is-small">Done</a>
+        </div>
+      </div>
+    {% endif %}
+  </form>
+</div>
