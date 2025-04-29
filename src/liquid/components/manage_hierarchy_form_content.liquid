@@ -8,24 +8,36 @@
   <div data-success="true"></div>
 {% endif %}
 
-<input name="place_type" value="{{contactType.name}}" hidden />
-<input name="op" value="{{op}}" hidden />
+<input name="place_type" value="{{contactType.name}}" hidden>
+<input name="op" value="{{op}}" hidden>
 
 {% if confirm %}
-  {% include "components/manage_hierarchy_warning" %}
+  {% render 'components/manage_hierarchy_warning',
+    op: op,
+    data: data,
+    contactType: contactType,
+    isPermanent: isPermanent,
+    warningInfo: warningInfo,
+    sourceHierarchy: sourceHierarchy,
+    destinationHierarchy: destinationHierarchy
+  %}
 {% endif %}
 
-<div {% if confirm %}hidden{% endif %}>
+<div
+  {% if confirm %}
+    hidden
+  {% endif %}
+>
   <section class="section is-small">
     <h1 class="subtitle">{{ sourceDescription }}</h1>
     {% for hierarchy in sourceHierarchy %}
-      {% render 'components/search_input.liquid'
-          op: op
-          type: contactType.name
-          hierarchy: hierarchy
-          data: data
-          required: hierarchy.required
-          prefix: "source_"
+      {% render 'components/search_input.liquid',
+        op: op,
+        type: contactType.name,
+        hierarchy: hierarchy,
+        data: data,
+        required: hierarchy.required,
+        prefix: 'source_'
       %}
     {% endfor %}
   </section>
@@ -34,13 +46,13 @@
     <section class="section is-small">
       <h1 class="subtitle">{{ destinationDescription }}</h1>
       {% for hierarchy in destinationHierarchy %}
-        {% render 'components/search_input.liquid'
-            op: op
-            type: contactType.name
-            hierarchy: hierarchy
-            data: data
-            required: hierarchy.required
-            prefix: "destination_"
+        {% render 'components/search_input.liquid',
+          op: op,
+          type: contactType.name,
+          hierarchy: hierarchy,
+          data: data,
+          required: hierarchy.required,
+          prefix: 'destination_'
         %}
       {% endfor %}
     </section>

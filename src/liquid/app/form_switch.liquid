@@ -9,38 +9,52 @@
     {% else %} New
     {% endif %}
   {% endcapture %}
-  
+
   <section class="hero is-small">
     <div class="hero-body">
       <p class="title">
-        {{header_caption}} 
-        {% if op == "replace" %}
-          {{contactType.contact_friendly | default: contactType.friendly }}
+        {{ header_caption }}
+        {% if op == 'replace' %}
+          {{ contactType.contact_friendly | default: contactType.friendly }}
         {% else %}
-          {{contactType.friendly}}
+          {{ contactType.friendly }}
         {% endif %}
       </p>
       <p class="block">
-        {% if op == "merge" %}
-          The first contact below will have all of its data moved to be under the second contact.
-          The first contact, once emptied, will be deleted.
-          This is useful to merge two duplicate records. <b>This operation cannot be undone.</b>
-        {% elsif op == "move" %}
-          The first contact selected below will be moved such that the second contact is its "parent".
-          Please ensure all affected users have synced their data fully before they are moved or data may be lost.
-        {% elsif op == "delete" %}
-          Deleting a contact will permanently remove the contact and all data within it. 
+        {% if op == 'merge' %}
+          The first contact below will have all of its data moved to be under the second contact. The first contact,
+          once emptied, will be deleted. This is useful to merge two duplicate records.
+          <b>This operation cannot be undone.</b>
+        {% elsif op == 'move' %}
+          The first contact selected below will be moved such that the second contact is its "parent". Please ensure all
+          affected users have synced their data fully before they are moved or data may be lost.
+        {% elsif op == 'delete' %}
+          Deleting a contact will permanently remove the contact and all data within it.
           <b>This operation cannot be undone.</b>
         {% endif %}
       </p>
     </div>
   </section>
 
-  {% if op == "bulk" %}
-    {% include "place/bulk_create_form.liquid" %}
-  {% elsif op == "move" or op == "merge" or op == "delete" %}
-    {% include "place/manage_hierarchy_form.liquid" %}
+  {% if op == 'bulk' %}
+    {% render 'place/bulk_create_form.liquid', contactType: contactType, userRoleProperty: userRoleProperty %}
+  {% elsif op == 'move' or op == 'merge' or op == 'delete' %}
+    {% render 'place/manage_hierarchy_form.liquid',
+      op: op,
+      contactType: contactType,
+      isPermanent: isPermanent,
+      sourceDescription: sourceDescription,
+      sourceHierarchy: sourceHierarchy,
+      destinationDescription: destinationDescription,
+      destinationHierarchy: destinationHierarchy
+    %}
   {% else %}
-    {% include "place/create_form.liquid" %}
+    {% render 'place/create_form.liquid',
+      op: op,
+      contactType: contactType,
+      hierarchy: hierarchy,
+      backend: backend,
+      data: data
+    %}
   {% endif %}
 </div>

@@ -11,7 +11,13 @@
     <link rel="stylesheet" href="/public/bulma-tooltip.min.css">
   </head>
   <body>
-    {% include "app/nav.liquid" %}
+    {% render 'app/nav.liquid',
+      op: op,
+      logo: logo,
+      contactTypes: contactTypes,
+      showListControls: showListControls,
+      session: session
+    %}
     <div class="container is-max-desktop px-4" hx-ext="sse" sse-connect="/events/connection">
       {% render 'new/form.liquid',
         contactType: contactType,

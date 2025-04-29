@@ -34,16 +34,16 @@
       {% endfor %}
       {% for prop in contactType.contact_properties %}
         {%
-          include "components/contact_type_property.liquid" prefix="contact_" prop=prop
-          place_type=contactType.name
-          disabled=show_place_form ==  true
+          render "components/contact_type_property.liquid", prefix:"contact_", prop: prop,
+          place_type: contactType.name,
+          disabled: show_place_form ==  true
         %}
       {% endfor %}
     </div>
 
     <div class="notification is-primary is-light">
-        Click on the <span style="font-weight: bold;">+ Add</span> button below to add all the
-        {{ contactType.friendly }}(s) that you want to assign to this user
+      Click on the <span style="font-weight: bold;">+ Add</span> button below to add all the
+      {{ contactType.friendly }}(s) that you want to assign to this user
     </div>
 
     <div id="place_new_parent">

@@ -1,3 +1,8 @@
-<a class="{{ include.className | default: "button is-primary" }}" hx-post="/app/apply-changes" hx-target="div#hero_directive_model" hx-swap="innerHTML">
+<a
+  class="{{ className | default: "button is-primary" }}"
+  hx-post="/app/apply-changes"
+  hx-target="div#hero_directive_model"
+  hx-swap="innerHTML"
+>
   <span class="material-symbols-outlined">group_add</span> Upload
 </a>

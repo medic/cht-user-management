@@ -1,3 +1,9 @@
 <div id="place_form_parent" class="tile is-6 is-child pt-3">
-    {% include "place/create_form.liquid" %}
+  {% render 'place/create_form.liquid',
+    op: op,
+    contactType: contactType,
+    hierarchy: hierarchy,
+    backend: backend,
+    data: data
+  %}
 </div>

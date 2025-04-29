@@ -1,26 +1,23 @@
 <html>
-
-<head>
+  <head>
     <title>CHT User Management Tool</title>
     <script src="/public/htmx.min.js"></script>
     <script src="/public/auth.js"></script>
-    <link rel="stylesheet" href="/public/bulma.min.css" />
-    <link rel="stylesheet" href="/public/material-symbols.css" />
-</head>
+    <link rel="stylesheet" href="/public/bulma.min.css">
+    <link rel="stylesheet" href="/public/material-symbols.css">
+  </head>
 
-<body>
-  <div class="container is-fluid">
-    
-    <section class="hero">
-      <div class="hero-body">
-        <p class="title">
-          <img src="{{ logo }}" />
-          User Management Tool
-        </p>
-      </div>
-    </section>
-    {% include "auth/authentication_form.liquid" %}
-  </div>
-</body>
-
+  <body>
+    <div class="container is-fluid">
+      <section class="hero">
+        <div class="hero-body">
+          <p class="title">
+            <img src="{{ logo }}">
+            User Management Tool
+          </p>
+        </div>
+      </section>
+      {% render 'auth/authentication_form.liquid', domains: domains %}
+    </div>
+  </body>
 </html>

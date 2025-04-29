@@ -1,11 +1,19 @@
 <form
-  id="form_place_move" 
+  id="form_place_move"
   autocomplete="off"
   hx-post="/manage-hierarchy"
-  hx-target="this" 
+  hx-target="this"
   hx-on::after-request="handleHierarchyFormResponse(event)"
 >
-  {% include "components/manage_hierarchy_form_content" %}
+  {% render 'components/manage_hierarchy_form_content',
+    op: op,
+    contactType: contactType,
+    isPermanent: isPermanent,
+    sourceDescription: sourceDescription,
+    sourceHierarchy: sourceHierarchy,
+    destinationDescription: destinationDescription,
+    destinationHierarchy: destinationHierarchy
+  %}
 
   <script type="text/javascript">
     function handleHierarchyFormResponse(event) {

@@ -1,5 +1,9 @@
-<p class="title is-5">
-  Upload In Progress...
-</p>
+<p class="title is-5">Upload In Progress...</p>
 
-<progress class="progress is-medium is-dark" value="{{ directiveModel.completeCount }}" max="{{ directiveModel.totalCount }}">{{ directiveModel.percent }}</progress>
+<progress
+  class="progress is-medium is-dark"
+  value="{{ directiveModel.completeCount }}"
+  max="{{ directiveModel.totalCount }}"
+>
+  {{ directiveModel.percent }}
+</progress>

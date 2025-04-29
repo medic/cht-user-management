@@ -1,8 +1,15 @@
 <form
-id="form_place_create" autocomplete="off"
-{% if backend %} hx-post="{{backend}}" {%else%} hx-post="/place?op=new&type={{contactType.name}}" {%endif%}
-hx-target="this" hx-swap="outerHTML">
-  <input name="place_type" value="{{contactType.name}}" hidden />
+  id="form_place_create"
+  autocomplete="off"
+  {% if backend %}
+    hx-post="{{backend}}"
+  {% else %}
+    hx-post="/place?op=new&type={{contactType.name}}"
+  {% endif %}
+  hx-target="this"
+  hx-swap="outerHTML"
+>
+  <input name="place_type" value="{{contactType.name}}" hidden>
   <section class="section is-small">
 
   {% if errors.size > 0 %}
@@ -18,38 +25,46 @@ hx-target="this" hx-swap="outerHTML">
 
     {% for hierarchy in hierarchy %}
       {% if hierarchy.level != 0 or op == 'replace' or place.hierarchyProperties.replacement.original %}
-        {%
-          render "components/search_input.liquid",
-            type: contactType.name,
-            hierarchy: hierarchy,
-            prefix: "hierarchy_",
-            data: data
+        {% render 'components/search_input.liquid',
+          type: contactType.name,
+          hierarchy: hierarchy,
+          prefix: 'hierarchy_',
+          data: data
         %}
       {% endif %}
     {% endfor %}
 
-    {%if op != 'replace'%}
+    {% if op != 'replace' %}
       {% for prop in contactType.place_properties %}
-        {%
-          include "components/contact_type_property.liquid" prefix="place_" prop=prop place_type=contactType.name
+        {% render 'components/contact_type_property.liquid',
+          prefix: 'place_',
+          prop: prop,
+          place_type: contactType.name,
+          data: data
         %}
       {% endfor %}
-    {%endif%}
+    {% endif %}
   </section>
   <section class="section is-small">
     {% for prop in contactType.contact_properties %}
-      {%
-        include "components/contact_type_property.liquid" prefix="contact_" prop=prop place_type=contactType.name
+      {% render 'components/contact_type_property.liquid',
+        prefix: 'contact_',
+        prop: prop,
+        place_type: contactType.name,
+        data: data
       %}
     {% endfor %}
   </section>
 
   {% if contactType.user_role.size > 1 %}
-  <section class="section is-small">
-    {%
-      include "components/contact_type_property.liquid" prefix="user_" prop=userRoleProperty
-    %}
-  </section>
+    <section class="section is-small">
+      {% render 'components/contact_type_property.liquid',
+        prefix: 'user_',
+        prop: userRoleProperty,
+        place_type: contactType.name,
+        data: data
+      %}
+    </section>
   {% endif %}
 
   <div class=" field is-grouped is-grouped-right">

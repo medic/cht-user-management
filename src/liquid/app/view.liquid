@@ -1,44 +1,64 @@
 <html>
+  <head>
+    <title>CHT User Management Tool</title>
+    <script src="/public/htmx.min.js"></script>
+    <script src="/public/sse.js"></script>
+    <script src="/public/bulma-calendar.min.js"></script>
+    <script src="/public/bulma-toast.min.js"></script>
 
-<head>
-  <title>CHT User Management Tool</title>
-  <script src="/public/htmx.min.js"></script>
-  <script src="/public/sse.js"></script>
-  <script src="/public/bulma-calendar.min.js"></script>
-  <script src="/public/bulma-toast.min.js"></script>
+    <link rel="stylesheet" href="/public/bulma.min.css">
+    <link rel="stylesheet" href="/public/bulma-tooltip.min.css">
+    <link rel="stylesheet" href="/public/bulma-calendar.min.css">
+    <link rel="stylesheet" href="/public/material-symbols.css">
 
-  <link rel="stylesheet" href="/public/bulma.min.css" />
-  <link rel="stylesheet" href="/public/bulma-tooltip.min.css" />
-  <link rel="stylesheet" href="/public/bulma-calendar.min.css" />
-  <link rel="stylesheet" href="/public/material-symbols.css" />
+    <style>
+      .material-symbols-outlined {
+        margin-right: 5px;
+      }
+    </style>
+  </head>
 
-  <style>
-    .material-symbols-outlined {
-      margin-right: 5px;
-    };
-  </style>
-</head>
+  <body>
+    {% render 'app/nav.liquid',
+      op: op,
+      logo: logo,
+      contactTypes: contactTypes,
+      showListControls: showListControls,
+      session: session
+    %}
 
-<body>
-  {% include "app/nav.liquid" %}
-
-  <div id="app" class="" style="min-height: 100vh">
-    <div id="workflow-content" class="container tile is-parent">
-      {% if view == "list" %}
-        {% include "app/fragment_home.liquid" %}
-      {% else %}
-        {% include "app/form_switch.liquid" %}
-      {% endif %}
+    <div id="app" class="" style="min-height: 100vh">
+      <div id="workflow-content" class="container tile is-parent">
+        {% if view == 'list' %}
+          {% render 'app/fragment_home.liquid',
+            directiveModel: directiveModel,
+            session: session,
+            contactTypes: contactTypes,
+            userRoleProperty: userRoleProperty
+          %}
+        {% else %}
+          {% render 'app/form_switch.liquid',
+            op: op,
+            contactType: contactType,
+            hierarchy: hierarchy,
+            backend: backend,
+            data: data,
+            isPermanent: isPermanent,
+            sourceDescription: sourceDescription,
+            sourceHierarchy: sourceHierarchy,
+            destinationDescription: destinationDescription,
+            destinationHierarchy: destinationHierarchy
+          %}
+        {% endif %}
+      </div>
     </div>
-  </div>
 
-  <script type="text/javascript">
-    bulmaCalendar.attach('input[type="date"]', {
-      lang: 'en-US',
-      dateFormat: 'yyyy-MM-dd',
-      maxDate: new Date(),
-    });
-  </script>
-</body>
-
+    <script type="text/javascript">
+      bulmaCalendar.attach('input[type="date"]', {
+        lang: 'en-US',
+        dateFormat: 'yyyy-MM-dd',
+        maxDate: new Date(),
+      });
+    </script>
+  </body>
 </html>

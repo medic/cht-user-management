@@ -1,21 +1,23 @@
 <div class="tags has-addons">
-  {% if directiveModel.filter == include.filterName %}
-    <button class="button {{ include.class }} tag disable">
-      {{ include.count }} {{ include.filterName }}
+  {% if directiveModel.filter == filterName %}
+    <button class="button {{ class }} tag disable">
+      {{ count }}
+      {{ filterName }}
     </button>
     <a class="tag is-delete" hx-post="/app/set-filter/" hx-swap="none"></a>
   {% else %}
-    <button 
+    <button
       class="
         button
-        {{ include.class }}
+        {{ class }}
         tag
         {% if directiveModel.filter %}is-light{%endif %}
-        " 
-      hx-post="/app/set-filter/{{ include.filterName }}" 
+      "
+      hx-post="/app/set-filter/{{ filterName }}"
       hx-swap="none"
     >
-      {{ include.count }} {{ include.filterName }}
+      {{ count }}
+      {{ filterName }}
     </button>
   {% endif %}
 </div>

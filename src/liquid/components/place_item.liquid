@@ -1,23 +1,25 @@
 <tr id="{{place.id}}" hx-sse="swap:update-{{place.id}}" hx-target="this" hx-swap="outerHTML">
   {% for hierarchy in contactType.hierarchy %}
     {% capture propertyName %}hierarchy_{{ hierarchy.property_name }}{% endcapture %}
-    {% 
-      include "components/list_cell.liquid"
-      propertyName=propertyName
-      property=hierarchy
-      values=place.hierarchyProperties
-      linkTo=place.resolvedHierarchy[hierarchy.level]
+    {% render 'components/list_cell.liquid',
+      propertyName: propertyName,
+      property: hierarchy,
+      values: place.hierarchyProperties,
+      linkTo: place.resolvedHierarchy[hierarchy.level],
+      session: session,
+      place: place
     %}
   {% endfor %}
 
   {% for property in contactType.place_properties %}
     {% if property.type != 'generated' %}
       {% capture propertyName %}place_{{ property.property_name }}{% endcapture %}
-      {%
-        include "components/list_cell.liquid"
-        propertyName=propertyName
-        property=property
-        values=place.properties
+      {% render 'components/list_cell.liquid',
+        propertyName: propertyName,
+        property: property,
+        session: session,
+        place: place,
+        values: place.properties
       %}
     {% endif %}
   {% endfor %}
@@ -26,11 +28,12 @@
     {% for contact_property in contactType.contact_properties %}
       {% if contact_property.type != 'generated' %}
         {% capture propertyName %}contact_{{ contact_property.property_name }}{% endcapture %}
-        {%
-          include "components/list_cell.liquid"
-          propertyName=propertyName
-          property=contact_property
-          values=place.contact.properties
+        {% render 'components/list_cell.liquid',
+          propertyName: propertyName,
+          property: contact_property,
+          session: session,
+          place: place,
+          values: place.contact.properties
         %}
       {% endif %}
     {% endfor %}
@@ -38,17 +41,17 @@
 
   {% if contactType.user_role.size > 1 %}
     {% capture propertyName %}user_{{ contactType.userRoleProperty.property_name }}{% endcapture %}
-    {%
-      include "components/list_cell.liquid"
-      propertyName=propertyName
-      property=contactType.userRoleProperty
-      values=place.userRoleProperties
+    {% render 'components/list_cell.liquid',
+      propertyName: propertyName,
+      property: contactType.userRoleProperty,
+      session: session,
+      place: place,
+      values: place.userRoleProperties
     %}
   {% endif %}
 
   <td>
-    {% capture tag_text %}{% if place.validationErrors == empty %}{{ place.state }}{% else %}invalid{% endif %}{%
-    endcapture %}
+    {% capture tag_text %}{% if place.validationErrors == empty %}{{ place.state }}{% else %}invalid{% endif %}{% endcapture %}
     {% capture tag_class %}
     {% if place.state == 'failure' %}is-danger
     {% elsif place.state == 'success' %}is-success
@@ -56,44 +59,55 @@
     {% endif %}
     {% if place.uploadError %}has-tooltip-arrow has-tooltipl-multiline{% endif %}
     {% endcapture %}
-    <span class="tag is-info {{ tag_class }}" {% if place.uploadError
-      %}data-tooltip="{{ place.uploadError | escape }}" {% endif %}>
+    <span
+      class="tag is-info {{ tag_class }}"
+      {% if place.uploadError %}
+        data-tooltip="{{ place.uploadError | escape }}"
+      {% endif %}
+    >
       {{ tag_text }}
     </span>
 
     {% if place.warnings != empty %}
       <span
-      class="material-symbols-outlined is-info has-tooltip-arrow has-tooltipl-multiline has-text-warning"
-      data-tooltip="{{ place.warnings | join: '\n' | escape }}"
+        class="material-symbols-outlined is-info has-tooltip-arrow has-tooltipl-multiline has-text-warning"
+        data-tooltip="{{ place.warnings | join: '\n' | escape }}"
       >
-      warning
+        warning
       </span>
     {% endif %}
   </td>
 
   <td>
     {% if place.creationDetails.password %}
-    {% capture explanation %}Username: {{ place.creationDetails.username }} Password: {{ place.creationDetails.password }}{% endcapture %}
-    <span class="has-tooltip-arrow has-tooltipl-multiline material-symbols-outlined"
-      data-tooltip="{{ explanation | escape }}"
-      onclick="navigator.clipboard.writeText(`{{ explanation | escape }}`);">
-      key
-    </span>
+      {% capture explanation %}Username: {{ place.creationDetails.username }} Password: {{ place.creationDetails.password }}{% endcapture %}
+      <span
+        class="has-tooltip-arrow has-tooltipl-multiline material-symbols-outlined"
+        data-tooltip="{{ explanation | escape }}"
+        onclick="navigator.clipboard.writeText(`{{ explanation | escape }}`);"
+      >
+        key
+      </span>
     {% else %}
-    <a href="/place/edit/{{place.id}}" data-tooltip="Edit">
-      <span class="material-symbols-outlined">edit</span>
-    </a>
-    <a hx-post="/place/refresh/{{place.id}}" data-tooltip="Refresh" hx-target="this" hx-swap="none">
-      <span class="material-symbols-outlined">refresh</span>
-    </a>
-    {% if place.validationErrors == empty %}
-    <a hx-post="/place/upload/{{place.id}}" hx-target="this" hx-swap="none" data-tooltip="Upload">
-      <span class="material-symbols-outlined">upload</span>
-    </a>
-    {%endif%}
-    {%endif%}
+      <a href="/place/edit/{{place.id}}" data-tooltip="Edit">
+        <span class="material-symbols-outlined">edit</span>
+      </a>
+      <a hx-post="/place/refresh/{{place.id}}" data-tooltip="Refresh" hx-target="this" hx-swap="none">
+        <span class="material-symbols-outlined">refresh</span>
+      </a>
+      {% if place.validationErrors == empty %}
+        <a hx-post="/place/upload/{{place.id}}" hx-target="this" hx-swap="none" data-tooltip="Upload">
+          <span class="material-symbols-outlined">upload</span>
+        </a>
+      {% endif %}
+    {% endif %}
 
-    <a class="material-symbols-outlined" data-tooltip="Forget" hx-post="/place/remove/{{place.id}}"
-      hx-swap="none">delete</a>
+    <a
+      class="material-symbols-outlined"
+      data-tooltip="Forget"
+      hx-post="/place/remove/{{place.id}}"
+      hx-swap="none"
+      >delete</a
+    >
   </td>
 </tr>
