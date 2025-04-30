@@ -10,19 +10,20 @@
       {% for contact_property in contactType.contact_properties %}
         {% if contact_property.type != 'generated' %}
           {% capture propertyName %}contact_{{ contact_property.property_name }}{% endcapture %}
-          <p class="m-1">
+          <div class="m-1">
             <span>
               <strong>{{ contact_property.friendly_name }}: </strong>
             </span>
             <span
               {% if places[0].validationErrors[propertyName] %}
                 class="has-text-danger has-text-weight-semibold has-tooltip-arrow has-tooltipl-multiline"
+                style="background-color: #feecf0; color: #cc0f35 display: inline-block; min-width: 80px; height: 20px;"
                 data-tooltip="{{ places[0].validationErrors[propertyName] | escape }}"
               {% endif %}
             >
               {{ places[0].contact.properties[contact_property.property_name] }}
             </span>
-          </p>
+          </div>
         {% endif %}
       {% endfor %}
     </div>
