@@ -20,7 +20,7 @@
       session: session
     %}
     <div class="container is-max-desktop px-4" hx-ext="sse" sse-connect="/events/connection">
-      {% render 'reassign/form.liquid', contactType: contactType, hierarchy: hierarchy, data: data, session: session %}
+      {% render 'multiplace/reassign/form.liquid', contactType: contactType, hierarchy: hierarchy, data: data, session: session %}
     </div>
   </body>
 </html>

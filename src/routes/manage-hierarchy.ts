@@ -4,6 +4,8 @@ import { FastifyInstance } from 'fastify';
 import ManageHierarchyLib from '../lib/manage-hierarchy';
 import SessionCache from '../services/session-cache';
 import { hierarchyViewModel } from '../services/hierarchy-view-model';
+import { AppViewModel } from '../liquid/app';
+import { ManageHierarchyFormContentViewModel } from '../liquid/place';
 
 export default async function sessionCache(fastify: FastifyInstance) {
   fastify.get('/manage-hierarchy/:action/:placeType', async (req, resp) => {
@@ -12,7 +14,7 @@ export default async function sessionCache(fastify: FastifyInstance) {
     const contactTypes = Config.contactTypes();
 
     const contactType = Config.getContactType(placeType);
-    const tmplData = {
+    const viewModel: AppViewModel = {
       view: 'manage-hierarchy',
       op: params.action,
       logo: Config.getLogoBase64(),
@@ -22,7 +24,7 @@ export default async function sessionCache(fastify: FastifyInstance) {
       ...hierarchyViewModel(params.action, contactType),
     };
 
-    return resp.view('src/liquid/app/view.liquid', tmplData);
+    return resp.view('src/liquid/app/view.liquid', viewModel);
   });
 
   fastify.post('/manage-hierarchy', async (req, resp) => {
@@ -32,14 +34,13 @@ export default async function sessionCache(fastify: FastifyInstance) {
     const contactType = Config.getContactType(formData.place_type);
     const chtApi = new ChtApi(req.chtSession);
 
-    const tmplData: any = {
-      view: 'manage-hierarchy',
+    const viewModel: ManageHierarchyFormContentViewModel = {
       op: formData.op,
-      logo: Config.getLogoBase64(),
       contactType,
       data: formData,
-      session: req.chtSession,
       ...hierarchyViewModel(formData.op, contactType),
+      success: false,
+      confirm: false,
     };
 
     try {
@@ -52,26 +53,20 @@ export default async function sessionCache(fastify: FastifyInstance) {
       );
       if (isConfirmed) {
         await ManageHierarchyLib.scheduleJob(job);
-        tmplData.success = true;
+        viewModel.success = true;
       } else {
         const warningInfo = await ManageHierarchyLib.getWarningInfo(
           job,
           chtApi
         );
-        tmplData.warningInfo = warningInfo;
+        viewModel.warningInfo = warningInfo;
       }
 
-      tmplData.confirm = !isConfirmed;
-      return resp.view(
-        'src/liquid/components/manage_hierarchy_form_content.liquid',
-        tmplData
-      );
+      viewModel.confirm = !isConfirmed;
+      return resp.view('src/liquid/components/manage_hierarchy_form_content.liquid', viewModel);
     } catch (e: any) {
-      tmplData.error = e.toString();
-      return resp.view(
-        'src/liquid/components/manage_hierarchy_form_content.liquid',
-        tmplData
-      );
+      viewModel.error = e.toString();
+      return resp.view('src/liquid/components/manage_hierarchy_form_content.liquid', viewModel);
     }
   });
 }

@@ -4,6 +4,7 @@ import { ChtApi, CouchDoc, UserInfo } from '../lib/cht-api';
 import { UploadManager } from '../services/upload-manager';
 import { isEqual } from 'lodash';
 import _ from 'lodash';
+import { MultiplaceReassignFormViewModel, MultiplaceReassignViewModel } from '../liquid/multiplace';
 
 export default async function newHandler(fastify: FastifyInstance) {
 
@@ -20,13 +21,16 @@ export default async function newHandler(fastify: FastifyInstance) {
     const { place_type } = req.query as any;
     const contactType = Config.getContactType(place_type);
     const contactTypes = Config.contactTypes();
-    return resp.view('src/liquid/reassign/index.liquid', {
+
+    const viewModel: MultiplaceReassignViewModel = {
+      errors: {},
       contactType,
       hierarchy: Config.getHierarchyWithReplacement(contactType, 'desc'),
       logo: Config.getLogoBase64(),
       session: req.chtSession,
       contactTypes
-    });
+    };
+    return resp.view('src/liquid/multiplace/reassign/index.liquid', viewModel);
   });
 
   fastify.post('/reassign/part', async (req, resp) => {
@@ -57,14 +61,15 @@ export default async function newHandler(fastify: FastifyInstance) {
       }
     }
     
-    return resp.view('src/liquid/reassign/form.liquid', {
+    const viewModel: MultiplaceReassignFormViewModel = {
       contactType,
       hierarchy,
       session: req.chtSession,
       data: body,
       places,
       errors
-    });
+    };
+    return resp.view('src/liquid/multiplace/reassign/form.liquid', viewModel);
   });
 
 
@@ -76,13 +81,15 @@ export default async function newHandler(fastify: FastifyInstance) {
     const hierarchy = Config.getHierarchyWithReplacement(contactType, 'desc');
     const places = getPlaces(body).filter(item => item.place.id !== place_id);
 
-    return resp.view('src/liquid/reassign/form.liquid', {
+    const viewModel: MultiplaceReassignFormViewModel = {
       contactType,
       hierarchy,
       session: req.chtSession,
       data: body,
-      places
-    });
+      places,
+      errors: {},
+    };
+    return resp.view('src/liquid/multiplace/reassign/form.liquid', viewModel);
   });
 
 
@@ -95,14 +102,15 @@ export default async function newHandler(fastify: FastifyInstance) {
     const uuidMatch = body.contact.match('/contacts/(?<uuid>[a-z0-9-]{32,36})');
     if (!uuidMatch?.groups?.uuid) {
       const errors = { contact: '*Invalid link' };
-      return resp.view('src/liquid/reassign/form.liquid', {
+      const viewModel: MultiplaceReassignFormViewModel = {
         contactType,
         hierarchy,
         session: req.chtSession,
         data: body,
         places,
         errors
-      });
+      };
+      return resp.view('src/liquid/multiplace/reassign/form.liquid', viewModel);
     }
 
     if (places.length > 0) {
@@ -125,18 +133,19 @@ export default async function newHandler(fastify: FastifyInstance) {
         uploadManager.reassign(contactId, user, places.map(i => i.place.id), chtApi);
       } catch (err: any) {
         const errors = { contact: err };
-        return resp.view('src/liquid/reassign/form.liquid', {
+        const viewModel: MultiplaceReassignFormViewModel = {
           contactType,
           hierarchy,
           session: req.chtSession,
           data: body,
           places,
           errors
-        });
+        };
+        return resp.view('src/liquid/multiplace/reassign/form.liquid', viewModel);
       }
     }
 
-    return resp.view('src/liquid/reassign/form.liquid', {
+    const viewModel = {
       contactType,
       hierarchy,
       session: req.chtSession,
@@ -145,7 +154,8 @@ export default async function newHandler(fastify: FastifyInstance) {
       errors: {
         form: places.length <= 0 ? 'Please Add some places before trying to reassign': undefined
       }
-    });
+    };
+    return resp.view('src/liquid/multiplace/reassign/form.liquid', viewModel);
   });
 
 }

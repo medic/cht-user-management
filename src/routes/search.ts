@@ -5,6 +5,7 @@ import { ChtApi } from '../lib/cht-api';
 import { RemotePlace } from '../lib/remote-place-cache';
 import SessionCache from '../services/session-cache';
 import SearchLib from '../lib/search';
+import { SearchInputViewModel, SearchResultViewModel } from '../liquid/components';
 
 export default async function place(fastify: FastifyInstance) {
   // returns search results dropdown
@@ -38,14 +39,15 @@ export default async function place(fastify: FastifyInstance) {
       sessionCache
     );
 
-    return resp.view('src/liquid/components/search_results.liquid', {
+    const viewModel: SearchResultViewModel = {
       op,
       place,
       div: `search_container_${dataPrefix}${hierarchyLevel.property_name}`,
       prefix: dataPrefix,
       searchResults,
       level,
-    });
+    };
+    return resp.view('src/liquid/components/search_results.liquid', viewModel);
   });
 
   // when we select a place from search results
@@ -68,12 +70,14 @@ export default async function place(fastify: FastifyInstance) {
     }
     data[`${dataPrefix}${hierarchyLevel.property_name}`] = resultName;
     data[`${dataPrefix}${hierarchyLevel.property_name}_id`] = place_id;
-    return resp.view('src/liquid/components/search_input.liquid', {
+
+    const viewModel: SearchInputViewModel = {
       op,
       type: contactType.name,
       prefix: dataPrefix,
       hierarchy: hierarchyLevel,
       data,
-    });
+    };
+    return resp.view('src/liquid/components/search_input.liquid', viewModel);
   });
 }

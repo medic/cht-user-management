@@ -9,6 +9,8 @@ import { UploadManager } from '../services/upload-manager';
 import RemotePlaceCache from '../lib/remote-place-cache';
 import WarningSystem from '../warnings';
 import semver from 'semver';
+import { AppViewModel } from '../liquid/app';
+import { BulkCreateFormViewModel } from '../liquid/place';
 
 export default async function addPlace(fastify: FastifyInstance) {
   fastify.get('/add-place', async (req, resp) => {
@@ -25,11 +27,11 @@ export default async function addPlace(fastify: FastifyInstance) {
       contactType.can_assign_multiple &&
       op === 'new'
     ) {
-      resp.redirect(`/new?place_type=${queryParams.type}`);
+      resp.redirect(`/multiplace/new?place_type=${queryParams.type}`);
       return;
     }
 
-    const tmplData = {
+    const viewModel: AppViewModel = {
       view: 'add',
       logo: Config.getLogoBase64(),
       session: req.chtSession,
@@ -40,7 +42,7 @@ export default async function addPlace(fastify: FastifyInstance) {
       userRoleProperty: Config.getUserRoleConfig(contactType),
     };
 
-    return resp.view('src/liquid/app/view.liquid', tmplData);
+    return resp.view('src/liquid/app/view.liquid', viewModel);
   });
 
   fastify.post('/place/dob', async (req, resp) => {
@@ -48,14 +50,16 @@ export default async function addPlace(fastify: FastifyInstance) {
     const contactType = Config.getContactType(
       place_type
     ).contact_properties.find((prop) => prop.type === prop_type);
-    return resp.view('src/liquid/components/contact_type_property.liquid', {
+
+    const viewModel: ComponentViewModel = {
       data: req.body,
       include: {
         prefix,
         place_type,
         prop: contactType,
       },
-    });
+    };
+    return resp.view('src/liquid/components/contact_type_property.liquid', viewModel);
   });
 
   // you want to create a place? replace a contact? you'll have to go through me first
@@ -85,13 +89,15 @@ export default async function addPlace(fastify: FastifyInstance) {
           sessionCache,
           chtApi
         );
-      } catch (error) {
-        return fastify.view('src/liquid/place/bulk_create_form.liquid', {
+      } catch (error: any) {
+        const viewModel: BulkCreateFormViewModel = {
           contactType,
           errors: {
-            message: error,
+            message: error.toString(),
           },
-        });
+          userRoleProperty: Config.getUserRoleConfig(contactType),
+        };
+        return fastify.view('src/liquid/place/bulk_create_form.liquid', viewModel);
       }
 
       // back to places list
@@ -128,7 +134,7 @@ export default async function addPlace(fastify: FastifyInstance) {
       );
     }
 
-    const tmplData = {
+    const viewModel: AppViewModel = {
       view: 'edit',
       op: 'edit',
       logo: Config.getLogoBase64(),
@@ -144,7 +150,7 @@ export default async function addPlace(fastify: FastifyInstance) {
     };
 
     resp.header('HX-Push-Url', `/place/edit/${id}`);
-    return resp.view('src/liquid/app/view.liquid', tmplData);
+    return resp.view('src/liquid/app/view.liquid', viewModel);
   });
 
   fastify.post('/place/edit/:id', async (req, resp) => {

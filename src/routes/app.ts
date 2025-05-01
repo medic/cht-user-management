@@ -9,6 +9,8 @@ import RemotePlaceResolver from '../lib/remote-place-resolver';
 import SessionCache from '../services/session-cache';
 import { UploadManager } from '../services/upload-manager';
 import WarningSystem from '../warnings';
+import { AppViewModel } from '../liquid/app';
+import { DirectiveViewModel, ListViewModel } from '../liquid/place';
 
 export default async function sessionCache(fastify: FastifyInstance) {
   fastify.get('/', async (req, resp) => {
@@ -27,7 +29,7 @@ export default async function sessionCache(fastify: FastifyInstance) {
       };
     });
 
-    const tmplData = {
+    const viewModel: AppViewModel = {
       view: 'list',
       session: req.chtSession,
       showListControls: true,
@@ -38,7 +40,7 @@ export default async function sessionCache(fastify: FastifyInstance) {
       directiveModel,
     };
 
-    return resp.view('src/liquid/app/view.liquid', tmplData);
+    return resp.view('src/liquid/app/view.liquid', viewModel);
   });
 
   fastify.get('/app/list', async (req, resp) => {
@@ -56,11 +58,11 @@ export default async function sessionCache(fastify: FastifyInstance) {
         userRoleProperty: Config.getUserRoleConfig(item),
       };
     });
-    const tmplData = {
-      session: req.chtSession,
+
+    const viewModel: ListViewModel = {
       contactTypes: placeData,
     };
-    return resp.view('src/liquid/place/list.liquid', tmplData);
+    return resp.view('src/liquid/place/list.liquid', viewModel);
   });
 
   fastify.post('/app/remove-all', async (req, resp) => {
@@ -102,9 +104,13 @@ export default async function sessionCache(fastify: FastifyInstance) {
       ignoreWarnings === 'true'
     );
 
-    return resp.view('src/liquid/place/directive.liquid', {
+    const viewModel: DirectiveViewModel = {
+      session: req.chtSession,
+      contactTypes: Config.contactTypes(),
       directiveModel,
-    });
+    };
+
+    return resp.view('src/liquid/place/directive.liquid', viewModel);
   });
 
   fastify.post('/app/set-filter/:filter', async (req, resp) => {
