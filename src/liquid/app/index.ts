@@ -1,7 +1,7 @@
 import { ContactType } from '../../config';
 import { BulkCreateFormViewModel, CreateFormViewModel, DirectiveViewModel, ListLazyViewModel, ManageHierarchyFormViewModel } from '../place';
 
-type NavViewModel = {
+export type NavViewModel = {
   op: string;
   logo: string;
   contactTypes: ContactType[];

@@ -5,6 +5,7 @@ import { AuthError } from '../lib/authentication-error';
 import { Config } from '../config';
 import { version as appVersion } from '../package.json';
 import ChtSession from '../lib/cht-session';
+import { AuthFormViewModel, AuthViewModel } from '../liquid/auth';
 
 const getLoginErrorMessage = (error: unknown): string => {
   if (error instanceof AuthError) {
@@ -22,19 +23,20 @@ export default async function authentication(fastify: FastifyInstance) {
   };
 
   const renderAuthForm = (resp: FastifyReply, error: string) => {
-    return resp.view('src/liquid/auth/authentication_form.liquid', {
+    const viewModel: AuthFormViewModel = {
       domains: Config.getDomains(),
       error,
-    });
+    };
+    return resp.view('src/liquid/auth/authentication_form.liquid', viewModel);
   };
 
   fastify.get('/login', unauthenticatedOptions, async (req, resp) => {
-    const tmplData = {
+    const viewModel: AuthViewModel = {
       logo: Config.getLogoBase64(),
       domains: Config.getDomains(),
     };
 
-    return resp.view('src/liquid/auth/view.liquid', tmplData);
+    return resp.view('src/liquid/auth/view.liquid', viewModel);
   });
 
   fastify.get('/logout', unauthenticatedOptions, async (req, resp) => {

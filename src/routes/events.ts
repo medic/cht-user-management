@@ -6,6 +6,8 @@ import SessionCache from '../services/session-cache';
 import { UploadManager } from '../services/upload-manager';
 import { minify } from 'html-minifier';
 import { PlaceUploadState } from '../services/place';
+import { DirectiveViewModel } from '../liquid/place';
+import { PlaceItemViewModel } from '../liquid/components';
 
 export default async function events(fastify: FastifyInstance) {
   fastify.get('/events/connection', async (req, resp) => {
@@ -19,9 +21,12 @@ export default async function events(fastify: FastifyInstance) {
         sessionCache,
         req.cookies.filter
       );
-      const html = await fastify.view('src/liquid/place/directive.liquid', {
+      const viewModel: DirectiveViewModel = {
+        session: req.chtSession,
+        contactTypes: Config.contactTypes(),
         directiveModel,
-      });
+      };
+      const html = await fastify.view('src/liquid/place/directive.liquid', viewModel);
       resp.sse({
         event: `directive`,
         data: minify(html, {
@@ -36,18 +41,16 @@ export default async function events(fastify: FastifyInstance) {
       if (!place) {
         resp.sse({ event: `update-${arg}`, data: '<tr></tr>' });
       } else {
-        const html = await fastify.view(
-          'src/liquid/components/place_item.liquid',
-          {
-            session: req.chtSession,
-            contactType: {
-              ...place.type,
-              hierarchy: Config.getHierarchyWithReplacement(place.type, 'desc'),
-              userRoleProperty: Config.getUserRoleConfig(place.type),
-            },
-            place: place,
-          }
-        );
+        const viewModel: PlaceItemViewModel = {
+          session: req.chtSession,
+          contactType: {
+            ...place.type,
+            hierarchy: Config.getHierarchyWithReplacement(place.type, 'desc'),
+          },
+          place: place,
+        };
+
+        const html = await fastify.view('src/liquid/components/place_item.liquid', viewModel);
 
         resp.sse({
           event: `update-${arg}`,

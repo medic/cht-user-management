@@ -1,4 +1,7 @@
 import { ContactType, HierarchyConstraint } from '../../config';
+import ChtSession from '../../lib/cht-session';
+import Place from '../../services/place';
+import { NavViewModel } from '../app';
 
 export type MultiplaceNewViewModel = {
   logo: string;
@@ -7,17 +10,20 @@ export type MultiplaceNewViewModel = {
   show_place_form: boolean;
   data?: any;
   contact_id?: string;
-  errors: { [key:string]: string };
+  errors: { [key: string]: string };
 };
 
 export type MultiplaceEditViewModel = {
-  logo: string;
   contactType: ContactType;
+} & NavViewModel & MultiplaceEditFormViewModel;
+
+export type MultiplaceEditFormViewModel = {
+  contactType: ContactType;
+  contact_id: string;
   hierarchy: HierarchyConstraint[];
+  data: any;
   show_place_form: boolean;
-  data?: any;
-  contact_id?: string;
-  errors: { [key:string]: string };
+  errors: { [key: string]: string };
 };
 
 export type MultiplaceFormFragmentViewModel = {
@@ -30,6 +36,18 @@ export type MultiplaceButtonViewModel = {
   place_type: string;
 };
 
+export type MultiplaceNewFormFragment = {
+  contactType: ContactType;
+  errors: { [key:string]: string };
+  data?: any;
+};
+
+export type PlaceListViewModel = {
+  contactType: ContactType;
+  places: Place[];
+  can_edit: boolean; 
+}
+
 export type PlaceListFragmentViewModel = {
   contactType: ContactType;
   item: {
@@ -40,3 +58,19 @@ export type PlaceListFragmentViewModel = {
   data?: any;
   errors: { [key:string]: string };
 };
+
+export type MultiplaceReassignFormViewModel = {
+  session: ChtSession;
+  contactType: ContactType;
+  hierarchy: HierarchyConstraint[];
+  errors: { [key:string]: string };
+  places?: {
+    place: Place;
+    value: string;
+  }[];
+  data?: any;
+};
+
+export type MultiplaceReassignViewModel = {
+  contactType: ContactType;
+} & NavViewModel & MultiplaceReassignFormViewModel;

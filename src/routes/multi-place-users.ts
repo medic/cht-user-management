@@ -5,39 +5,33 @@ import SessionCache from '../services/session-cache';
 import PlaceFactory from '../services/place-factory';
 import Validation from '../validation';
 import crypto from 'crypto';
+import { MultiplaceButtonViewModel, MultiplaceEditFormViewModel, MultiplaceEditViewModel, MultiplaceNewFormFragment, MultiplaceNewViewModel, PlaceListFragmentViewModel, PlaceListViewModel } from '../liquid/multiplace';
 
 export default async function newHandler(fastify: FastifyInstance) {
   
   fastify.get('/multiplace/new', async (req, resp) => {
     const { place_type, contact } = req.query as any;
     const contactType = Config.getContactType(place_type);
-    const contactTypes = Config.contactTypes();
     const sessionCache: SessionCache = req.sessionCache;
     
-    const shared = {
+    const viewModel: MultiplaceNewViewModel = {
       hierarchy: contactType.hierarchy,
       contactType,
       logo: Config.getLogoBase64(),
       show_place_form: false,
-      session: req.chtSession,
-      contactTypes
+      errors: {},
     };
 
     if (contact) {
       const placeData = sessionCache.getPlaces({ type: contactType.name, contactId: contact }).find(p => p !== undefined)?.asFormData('hierarchy_');
       const placeFormData = {} as any;
       Object.keys(placeData).filter(k => k.startsWith('contact_') || k.startsWith('hierarchy_') ).forEach(k => placeFormData[k]= placeData[k]);
-      const data = {
-        ...shared,
-        data: placeFormData,
-        show_place_form: true,
-        contact_id: contact 
-      };
-      return resp.view('src/liquid/multiplace/new/index.liquid', data);
+      viewModel.data = placeFormData;
+      viewModel.show_place_form = true;
+      viewModel.contact_id = contact;
     }
 
-    const data = { ...shared  };
-    return resp.view('src/liquid/multiplace/new/index.liquid', data);
+    return resp.view('src/liquid/multiplace/new/index.liquid', viewModel);
   });
 
   fastify.post('/multiplace/new', async (req, resp) => {
@@ -60,10 +54,15 @@ export default async function newHandler(fastify: FastifyInstance) {
   fastify.get('/multiplace/place_form', async (req, resp) => {
     const { place_type, action } = req.query as any;
     if (action === 'cancel') {
-      return resp.view('src/liquid/multiplace/new/new_place_btn.liquid', { place_type });
+      const viewModel : MultiplaceButtonViewModel = { place_type };
+      return resp.view('src/liquid/multiplace/new/new_place_btn.liquid', viewModel);
     }
     const contactType = Config.getContactType(place_type);
-    return resp.view('src/liquid/multiplace/new/place_form_fragment.liquid', { contactType });
+    const viewModel: MultiplaceNewFormFragment = {
+      contactType,
+      errors: {},
+    };
+    return resp.view('src/liquid/multiplace/new/place_form_fragment.liquid', viewModel);
   });
 
   fastify.post('/multiplace/place_form', async (req, resp) => {
@@ -86,17 +85,23 @@ export default async function newHandler(fastify: FastifyInstance) {
     });
 
     if (Object.keys(errors).length > 0) {
-      return resp.view('src/liquid/multiplace/new/place_form_fragment.liquid', { contactType, errors, data: formData });
+      const viewModel: MultiplaceNewFormFragment = {
+        contactType,
+        errors,
+        data: formData,
+      };
+      return resp.view('src/liquid/multiplace/new/place_form_fragment.liquid', viewModel);
     }
 
-    return resp.view('src/liquid/multiplace/new/place_list_fragment.liquid', {
+    const viewModel: PlaceListFragmentViewModel = {
       contactType,
       item: {
         id: crypto.randomUUID(),
         name: placeData.place_name,
         value: Buffer.from(JSON.stringify(placeData)).toString('base64'),
       },
-    });
+    };
+    return resp.view('src/liquid/multiplace/new/place_list_fragment.liquid', viewModel);
   });
   
   fastify.post('/multiplace/multiplace/new/part/delete/:id', async () => {});
@@ -105,34 +110,36 @@ export default async function newHandler(fastify: FastifyInstance) {
     const { contact } = req.query as any;
     const sessionCache: SessionCache = req.sessionCache;
     const places = sessionCache.getPlaces({ contactId: contact });
-    return resp.view('src/liquid/multiplace/new/place_list.liquid', {
+
+    const viewModel: PlaceListViewModel = {
       contactType: { 
         ...places[0].type, 
         hierarchy: Config.getHierarchyWithReplacement(places[0].type, 'desc') },
       places,
       can_edit: !places.find(p => p.creationDetails.username)
-    });
+    };
+    return resp.view('src/liquid/multiplace/new/place_list.liquid', viewModel);
   });
 
-  fastify.get('/multiplace/edit/contact/:id', async (req, resp) => {
+  fastify.get('/multiplace/edit/:id', async (req, resp) => {
     const { id } =  req.params as any;
     const sessionCache: SessionCache = req.sessionCache;
-    const contactTypes = Config.contactTypes();
     const place = sessionCache.getPlaces({contactId: id}).find(p => p !== undefined);
     if (!place) {
       throw new Error('could not find place');
     }
     
     const data = place.asFormData('hierarchy_');
-    return resp.view('src/liquid/edit/contact/index.liquid', {
+    const viewModel: MultiplaceEditViewModel = {
       logo: Config.getLogoBase64(),
       contactType: place.type,
-      session: req.chtSession,
       contact_id: place.contact.id,
       data,
       hierarchy: place.type.hierarchy,
-      contactTypes
-    });
+      show_place_form: false,
+      errors: {},
+    };
+    return resp.view('src/liquid/multiplace/edit/index.liquid', viewModel);
   });
 
 
@@ -153,14 +160,15 @@ export default async function newHandler(fastify: FastifyInstance) {
     });
 
     if (Object.keys(errors).length > 0) {
-      return resp.view('src/liquid/edit/contact/form.liquid', {
-        logo: Config.getLogoBase64(),
+      const viewModel: MultiplaceEditFormViewModel = {
         contactType: contactType,
         contact_id: id,
         data: body,
         errors,
-        hierarchy: contactType.hierarchy
-      });
+        hierarchy: contactType.hierarchy,
+        show_place_form: false,
+      };
+      return resp.view('src/liquid/multiplace/edit/form.liquid', viewModel);
     }
 
     const sessionCache: SessionCache = req.sessionCache;
