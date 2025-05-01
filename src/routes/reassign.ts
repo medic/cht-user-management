@@ -20,7 +20,7 @@ export default async function newHandler(fastify: FastifyInstance) {
     const { place_type } = req.query as any;
     const contactType = Config.getContactType(place_type);
     const contactTypes = Config.contactTypes();
-    return resp.view('src/liquid/reassign/index.liquid', {
+    return resp.view('src/liquid/multiplace/reassign/index.liquid', {
       contactType,
       hierarchy: Config.getHierarchyWithReplacement(contactType, 'desc'),
       logo: Config.getLogoBase64(),
@@ -57,7 +57,7 @@ export default async function newHandler(fastify: FastifyInstance) {
       }
     }
     
-    return resp.view('src/liquid/reassign/form.liquid', {
+    return resp.view('src/liquid/multiplace/reassign/form.liquid', {
       contactType,
       hierarchy,
       session: req.chtSession,
@@ -76,7 +76,7 @@ export default async function newHandler(fastify: FastifyInstance) {
     const hierarchy = Config.getHierarchyWithReplacement(contactType, 'desc');
     const places = getPlaces(body).filter(item => item.place.id !== place_id);
 
-    return resp.view('src/liquid/reassign/form.liquid', {
+    return resp.view('src/liquid/multiplace/reassign/form.liquid', {
       contactType,
       hierarchy,
       session: req.chtSession,
@@ -95,7 +95,7 @@ export default async function newHandler(fastify: FastifyInstance) {
     const uuidMatch = body.contact.match('/contacts/(?<uuid>[a-z0-9-]{32,36})');
     if (!uuidMatch?.groups?.uuid) {
       const errors = { contact: '*Invalid link' };
-      return resp.view('src/liquid/reassign/form.liquid', {
+      return resp.view('src/liquid/multiplace/reassign/form.liquid', {
         contactType,
         hierarchy,
         session: req.chtSession,
@@ -125,7 +125,7 @@ export default async function newHandler(fastify: FastifyInstance) {
         uploadManager.reassign(contactId, user, places.map(i => i.place.id), chtApi);
       } catch (err: any) {
         const errors = { contact: err };
-        return resp.view('src/liquid/reassign/form.liquid', {
+        return resp.view('src/liquid/multiplace/reassign/form.liquid', {
           contactType,
           hierarchy,
           session: req.chtSession,
@@ -136,7 +136,7 @@ export default async function newHandler(fastify: FastifyInstance) {
       }
     }
 
-    return resp.view('src/liquid/reassign/form.liquid', {
+    return resp.view('src/liquid/multiplace/reassign/form.liquid', {
       contactType,
       hierarchy,
       session: req.chtSession,

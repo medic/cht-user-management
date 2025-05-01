@@ -1,4 +1,4 @@
-{% render 'new/new_place_btn.liquid' with contactType.name as place_type %}
+{% render 'multiplace/new/new_place_btn.liquid' with contactType.name as place_type %}
 <div
   id="div_{{item.id}}"
   class="p-2 is-flex is-justify-content-space-between"
@@ -10,7 +10,7 @@
   <button
     class="button is-small"
     type="button"
-    hx-post="new/part/delete/{{item.id}}"
+    hx-post="multiplace/new/part/delete/{{item.id}}"
     hx-target="#div_{{ item.id }}"
     hx-swap="outerHTML"
   >

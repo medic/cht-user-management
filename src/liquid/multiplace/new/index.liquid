@@ -1,0 +1,32 @@
+<html>
+  <head>
+    <title>
+      New
+      {{ contactType.contact_friendly }}
+    </title>
+    <script src="/public/htmx.min.js"></script>
+    <script src="/public/sse.js"></script>
+    <link rel="stylesheet" href="/public/bulma.min.css">
+    <link rel="stylesheet" href="/public/material-symbols.css">
+    <link rel="stylesheet" href="/public/bulma-tooltip.min.css">
+  </head>
+  <body>
+    {% render 'app/nav.liquid',
+      op: op,
+      logo: logo,
+      contactTypes: contactTypes,
+      showListControls: showListControls,
+      session: session
+    %}
+    <div class="container is-max-desktop px-4" hx-ext="sse" sse-connect="/events/connection">
+      {% render 'multiplace/new/form.liquid',
+        contactType: contactType,
+        hierarchy: hierarchy,
+        data: data,
+        show_place_form: show_place_form,
+        contact_id: contact_id,
+        places: places
+      %}
+    </div>
+  </body>
+</html>

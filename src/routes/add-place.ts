@@ -25,7 +25,7 @@ export default async function addPlace(fastify: FastifyInstance) {
       contactType.can_assign_multiple &&
       op === 'new'
     ) {
-      resp.redirect(`/new?place_type=${queryParams.type}`);
+      resp.redirect(`/multiplace/new?place_type=${queryParams.type}`);
       return;
     }
 

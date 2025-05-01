@@ -21,7 +21,7 @@
     <div class="field is-grouped is-grouped-right p-2">
       <button
         type="button"
-        hx-get="/place_form?place_type={{contactType.name}}&action=cancel"
+        hx-get="/multiplace/place_form?place_type={{contactType.name}}&action=cancel"
         class="button is-small mr-2"
         hx-target="#place_fragment"
         hx-swap="outerHTML"
@@ -30,7 +30,7 @@
       </button>
       <button
         class="button is-primary is-small"
-        hx-post="/place_form?place_type={{contactType.name}}"
+        hx-post="/multiplace/place_form?place_type={{contactType.name}}"
         hx-target="#place_fragment"
         hx-swap="outerHTML"
       >

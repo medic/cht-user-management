@@ -5,7 +5,7 @@
       {% if contactType.places.length > 0 %}
         {% for item in contactType.places %}
           {% if contactType.can_assign_multiple %}
-            {% render 'new/place_list.liquid', places: item.places, can_edit: item.canEdit, contactType: contactType %}
+            {% render 'multiplace/new/place_list.liquid', places: item.places, can_edit: item.canEdit, contactType: contactType %}
           {% else %}
             <table
               id="table_places"

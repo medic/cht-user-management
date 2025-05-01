@@ -1,7 +1,7 @@
 <div
   class="my-4"
   style="border: 1px solid #d3d3d3; border-radius: 4px; width: 100%;"
-  hx-get="/new/table?contact={{places[0].contact.id}}"
+  hx-get="/multiplace/new/table?contact={{places[0].contact.id}}"
   hx-swap="outerHTML"
   hx-trigger="sse:update-group"
 >
@@ -32,7 +32,7 @@
         <a
           class="button is-small me-2"
           data-tooltip="Edit {{places[0].type.contact_friendly}}"
-          href="/edit/contact/{{places[0].contact.id}}"
+          href="/multiplace/edit/contact/{{places[0].contact.id}}"
         >
           Edit
         </a>
@@ -41,7 +41,7 @@
         <a
           class="button is-small"
           data-tooltip="Add more {{places[0].type.friendly}}(s)"
-          href="/new?place_type={{places[0].type.name}}&contact={{places[0].contact.id}}"
+          href="/multiplace/new?place_type={{places[0].type.name}}&contact={{places[0].contact.id}}"
         >
           + Add
         </a>
