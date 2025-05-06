@@ -2,7 +2,7 @@
   <!-- want to use tiles, they are super weird with forms in them -->
   <div class="box" style="margin: 20px; padding: 50px;">
     {% if error %}
-      <span class='tag is-warning is-overlay'>{{ error }}</span>
+      <span class="tag is-warning is-overlay">{{ error }}</span>
     {% endif %}
 
     <div class="field">
@@ -10,9 +10,9 @@
       <div class="control">
         <div class="select is-fullwidth">
           <select name="domain">
-              {% for domain in domains %}
-                <option value="{{ domain.domain }}">{{ domain.friendly }}</option>
-              {% endfor %}
+            {% for domain in domains %}
+              <option value="{{ domain.domain }}">{{ domain.friendly }}</option>
+            {% endfor %}
           </select>
         </div>
       </div>
@@ -20,17 +20,19 @@
     <div class="field">
       <label class="label">Credentials</label>
       <div class="control">
-          <input name="username" class="input" type="text" placeholder="username">
+        <input name="username" class="input" type="text" placeholder="username">
       </div>
     </div>
     <div class="field">
       <div class="control has-icons-right">
         <input name="password" class="input" type="password" placeholder="password">
-        <span class="icon is-right password-toggle"
-              style="cursor: pointer; pointer-events: auto !important;"
-              role="button"
-              aria-label="Toggle password visibility">
-            <span class="material-symbols-outlined">visibility</span>
+        <span
+          class="icon is-right password-toggle"
+          style="cursor: pointer; pointer-events: auto !important;"
+          role="button"
+          aria-label="Toggle password visibility"
+        >
+          <span class="material-symbols-outlined">visibility</span>
         </span>
       </div>
     </div>
@@ -38,9 +40,15 @@
       <p class="control">
         <button class="button is-primary" hx-indicator="this">
           <style>
-            .htmx-request .htmx-indicator { display: inline; }
-            .htmx-request .sign-in-text { display: none; }
-            .htmx-indicator { display: none; }
+            .htmx-request .htmx-indicator {
+              display: inline;
+            }
+            .htmx-request .sign-in-text {
+              display: none;
+            }
+            .htmx-indicator {
+              display: none;
+            }
           </style>
           <span class="htmx-indicator">Signing in...</span>
           <span class="sign-in-text">Sign In</span>

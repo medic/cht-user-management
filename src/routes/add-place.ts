@@ -20,7 +20,11 @@ export default async function addPlace(fastify: FastifyInstance) {
       : contactTypes[contactTypes.length - 1];
 
     const op = queryParams.op || 'new';
-    if (semver.gte(req.chtSession.chtCoreVersion, '4.9.0') && contactType.can_assign_multiple && op === 'new') {
+    if (
+      semver.gte(req.chtSession.chtCoreVersion, '4.9.0') &&
+      contactType.can_assign_multiple &&
+      op === 'new'
+    ) {
       resp.redirect(`/new?place_type=${queryParams.type}`);
       return;
     }
@@ -33,22 +37,22 @@ export default async function addPlace(fastify: FastifyInstance) {
       hierarchy: Config.getHierarchyWithReplacement(contactType, 'desc'),
       contactType,
       contactTypes,
-      userRoleProperty: Config.getUserRoleConfig(contactType)
+      userRoleProperty: Config.getUserRoleConfig(contactType),
     };
 
-    return resp.view('src/liquid/app/view.html', tmplData);
+    return resp.view('src/liquid/app/view.liquid', tmplData);
   });
 
   fastify.post('/place/dob', async (req, resp) => {
     const { place_type, prefix, prop_type } = req.query as any;
-    const contactType = Config.getContactType(place_type).contact_properties.find(prop => prop.type === prop_type);
-    return resp.view('src/liquid/components/contact_type_property.html', {
+    const contactType = Config.getContactType(place_type)
+      .contact_properties
+      .find((prop) => prop.type === prop_type);
+    return resp.view('src/liquid/components/contact_type_property.liquid', {
       data: req.body,
-      include: {
-        prefix,
-        place_type,
-        prop: contactType
-      }
+      prefix,
+      place_type,
+      prop: contactType,
     });
   });
 
@@ -73,9 +77,14 @@ export default async function addPlace(fastify: FastifyInstance) {
       }
       try {
         const csvBuf = await fileData.toBuffer();
-        await PlaceFactory.createFromCsv(csvBuf, contactType, sessionCache, chtApi);
+        await PlaceFactory.createFromCsv(
+          csvBuf,
+          contactType,
+          sessionCache,
+          chtApi
+        );
       } catch (error) {
-        return fastify.view('src/liquid/place/bulk_create_form.html', {
+        return fastify.view('src/liquid/place/bulk_create_form.liquid', {
           contactType,
           errors: {
             message: error,
@@ -133,7 +142,7 @@ export default async function addPlace(fastify: FastifyInstance) {
     };
 
     resp.header('HX-Push-Url', `/place/edit/${id}`);
-    return resp.view('src/liquid/app/view.html', tmplData);
+    return resp.view('src/liquid/app/view.liquid', tmplData);
   });
 
   fastify.post('/place/edit/:id', async (req, resp) => {
@@ -159,14 +168,19 @@ export default async function addPlace(fastify: FastifyInstance) {
     RemotePlaceCache.clear(chtApi, place.type.name);
     let places = [];
     if (place.hasSharedUser) {
-      places = sessionCache.getPlaces({ type: place.type.name, contactId: place.contact.id });
+      places = sessionCache.getPlaces({
+        type: place.type.name,
+        contactId: place.contact.id,
+      });
     } else {
       places = [place];
     }
-    await RemotePlaceResolver.resolve(places, sessionCache, chtApi, { fuzz: true });
-    places.forEach(place => place.validate());
+    await RemotePlaceResolver.resolve(places, sessionCache, chtApi, {
+      fuzz: true,
+    });
+    places.forEach((place) => place.validate());
     await WarningSystem.setWarnings(place.type, chtApi, sessionCache);
-    places.forEach(place => fastify.uploadManager.triggerRefresh(place.id));
+    places.forEach((place) => fastify.uploadManager.triggerRefresh(place.id));
   });
 
   fastify.post('/place/upload/:id', async (req) => {
@@ -180,7 +194,10 @@ export default async function addPlace(fastify: FastifyInstance) {
     }
     let places = [];
     if (place.hasSharedUser) {
-      places = sessionCache.getPlaces({ type: place.type.name, contactId: place.contact.id });
+      places = sessionCache.getPlaces({
+        type: place.type.name,
+        contactId: place.contact.id,
+      });
     } else {
       places = [place];
     }

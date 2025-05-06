@@ -19,7 +19,7 @@ export default async function events(fastify: FastifyInstance) {
         sessionCache,
         req.cookies.filter
       );
-      const html = await fastify.view('src/liquid/place/directive.html', {
+      const html = await fastify.view('src/liquid/place/directive.liquid', {
         directiveModel,
       });
       resp.sse({
@@ -37,7 +37,7 @@ export default async function events(fastify: FastifyInstance) {
         resp.sse({ event: `update-${arg}`, data: '<tr></tr>' });
       } else {
         const html = await fastify.view(
-          'src/liquid/components/place_item.html',
+          'src/liquid/components/place_item.liquid',
           {
             session: req.chtSession,
             contactType: {
@@ -64,7 +64,7 @@ export default async function events(fastify: FastifyInstance) {
     uploadManager.on('refresh_grouped', async () => {
       resp.sse({ event: `update-group`, data: `update` });
     });
-    uploadManager.on('refresh_place', async args => {
+    uploadManager.on('refresh_place', async (args) => {
       const { id, state, err } = args;
       let statusText;
       if (state === PlaceUploadState.FAILURE) {

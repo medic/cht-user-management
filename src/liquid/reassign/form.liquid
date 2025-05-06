@@ -15,7 +15,7 @@
     <div class="p-2">
       <div>
         {% for hierarchy in hierarchy %}
-          {% render 'components/search_input.html',
+          {% render 'components/search_input.liquid',
             type: contactType.name,
             hierarchy: hierarchy,
             prefix: 'hierarchy_',

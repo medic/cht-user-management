@@ -4,24 +4,24 @@
     <tbody>
       {% for hierarchy in sourceHierarchy %}
         {% capture property_name %}source_{{ hierarchy.property_name }}{% endcapture %}
-        {%if data[property_name] and data[property_name] != empty %}
-        <tr>
-          <td>Source {{ hierarchy.friendly_name }}</td>
-          <td>{{ data[property_name] }}</td>
-        </tr>
+        {% if data[property_name] and data[property_name] != empty %}
+          <tr>
+            <td>Source {{ hierarchy.friendly_name }}</td>
+            <td>{{ data[property_name] }}</td>
+          </tr>
         {% endif %}
       {% endfor %}
 
       {% for hierarchy in destinationHierarchy %}
         {% capture property_name %}destination_{{ hierarchy.property_name }}{% endcapture %}
-        {%if data[property_name] and data[property_name] != empty %}
-        <tr>
-          <td>Destination {{ hierarchy.friendly_name }}</td>
-          <td>{{ data[property_name] }}</td>
-        </tr>
+        {% if data[property_name] and data[property_name] != empty %}
+          <tr>
+            <td>Destination {{ hierarchy.friendly_name }}</td>
+            <td>{{ data[property_name] }}</td>
+          </tr>
         {% endif %}
       {% endfor %}
-      
+
       <tr>
         <td># of Affected Contacts</td>
         <td>{{ warningInfo.affectedPlaceCount }}</td>
@@ -34,9 +34,15 @@
     </tbody>
   </table>
 
-  {% if isPermanent %}<span class="tag is-warning">Cannot be undone</span>{% endif %}
-  {% if warningInfo.userIsActive %}<span class="tag is-warning">User is active</span>{% endif %}
-  {% if warningInfo.lotsOfPlaces %}<span class="tag is-warning">Large amount of data</span>{% endif %}
+  {% if isPermanent -%}
+    <span class="tag is-warning">Cannot be undone</span>
+  {%- endif %}
+  {% if warningInfo.userIsActive -%}
+    <span class="tag is-warning">User is active</span>
+  {%- endif %}
+  {% if warningInfo.lotsOfPlaces -%}
+    <span class="tag is-warning">Large amount of data</span>
+  {%- endif %}
 
   <div class="field is-grouped is-grouped-right">
     <div class="control">
@@ -45,5 +51,5 @@
     </div>
   </div>
 
-  <input name="confirmed" value="true" hidden />
+  <input name="confirmed" value="true" hidden>
 </section>

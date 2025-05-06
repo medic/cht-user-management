@@ -13,7 +13,7 @@
   <div class="p-2">
     {% for hierarchy in hierarchy %}
       {% if hierarchy.level != 0 %}
-        {% render 'components/search_input.html',
+        {% render 'components/search_input.liquid',
           type: contactType.name,
           hierarchy: hierarchy,
           prefix: 'hierarchy_',
@@ -23,9 +23,12 @@
     {% endfor %}
     {% for prop in contactType.contact_properties %}
       {%
-        include "components/contact_type_property.html" prefix="contact_" prop=prop
-        place_type=contactType.name
-        disabled=show_place_form ==  true
+        render 'components/contact_type_property.liquid',
+        prefix: 'contact_',
+        data: data,
+        prop: prop,
+        place_type: contactType.name,
+        disabled: show_place_form == true
       %}
       {% if errors[prop.property_name] %}
         <p class="mb-2" style="color: red;">{{ errors[prop.property_name] }}</p>

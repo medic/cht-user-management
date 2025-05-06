@@ -14,16 +14,23 @@
       hx-vals=""
       placeholder="start typing to see suggestions"
       hx-trigger="keyup changed delay:200ms, search"
-      hx-target="#search_results_{{ property_name }}" hx-swap="innerHTML"
-      {% if required %} required {% endif %}
-      {% if data[property_name] %}value="{{ data[property_name] }}" {% endif %}
+      hx-target="#search_results_{{ property_name }}"
+      hx-swap="innerHTML"
+      {% if required %}
+        required
+      {% endif %}
+      {% if data[property_name] %}
+        value="{{ data[property_name] }}"
+      {% endif %}
       hx-encoding="application/x-www-form-urlencoded"
-      {% if disabled == true %} disabled {% endif %}
-    />
-    {% assign property_name_id = property_name | append: "_id" %}
-    {% if data[property_name_id] %} 
+      {% if disabled == true %}
+        disabled
+      {% endif %}
+    >
+    {% assign property_name_id = property_name | append: '_id' %}
+    {% if data[property_name_id] %}
       <input name="{{property_name_id}}" value="{{data[property_name_id]}}" hidden>
-    {%endif%}
+    {% endif %}
     <div id="search_results_{{ property_name }}" class="control"></div>
   </div>
 </div>
