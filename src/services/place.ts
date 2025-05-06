@@ -9,14 +9,13 @@ import { PlacePayload } from '../lib/cht-api';
 import { RemotePlace } from '../lib/remote-place-cache';
 import RemotePlaceResolver from '../lib/remote-place-resolver';
 import { version as appVersion } from '../package.json';
+import { UserCreationDetails as ChtUserCreationDetails } from '../types/cht';
 
 export type FormattedPropertyCollection = {
   [key: string]: IPropertyValue;
 };
 
-export type UserCreationDetails = {
-  username?: string;
-  password?: string;
+export type UserCreationDetails = ChtUserCreationDetails & {
   placeId?: string;
   contactId?: string;
   created_at?: number;
@@ -46,9 +45,18 @@ const SUPERSET_PREFIX = 'superset_';
 export default class Place {
   public readonly id: string;
   public readonly type: ContactType;
-  public contact : Contact;
+  public contact: Contact;
   public hasSharedUser: boolean = false;
-  public readonly creationDetails : UserCreationDetails = {};
+  public readonly creationDetails : UserCreationDetails = {
+    username: '',
+    password: '',
+    email: '',
+    name: '',
+    placeId: '',
+    contactId: '',
+    created_at: 0
+  };
+  
   public readonly resolvedHierarchy: (RemotePlace | undefined)[];
 
   public properties: FormattedPropertyCollection;

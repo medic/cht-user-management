@@ -9,10 +9,10 @@ export class UploadSuperset {
   /**
    * Handles the complete Superset integration process for a place
    * @param place The place to create in Superset
-   * @returns Object containing the created user's credentials
+   * @returns Object containing the created user's credentials and ID
    * @throws Error if any step of the integration fails
    */
-  async handlePlace(place: Place): Promise<{ username: string; password: string }> {
+  async handlePlace(place: Place): Promise<{ username: string; password: string; supersetUserId: number }> {
     this.validatePlaceForSuperset(place);
 
     try {
@@ -23,7 +23,14 @@ export class UploadSuperset {
       await this.setupRowLevelSecurity(place, roleId);
 
       // Step 3: Create user with the configured role
-      return await this.createUserWithRole(place, roleId);
+      const supersetUserPayload = SupersetUserPayloadBuilder.fromPlace(place, [roleId]);
+      const response = await this.supersetApi.createUser(supersetUserPayload);
+      
+      return {
+        username: supersetUserPayload.username,
+        password: supersetUserPayload.password,
+        supersetUserId: response.id
+      };
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       throw new Error(
@@ -32,18 +39,47 @@ export class UploadSuperset {
     }
   }
 
-  async handleGroup(places: Place[], username: string, password: string) {
-    // Create roles for each place
-    const roles = await Promise.all(
-      places.map(async place => {
-        const role = await this.createRoleForPlace(place);
-        await this.setRlsForPlace(place);
-        return role;
-      })
-    );
+  /**
+   * Handles the complete Superset integration process for multiple places sharing the same user
+   * @param places Array of places to create in Superset
+   * @throws Error if any step of the integration fails
+   */
+  async handleGroup(places: Place[]): Promise<void> {
+    if (!places.length) {
+      throw new Error('No places provided for group creation');
+    }
 
-    // Create user with all roles
-    await this.createUser(username, password, roles);
+    // Get shared credentials and Superset user ID from the first place
+    const { username, password, supersetUserId } = places[0].creationDetails;
+    if (!username || !password || !supersetUserId) {
+      throw new Error('Cannot update Superset user without CHT credentials and Superset user ID');
+    }
+
+    try {
+      // Skip first place as it's already handled in uploadSinglePlace
+      const remainingPlaces = places.slice(1);
+      
+      // Step 1: Create roles and set up RLS for remaining places
+      const roleIds = await Promise.all(
+        remainingPlaces.map(async place => {
+          this.validatePlaceForSuperset(place);
+          const roleId = await this.createRoleWithPermissions(place);
+          await this.setupRowLevelSecurity(place, roleId);
+          return roleId;
+        })
+      );
+
+      // Step 2: Update existing user with new roles
+      await this.supersetApi.updateUser(supersetUserId, {
+        roles: [...places[0].creationDetails.supersetRoles || [], ...roleIds]
+      });
+
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      throw new Error(
+        `Failed to set up Superset for group of places: ${errorMessage}`
+      );
+    }
   }
 
   private validatePlaceForSuperset(place: Place) {
@@ -105,21 +141,5 @@ export class UploadSuperset {
       supersetConfig.prefix,
       tableIds
     );
-  }
-
-  /**
-   * Creates a Superset user and assigns the role
-   */
-  private async createUserWithRole(
-    place: Place,
-    roleId: number
-  ): Promise<{ username: string; password: string }> {
-    const supersetUserPayload = SupersetUserPayloadBuilder.fromPlace(place, [roleId]);
-    await this.supersetApi.createUser(supersetUserPayload);
-    
-    return {
-      username: supersetUserPayload.username,
-      password: supersetUserPayload.password
-    };
   }
 }

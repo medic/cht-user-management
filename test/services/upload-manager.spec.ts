@@ -365,6 +365,22 @@ describe('services/upload-manager.ts', () => {
     expect(place.isCreated).to.be.true;
   });
 
+  it('mock group data is properly sent to chtApi - standard', async () => {
+    const { fakeFormData, contactType, chtApi, sessionCache, supersetApi  } = await createMocks();
+    const placeCount = 2;
+    const formData = {...fakeFormData, ...mockGroupedFormData(contactType, placeCount)};
+    const places = await PlaceFactory.createManyWithSingleUser(formData, contactType, sessionCache, chtApi);
+  
+    const uploadManager = new UploadManager();
+    await uploadManager.doUpload(places, chtApi, supersetApi);
+  
+    expect(chtApi.createPlace.callCount).equals(placeCount);
+    expect(chtApi.createUser.calledOnce).to.be.true;
+    expect(chtApi.updateUser.calledOnce).to.be.true;
+    const creationDetails = places[0].creationDetails;
+    places.forEach(p => expect(creationDetails.username).equals(p.creationDetails.username));
+  });
+
   describe('Superset Integration', () => {
     it('should handle successful sequential upload to CHT and Superset', async () => {
       const contactType = mockSupersetContactType();
@@ -392,7 +408,7 @@ describe('services/upload-manager.ts', () => {
       expect(supersetApi.getPermissionsByRoleID.args[0][0]).to.equal(contactType?.superset?.role_template);
       
       expect(supersetApi.assignPermissionsToRole.calledOnce).to.be.true;
-      expect(supersetApi.assignPermissionsToRole.args[0]).to.deep.equal(['new-role-id', ['permission1', 'permission2']]);
+      expect(supersetApi.assignPermissionsToRole.args[0]).to.deep.equal([1, [1, 2]]);
       
       expect(supersetApi.getTablesByRlsID.calledOnce).to.be.true;
       expect(supersetApi.getTablesByRlsID.args[0][0]).to.equal(contactType.superset?.rls_template);
@@ -547,23 +563,126 @@ describe('services/upload-manager.ts', () => {
       expect(place.state).to.equal(PlaceUploadState.SUCCESS);
       expect(place.isCreated).to.be.true;
     });
+
+    it('should handle successful Superset group upload for places with shared user', async () => {
+      const contactType = mockSupersetContactType();
+      const { sessionCache, chtApi, supersetApi } = await createMocks();
+      const formData = {
+        ...mockGroupedFormData(contactType, 2),
+        superset_mode: 'enable',
+        contact_email: 'test@example.com',
+        contact_name: 'contact',
+        hierarchy_PARENT: 'parent-name',
+      };
+      const places = await PlaceFactory.createManyWithSingleUser(formData, contactType, sessionCache, chtApi);
+
+      const uploadManager = new UploadManager();
+      await uploadManager.doUpload(places, chtApi, supersetApi);
+
+      // Verify CHT upload sequence
+      expect(chtApi.createPlace.callCount).to.equal(2);
+      expect(chtApi.createUser.calledOnce).to.be.true;
+      expect(chtApi.updateUser.calledOnce).to.be.true;
+      places.forEach(place => {
+        expect(place.chtUploadState).to.equal(UploadState.SUCCESS);
+      });
+
+      // Verify Superset upload sequence
+      expect(supersetApi.createRole.callCount).to.equal(2);
+      expect(supersetApi.getPermissionsByRoleID.callCount).to.equal(2);
+      expect(supersetApi.assignPermissionsToRole.callCount).to.equal(2);
+      expect(supersetApi.getTablesByRlsID.callCount).to.equal(2);
+      expect(supersetApi.createRowLevelSecurityFromTemplate.callCount).to.equal(2);
+      expect(supersetApi.createUser.calledOnce).to.be.true;
+
+      // Verify all places have success state
+      places.forEach(place => {
+        expect(place.supersetUploadState).to.equal(UploadState.SUCCESS);
+        expect(place.state).to.equal(PlaceUploadState.SUCCESS);
+        expect(place.isCreated).to.be.true;
+      });
+    });
+
+    it('should handle Superset group upload failure after successful CHT upload', async () => {
+      const contactType = mockSupersetContactType();
+      const { sessionCache, chtApi, supersetApi } = await createMocks();
+      const formData = {
+        ...mockGroupedFormData(contactType, 2),
+        superset_mode: 'enable',
+        contact_email: 'test@example.com',
+        contact_name: 'contact',
+        hierarchy_PARENT: 'parent-name',
+      };
+      const places = await PlaceFactory.createManyWithSingleUser(formData, contactType, sessionCache, chtApi);
+
+      // Set up Superset failure
+      supersetApi.createRole.rejects(new Error('Superset upload failed'));
+
+      const uploadManager = new UploadManager();
+      await uploadManager.doUpload(places, chtApi, supersetApi);
+
+      // Verify CHT upload completed successfully
+      expect(chtApi.createPlace.callCount).to.equal(2);
+      expect(chtApi.createUser.calledOnce).to.be.true;
+      expect(chtApi.updateUser.calledOnce).to.be.true;
+      places.forEach(place => {
+        expect(place.chtUploadState).to.equal(UploadState.SUCCESS);
+      });
+
+      // Verify Superset failure
+      expect(supersetApi.createRole.calledOnce).to.be.true;
+      expect(supersetApi.getPermissionsByRoleID.called).to.be.false;
+      expect(supersetApi.assignPermissionsToRole.called).to.be.false;
+      expect(supersetApi.getTablesByRlsID.called).to.be.false;
+      expect(supersetApi.createRowLevelSecurityFromTemplate.called).to.be.false;
+      expect(supersetApi.createUser.called).to.be.false;
+
+      // Verify all places have failure state
+      places.forEach(place => {
+        expect(place.supersetUploadState).to.equal(UploadState.FAILURE);
+        expect(place.uploadError).to.include('Superset upload failed');
+        expect(place.state).to.equal(PlaceUploadState.FAILURE);
+        expect(place.isCreated).to.be.false;
+      });
+    });
+
+    it('should skip Superset group upload for places without Superset configuration', async () => {
+      const contactType = mockValidContactType('string', undefined); // No Superset config
+      const { sessionCache, chtApi, supersetApi } = await createMocks();
+      const formData = {
+        ...mockGroupedFormData(contactType, 2),
+        contact_name: 'contact',
+        hierarchy_PARENT: 'parent-name',
+      };
+      const places = await PlaceFactory.createManyWithSingleUser(formData, contactType, sessionCache, chtApi);
+
+      const uploadManager = new UploadManager();
+      await uploadManager.doUpload(places, chtApi, supersetApi);
+
+      // Verify CHT upload completed
+      expect(chtApi.createPlace.callCount).to.equal(2);
+      expect(chtApi.createUser.calledOnce).to.be.true;
+      expect(chtApi.updateUser.calledOnce).to.be.true;
+      places.forEach(place => {
+        expect(place.chtUploadState).to.equal(UploadState.SUCCESS);
+      });
+
+      // Verify no Superset calls were made
+      expect(supersetApi.createRole.called).to.be.false;
+      expect(supersetApi.getPermissionsByRoleID.called).to.be.false;
+      expect(supersetApi.assignPermissionsToRole.called).to.be.false;
+      expect(supersetApi.getTablesByRlsID.called).to.be.false;
+      expect(supersetApi.createRowLevelSecurityFromTemplate.called).to.be.false;
+      expect(supersetApi.createUser.called).to.be.false;
+
+      // Verify all places have success state
+      places.forEach(place => {
+        expect(place.state).to.equal(PlaceUploadState.SUCCESS);
+        expect(place.isCreated).to.be.true;
+      });
+    });
   });
-});
 
-it('mock group data is properly sent to chtApi - standard', async () => {
-  const { fakeFormData, contactType, chtApi, sessionCache  } = await createMocks();
-  const placeCount = 2;
-  const formData = {...fakeFormData, ...mockGroupedFormData(contactType, placeCount)};
-  const places = await PlaceFactory.createManyWithSingleUser(formData, contactType, sessionCache, chtApi);
-
-  const uploadManager = new UploadManager();
-  await uploadManager.doUpload(places, chtApi);
-
-  expect(chtApi.createPlace.callCount).equals(placeCount);
-  expect(chtApi.createUser.calledOnce).to.be.true;
-  expect(chtApi.updateUser.calledOnce).to.be.true;
-  const creationDetails = places[0].creationDetails;
-  places.forEach(p => expect(creationDetails.username).equals(p.creationDetails.username));
 });
 
 async function createMocks() {
@@ -610,10 +729,10 @@ async function createMocks() {
   
   const supersetApi = {
     session: mockSupersetSession(),
-    createRole: sinon.stub().resolves('new-role-id'),
-    getPermissionsByRoleID: sinon.stub().resolves(['permission1', 'permission2']),
+    createRole: sinon.stub().resolves(1),
+    getPermissionsByRoleID: sinon.stub().resolves([1, 2]),
     assignPermissionsToRole: sinon.stub().resolves(),
-    getTablesByRlsID: sinon.stub().resolves([{ id: 'table1' }]),
+    getTablesByRlsID: sinon.stub().resolves([{ id: 3 }]),
     createRowLevelSecurityFromTemplate: sinon.stub().resolves(),
     createUser: sinon.stub().resolves()
   };

@@ -135,12 +135,12 @@ export class UploadManager extends EventEmitter {
     }
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   private async uploadGroup(creationDetails: UserCreationDetails, places: Place[], api: ChtApi, supersetApi: SupersetApi) {
     if (!creationDetails.username || !creationDetails.placeId) {
       throw new Error('creationDetails must not be empty');
     }
     const placeIds: {[key:string]: any} = { [creationDetails.placeId]: '' };
+    
     for (const place of places) {
       if (place.creationDetails.placeId) {
         placeIds[place.id] = undefined;
@@ -157,25 +157,64 @@ export class UploadManager extends EventEmitter {
         place.creationDetails.contactId = result.contactId;
         place.creationDetails.placeId = result.placeId;
         placeIds[result.placeId] = undefined;
-
+        this.eventedUploadStateChange(place, 'cht', UploadState.SUCCESS);
       } catch (err) {
         const errorDetails = getErrorDetails(err);
         console.log('error when creating place', errorDetails);
         place.uploadError = errorDetails;
+        this.eventedUploadStateChange(place, 'cht', UploadState.FAILURE);
         this.eventedPlaceStateChange(place, PlaceUploadState.FAILURE);
       }
     }
   
     try {
+      // Update CHT user with all places
       await api.updateUser({ username: creationDetails.username, place: Object.keys(placeIds)});
       const created_at = new Date().getTime();
 
+      // Update creation details for all places
       places.forEach(place => {
         place.creationDetails.username = creationDetails.username;
         place.creationDetails.password = creationDetails.password;
         place.creationDetails.created_at = created_at;
-        this.eventedPlaceStateChange(place, PlaceUploadState.SUCCESS);
       });
+
+      // Handle Superset for all successfully created places
+      const successfulPlaces = places.filter(
+        place => place.chtUploadState === UploadState.SUCCESS && 
+        place.shouldUploadToSuperset()
+      );
+
+      if (successfulPlaces.length > 0) {
+        try {
+          const uploadSuperset = new UploadSuperset(supersetApi);
+          await uploadSuperset.handleGroup(successfulPlaces);
+          
+          // Update all places with success state
+          successfulPlaces.forEach(place => {
+            this.eventedUploadStateChange(place, 'superset', UploadState.SUCCESS);
+            this.eventedPlaceStateChange(place, PlaceUploadState.SUCCESS);
+          });
+          
+          console.log(`Successfully created Superset roles and assigned to user ${creationDetails.username}`);
+        } catch (err: any) {
+          const errorDetails = getErrorDetails(err);
+          console.log('Error during Superset group creation', errorDetails);
+          successfulPlaces.forEach(place => {
+            this.eventedUploadStateChange(place, 'superset', UploadState.FAILURE);
+            place.uploadError = errorDetails;
+            this.eventedPlaceStateChange(place, PlaceUploadState.FAILURE);
+          });
+        }
+      } else {
+        // If no Superset upload needed, mark all places as success
+        places
+          .forEach(place => {
+            if (place.chtUploadState === UploadState.SUCCESS) {
+              this.eventedPlaceStateChange(place, PlaceUploadState.SUCCESS);
+            }
+          });
+      }
 
       this.emit('refresh_grouped', creationDetails.contactId);
 
@@ -188,7 +227,6 @@ export class UploadManager extends EventEmitter {
       });
       this.emit('refresh_grouped', creationDetails.contactId);     
     }
-   
   }
 
   public triggerRefresh(place_id: string) {

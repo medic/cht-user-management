@@ -126,12 +126,30 @@ export class SupersetApi {
   /**
    * Creates a new user in Superset
    * @param userPayload User information
+   * @returns Created user's ID
    */
-  async createUser(userPayload: SupersetUserPayload): Promise<void> {
+  async createUser(userPayload: SupersetUserPayload): Promise<{ id: number }> {
     try {
-      await this.session.axiosInstance.post(ENDPOINTS.USERS, userPayload);
+      const response = await this.session.axiosInstance.post(ENDPOINTS.USERS, userPayload);
+      return { id: Number(response.data.id) };
     } catch (error) {
       throw this.handleError(error, `create user '${userPayload.username}'`);
+    }
+  }
+
+  /**
+   * Updates an existing user in Superset
+   * @param userId ID of the user to update
+   * @param updatePayload User information to update
+   */
+  async updateUser(userId: number, updatePayload: { roles: number[] }): Promise<void> {
+    try {
+      await this.session.axiosInstance.put(
+        `${ENDPOINTS.USERS}${userId}`,
+        updatePayload
+      );
+    } catch (error) {
+      throw this.handleError(error, `update user '${userId}'`);
     }
   }
 
