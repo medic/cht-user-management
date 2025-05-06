@@ -1,10 +1,20 @@
-{% assign is_multiple = prop.type == 'select_multiple'  %}
+{% assign is_multiple = prop.type == 'select_multiple' %}
 <div class="select is-fullwidth{% if is_multiple %} is-multiple{% endif %}">
-  <select name="{{ prop_name }}" {% if is_multiple %}multiple{% endif %}>
+  <select
+    name="{{ prop_name }}"
+    {% if is_multiple %}
+      multiple
+    {% endif %}
+  >
     {% for params in prop.parameter %}
-    <option value="{{ params[0] }}" {% if data[prop_name] == params[0] or data[prop_name] contains params[0] %}selected{% endif %}>
-      {{ params[1] }}
-    </option>
+      <option
+        value="{{ params[0] }}"
+        {% if data[prop_name] == params[0] or data[prop_name] contains params[0] %}
+          selected
+        {% endif %}
+      >
+        {{ params[1] }}
+      </option>
     {% endfor %}
   </select>
 </div>

@@ -1,24 +1,24 @@
 <thead>
-    <tr>
-        {% for hierarchy in contactType.hierarchy %}
-            <th id="hierarchy_{{ hierarchy.property_name }}">{{ hierarchy.friendly_name }}</th>
-        {% endfor %}
-        {% for property in contactType.place_properties %}
-            {% if property.type != 'generated' %}
-            <th id="place_{{property.property_name}}">{{property.friendly_name}}</th>
-            {% endif %}
-        {% endfor %}
-        {% unless contactType.can_assign_multiple %}
-            {% for contact_property in contactType.contact_properties %}
-                {% if contact_property.type != 'generated' %}
-                <th id="contact_{{contact_property.property_name}}">{{contact_property.friendly_name}}</th>
-                {% endif %}
-            {% endfor %}
-        {% endunless %}
-        {% if contactType.user_role.size > 1 %}
-            <th id="{{userRoleProperty.property_name}}">{{ contactType.userRoleProperty.friendly_name }}</th>
+  <tr>
+    {% for hierarchy in contactType.hierarchy %}
+      <th id="hierarchy_{{ hierarchy.property_name }}">{{ hierarchy.friendly_name }}</th>
+    {% endfor %}
+    {% for property in contactType.place_properties %}
+      {% if property.type != 'generated' %}
+        <th id="place_{{property.property_name}}">{{ property.friendly_name }}</th>
+      {% endif %}
+    {% endfor %}
+    {% unless contactType.can_assign_multiple %}
+      {% for contact_property in contactType.contact_properties %}
+        {% if contact_property.type != 'generated' %}
+          <th id="contact_{{contact_property.property_name}}">{{ contact_property.friendly_name }}</th>
         {% endif %}
-        <th></th>
-        <th></th>
-    </tr>
+      {% endfor %}
+    {% endunless %}
+    {% if contactType.user_role.size > 1 %}
+      <th id="{{userRoleProperty.property_name}}">{{ contactType.userRoleProperty.friendly_name }}</th>
+    {% endif %}
+    <th></th>
+    <th></th>
+  </tr>
 </thead>

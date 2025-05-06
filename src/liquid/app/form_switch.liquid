@@ -1,11 +1,11 @@
 <div id="place_form_parent">
   {% capture header_caption %}
-    {% if op == "bulk" %} Bulk Load from CSV
-    {% elsif op == "replace" %} Replace Existing
-    {% elsif op == "move" %} Move
-    {% elsif op == "merge" %} Merge Two
-    {% elsif op == "delete" %} Delete a
-    {% elsif op == "edit" %} Edit
+    {% if op == 'bulk' %} Bulk Load from CSV
+    {% elsif op == 'replace' %} Replace Existing
+    {% elsif op == 'move' %} Move
+    {% elsif op == 'merge' %} Merge Two
+    {% elsif op == 'delete' %} Delete a
+    {% elsif op == 'edit' %} Edit
     {% else %} New
     {% endif %}
   {% endcapture %}
@@ -26,7 +26,7 @@
           once emptied, will be deleted. This is useful to merge two duplicate records.
           <b>This operation cannot be undone.</b>
         {% elsif op == 'move' %}
-          The first contact selected below will be moved such that the second contact is its "parent". Please ensure all
+          The first contact selected below will be moved such that the second contact is its 'parent'. Please ensure all
           affected users have synced their data fully before they are moved or data may be lost.
         {% elsif op == 'delete' %}
           Deleting a contact will permanently remove the contact and all data within it.

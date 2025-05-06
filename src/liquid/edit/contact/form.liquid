@@ -24,7 +24,7 @@
     {% for prop in contactType.contact_properties %}
       {%
         render 'components/contact_type_property.liquid',
-        prefix: "contact_",
+        prefix: 'contact_',
         data: data,
         prop: prop,
         place_type: contactType.name,

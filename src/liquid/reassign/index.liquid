@@ -11,9 +11,8 @@
     <link rel="stylesheet" href="/public/material-symbols.css">
   </head>
   <body>
-    {%
-      render "app/nav.liquid",
-      op,
+    {% render 'app/nav.liquid',
+      op: op,
       logo: logo,
       contactTypes: contactTypes,
       showListControls: showListControls,

@@ -45,16 +45,14 @@ export default async function addPlace(fastify: FastifyInstance) {
 
   fastify.post('/place/dob', async (req, resp) => {
     const { place_type, prefix, prop_type } = req.query as any;
-    const contactType = Config.getContactType(
-      place_type
-    ).contact_properties.find((prop) => prop.type === prop_type);
+    const contactType = Config.getContactType(place_type)
+      .contact_properties
+      .find((prop) => prop.type === prop_type);
     return resp.view('src/liquid/components/contact_type_property.liquid', {
       data: req.body,
-      include: {
-        prefix,
-        place_type,
-        prop: contactType,
-      },
+      prefix,
+      place_type,
+      prop: contactType,
     });
   });
 

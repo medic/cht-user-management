@@ -15,14 +15,16 @@
     destinationHierarchy: destinationHierarchy
   %}
 
-  <script type="text/javascript">
+  <script
+    type="text/javascript"
+  >
     function handleHierarchyFormResponse(event) {
       const response = event?.detail?.xhr?.responseText;
       const parser = new DOMParser();
       const doc = parser.parseFromString(response, 'text/html');
 
       // Find the element that indicates success
-      const successElement = doc.querySelector('[data-success="true"]');
+      const successElement = doc.querySelector('[data-success='true']');
       if (successElement) {
         bulmaToast.toast({
           duration: 5000,
