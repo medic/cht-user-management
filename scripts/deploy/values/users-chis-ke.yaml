@@ -17,6 +17,7 @@ cht-user-management:
     CONFIG_NAME: chis-ke
     REDIS_HOST: users-chis-ke-redis-master.users-chis-prod.svc.cluster.local
     REDIS_PORT: 6379
+    ALLOW_ADMIN_LOGIN: false
   envSecrets:
     # COOKIE/WORKER_PRIVATE_KEY will be automatically generated if it doesn't exist
     - env: COOKIE_PRIVATE_KEY
