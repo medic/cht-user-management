@@ -1,4 +1,5 @@
 import _ from 'lodash';
+import process from 'process';
 const axios = require('axios'); // require is needed for rewire
 import { AxiosHeaders, AxiosInstance } from 'axios';
 import axiosRetry from 'axios-retry';
@@ -13,6 +14,7 @@ import { UserPermissionService } from '../services/user-permissions';
 const COUCH_AUTH_COOKIE_NAME = 'AuthSession=';
 const ADMIN_FACILITY_ID = '*';
 export const ADMIN_ROLES = ['admin', '_admin'];
+const ALLOW_ADMIN_LOGIN = process.env.ALLOW_ADMIN_LOGIN ?? 'true';
 
 axiosRetry(axios, axiosRetryConfig);
 
@@ -38,7 +40,7 @@ export default class ChtSession {
     this.facilityIds = creationDetails.facilityIds;
     this.sessionToken = creationDetails.sessionToken;
     this.chtCoreVersion = creationDetails.chtCoreVersion;
-    
+
     this.axiosInstance = axios.create({
       baseURL: ChtSession.createUrl(creationDetails.authInfo, ''),
       headers: { Cookie: creationDetails.sessionToken },
@@ -90,7 +92,7 @@ export default class ChtSession {
         }
       );
       const setCookieHeader = (resp.headers as AxiosHeaders).get('set-cookie') as AxiosHeaders;
-      const token =  setCookieHeader?.[0]?.split(';')
+      const token = setCookieHeader?.[0]?.split(';')
         .find((header: string) => header.startsWith(COUCH_AUTH_COOKIE_NAME));
       if (!token) {
         throw AuthError.TOKEN_CREATION_FAILED(username, authInfo.domain);
@@ -103,10 +105,13 @@ export default class ChtSession {
       if (e.code === 'ENOTFOUND' || e.errno === -3008) {
         throw AuthError.INSTANCE_OFFLINE();
       }
+      if (e.code === 'ETIMEDOUT' || e?.cause?.code === 'ETIMEDOUT' || e?.cause?.code === 'ECONNREFUSED') {
+        throw AuthError.CONNECTION_TIMEOUT(authInfo.domain);
+      }
       throw e;
     }
   }
-  
+
   private static async fetchCreationDetails(authInfo: AuthenticationInfo, username: string, sessionToken: string): Promise<SessionCreationDetails> {
     // api/v2/users returns all users prior to 4.6 even with ?facility_id
     const paths = [`medic/org.couchdb.user:${username}`, 'api/v2/monitoring', 'api/v1/settings'];
@@ -118,12 +123,15 @@ export default class ChtSession {
       );
     });
     const [
-      { data: userDoc }, 
+      { data: userDoc },
       { data: { version: { app: chtCoreVersion } } },
       { data: settings }
     ] = await Promise.all(fetches);
 
     const isAdmin = _.intersection(ADMIN_ROLES, userDoc?.roles).length > 0;
+    if (isAdmin && ALLOW_ADMIN_LOGIN === 'false') {
+      throw AuthError.LOGIN_DISALLOWED(username);
+    }
 
     UserPermissionService.validateUserPermissions(userDoc, username, settings.permissions);
 
@@ -142,7 +150,7 @@ export default class ChtSession {
       facilityIds,
     };
   }
-  
+
   private static assertCoreVersion(chtCoreVersion: any, domain: string) {
     const coercedVersion = semver.valid(semver.coerce(chtCoreVersion));
     if (!coercedVersion) {

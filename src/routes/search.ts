@@ -10,12 +10,7 @@ export default async function place(fastify: FastifyInstance) {
   // returns search results dropdown
   fastify.post('/search', async (req, resp) => {
     const queryParams: any = req.query;
-    const {
-      op,
-      place_id: placeId,
-      type,
-      prefix: dataPrefix
-    } = queryParams;
+    const { op, place_id: placeId, type, prefix: dataPrefix } = queryParams;
     const level = parseInt(queryParams.level);
 
     const data: any = req.body;
@@ -28,16 +23,25 @@ export default async function place(fastify: FastifyInstance) {
     }
 
     const chtApi = new ChtApi(req.chtSession);
-    const hierarchyLevel = Config.getHierarchyWithReplacement(contactType).find(hierarchy => hierarchy.level === level);
+    const hierarchyLevel = Config.getHierarchyWithReplacement(contactType).find(
+      (hierarchy) => hierarchy.level === level
+    );
     if (!hierarchyLevel) {
       throw Error(`not hierarchy constraint at ${level}`);
     }
-    const searchResults: RemotePlace[] = await SearchLib.search(contactType, data, dataPrefix, hierarchyLevel, chtApi, sessionCache);
+    const searchResults: RemotePlace[] = await SearchLib.search(
+      contactType,
+      data,
+      dataPrefix,
+      hierarchyLevel,
+      chtApi,
+      sessionCache
+    );
 
-    return resp.view('src/liquid/components/search_results.html', {
+    return resp.view('src/liquid/components/search_results.liquid', {
       op,
       place,
-      div: 'div_hierarchy_' + hierarchyLevel.property_name,
+      div: `search_container_${dataPrefix}${hierarchyLevel.property_name}`,
       prefix: dataPrefix,
       searchResults,
       level,
@@ -49,21 +53,27 @@ export default async function place(fastify: FastifyInstance) {
     const data: any = req.body;
     const queryParams: any = req.query;
     const {
+      op,
       result_name: resultName,
+      place_id,
       prefix: dataPrefix,
     } = queryParams;
     const level = parseInt(queryParams.level);
     const contactType = Config.getContactType(data.place_type);
-    const hierarchyLevel =  Config.getHierarchyWithReplacement(contactType).find(hierarchy => hierarchy.level === level);
+    const hierarchyLevel = Config.getHierarchyWithReplacement(contactType).find(
+      (hierarchy) => hierarchy.level === level
+    );
     if (!hierarchyLevel) {
       throw Error(`not hierarchy constraint at ${level}`);
     }
     data[`${dataPrefix}${hierarchyLevel.property_name}`] = resultName;
-    return resp.view('src/liquid/components/search_input.html', {
+    data[`${dataPrefix}${hierarchyLevel.property_name}_id`] = place_id;
+    return resp.view('src/liquid/components/search_input.liquid', {
+      op,
       type: contactType.name,
-      prefix: 'hierarchy_',
+      prefix: dataPrefix,
       hierarchy: hierarchyLevel,
-      data
+      data,
     });
   });
 }

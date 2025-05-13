@@ -15,10 +15,8 @@ import { SupersetApi } from '../lib/superset-api';
 export default async function sessionCache(fastify: FastifyInstance) {
   fastify.get('/', async (req, resp) => {
     const contactTypes = Config.contactTypes();
-    const {
-      op = 'table',
-      type: placeTypeName = contactTypes[0].name,
-    } = req.query as any;
+    const { op = 'table', type: placeTypeName = contactTypes[0].name } =
+      req.query as any;
 
     const contactType = Config.getContactType(placeTypeName);
     const sessionCache: SessionCache = req.sessionCache;
@@ -34,6 +32,7 @@ export default async function sessionCache(fastify: FastifyInstance) {
     const tmplData = {
       view: 'list',
       session: req.chtSession,
+      showListControls: true,
       logo: Config.getLogoBase64(),
       op,
       contactType,
@@ -41,9 +40,9 @@ export default async function sessionCache(fastify: FastifyInstance) {
       directiveModel,
     };
 
-    return resp.view('src/liquid/app/view.html', tmplData);
+    return resp.view('src/liquid/app/view.liquid', tmplData);
   });
-  
+
   fastify.get('/app/list', async (req, resp) => {
     const contactTypes = Config.contactTypes();
     const sessionCache: SessionCache = req.sessionCache;
@@ -63,7 +62,7 @@ export default async function sessionCache(fastify: FastifyInstance) {
       session: req.chtSession,
       contactTypes: placeData,
     };
-    return resp.view('src/liquid/place/list.html', tmplData);
+    return resp.view('src/liquid/place/list.liquid', tmplData);
   });
 
   fastify.post('/app/remove-all', async (req, resp) => {
@@ -79,8 +78,10 @@ export default async function sessionCache(fastify: FastifyInstance) {
     RemotePlaceCache.clear(chtApi);
 
     const places = sessionCache.getPlaces({ created: false });
-    await RemotePlaceResolver.resolve(places, sessionCache, chtApi, { fuzz: true });
-    places.forEach(p => p.validate());
+    await RemotePlaceResolver.resolve(places, sessionCache, chtApi, {
+      fuzz: true,
+    });
+    places.forEach((p) => p.validate());
 
     for (const contactType of Config.contactTypes()) {
       await WarningSystem.setWarnings(contactType, chtApi, sessionCache);
@@ -98,10 +99,15 @@ export default async function sessionCache(fastify: FastifyInstance) {
 
     const chtApi = new ChtApi(req.chtSession);
     const supersetApi = new SupersetApi(await SupersetSession.create());
-    uploadManager.doUpload(sessionCache.getPlaces(), chtApi, supersetApi, ignoreWarnings === 'true');
+    uploadManager.doUpload(
+      sessionCache.getPlaces(), 
+      chtApi, 
+      supersetApi, 
+      ignoreWarnings === 'true'
+    );
 
-    return resp.view('src/liquid/place/directive.html', {
-      directiveModel
+    return resp.view('src/liquid/place/directive.liquid', {
+      directiveModel,
     });
   });
 
@@ -114,9 +120,8 @@ export default async function sessionCache(fastify: FastifyInstance) {
       expires: Auth.cookieExpiry(),
       path: '/',
       secure: true,
-      
     });
-    
+
     resp.header('HX-Redirect', '/');
   });
 }

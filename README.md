@@ -215,17 +215,17 @@ If you don't have redis running locally, you can start it with:
 docker compose -f docker-compose.redis.yml up -d
 ```
 
-Then run:
+Run these two commands  first to ensure the `./dist` folder is properly populated  and all required packages are installed:
 
-```
-npm run dev
-```
-
-or
-
-```
+```shell
+npm ci
 npm run build
-npm start
+```
+
+Then run this to start a local dev instance and reload the app when it sees changes to local files:
+
+```shell
+npm run dev
 ```
 
 ### Docker with static code
@@ -256,6 +256,7 @@ Variable | Description | Sample
 `INTERFACE` | Interface to bind to. Leave as '0.0.0.0' for prod, suggest '127.0.0.1' for development | `127.0.0.1`
 `CHT_DEV_URL_PORT` | CHT instance when in `NODE_ENV===dev`. Needs URL and port | `192-168-1-26.local-ip.medicmobile.org:10463`
 `CHT_DEV_HTTP` |  'true' for http  'false' for https | `false`
+`ALLOW_ADMIN_LOGIN` |  Allow login for admin accounts. Defaults to true. | `true`
 `REDIS_HOST` | Redis server hostname use 'redis' for docker | `redis`
 `REDIS_PORT` | Redis server port | `6379`
 `CHT_USER_MANAGEMENT_IMAGE` | docker image for cht-user-management service (local development), leave empty to use published one | `cht-user-management:local `

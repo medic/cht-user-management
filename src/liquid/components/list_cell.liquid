@@ -1,0 +1,21 @@
+<td
+  id="{{ propertyName }}"
+  {% if place.validationErrors[propertyName] %}
+    class="is-danger has-tooltip-arrow has-tooltipl-multiline"
+    data-tooltip="{{ place.validationErrors[propertyName] | escape }}"
+  {% endif %}
+>
+  {% if values[property.property_name] != empty %}
+    {% if linkTo and linkTo != empty and linkTo.type == 'remote' %}
+      <a href="https://{{ session.authInfo.domain }}/#/contacts/{{ linkTo.id }}" target="_blank">
+        {{ values[property.property_name] }}
+      </a>
+    {% else %}
+      {{ values[property.property_name] }}
+    {% endif %}
+
+    {% if linkTo.type == 'local' %}
+      <span class="material-symbols-outlined">cloud_off</span>
+    {% endif %}
+  {% endif %}
+</td>

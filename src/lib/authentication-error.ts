@@ -1,6 +1,6 @@
 export class AuthError extends Error {
   constructor(
-      public errorMessage: string
+    public errorMessage: string
   ) {
     super(errorMessage);
     this.name = 'AuthError';
@@ -36,5 +36,13 @@ export class AuthError extends Error {
 
   static MISSING_PERMISSIONS(username: string) {
     return new AuthError(`User ${username} does not have the required permissions`);
+  }
+
+  public static CONNECTION_TIMEOUT(domain: string): AuthError {
+    return new AuthError(`Connection to ${domain} timed out. Please check your network and instance availability.`);
+  }
+
+  static LOGIN_DISALLOWED(username: string) {
+    return new AuthError(`User ${username} is not allowed to login`);
   }
 }

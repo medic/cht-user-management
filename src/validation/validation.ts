@@ -148,16 +148,23 @@ export class Validation {
     searchStr?: string,
     requiredParent?: string
   ): string {
+    let friendlyName;
+    try {
+      friendlyName = Config.getContactType(friendlyType).friendly;
+    } catch {
+      friendlyName = friendlyType;
+    }
+
     if (!searchStr) {
-      return `Cannot find ${friendlyType} because the search string is empty`;
+      return `Cannot find ${friendlyName} because the search string is empty`;
     }
 
     const requiredParentSuffix = requiredParent ? ` under '${requiredParent}'` : '';
     if (RemotePlaceResolver.Multiple.id === remotePlace?.id) {
       const ambiguityDetails = JSON.stringify(remotePlace.ambiguities?.map(a => a.id));
-      return `Found multiple ${friendlyType}s matching '${searchStr}'${requiredParentSuffix} ${ambiguityDetails}`;
+      return `Found multiple ${friendlyName}s matching '${searchStr}'${requiredParentSuffix} ${ambiguityDetails}`;
     }
 
-    return `Cannot find '${friendlyType}' matching '${searchStr}'${requiredParentSuffix}`;
+    return `Cannot find '${friendlyName}' matching '${searchStr}'${requiredParentSuffix}`;
   }
 }

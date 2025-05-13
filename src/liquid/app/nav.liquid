@@ -1,0 +1,108 @@
+<nav class="navbar" role="navigation" aria-label="main navigation">
+  <div class="navbar-brand">
+    <a class="navbar-item" href="/">
+      <img src="{{ logo }}">
+    </a>
+
+    <a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false">
+      <span aria-hidden="true"></span>
+      <span aria-hidden="true"></span>
+      <span aria-hidden="true"></span>
+    </a>
+  </div>
+
+  <div class="navbar-menu" id="nav-menu">
+    <div class="navbar-start">
+      <div class="navbar-item has-dropdown is-hoverable">
+        <a class="navbar-link is-arrowless"> <span class="material-symbols-outlined">add</span> Add </a>
+        <div class="navbar-dropdown">
+          {% for placeType in contactTypes %}
+            <div class="navbar-item">
+              <b>{{ placeType.friendly }}</b>
+            </div>
+            <a class="navbar-item" href="/add-place?type={{ placeType.name }}&op=new">Create New</a>
+            <a class="navbar-item" href="/add-place?type={{ placeType.name }}&op=replace">Replace Existing</a>
+            <a class="navbar-item" href="/add-place?type={{ placeType.name }}&op=bulk">Upload from CSV</a>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="navbar-item has-dropdown is-hoverable">
+        <a class="navbar-link is-arrowless"> <span class="material-symbols-outlined">low_priority</span> Manage </a>
+        <div class="navbar-dropdown">
+          {% for placeType in contactTypes %}
+            {% if placeType.can_assign_multiple %}
+              <a class="navbar-item" href="/reassign?place_type={{ placeType.name }}"
+                >Reassign {{ placeType.friendly -}}
+              </a>
+            {% endif %}
+            <a class="navbar-item" href="/manage-hierarchy/move/{{ placeType.name }}"
+              >Move a {{ placeType.friendly -}}
+            </a>
+            <a class="navbar-item" href="/manage-hierarchy/merge/{{ placeType.name }}"
+              >Merge Two {{ placeType.friendly }}s</a
+            >
+            <a class="navbar-item" href="/manage-hierarchy/delete/{{ placeType.name }}"
+              >Delete a {{ placeType.friendly -}}
+            </a>
+
+            {% if contactTypes.last != placeType %}
+              <hr>
+            {% endif %}
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="navbar-item has-dropdown is-hoverable">
+        <a class="navbar-link is-arrowless"> <span class="material-symbols-outlined">group</span> Users </a>
+
+        <div class="navbar-dropdown">
+          {% if op == 'table' %}
+            <a class="navbar-item" hx-post="/app/refresh-all" hx-swap="none">
+              <span class="material-symbols-outlined">refresh</span> Refresh
+            </a>
+            <a class="navbar-item" hx-post="/app/remove-all" hx-swap="none">
+              <span class="material-symbols-outlined">delete</span> Clear
+            </a>
+          {% else %}
+            <a class="navbar-item" href="/">
+              <span class="material-symbols-outlined">table_rows</span>
+              View
+            </a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    <div class="navbar-end">
+      <div class="navbar-item has-dropdown is-hoverable">
+        <a class="navbar-link is-arrowless">
+          <span class="material-symbols-outlined">cloud</span>
+          Connected to <i>{{ session.authInfo.friendly }} as {{ session.username }}</i>
+        </a>
+
+        <div class="navbar-dropdown is-right">
+          {% if showListControls %}
+            {% render 'components/button_upload.liquid', className: 'navbar-item' %}
+            {% render 'components/button_save_credentials.liquid', className: 'navbar-item' %}
+          {% endif %}
+          <a class="navbar-item" href="/logout"> <span class="material-symbols-outlined">logout</span> Logout </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<script type="text/javascript">
+  document.addEventListener('DOMContentLoaded', () => {
+    const $navbarBurgers = Array.prototype.slice.call(document.querySelectorAll('.navbar-burger'), 0);
+    const $target = document.getElementById('nav-menu');
+
+    // Add a click event on each of burger
+    $navbarBurgers.forEach((burger) => {
+      burger.addEventListener('click', () => {
+        burger.classList.toggle('is-active');
+        $target.classList.toggle('is-active');
+      });
+    });
+  });
+</script>

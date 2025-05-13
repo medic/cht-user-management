@@ -5,18 +5,19 @@ cht-user-management:
     enabled: true
   image:
     repository: public.ecr.aws/medic/cht-user-management
-    tag: "2.1.8"  # Set this to the version of the docker image
+    tag: "2.1.17" # Set this to the version of the docker image
 
   # Environment variablues to set in the pod, for example:
   # env:
   #   CONFIG_NAME: changeme
-  
-  env: 
+
+  env:
     NODE_ENV: production
     CHT_DEV_HTTP: false
     CONFIG_NAME: chis-ke
     REDIS_HOST: users-chis-ke-redis-master.users-chis-prod.svc.cluster.local
     REDIS_PORT: 6379
+    ALLOW_ADMIN_LOGIN: false
   envSecrets:
     # COOKIE/WORKER_PRIVATE_KEY will be automatically generated if it doesn't exist
     - env: COOKIE_PRIVATE_KEY
@@ -51,8 +52,8 @@ cht-user-management-worker:
   replicaCount: 1
   image:
     repository: public.ecr.aws/medic/cht-user-management-worker
-    tag: "2.1.8"
-  env: 
+    tag: "2.1.17"
+  env:
     NODE_ENV: production
     REDIS_HOST: users-chis-ke-redis-master.users-chis-prod.svc.cluster.local
     REDIS_PORT: 6379

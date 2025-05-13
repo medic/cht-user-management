@@ -1,0 +1,25 @@
+<html>
+  <head>
+    <title>
+      Reassign
+      {{ contactType.friendly }}
+    </title>
+    <script src="/public/htmx.min.js"></script>
+    <script src="/public/sse.js"></script>
+    <link rel="stylesheet" href="/public/bulma.min.css">
+    <link rel="stylesheet" href="/public/bulma-tooltip.min.css">
+    <link rel="stylesheet" href="/public/material-symbols.css">
+  </head>
+  <body>
+    {% render 'app/nav.liquid',
+      op: op,
+      logo: logo,
+      contactTypes: contactTypes,
+      showListControls: showListControls,
+      session: session
+    %}
+    <div class="container is-max-desktop px-4" hx-ext="sse" sse-connect="/events/connection">
+      {% render 'reassign/form.liquid', contactType: contactType, hierarchy: hierarchy, data: data, session: session %}
+    </div>
+  </body>
+</html>
