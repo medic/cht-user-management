@@ -1,0 +1,10 @@
+.req-indicator {
+  display: none;
+}
+.htmx-request .req-indicator {
+  display: inline;
+}
+.htmx-request > span#default {
+  display: none;
+}
+

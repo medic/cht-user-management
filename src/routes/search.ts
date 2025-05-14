@@ -2,7 +2,7 @@ import { FastifyInstance } from 'fastify';
 
 import { Config } from '../config';
 import { ChtApi } from '../lib/cht-api';
-import { RemotePlace } from '../lib/remote-place-cache';
+import RemotePlaceCache, { RemotePlace } from '../lib/remote-place-cache';
 import SessionCache from '../services/session-cache';
 import SearchLib from '../lib/search';
 
@@ -12,6 +12,7 @@ export default async function place(fastify: FastifyInstance) {
     const queryParams: any = req.query;
     const { op, place_id: placeId, type, prefix: dataPrefix } = queryParams;
     const level = parseInt(queryParams.level);
+    const bustcache = parseInt(queryParams.fresh) === 1;
 
     const data: any = req.body;
 
@@ -29,6 +30,11 @@ export default async function place(fastify: FastifyInstance) {
     if (!hierarchyLevel) {
       throw Error(`not hierarchy constraint at ${level}`);
     }
+
+    if (bustcache) {
+      RemotePlaceCache.clear(chtApi, hierarchyLevel.contact_type);
+    }
+
     const searchResults: RemotePlace[] = await SearchLib.search(
       contactType,
       data,
