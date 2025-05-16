@@ -4,7 +4,7 @@
     {{ hierarchy.friendly_name }}
     {% if hierarchy.required %}*{% endif %}
   </label>
-  <div class="control">
+  <div class="control has-icons-right">
     <input
       id="{{ property_name }}"
       name="{{ property_name }}"
@@ -26,7 +26,17 @@
       {% if disabled == true %}
         disabled
       {% endif %}
-    >
+      >
+      <span
+        id="refresh_{{hierarchy.level}}"
+        class="icon is-right search-clear-cache-icon" 
+        hx-post="/search?place_id={{place.id}}&type={{ type }}&op={{op}}&level={{ hierarchy.level }}&prefix={{ prefix }}&clear_cache=1"
+        hx-target="#search_results_{{ property_name }}"
+        hx-swap="innerHTML"
+        hx-indicator="#refresh_{{hierarchy.level}}">
+          <span class="is-size-7 has-text-primary req-indicator">Refreshing...</span>
+          <span id="default" class="material-symbols-outlined">sync</span>
+      </span>
     {% assign property_name_id = property_name | append: '_id' %}
     {% if data[property_name_id] %}
       <input name="{{property_name_id}}" value="{{data[property_name_id]}}" hidden>
