@@ -60,22 +60,20 @@ export default async function events(fastify: FastifyInstance) {
       await updateDirective();
     };
 
-    if (req.chtSession) {
-      uploadManager.on('refresh_table_row', placeChangeListener);
-      uploadManager.on('refresh_grouped', async () => {
-        resp.sse({ event: `update-group`, data: `update` });
-      });
-      uploadManager.on('refresh_place', async (args) => {
-        const { id, state, err } = args;
-        let statusText;
-        if (state === PlaceUploadState.FAILURE) {
-          statusText = `<span class="tag is-size-7 is-capitalized has-tooltip-multiline is-warning" data-tooltip="${err}">${state}</span>`;
-        } else {
-          statusText = `<span class="tag is-size-7 is-success is-capitalized">${state}</span>`;
-        }
-        resp.sse({ event: `update-${id}`, data: statusText });
-      });
-    }
+    uploadManager.on('refresh_table_row', placeChangeListener);
+    uploadManager.on('refresh_grouped', async () => {
+      resp.sse({ event: `update-group`, data: `update` });
+    });
+    uploadManager.on('refresh_place', async (args) => {
+      const { id, state, err } = args;
+      let statusText;
+      if (state === PlaceUploadState.FAILURE) {
+        statusText = `<span class="tag is-size-7 is-capitalized has-tooltip-multiline is-warning" data-tooltip="${err}">${state}</span>`;
+      } else {
+        statusText = `<span class="tag is-size-7 is-success is-capitalized">${state}</span>`;
+      }
+      resp.sse({ event: `update-${id}`, data: statusText });
+    });
 
     req.socket.on('close', () => {
       uploadManager.removeListener('refresh_table_row', placeChangeListener);
