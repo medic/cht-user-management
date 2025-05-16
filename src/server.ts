@@ -87,9 +87,6 @@ const build = (opts: FastifyServerOptions): FastifyInstance => {
 
     const cookieToken = req.cookies[Auth.AUTH_COOKIE_NAME] as string;
     if (!cookieToken) {
-      if (req.routeOptions.url?.startsWith('/events/')) {
-        return;
-      }
       reply.redirect('/login');
       throw new Error('user must login');
     }
