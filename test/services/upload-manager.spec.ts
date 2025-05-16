@@ -15,7 +15,6 @@ import RemotePlaceResolver from '../../src/lib/remote-place-resolver';
 import { UploadManagerRetryScenario } from '../lib/retry-logic.spec';
 import { PlaceUploadState, UploadState } from '../../src/services/place';
 import { mockGroupedFormData } from './place-factory.spec';
-import { ISupersetIntegration } from '../../src/services/superset-integration';
 import SupersetSession from '../../src/lib/superset-session';
 import * as supersetIntegrationModule from '../../src/services/superset-integration';
 
