@@ -22,7 +22,8 @@ describe('services/upload-superset.ts', () => {
       assignPermissionsToRole: sinon.stub().resolves() as unknown as SupersetApi['assignPermissionsToRole'],
       getTablesByRlsID: sinon.stub().resolves([{ id: 456 }]) as unknown as SupersetApi['getTablesByRlsID'],
       createRowLevelSecurityFromTemplate: sinon.stub().resolves() as unknown as SupersetApi['createRowLevelSecurityFromTemplate'],
-      createUser: sinon.stub().resolves() as unknown as SupersetApi['createUser']
+      createUser: sinon.stub().resolves({ id: 99 }) as unknown as SupersetApi['createUser'],
+      updateUser: sinon.stub().resolves() as unknown as SupersetApi['updateUser']
     } as SupersetApi;
 
     uploadSuperset = new UploadSuperset(supersetApi);
@@ -77,14 +78,36 @@ describe('services/upload-superset.ts', () => {
 
   it('should throw error if Superset is not configured', async () => {
     const placeWithoutSuperset = new Place(mockValidContactType('string', undefined));
+    placeWithoutSuperset.creationDetails.username = 'test_contact';
+    placeWithoutSuperset.creationDetails.password = 'password';
+    placeWithoutSuperset.contact.properties.email = new UnvalidatedPropertyValue('test@example.com');
+    placeWithoutSuperset.properties.name = new UnvalidatedPropertyValue('NoSuperset Place');
     await expect(uploadSuperset.handlePlace(placeWithoutSuperset))
-      .to.eventually.be.rejectedWith('Superset integration is not enabled');
+      .to.eventually.be.rejectedWith('Superset integration is not enabled for place: NoSuperset Place');
   });
 
   it('should throw error if email is missing', async () => {
     delete mockPlace.contact.properties.email;
     await expect(uploadSuperset.handlePlace(mockPlace))
-      .to.eventually.be.rejectedWith('Email is required for Superset integration');
+      .to.eventually.be.rejectedWith('Email is required for Superset integration, but is missing for place: Test Place');
+  });
+
+  it('should throw error if username or password is missing', async () => {
+    mockPlace.creationDetails.username = '';
+    await expect(uploadSuperset.handlePlace(mockPlace))
+      .to.eventually.be.rejectedWith('Cannot create Superset user without CHT credentials for place: Test Place');
+    mockPlace.creationDetails.username = 'test_contact';
+    mockPlace.creationDetails.password = '';
+    await expect(uploadSuperset.handlePlace(mockPlace))
+      .to.eventually.be.rejectedWith('Cannot create Superset user without CHT credentials for place: Test Place');
+  });
+
+  it('should throw error if place name is missing', async () => {
+    mockPlace.properties.name = new UnvalidatedPropertyValue('');
+    // Place.name getter will be undefined
+    Object.defineProperty(mockPlace, 'name', { get: () => undefined });
+    await expect(uploadSuperset.handlePlace(mockPlace))
+      .to.eventually.be.rejectedWith('Place name is required for Superset integration');
   });
 
   describe('handleGroup', () => {
@@ -92,71 +115,59 @@ describe('services/upload-superset.ts', () => {
 
     beforeEach(() => {
       mockPlaces = [
-        mockPlace,
+        new Place(mockSupersetContactType()),
         new Place(mockSupersetContactType()),
         new Place(mockSupersetContactType())
       ];
 
-      // Set up the first place with Superset user ID and roles
-      mockPlaces[0].creationDetails.username = 'test_contact';
-      mockPlaces[0].creationDetails.password = 'password';
-      mockPlaces[0].creationDetails.email = 'test@example.com';
-      mockPlaces[0].creationDetails.name = 'Test Contact';
-      mockPlaces[0].creationDetails.supersetUserId = 1;
-      mockPlaces[0].creationDetails.supersetRoles = [1];
-
-      // Set up the other places with the same credentials
-      mockPlaces[1].properties.name = new UnvalidatedPropertyValue('Test Place 2');
-      mockPlaces[1].contact.properties.email = new UnvalidatedPropertyValue('test@example.com');
-      mockPlaces[1].creationDetails.username = 'test_contact';
-      mockPlaces[1].creationDetails.password = 'password';
-      mockPlaces[1].creationDetails.email = 'test@example.com';
-      mockPlaces[1].creationDetails.name = 'Test Contact';
-
-      mockPlaces[2].properties.name = new UnvalidatedPropertyValue('Test Place 3');
-      mockPlaces[2].contact.properties.email = new UnvalidatedPropertyValue('test@example.com');
-      mockPlaces[2].creationDetails.username = 'test_contact';
-      mockPlaces[2].creationDetails.password = 'password';
-      mockPlaces[2].creationDetails.email = 'test@example.com';
-      mockPlaces[2].creationDetails.name = 'Test Contact';
-    });
-
-    it('should create roles and RLS for remaining places and update existing user', async () => {
-      // Mock createRole to return different IDs for each call
-      (supersetApi.createRole as sinon.SinonStub)
-        .onFirstCall().resolves({ id: 2 })
-        .onSecondCall().resolves({ id: 3 });
-
-      await uploadSuperset.handleGroup(mockPlaces);
-
-      // Verify createRole was called twice (for place2 and place3)
-      sinon.assert.calledTwice(supersetApi.createRole as sinon.SinonStub);
-
-      // Verify updateUser was called with all role IDs
-      sinon.assert.calledOnceWithExactly(supersetApi.updateUser as sinon.SinonStub, 1, {
-        roles: [1, 2, 3]
+      // Set up all places with CHT credentials and required properties
+      mockPlaces.forEach((p, i) => {
+        p.creationDetails.username = 'test_contact';
+        p.creationDetails.password = 'password';
+        p.properties.name = new UnvalidatedPropertyValue(`Test Place ${i + 1}`);
+        p.contact.properties.name = new UnvalidatedPropertyValue(`Test Contact ${i + 1}`);
+        p.contact.properties.email = new UnvalidatedPropertyValue('test@example.com');
       });
     });
 
-    it('should throw error if no places provided', async () => {
-      await expect(uploadSuperset.handleGroup([])).to.be.rejectedWith('No places provided for group creation');
+    it('should create roles and RLS for all places and create ONE Superset user with all roles', async () => {
+      // Mock createRole to return different IDs for each call
+      (supersetApi.createRole as sinon.SinonStub)
+        .onCall(0).resolves(2)
+        .onCall(1).resolves(3)
+        .onCall(2).resolves(4);
+
+      await uploadSuperset.handleGroup(mockPlaces);
+
+      // Verify createRole was called for each place
+      sinon.assert.callCount(supersetApi.createRole as sinon.SinonStub, mockPlaces.length);
+
+      // Verify createUser was called once with all role IDs
+      sinon.assert.calledOnce(supersetApi.createUser as sinon.SinonStub);
+      const userPayload = (supersetApi.createUser as sinon.SinonStub).args[0][0];
+      expect(userPayload.roles).to.deep.equal([2, 3, 4]);
+
+      // All places should have supersetUserId set
+      mockPlaces.forEach(p => {
+        expect(p.creationDetails.supersetUserId).to.equal(99);
+      });
     });
 
-    it('should throw error if first place has no Superset user ID', async () => {
-      const testPlace = new Place(mockSupersetContactType());
-      testPlace.properties.name = new UnvalidatedPropertyValue('Test Place');
-      testPlace.contact.properties.email = new UnvalidatedPropertyValue('test@example.com');
-      testPlace.creationDetails.username = 'test_contact';
-      testPlace.creationDetails.password = 'password';
-      testPlace.creationDetails.email = 'test@example.com';
-      testPlace.creationDetails.name = 'Test Contact';
-
-      await expect(uploadSuperset.handleGroup([testPlace])).to.be.rejectedWith('First place must have a Superset user ID');
+    it('should throw error if any place is missing CHT credentials', async () => {
+      delete mockPlaces[1].creationDetails.username;
+      await expect(uploadSuperset.handleGroup(mockPlaces)).to.be.rejectedWith('Cannot create Superset user without CHT credentials');
     });
 
     it('should handle API failures gracefully', async () => {
       (supersetApi.createRole as sinon.SinonStub).rejects(new Error('API Error'));
       await expect(uploadSuperset.handleGroup(mockPlaces)).to.be.rejectedWith('Failed to set up Superset for group of places: API Error');
+      mockPlaces.forEach(p => {
+        expect(p.creationDetails.supersetUserId).to.be.undefined;
+      });
+    });
+
+    it('should throw error if no places provided', async () => {
+      await expect(uploadSuperset.handleGroup([])).to.be.rejectedWith('No places provided for group creation');
     });
   });
 });

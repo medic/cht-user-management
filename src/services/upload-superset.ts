@@ -49,19 +49,16 @@ export class UploadSuperset {
       throw new Error('No places provided for group creation');
     }
 
-    // Get shared credentials and Superset user ID from the first place
-    const { username, password, supersetUserId } = places[0].creationDetails;
-    if (!username || !password || !supersetUserId) {
-      throw new Error('Cannot update Superset user without CHT credentials and Superset user ID');
+    // All places should have CHT credentials at this point
+    const { username, password } = places[0].creationDetails;
+    if (!username || !password) {
+      throw new Error('Cannot create Superset user without CHT credentials');
     }
 
     try {
-      // Skip first place as it's already handled in uploadSinglePlace
-      const remainingPlaces = places.slice(1);
-      
-      // Step 1: Create roles and set up RLS for remaining places
+      // Step 1: Create roles and set up RLS for all places
       const roleIds = await Promise.all(
-        remainingPlaces.map(async place => {
+        places.map(async place => {
           this.validatePlaceForSuperset(place);
           const roleId = await this.createRoleWithPermissions(place);
           await this.setupRowLevelSecurity(place, roleId);
@@ -69,10 +66,14 @@ export class UploadSuperset {
         })
       );
 
-      // Step 2: Update existing user with new roles
-      await this.supersetApi.updateUser(supersetUserId, {
-        roles: [...places[0].creationDetails.supersetRoles || [], ...roleIds]
-      });
+      // Step 2: Create the Superset user with all roles
+      const supersetUserPayload = SupersetUserPayloadBuilder.fromPlace(places[0], roleIds);
+      const response = await this.supersetApi.createUser(supersetUserPayload);
+
+      // Step 3: Store Superset user ID in all places' creationDetails
+      for (const place of places) {
+        place.creationDetails.supersetUserId = response.id;
+      }
 
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';

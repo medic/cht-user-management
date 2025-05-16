@@ -9,8 +9,6 @@ import RemotePlaceResolver from '../lib/remote-place-resolver';
 import SessionCache from '../services/session-cache';
 import { UploadManager } from '../services/upload-manager';
 import WarningSystem from '../warnings';
-import SupersetSession from '../lib/superset-session';
-import { SupersetApi } from '../lib/superset-api';
 
 export default async function sessionCache(fastify: FastifyInstance) {
   fastify.get('/', async (req, resp) => {
@@ -98,11 +96,9 @@ export default async function sessionCache(fastify: FastifyInstance) {
     const directiveModel = new DirectiveModel(sessionCache, req.cookies.filter);
 
     const chtApi = new ChtApi(req.chtSession);
-    const supersetApi = new SupersetApi(await SupersetSession.create());
     uploadManager.doUpload(
       sessionCache.getPlaces(), 
       chtApi, 
-      supersetApi, 
       ignoreWarnings === 'true'
     );
 

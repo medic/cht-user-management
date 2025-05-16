@@ -46,6 +46,9 @@ describe('lib/superset-session.ts', () => {
       create: sinon.stub().returns(mockAxios),
       ...mockAxios,
     });
+
+    // Speed up retry tests by stubbing delay to resolve immediately
+    sinon.stub(SupersetSession.default.prototype, 'delay').callsFake(() => Promise.resolve());
   });
 
   afterEach(() => {
@@ -76,7 +79,7 @@ describe('lib/superset-session.ts', () => {
   });
 
   it('should throw error after max retries', async function() {
-    this.timeout(50000);
+    this.timeout(10000);
     
     mockAxios.post.rejects(new Error('Network error'));
 

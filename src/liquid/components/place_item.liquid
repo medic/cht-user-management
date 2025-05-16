@@ -53,12 +53,12 @@
   {% if contactType.superset %}
     {% capture propertyName %}superset_{{ contactType.superset.property_name }}{% endcapture %}
     {%
-      include "components/list_cell.html"
-      propertyName=propertyName
-      property=contactType.superset
+      include "components/list_cell.liquid",
+      propertyName: propertyName,
+      property: contactType.superset,
       session: session,
       place: place,
-      values=place.supersetProperties
+      values: place.supersetProperties
     %}
   {% endif %}
 
