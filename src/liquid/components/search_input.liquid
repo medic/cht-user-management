@@ -29,9 +29,8 @@
       >
       <span
         id="refresh_{{hierarchy.level}}"
-        class="icon is-right" 
-        style="cursor: pointer; pointer-events: auto; width: auto; right: 8;" 
-        hx-post="/search?place_id={{place.id}}&type={{ type }}&op={{op}}&level={{ hierarchy.level }}&prefix={{ prefix }}&fresh=1"
+        class="icon is-right search-clear-cache-icon" 
+        hx-post="/search?place_id={{place.id}}&type={{ type }}&op={{op}}&level={{ hierarchy.level }}&prefix={{ prefix }}&clear_cache=1"
         hx-target="#search_results_{{ property_name }}"
         hx-swap="innerHTML"
         hx-indicator="#refresh_{{hierarchy.level}}">

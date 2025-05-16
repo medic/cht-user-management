@@ -1,10 +1,18 @@
 .req-indicator {
   display: none;
 }
+
 .htmx-request .req-indicator {
   display: inline;
 }
-.htmx-request > span#default {
+
+.htmx-request>span#default {
   display: none;
 }
 
+.control.has-icons-right .icon.search-clear-cache-icon {
+  cursor: pointer;
+  pointer-events: auto;
+  width: auto;
+  right: 8;
+}

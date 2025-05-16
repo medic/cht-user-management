@@ -12,7 +12,7 @@ export default async function place(fastify: FastifyInstance) {
     const queryParams: any = req.query;
     const { op, place_id: placeId, type, prefix: dataPrefix } = queryParams;
     const level = parseInt(queryParams.level);
-    const bustcache = parseInt(queryParams.fresh) === 1;
+    const shouldClearCache = parseInt(queryParams.clear_cache) === 1;
 
     const data: any = req.body;
 
@@ -31,7 +31,7 @@ export default async function place(fastify: FastifyInstance) {
       throw Error(`not hierarchy constraint at ${level}`);
     }
 
-    if (bustcache) {
+    if (shouldClearCache) {
       RemotePlaceCache.clear(chtApi, hierarchyLevel.contact_type);
     }
 
