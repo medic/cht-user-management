@@ -64,10 +64,6 @@ jobs:
         run: |
           helm upgrade --namespace ${{vars.NAMESPACE}} --values scripts/deploy/values/users-chis-tg.yaml users-chis-tg medic/cht-user-management
 
-      - name: Upgrade users-chis-ke
-        run: |
-          helm upgrade --namespace ${{vars.NAMESPACE}} --values scripts/deploy/values/users-chis-ke.yaml users-chis-ke medic/cht-user-management
-
       - name: Upgrade users-chis-ml
         run: |
           helm upgrade --namespace ${{vars.NAMESPACE}} --values scripts/deploy/values/users-chis-ml.yaml users-chis-ml medic/cht-user-management
