@@ -51,6 +51,9 @@ jobs:
 
       - uses: actions/checkout@v2
 
+      - name: Set PKG_VERSION
+        run: echo "PKG_VERSION=$(cat package.json | jq -r .version)" >> "$GITHUB_ENV"
+
       - name: Update kubeconfig
         run: |
           aws eks update-kubeconfig --name ${{vars.CLUSTER}} --region ${{vars.AWS_REGION}}
@@ -58,12 +61,12 @@ jobs:
 
       - name: Upgrade users-chis-civ
         run: |
-          helm upgrade --namespace ${{vars.NAMESPACE}} --values scripts/deploy/values/users-chis-civ.yaml users-chis-civ medic/cht-user-management
+          helm upgrade --namespace ${{vars.NAMESPACE}} --values scripts/deploy/values/users-chis-civ.yaml users-chis-civ medic/cht-user-management --set tag=$PKG_VERSION
 
       - name: Upgrade users-chis-tg
         run: |
-          helm upgrade --namespace ${{vars.NAMESPACE}} --values scripts/deploy/values/users-chis-tg.yaml users-chis-tg medic/cht-user-management
+          helm upgrade --namespace ${{vars.NAMESPACE}} --values scripts/deploy/values/users-chis-tg.yaml users-chis-tg medic/cht-user-management --set tag=$PKG_VERSION
 
       - name: Upgrade users-chis-ml
         run: |
-          helm upgrade --namespace ${{vars.NAMESPACE}} --values scripts/deploy/values/users-chis-ml.yaml users-chis-ml medic/cht-user-management
+          helm upgrade --namespace ${{vars.NAMESPACE}} --values scripts/deploy/values/users-chis-ml.yaml users-chis-ml medic/cht-user-management --set tag=$PKG_VERSION
