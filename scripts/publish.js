@@ -14,9 +14,8 @@ const {
 const getBranchVersions = () => {
   if (BRANCH === 'main' || BRANCH.replace('v', '') === packageJson.version) {
     return [`${packageJson.version}`, 'latest'];
-  } {
-    return [`${packageJson.version}-${BRANCH}.${BUILD_NUMBER}`];
   }
+  return [`${packageJson.version}-${BRANCH}.${BUILD_NUMBER}`];
 };
 
 const getRepo = () => {
