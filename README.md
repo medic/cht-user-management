@@ -174,10 +174,14 @@ Variable | Description | Sample
 `CHT_USER_MANAGEMENT_IMAGE` | docker image for cht-user-management service (local development), leave empty to use published one | `cht-user-management:local `
 `CHT_USER_MANAGEMENT_WORKER_IMAGE` | docker image for cht-user-management service (local development), leave empty to use published one | `cht-user-management-worker:local`
 
-## Publishing new docker images
+## Development
 
-Docker images are hosted on [AWS's Elastic Container Registry (ECR)](https://gallery.ecr.aws/medic/cht-user-management). To publish a new version:
+This repo has an automated release process where each feature/bug fix will be released immediately after it is merged to main.
 
-1. Update the [version string](https://github.com/medic/cht-user-management/blob/d992d5d6a911cdc21f610fa48a0ffb3e275bae0d/package.json#L3) in the `package.json`.
-2. Submit a PR and have it merged to `main`. 
-3. [Existing CI](https://github.com/medic/cht-user-management/blob/main/.github/workflows/docker-build.yml) will push an image to ECR.
+1. Create a ticket for the feature/bug fix.
+2. Submit a PR, and make sure that the PR title is clear, readable, and follows the strict commit message format described in the commit message format section below. If the PR title does not comply, automatic release will fail.
+3. Have the PR reviewed.
+4. Squash and merge the PR to main. The commit message should be the already-formatted PR title but double check it's clear, readable, and follows the strict commit message format to make sure the automatic release works as expected.
+5. Close the ticket.
+
+Docker images are hosted on [AWS's Elastic Container Registry (ECR)](https://gallery.ecr.aws/medic/cht-user-management). New images are published after every release through the [existing CI](https://github.com/medic/cht-user-management/blob/main/.github/workflows/docker-build.yml)
