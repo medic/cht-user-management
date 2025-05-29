@@ -184,4 +184,17 @@ This repo has an automated release process where each feature/bug fix will be re
 4. Squash and merge the PR to main. The commit message should be the already-formatted PR title but double check it's clear, readable, and follows the strict commit message format to make sure the automatic release works as expected.
 5. Close the ticket.
 
-Docker images are hosted on [AWS's Elastic Container Registry (ECR)](https://gallery.ecr.aws/medic/cht-user-management). New images are published after every release through the [existing CI](https://github.com/medic/cht-user-management/blob/main/.github/workflows/docker-build.yml)
+New docker images are published after every release and are hosted on [AWS's Elastic Container Registry (ECR)](https://gallery.ecr.aws/medic/cht-user-management). 
+
+### Commit message format
+
+The commit format should follow the convention outlined in the [CHT docs](https://docs.communityhealthtoolkit.org/contribute/code/workflow/#commit-message-format).
+Examples are provided below.
+
+| Type        | Example commit message                                                                              | Release type |
+|-------------|-----------------------------------------------------------------------------------------------------|--------------|
+| Bug fixes   | fix(#123): infinite spinner when clicking contacts tab twice                                        | patch        |
+| Performance | perf(#789): lazily loaded angular modules                                                           | patch        |
+| Features    | feat(#456): add home tab                                                                            | minor        |
+| Non-code    | chore(#123): update README                                                                          | none         |
+| Breaking    | perf(#2): remove reporting rates feature <br/> BREAKING CHANGE: reporting rates no longer supported | major        |
