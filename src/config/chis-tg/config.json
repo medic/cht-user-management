@@ -16,6 +16,111 @@
   ],
   "contact_types": [
     {
+      "name": "cf60_sanitary",
+      "friendly": "Sanitary Training",
+      "contact_type": "cf62_sanitary",
+      "user_role": ["sanitary"],
+      "username_from_place": false,
+      "deactivate_users_on_replace": false,
+      "hierarchy": [
+        {
+          "friendly_name": "Followup Area",
+          "property_name": "followup_area",
+          "contact_type": "ce50_followup",
+          "type": "name",
+          "required": true,
+          "level": 1
+        },
+        {
+          "friendly_name": "Commune",
+          "property_name": "commun",
+          "contact_type": "cd40_commun",
+          "type": "name",
+          "required": true,
+          "level": 2
+        },
+        {
+          "friendly_name": "District",
+          "property_name": "district",
+          "contact_type": "cc30_district",
+          "type": "name",
+          "required": true,
+          "level": 3
+        }
+      ],
+      "replacement_property": {
+        "friendly_name": "Affected Sanitary Training",
+        "property_name": "replacement",
+        "type": "string",
+        "parameter": ["\\(*Sanitary*\\)"],
+        "required": true
+      },
+      "place_properties": [
+        {
+          "friendly_name": "Sanitary Training Name",
+          "property_name": "name",
+          "type": "generated",
+          "parameter": "{{ contact.last_name }} {{ contact.first_name }} ({{ lineage.followup_area }})",
+          "required": false,
+          "unique": "parent"
+        }
+      ],
+      "contact_properties": [
+        {
+          "friendly_name": "Last Name",
+          "property_name": "last_name",
+          "type": "string",
+          "parameter": ["\\(*Last*\\)"],
+          "required": true
+        },
+        {
+          "friendly_name": "First Name",
+          "property_name": "first_name",
+          "type": "string",
+          "parameter": ["\\(*First*\\)"],
+          "required": true
+        },
+        {
+          "friendly_name": "Full Name",
+          "property_name": "name",
+          "type": "generated",
+          "parameter": "{{ contact.last_name }} {{ contact.first_name }}",
+          "required": false
+        },
+        {
+          "friendly_name": "Gender",
+          "property_name": "sex",
+          "type": "select_one",
+          "parameter": {
+            "male": "Masculin",
+            "female": "Feminin"
+          },
+          "required": true
+        },
+        {
+          "friendly_name": "Telephone",
+          "property_name": "telephone",
+          "type": "regex",
+          "parameter": "^\\d{8}$",
+          "required": true
+        },
+        {
+          "friendly_name": "NGO/Provenance Structure",
+          "property_name": "appartenance_ngo",
+          "type": "string",
+          "parameter": ["\\(STRUCTURE[ -]NAME\\)"],
+          "required": true
+        },
+        {
+          "friendly_name": "Email",
+          "property_name": "email",
+          "type": "regex",
+          "parameter": "^[a-zA-Z0-9._+-]+@[a-zA-Z0-9.-]+.[a-zA-Z]{2,}$",
+          "required": false
+        }
+      ]
+    },
+    {
       "name": "cg70_supervision",
       "friendly": "Supervision Area",
       "contact_type": "cg72_supervision",
@@ -30,6 +135,30 @@
           "type": "name",
           "required": true,
           "level": 1
+        },
+        {
+          "friendly_name": "Followup Area",
+          "property_name": "followup_area",
+          "contact_type": "ce50_followup",
+          "type": "name",
+          "required": true,
+          "level": 2
+        },
+        {
+          "friendly_name": "Commune",
+          "property_name": "commun",
+          "contact_type": "cd40_commun",
+          "type": "name",
+          "required": true,
+          "level": 3
+        },
+        {
+          "friendly_name": "District",
+          "property_name": "district",
+          "contact_type": "cc30_district",
+          "type": "name",
+          "required": true,
+          "level": 4
         }
       ],
       "replacement_property": {
@@ -112,6 +241,30 @@
           "type": "name",
           "required": true,
           "level": 1
+        },
+        {
+          "friendly_name": "Supervision Area",
+          "property_name": "supervision_area",
+          "contact_type": "cg70_supervision",
+          "type": "name",
+          "required": true,
+          "level": 2
+        },
+        {
+          "friendly_name": "Sanitary Training",
+          "property_name": "sanitary_training",
+          "contact_type": "cf60_sanitary",
+          "type": "name",
+          "required": true,
+          "level": 3
+        },
+        {
+          "friendly_name": "District",
+          "property_name": "district",
+          "contact_type": "cc30_district",
+          "type": "name",
+          "required": true,
+          "level": 6
         }
       ],
       "replacement_property": {
@@ -155,8 +308,11 @@
         {
           "friendly_name": "Agent Type",
           "property_name": "role",
-          "type": "string",
-          "parameter": ["\\(chw\\)", "\\(community_user\\)"],
+          "type": "select_one",
+          "parameter": {
+            "chw": "ASC",
+            "community_user": "Relai Communautaire"
+          },
           "required": true
         },
         {
@@ -172,7 +328,28 @@
         {
           "friendly_name": "Occupation",
           "property_name": "occupation",
-          "type": "string",
+          "type": "select_one",
+          "parameter": {
+            "health_worker": "Agent de Santé",
+            "artisan": "Artisan",
+            "shopkeeper": "Boutiquier",
+            "driver": "Chauffeur",
+            "trader": "Commerçant (e)",
+            "farmer": "Cultivateur",
+            "pupil": "Ecolier",
+            "student": "Elève/étudiant",
+            "breeder": "Eleveur",
+            "commercial_employe": "Employé de commerce",
+            "treacher": "Enseignant (e)",
+            "fat_police": "FAT/Policier/Gendarme",
+            "household": "Ménagère",
+            "worker": "Ouvrier",
+            "retirement": "Retraité",
+            "reseller": "Revendeur ( se )",
+            "unemployed": "Sans emploi",
+            "social_worker": "Travailleur social / volontaire",
+            "other": "Autre"
+          },
           "required": true
         },
         {
@@ -192,7 +369,13 @@
         {
           "friendly_name": "Education Level",
           "property_name": "education",
-          "type": "string",
+          "type": "select_one",
+          "parameter": {
+            "no_study": "Pas de Niveau",
+            "primary": "Primaire",
+            "secondary": "Secondaire",
+            "university": "Universitaire"
+          },
           "required": true
         }
       ]
