@@ -63,12 +63,12 @@ jobs:
 
       - name: Upgrade users-chis-civ
         run: |
-          helm upgrade --namespace ${{vars.NAMESPACE}} --values scripts/deploy/values/users-chis-civ.yaml users-chis-civ medic/cht-user-management --set tag=$PKG_VERSION
+          helm upgrade --namespace ${{vars.NAMESPACE}} --values scripts/deploy/values/users-chis-civ.yaml users-chis-civ medic/cht-user-management --set cht-user-management.image.tag=$PKG_VERSION --set cht-user-management-worker.image.tag=$PKG_VERSION
 
       - name: Upgrade users-chis-tg
         run: |
-          helm upgrade --namespace ${{vars.NAMESPACE}} --values scripts/deploy/values/users-chis-tg.yaml users-chis-tg medic/cht-user-management --set tag=$PKG_VERSION
+          helm upgrade --namespace ${{vars.NAMESPACE}} --values scripts/deploy/values/users-chis-tg.yaml users-chis-tg medic/cht-user-management --set cht-user-management.image.tag=$PKG_VERSION --set cht-user-management-worker.image.tag=$PKG_VERSION
 
       - name: Upgrade users-chis-ml
         run: |
-          helm upgrade --namespace ${{vars.NAMESPACE}} --values scripts/deploy/values/users-chis-ml.yaml users-chis-ml medic/cht-user-management --set tag=$PKG_VERSION
+          helm upgrade --namespace ${{vars.NAMESPACE}} --values scripts/deploy/values/users-chis-ml.yaml users-chis-ml medic/cht-user-management --set cht-user-management.image.tag=$PKG_VERSION --set cht-user-management-worker.image.tag=$PKG_VERSION
