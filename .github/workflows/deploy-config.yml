@@ -24,12 +24,14 @@ jobs:
             helm upgrade --namespace ${{ inputs.namespace }} \
               --values scripts/deploy/values/users-${{ inputs.config }}.yaml \
               --values secrets.yaml \
-              users-${{ inputs.config }} medic/cht-user-management
+              users-${{ inputs.config }} medic/cht-user-management \
+              --set tag=$PKG_VERSION
             rm secrets.yaml
           else
             echo "No secrets file found, deploying without secrets..."
             # Deploy with only values file
             helm upgrade --namespace ${{ inputs.namespace }} \
               --values scripts/deploy/values/users-${{ inputs.config }}.yaml \
-              users-${{ inputs.config }} medic/cht-user-management
+              users-${{ inputs.config }} medic/cht-user-management \
+              --set tag=$PKG_VERSION
           fi 
