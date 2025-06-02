@@ -22,7 +22,6 @@ As each deployment needs its own configuration directory, DNS entry and deployme
 
 | Name         | Config           | Values                | EKS-Deployment | URL |
 |--------------|------------------|-----------------------|--              |--   |   
-| MoH Kenya    | `users-chis-ke`  | `users-chis-ke.yaml`  | `users-chis-ke-cht-user-management` | users-chis-ke.app.medicmobile.org | 
 | MoH Togo     | `users-chis-tg`  | `users-chis-tg.yaml`  | `users-chis-tg-cht-user-management` | users-chis-tg.app.medicmobile.org | 
 | MoH Mali CIV | `users-chis-civ` | `users-chis-civ.yaml` | `users-chis-civ-cht-user-management` | users-chis-civ.app.medicmobile.org | 
 | MoH Mali CHW | `users-chis-ml`  | `users-chis-ml.yaml`   | `users-chis-ml-cht-user-management` | users-chis-ml.app.medicmobile.org | 
