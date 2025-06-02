@@ -97,6 +97,14 @@
               </td>
             </tr>
             {% endif %}
+
+            {% if contactType.superset %}
+            <tr>
+              <td>{{ contactType.superset.friendly_name }}</td>
+              <td>{{ contactType.superset.required }}</td>
+              <td>{% if contactType.superset.hint %} <i>{{ contactType.superset.hint }}</i> {% else %} Enable to use the superset integration {% endif %} (possible values: `enable`, `disable`)</td>
+            </tr>
+            {% endif %}
           </tbody>
         </table>
       </div>

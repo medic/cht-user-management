@@ -28,6 +28,7 @@ export type ContactType = {
   deactivate_users_on_replace: boolean;
   can_assign_multiple?: boolean;
   hint?: string;
+  superset?: SupersetConfig;
 };
 
 const KnownContactPropertyTypes = [...Validation.getKnownContactPropertyTypes()] as const;
@@ -62,6 +63,27 @@ export type AuthenticationInfo = {
   useHttp?: boolean;
 };
 
+export enum SupersetMode {
+  ENABLE = 'enable',
+  DISABLE = 'disable',
+}
+
+export type SupersetModeParameter = {
+  [K in SupersetMode]: string;
+};
+
+export type SupersetConfig = {
+  friendly_name: string;
+  property_name: string;
+  type: ContactPropertyType;
+  required: boolean;
+  parameter?: SupersetModeParameter;
+
+  prefix: string;
+  role_template: number;
+  rls_template: number;
+  rls_group_key: string;
+};
 
 const {
   CONFIG_NAME,
@@ -129,6 +151,10 @@ export class Config {
     };
   }
 
+  public static getSupersetConfig(contactType: ContactType): SupersetConfig | undefined {
+    return contactType.superset;
+  }
+
   public static hasMultipleRoles(contactType: ContactType): boolean {
     if (!contactType.user_role.length || contactType.user_role.some(role => !role.trim())) {
       throw Error(`unvalidatable config: 'user_role' property is empty or contains empty strings`);
@@ -166,6 +192,23 @@ export class Config {
     const requiredPlaceProps = isReplacement ? [] : contactType.place_properties.filter(p => p.required);
     const requiredHierarchy = contactType.hierarchy.filter(h => h.required);
     const requiredUserRole = Config.hasMultipleRoles(contactType) ? [Config.getUserRoleConfig(contactType)] : [];
+
+    // Early detect email contact property presence if the contact type has superset enabled
+    if (contactType.superset) {
+      const emailProperty = contactType.contact_properties.find(p => p.property_name === 'email');
+      if (!emailProperty) {
+        throw new Error(
+          `It looks like the contact type "${contactType.name}" has Superset integration enabled ` +
+          `but missing the required "email" contact property. Please ensure 'email' is included ` +
+          `to avoid issues with Superset integration later on.`
+        );
+      }
+
+      // Add 'email' to the list of required contact properties if it's not already required
+      if (!emailProperty.required) {
+        requiredContactProps.push({ ...emailProperty, required: true });
+      }
+    }
 
     return [
       ...requiredHierarchy,
@@ -236,6 +279,48 @@ export class Config {
         throw Error('Hierarchy properties cannot be of type "generated"');
       }
     }
+  }
+
+  public static getSupersetBaseUrl(): string {
+    const configKey = CONFIG_NAME?.replace('-', '_').toUpperCase() || '';
+    const baseUrl = Config.getSupersetEnvVar(`${configKey}_SUPERSET_BASE_URL`);
+    if (!baseUrl) {
+      throw new Error(`${configKey}_SUPERSET_BASE_URL is not configured`);
+    }
+    return baseUrl;
+  }
+
+  public static getSupersetCredentials(): { username: string; password: string } {
+    const configKey = CONFIG_NAME?.replace('-', '_').toUpperCase() || '';
+    const username = Config.getSupersetEnvVar(`${configKey}_SUPERSET_ADMIN_USERNAME`);
+    const password = Config.getSupersetEnvVar(`${configKey}_SUPERSET_ADMIN_PASSWORD`);
+    
+    if (!username || !password) {
+      throw new Error(`Superset credentials (${configKey}_SUPERSET_ADMIN_*) are not properly configured`);
+    }
+    
+    return { username, password };
+  }
+
+  private static getSupersetEnvVar(envVar: string): string {
+    if (!this.hasSupersetConfig()) {
+      return '';
+    }
+
+    const envValue = process.env[envVar];
+    if (!envValue) {
+      throw new Error(`Required Superset environment variable ${envVar} is not set`);
+    }
+
+    return envValue;
+  }
+
+  // Helper function to check if any contact type has Superset configuration
+  private static hasSupersetConfig(): boolean {
+    const anyContactTypeWithSuperset = config.contact_types.find(
+      (contactType) => contactType.superset !== undefined
+    );
+    return !!anyContactTypeWithSuperset;
   }
 }
 

@@ -15,8 +15,67 @@ General public is welcome to look at these instructions for who they might use t
 - Check out [helm chart repository](https://github.com/medic/helm-charts/tree/main#usage) so you can reference it locally
 - Be able to [authenticate to Medic kubernetes cluster (EKS)](https://github.com/medic/medic-infrastructure/blob/master/terraform/aws/dev/eks/access/README.md)
 
+### Production Environment Secrets
 
-### Known cofigurations:
+The CHT User Management tool uses SOPS (Secrets OPerationS) to securely manage sensitive environment variables in production. This is particularly important for credentials that shouldn't be stored in plain text in the Helm values files (e.g., Superset admin credentials used for API access).
+
+Each configuration will have its own encrypted secrets file (e.g, `users-chis-tg-secrets.yaml`).
+
+#### Getting Started with Secrets
+
+1. **For Medic Hosted Deployment**:
+   - Get both the SOPS private key and public key from [1Password](https://start.1password.com/open/i?a=ZXKW4QPXKNF7LMQXIV73EG6Y5Q&v=dnrhbauihkhjs5ag6fwn2zhazi&i=4z4lw7l4nbhwrbfl3xqkf7h4ni&h=team-medic.1password.com)
+   - Create `scripts/deploy/secrets/key.txt` with the private key
+   - Create `scripts/deploy/secrets/.sops.yaml` with the public key and encryption rules
+   - Use `manage-secrets.sh` to manage secrets
+
+2. **For Self Hosted Deployment**:
+   - Generate a new SOPS key pair for your deployment:
+     ```bash
+     ./manage-secrets.sh init
+     ```
+   - This creates:
+     - `scripts/deploy/secrets/key.txt`: Contains your private key (keep this secure)
+     - `scripts/deploy/secrets/.sops.yaml`: Contains the correct creation rule from encryption
+   - Store the private key securely - it will be needed for future secret management
+   - Never commit the private key to version control
+
+#### Managing Production Secrets
+
+The `manage-secrets.sh` script helps you manage sensitive environment variables that shouldn't be stored in plain text in the Helm values files. For example, when setting up Superset integration, you'll need to store admin credentials securely.
+
+1. **Add/Update Secrets**:
+   ```bash
+   ./manage-secrets.sh add chis-ke
+   ```
+   The script will:
+   - Prompt for environment variable name (without the config prefix)
+   - Prompt for the secret value
+   - Automatically add the config prefix (e.g., `CHIS_KE_` for Kenya)
+   - Create/update `scripts/deploy/secrets/users-chis-ke-secrets.yaml`
+   - Encrypt the secrets using SOPS
+   - The encrypted file should be committed to git
+
+   Example:
+   ```
+   ENV var (without CHIS_KE_ prefix, or Enter to finish): SUPERSET_ADMIN_PASSWORD
+   Enter value: your-secure-password
+   ✓ Added CHIS_KE_SUPERSET_ADMIN_PASSWORD
+   ```
+
+2. **View Secrets**:
+   ```bash
+   ./manage-secrets.sh decrypt chis-ke
+   ```
+
+> [!NOTE]
+> These encrypted secrets are only used in production environments. For development, you can use plain text values in `.env` file.
+
+### Continuous Deployment
+
+The [GitHub Actions workflow](../../.github/workflows/deploy-config.yml#L22) automatically handles secret decryption and deployment. When changes are merged to main, the workflow decrypts the secrets using the SOPS key and includes them in the Helm deployment.
+
+### Known Configurations:
 
 As each deployment needs its own configuration directory, DNS entry and deployment name, we'll list them here and the commands below can be used by replacing the correct value.
 
