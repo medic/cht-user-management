@@ -1,3 +1,10 @@
+## [2.2.1](https://github.com/medic/cht-user-management/compare/v2.2.0...v2.2.1) (2025-06-02)
+
+
+### Bug Fixes
+
+* **ui:** improve required input indicators and fix user role select box ([#297](https://github.com/medic/cht-user-management/issues/297)) ([73fe62b](https://github.com/medic/cht-user-management/commit/73fe62b891081fcb6f24961d9bc44d1f73df0ea8))
+
 # [2.2.0](https://github.com/medic/cht-user-management/compare/v2.1.16...v2.2.0) (2025-05-30)
 
 
