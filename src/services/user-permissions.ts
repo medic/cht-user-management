@@ -5,7 +5,6 @@ import { AuthError } from '../lib/authentication-error';
 import { ADMIN_ROLES } from '../lib/cht-session';
 export const REQUIRED_PERMISSIONS = [
   'can_create_people',
-  'can_configure',
   'can_create_places',
   'can_create_users',
   'can_delete_contacts',
