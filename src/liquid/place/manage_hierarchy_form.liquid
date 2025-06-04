@@ -1,0 +1,41 @@
+<form
+  id="form_place_move"
+  autocomplete="off"
+  hx-post="/manage-hierarchy"
+  hx-target="this"
+  hx-on::after-request="handleHierarchyFormResponse(event)"
+>
+  {% render 'components/manage_hierarchy_form_content',
+    op: op,
+    contactType: contactType,
+    isPermanent: isPermanent,
+    sourceDescription: sourceDescription,
+    sourceHierarchy: sourceHierarchy,
+    destinationDescription: destinationDescription,
+    destinationHierarchy: destinationHierarchy
+  %}
+
+  <script
+    type="text/javascript"
+  >
+    function handleHierarchyFormResponse(event) {
+      const response = event?.detail?.xhr?.responseText;
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(response, 'text/html');
+
+      // Find the element that indicates success
+      const successElement = doc.querySelector('[data-success='true']');
+      if (successElement) {
+        bulmaToast.toast({
+          duration: 5000,
+          dismissible: true,
+          closeOnClick: true,
+          pauseOnHover: true,
+          type: 'is-success',
+          position: 'top-center',
+          message: `<p>{{ op | capitalize }} operation scheduled. Please allow up to 24 hours for processing.</p>`,
+        });
+      }
+    }
+  </script>
+</form>

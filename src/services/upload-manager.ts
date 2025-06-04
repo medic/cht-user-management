@@ -1,7 +1,7 @@
 import EventEmitter from 'events';
 
 import * as RetryLogic from '../lib/retry-logic';
-import { ChtApi, CreatedPlaceResult, PlacePayload } from '../lib/cht-api';
+import { ChtApi, CouchDoc, CreatedPlaceResult, PlacePayload, UserInfo } from '../lib/cht-api';
 import { Config } from '../config';
 import Place, { PlaceUploadState, UserCreationDetails } from './place';
 import RemotePlaceCache from '../lib/remote-place-cache';
@@ -49,6 +49,49 @@ export class UploadManager extends EventEmitter {
     }
   };
 
+  reassign = async (contactId: string, user: UserInfo & { place: CouchDoc[] }, places: string[], api: ChtApi) => {
+    try {
+      places.forEach(p => {  
+        this.emit('refresh_place', { id: p, state: PlaceUploadState.IN_PROGRESS });
+      });
+      await api.updateUser({ username: user.username, place: [...user.place.map(d => d._id), ...places ] });
+      await this.updateContact(contactId, places, api);
+    } catch (err: any) {
+      places.forEach(p => {  
+        this.emit('refresh_place', { id: p, state: PlaceUploadState.FAILURE, err: err.response?.data?.error?.message ?? err.message });
+      });     
+    }
+  };
+
+  private async updateContact(contactId: string, places: string[], api: ChtApi) {
+    for (let i = 0; i < places.length; i++) {
+      try {
+        const place = await api.getDoc(places[i]);
+        if (place.contact) {
+          const contactId = place.contact._id ?? place.contact;
+          const prevUser = await api.getUser(contactId) as UserInfo & {place: CouchDoc[]};
+          if (prevUser) {
+            const prevUserPlaces = prevUser.place.map(p => p._id).filter(id => id !== places[i]); 
+            if (prevUserPlaces.length > 0) {
+              await api.updateUser({
+                username: prevUser.username, 
+                place: prevUserPlaces
+              });
+            } else {
+              await api.disableUser(prevUser.username);
+              await api.deleteDoc(contactId);
+            }
+          }
+        }
+        place.contact = contactId;
+        await api.setDoc(places[i], place);
+        this.emit('refresh_place', { id: places[i], state: PlaceUploadState.SUCCESS });
+      } catch (err: any) {
+        this.emit('refresh_place', { id: places[i], state: PlaceUploadState.FAILURE, err: err.response?.data?.error?.message ?? err.message });
+      }
+    }
+  }
+
   private async uploadPlacesInBatches(places: Place[], chtApi: ChtApi) {
     for (let batchStartIndex = 0; batchStartIndex < places.length; batchStartIndex += UPLOAD_BATCH_SIZE) {
       const batchEndIndex = Math.min(batchStartIndex + UPLOAD_BATCH_SIZE, places.length);
@@ -70,8 +113,9 @@ export class UploadManager extends EventEmitter {
         place.creationDetails.contactId = contactId;
       }
 
+      let placeResult;
       if (!place.creationDetails.placeId) {
-        const placeResult = await uploader.handlePlacePayload(place, payload);
+        placeResult = await uploader.handlePlacePayload(place, payload);
         place.creationDetails.placeId = placeResult.placeId;
         place.creationDetails.contactId ||= placeResult.contactId;
       }
@@ -81,7 +125,11 @@ export class UploadManager extends EventEmitter {
       }
 
       if (!place.creationDetails.username) {
-        const userPayload = new UserPayload(place, place.creationDetails.placeId, place.creationDetails.contactId);
+        const userPayload = new UserPayload(
+          place, 
+          [place.creationDetails.placeId, ...(placeResult?.placeIds ?? [])], 
+          place.creationDetails.contactId
+        );
         const { username, password } = await RetryLogic.createUserWithRetries(userPayload, chtApi);
         place.creationDetails.username = username;
         place.creationDetails.password = password;

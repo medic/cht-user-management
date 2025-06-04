@@ -11,9 +11,9 @@
   >
     <div>
       {% if contact_id %}
-        <h3 class="is-size-4">Add {{ contactType.friendly }}(s)</h3>
+        <h3 class="title is-size-4">Add {{ contactType.friendly }}(s)</h3>
       {% else %}
-        <h3 class="is-size-4">New {{ contactType.contact_friendly }}</h3>
+        <h3 class="title is-size-4">New {{ contactType.contact_friendly }}</h3>
       {% endif %}
     </div>
     <input name="place_type" value="{{contactType.name}}" hidden>
@@ -23,7 +23,7 @@
       {% for hierarchy in hierarchy %}
         {% if hierarchy.level != 0 %}
           {%
-            render 'components/search_input.html',
+            render 'components/search_input.liquid',
             type: contactType.name,
             hierarchy: hierarchy,
             prefix: 'hierarchy_',
@@ -34,16 +34,19 @@
       {% endfor %}
       {% for prop in contactType.contact_properties %}
         {%
-          include "components/contact_type_property.html" prefix="contact_" prop=prop
-          place_type=contactType.name
-          disabled=show_place_form ==  true
+          render 'components/contact_type_property.liquid',
+          prefix:'contact_',
+          data: data,
+          prop: prop,
+          place_type: contactType.name,
+          disabled: show_place_form ==  true
         %}
       {% endfor %}
     </div>
 
     <div class="notification is-primary is-light">
-        Click on the <span style="font-weight: bold;">+ Add</span> button below to add all the
-        {{ contactType.friendly }}(s) that you want to assign to this user
+      Click on the <span style="font-weight: bold;">+ Add</span> button below to add all the
+      {{ contactType.friendly }}(s) that you want to assign to this user
     </div>
 
     <div id="place_new_parent">

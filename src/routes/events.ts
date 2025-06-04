@@ -5,6 +5,7 @@ import DirectiveModel from '../services/directive-model';
 import SessionCache from '../services/session-cache';
 import { UploadManager } from '../services/upload-manager';
 import { minify } from 'html-minifier';
+import { PlaceUploadState } from '../services/place';
 
 export default async function events(fastify: FastifyInstance) {
   fastify.get('/events/connection', async (req, resp) => {
@@ -18,7 +19,7 @@ export default async function events(fastify: FastifyInstance) {
         sessionCache,
         req.cookies.filter
       );
-      const html = await fastify.view('src/liquid/place/directive.html', {
+      const html = await fastify.view('src/liquid/place/directive.liquid', {
         directiveModel,
       });
       resp.sse({
@@ -36,7 +37,7 @@ export default async function events(fastify: FastifyInstance) {
         resp.sse({ event: `update-${arg}`, data: '<tr></tr>' });
       } else {
         const html = await fastify.view(
-          'src/liquid/components/place_item.html',
+          'src/liquid/components/place_item.liquid',
           {
             session: req.chtSession,
             contactType: {
@@ -62,6 +63,16 @@ export default async function events(fastify: FastifyInstance) {
     uploadManager.on('refresh_table_row', placeChangeListener);
     uploadManager.on('refresh_grouped', async () => {
       resp.sse({ event: `update-group`, data: `update` });
+    });
+    uploadManager.on('refresh_place', async (args) => {
+      const { id, state, err } = args;
+      let statusText;
+      if (state === PlaceUploadState.FAILURE) {
+        statusText = `<span class="tag is-size-7 is-capitalized has-tooltip-multiline is-warning" data-tooltip="${err}">${state}</span>`;
+      } else {
+        statusText = `<span class="tag is-size-7 is-success is-capitalized">${state}</span>`;
+      }
+      resp.sse({ event: `update-${id}`, data: statusText });
     });
 
     req.socket.on('close', () => {

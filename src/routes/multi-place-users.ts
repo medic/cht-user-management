@@ -11,6 +11,7 @@ export default async function newHandler(fastify: FastifyInstance) {
   fastify.get('/new', async (req, resp) => {
     const { place_type, contact } = req.query as any;
     const contactType = Config.getContactType(place_type);
+    const contactTypes = Config.contactTypes();
     const sessionCache: SessionCache = req.sessionCache;
     
     const shared = {
@@ -18,6 +19,8 @@ export default async function newHandler(fastify: FastifyInstance) {
       contactType,
       logo: Config.getLogoBase64(),
       show_place_form: false,
+      session: req.chtSession,
+      contactTypes
     };
 
     if (contact) {
@@ -103,7 +106,9 @@ export default async function newHandler(fastify: FastifyInstance) {
     const sessionCache: SessionCache = req.sessionCache;
     const places = sessionCache.getPlaces({ contactId: contact });
     return resp.view('src/liquid/new/place_list.liquid', {
-      contactType: places[0].type,
+      contactType: { 
+        ...places[0].type, 
+        hierarchy: Config.getHierarchyWithReplacement(places[0].type, 'desc') },
       places,
       can_edit: !places.find(p => p.creationDetails.username)
     });
@@ -112,6 +117,7 @@ export default async function newHandler(fastify: FastifyInstance) {
   fastify.get('/edit/contact/:id', async (req, resp) => {
     const { id } =  req.params as any;
     const sessionCache: SessionCache = req.sessionCache;
+    const contactTypes = Config.contactTypes();
     const place = sessionCache.getPlaces({contactId: id}).find(p => p !== undefined);
     if (!place) {
       throw new Error('could not find place');
@@ -121,9 +127,11 @@ export default async function newHandler(fastify: FastifyInstance) {
     return resp.view('src/liquid/edit/contact/index.liquid', {
       logo: Config.getLogoBase64(),
       contactType: place.type,
+      session: req.chtSession,
       contact_id: place.contact.id,
       data,
-      hierarchy: place.type.hierarchy
+      hierarchy: place.type.hierarchy,
+      contactTypes
     });
   });
 

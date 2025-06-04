@@ -29,7 +29,7 @@ abstract class AbstractPropertyValue implements IPropertyValue {
   }
 
   public get formatted(): string {
-    return this.formattedValue;
+    return this.formattedValue ?? '';
   }
 
   public get validationError(): string | undefined {
