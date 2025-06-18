@@ -1,0 +1,25 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  namespace: users-chis-prod
+  name: users-chis-ke-redirect
+  annotations:
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/actions.redirect-to-moh-ke: >
+      {"type":"redirect","redirectConfig":{"Host":"users.echis.go.ke","path":"/login","port":"443","protocol":"HTTPS","statusCode":"HTTP_302"}}
+    alb.ingress.kubernetes.io/tags: Environment=prod,Team=SRE
+    alb.ingress.kubernetes.io/group.name: prod-cht-alb
+    alb.ingress.kubernetes.io/certificate-arn: arn:aws:iam::720541322708:server-certificate/2025-q3-wildcard-app-medicmobile-org-letsencrypt
+spec:
+  rules:
+    - host: users-chis-ke.app.medicmobile.org
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: redirect-to-moh-ke
+                port: 
+                  name: use-annotation
