@@ -7,7 +7,7 @@ metadata:
     kubernetes.io/ingress.class: alb
     alb.ingress.kubernetes.io/scheme: internet-facing
     alb.ingress.kubernetes.io/actions.redirect-to-moh-ke: >
-      {"type":"redirect","redirectConfig":{"Host":"users.echis.go.ke","path":"/login","port":"443","protocol":"HTTPS","statusCode":"HTTP_302"}}
+      {"type":"redirect","redirectConfig":{"Host":"users.echis.go.ke","path":"/login","port":"443","protocol":"HTTPS","statusCode":"HTTP_301"}}
     alb.ingress.kubernetes.io/tags: Environment=prod,Team=SRE
     alb.ingress.kubernetes.io/group.name: prod-cht-alb
     alb.ingress.kubernetes.io/certificate-arn: arn:aws:iam::720541322708:server-certificate/2025-q3-wildcard-app-medicmobile-org-letsencrypt
