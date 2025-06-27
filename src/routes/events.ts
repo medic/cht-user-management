@@ -20,6 +20,7 @@ export default async function events(fastify: FastifyInstance) {
         req.cookies.filter
       );
       const html = await fastify.view('src/liquid/place/directive.liquid', {
+        session: req.chtSession,
         directiveModel,
       });
       resp.sse({

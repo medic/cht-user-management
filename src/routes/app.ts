@@ -103,6 +103,7 @@ export default async function sessionCache(fastify: FastifyInstance) {
     );
 
     return resp.view('src/liquid/place/directive.liquid', {
+      session: req.chtSession,
       directiveModel,
     });
   });
