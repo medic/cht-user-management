@@ -1,3 +1,10 @@
+## [2.2.3](https://github.com/medic/cht-user-management/compare/v2.2.2...v2.2.3) (2025-07-01)
+
+
+### Bug Fixes
+
+* **#307:** replace the correct directive element ([03e2f4d](https://github.com/medic/cht-user-management/commit/03e2f4d5946c6516b4546c4fabc6696bf3b7db19)), closes [#307](https://github.com/medic/cht-user-management/issues/307)
+
 ## [2.2.2](https://github.com/medic/cht-user-management/compare/v2.2.1...v2.2.2) (2025-06-03)
 
 
