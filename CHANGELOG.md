@@ -1,3 +1,17 @@
+## [2.2.3](https://github.com/medic/cht-user-management/compare/v2.2.2...v2.2.3) (2025-07-01)
+
+
+### Bug Fixes
+
+* **#307:** replace the correct directive element ([03e2f4d](https://github.com/medic/cht-user-management/commit/03e2f4d5946c6516b4546c4fabc6696bf3b7db19)), closes [#307](https://github.com/medic/cht-user-management/issues/307)
+
+## [2.2.2](https://github.com/medic/cht-user-management/compare/v2.2.1...v2.2.2) (2025-06-03)
+
+
+### Bug Fixes
+
+* **config:** add more hierarchy levels in MoH Togo config.json to avoid errors ([#297](https://github.com/medic/cht-user-management/issues/297)) ([8e76383](https://github.com/medic/cht-user-management/commit/8e7638302c84a914e96c5cdfbef991d41e68cf81))
+
 ## [2.2.1](https://github.com/medic/cht-user-management/compare/v2.2.0...v2.2.1) (2025-06-02)
 
 

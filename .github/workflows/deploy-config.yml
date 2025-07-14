@@ -33,5 +33,6 @@ jobs:
             helm upgrade --namespace ${{ inputs.namespace }} \
               --values scripts/deploy/values/users-${{ inputs.config }}.yaml \
               users-${{ inputs.config }} medic/cht-user-management \
-              --set tag=$PKG_VERSION
+              --set cht-user-management.image.tag=$PKG_VERSION
+              --set cht-user-management-worker.image.tag=$PKG_VERSION
           fi 

@@ -5,7 +5,6 @@ cht-user-management:
     enabled: true
   image:
     repository: public.ecr.aws/medic/cht-user-management
-    tag: "{{ .Values.tag }}" # Set this to the version of the docker image
 
   # Environment variablues to set in the pod, for example:
   # env:
@@ -51,7 +50,6 @@ cht-user-management-worker:
   replicaCount: 1
   image:
     repository: public.ecr.aws/medic/cht-user-management-worker
-    tag: "{{ .Values.tag }}"
   env:
     NODE_ENV: production
     REDIS_HOST: users-chis-ml-redis-master.users-chis-prod.svc.cluster.local

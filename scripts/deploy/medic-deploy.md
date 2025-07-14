@@ -107,15 +107,8 @@ helm install \
       --kube-context arn:aws:eks:eu-west-2:720541322708:cluster/prod-cht-eks \
       --namespace users-chis-prod \
       --values values/$VALUES \
+      --set cht-user-management.image.tag=$PKG_VERSION --set cht-user-management-worker.image.tag=$PKG_VERSION \
       $CONFIG medic/cht-user-management
-```
-
-To ensure the deployment gets auto updated via CD, be sure to add 3 lines to the end of the `deploy.yml` [file](https://github.com/medic/cht-user-management/blob/main/.github/workflows/deploy.yml).  Here's ane example for MoH Mali (`users-chis-ml`):
-
-```yaml
-      - name: Upgrade users-chis-ml
-        run: |
-          helm upgrade --namespace ${{vars.NAMESPACE}} --values scripts/deploy/values/users-chis-ml.yaml users-chis-ml medic/cht-user-management
 ```
 
 #### Upgrade 
@@ -127,6 +120,7 @@ helm upgrade \
       --kube-context arn:aws:eks:eu-west-2:720541322708:cluster/prod-cht-eks \
       --namespace users-chis-prod \
       --values values/$VALUES \
+      --set cht-user-management.image.tag=$PKG_VERSION --set cht-user-management-worker.image.tag=$PKG_VERSION \
       $CONFIG medic/cht-user-management
 ```
 
@@ -196,5 +190,6 @@ helm install \
       --kube-context arn:aws:eks:eu-west-2:720541322708:cluster/prod-cht-eks \
       --namespace users-chis-prod \
       --values values/$VALUES \
+      --set cht-user-management.image.tag=$PKG_VERSION --set cht-user-management-worker.image.tag=$PKG_VERSION \
       $CONFIG medic/cht-user-management
 ```
