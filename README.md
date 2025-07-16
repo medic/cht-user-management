@@ -49,7 +49,7 @@ To use the User Management Tool with your CHT project, you'll need to create a n
 `contact_types.deactivate_users_on_replace` | boolean | Controls what should happen to the defunct contact and user documents when a user is replaced. When `false`, the contact and user account will be deleted. When `true`, the contact will be unaltered and the user account will be assigned the role `deactivated`. This allows for account restoration.
 `contact_types.hint` | string | Provide a brief hint or description to clarify the expected input for the property.
 `contact_types.can_assign_multiple` | boolean | Requires CHT >=4.9.0. Enable support for assigning a single user to multiple places.
-`contact_types.superset_properties` | Object | Configuration for [Superset integration](#superset-configuration). Optional - if not provided, Superset integration is disabled for this contact type. When provided, enables runtime control of Superset integration through forms or CSV uploads.
+`contact_types.superset_properties` | Object | See [Superset Integration](#superset-integration) for configuration and requirements.
 `logoBase64` | Image in base64 | Logo image for your project
 
 #### ConfigProperty
@@ -113,10 +113,15 @@ place | Has the attributes from `place_properties.property_name`
 contact | Has the attributes from `contact_properties.property_name`
 lineage | Has the attributes from `hierarchy.property_name` 
 
-#### Superset Configuration
+## Superset Integration
 
-The CHT User Management Tool supports integration with Apache Superset, allowing automatic user creation and access management in both CHT and Superset. 
-The `superset_properties` object in a contact type enables Superset integration:
+The CHT User Management Tool supports integration with Apache Superset, allowing automatic user creation and access management in both CHT and Superset.
+
+### Configuration
+
+- To enable Superset integration for a contact type, add a `superset` property to the contact type in your `config.json`.
+- The `contact_properties` array **must include an `email` property with `"required": true`**.
+- Example:
 
 ```json
 {
@@ -134,8 +139,8 @@ The `superset_properties` object in a contact type enables Superset integration:
         },
         "required": false,
         "prefix": "[]",
-        "role_template": "[]",
-        "rls_template": "[]",
+        "role_template": <ROLE_ID>,
+        "rls_template": <RLS_ID>,
         "rls_group_key": "[]"
       }
     }
@@ -143,62 +148,58 @@ The `superset_properties` object in a contact type enables Superset integration:
 }
 ```
 
-##### Superset Integration Requirements
+- `role_template` and `rls_template` should be set to the IDs of a template role and RLS in your Superset instance. New users at this contact type level will copy role permissions and RLS config from these templates.
 
-1. **Configuration Level (Contact Type Setting)**:
-   - The `superset` property in the contact type configuration determines if Superset integration is available
-   - If not set in the configuration, Superset integration is completely disabled for that contact type
-   - When set in the configuration, it enables the option to create Superset accounts during user creation
+### Environment Variables
 
-2. **Runtime Control (Per-User Setting)**:
-   - Only available if Superset is configured for the contact type
-   - Controls whether a Superset account is created for each specific user
-   - Can be controlled through:
-     - A dropdown in the web interface form when creating/editing places
-     - The `superset_config` column in CSV uploads (values: "enable" or "disable")
-   - Effects when enabled for a user:
-     - Email becomes a required field for the contact
-     - A Superset account is created during upload
-     - Role and permissions are set up in Superset
-   - Effects when disabled for a user:
-     - Email is optional
-     - No Superset account or resources are created
-     - User only gets CHT access
+See the [Environment Variables](#environment-variables) table above for the required Superset variables. Replace `{CONFIG_NAME}` with your configuration name in uppercase with hyphens replaced by underscores (e.g., `CHIS_KE` for `chis-ke`).
 
-##### Superset Upload Process
+- In development, set these in your `.env` file.
+- In production, add them to your Helm chart's `values.yaml`. If you don't want to have them visible in your repo, encrypt as described in the [Managing Additional Secrets](#managing-additional-secrets) section.
 
-When Superset integration is enabled for a place:
+### How Superset Integration Works
 
-1. The CHT upload is performed first
-2. If CHT upload succeeds and Superset is enabled for the place:
-   - Creates a role in Superset for the CHU
-   - Assigns necessary permissions from a template role
-   - Sets up row-level security for the CHU's data
-   - Creates a Superset user with appropriate access
+- If Superset integration is enabled for a contact type, users created for that type can also be provisioned in Superset.
+- The Superset integration can be toggled per user (via form or CSV) if the `superset` property is present.
+- When enabled for a user:
+  - Email is required.
+  - The tool creates a Superset user, role, and RLS, copying from the templates you provided.
+- When disabled for a user:
+  - Email is optional.
+  - No Superset account or resources are created.
 
-##### Superset Upload States
+#### Upload Process
+1. CHT upload is performed first.
+2. If successful and Superset is enabled for the user:
+   - Creates a role in Superset for the CHU.
+   - Assigns permissions from the template role.
+   - Sets up row-level security from the template RLS.
+   - Creates a Superset user with appropriate access.
 
-Places track their upload state separately for CHT and Superset:
-- `chtUploadState`: Tracks the CHT upload status
-- `supersetUploadState`: Tracks the Superset upload status
+#### Upload States
+- `chtUploadState`: Tracks the CHT upload status.
+- `supersetUploadState`: Tracks the Superset upload status.
+- Both can be: `NOT_ATTEMPTED`, `PENDING`, `SUCCESS`, `FAILURE`.
 
-Both can be in one of these states:
-- `NOT_ATTEMPTED`: Upload hasn't been tried yet
-- `PENDING`: Upload is in progress
-- `SUCCESS`: Upload completed successfully
-- `FAILURE`: Upload failed
+#### Error Handling
+- If CHT upload fails, Superset upload is not attempted.
+- If Superset upload fails, it can be retried without affecting the CHT upload.
+- Each system maintains its own error state and can be retried independently.
 
-##### Superset Error Handling
+### How to Test Superset Integration
 
-- If CHT upload fails, Superset upload is not attempted
-- If Superset upload fails, it can be retried without affecting the CHT upload
-- Each system maintains its own error state and can be retried independently
+1. **Have a running Superset instance** ([installation guide](https://superset.apache.org/docs/installation/installing-superset/)).
+2. **Create a template role and RLS in Superset**. Note their IDs and set them in your `config.json` under the relevant contact type's `superset` property as `role_template` and `rls_template`.
+3. **Set environment variables** for your config (see above).
+4. **Ensure your contact type config includes a required `email` property** in `contact_properties`.
+5. **Run the tool and create a user with Superset integration enabled**. The tool will copy role and RLS from your templates and create the user in Superset.
+6. **Verify in Superset**: Log in as admin and check that the user, roles, and permissions were created as expected.
 
-##### Superset Integration deployment
-Superset integration requires specific environment variables for each configuration. See [Superset Environment Variables](#superset-environment-variables) for the required variables and naming convention.
+If Superset integration fails, check logs, environment variables, and Superset connectivity. For production, ensure secrets are properly decrypted and available as environment variables.
 
-For production deployment, Superset credentials are managed securely using SOPS encryption. See the [Medic Deployment Guide](scripts/deploy/medic-deploy.md#managing-superset-secrets) for detailed instructions.
+## Managing Secrets
 
+See [scripts/deploy/medic-deploy.md](scripts/deploy/medic-deploy.md#managing-secrets) for detailed instructions on managing secrets for both Medic-hosted and self-hosted deployments, including SOPS usage, what to commit, and how CI/CD handles secrets.
 
 ### Deployment
 This tool is available via Docker by running `docker compose up`. Set the [Environment Variables](#environment-variables).
@@ -261,18 +262,9 @@ Variable | Description | Sample
 `REDIS_PORT` | Redis server port | `6379`
 `CHT_USER_MANAGEMENT_IMAGE` | docker image for cht-user-management service (local development), leave empty to use published one | `cht-user-management:local `
 `CHT_USER_MANAGEMENT_WORKER_IMAGE` | docker image for cht-user-management service (local development), leave empty to use published one | `cht-user-management-worker:local`
-
-### Superset Environment Variables
-
-For each configuration (e.g., `chis-ke`, `chis-tg`), the following environment variables are required for Superset integration. Since these contain sensitive credentials, for production deployments they should be managed using SOPS as described in the [Managing Additional Secrets](scripts/deploy/medic-deploy.md#managing-additionnal-secrets) section of the deployment documentation:
-
-Variable | Description | Sample
--- | -- | --
 `{CONFIG_NAME}_SUPERSET_BASE_URL` | Superset instance URL for this config | `CHIS_KE_SUPERSET_BASE_URL=https://superset.example.com`
 `{CONFIG_NAME}_SUPERSET_ADMIN_USERNAME` | Superset admin username for this config | `CHIS_KE_SUPERSET_ADMIN_USERNAME=admin`
 `{CONFIG_NAME}_SUPERSET_ADMIN_PASSWORD` | Superset admin password for this config | `CHIS_KE_SUPERSET_ADMIN_PASSWORD=password123`
-
-Note: Replace `{CONFIG_NAME}` with your configuration name in uppercase with hyphens replaced by underscores (e.g., `CHIS_KE` for `chis-ke`).
 
 ## Publishing new docker images
 ## Development

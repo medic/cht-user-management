@@ -137,18 +137,6 @@ export default class Place {
       };
 
       this.supersetProperties[propertyName] = new SupersetPropertyValue(this, supersetConfig, SUPERSET_PREFIX, supersetMode);
-
-      const emailProperty = this.type.contact_properties.find(p => p.property_name === 'email');
-      if (emailProperty) {
-        // Ensure email is required
-        emailProperty.required = supersetMode === SupersetMode.ENABLE;
-
-        // Update contact properties, with email property required if Superset is enabled
-        this.contact.properties = {
-          ...this.contact.properties,
-          ...getPropertySetWithPrefix([emailProperty], CONTACT_PREFIX),
-        };
-      }
     }
   }
 

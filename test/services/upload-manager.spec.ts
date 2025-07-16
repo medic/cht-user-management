@@ -453,6 +453,7 @@ describe('services/upload-manager.ts', () => {
       const formData = {
         ...fakeFormData,
         superset_mode: 'disable',
+        contact_email: 'test@example.com',
       };
 
       fakeFormData.superset_mode = 'disable';

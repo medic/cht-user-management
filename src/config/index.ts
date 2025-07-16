@@ -258,6 +258,23 @@ export class Config {
       Config.getPropertyWithName(contactType.place_properties, 'name');
       Config.getPropertyWithName(contactType.contact_properties, 'name');
 
+      // If Superset is enabled, require email property and it must be required
+      if (contactType.superset) {
+        const emailProperty = contactType.contact_properties.find(p => p.property_name === 'email');
+        if (!emailProperty) {
+          throw new Error(
+            `It looks like the contact type "${contactType.name}" has Superset integration enabled ` +
+            `but is missing the required "email" contact property. Please ensure 'email' is included and marked as required.`
+          );
+        }
+        if (!emailProperty.required) {
+          throw new Error(
+            `It looks like the contact type "${contactType.name}" has Superset integration enabled ` +
+            `but the "email" contact property is not marked as required. Please set 'required: true' for 'email'.`
+          );
+        }
+      }
+
       const parentLevel = contactType.hierarchy.find(hierarchy => hierarchy.level === 1);
       if (!parentLevel) {
         throw Error(`Must have a hierarchy with parent level (level: 1)`);
