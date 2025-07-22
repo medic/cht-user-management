@@ -5,6 +5,7 @@ import Place, { FormattedPropertyCollection } from '../services/place';
 import { ChtApi } from './cht-api';
 import { IPropertyValue, RemotePlacePropertyValue } from '../property-value';
 import { Config, ContactProperty, ContactType, HierarchyConstraint } from '../config';
+import { env } from 'process';
 
 export type RemotePlace = {
   id: string;
@@ -23,12 +24,19 @@ export type RemotePlace = {
   stagedPlace?: Place;
 };
 
+
+
 export default class RemotePlaceCache {
-  private static readonly CACHE_TTL = 60 * 60 * 12;
+
+  private static getCacheTTL() {
+    const CACHE_TTL = 60 * 60 * 12; // 12hrs
+    return parseInt(env.CACHE_TTL ?? '') ?? CACHE_TTL;
+  }
+
   private static readonly CACHE_CHECK_PERIOD = 120;
   private static cache: NodeCache = new NodeCache({
-    stdTTL: this.CACHE_TTL,
-    checkperiod: this.CACHE_CHECK_PERIOD 
+    stdTTL: this.getCacheTTL(),
+    checkperiod: this.CACHE_CHECK_PERIOD
   });
 
   private static runningFetch: Map<string, Promise<RemotePlace[]>> = new Map();
@@ -36,7 +44,7 @@ export default class RemotePlaceCache {
   private static getCacheKey(domain: string, placeType: string): string {
     return `${domain}:${placeType}`;
   }
-  
+
   public static async getRemotePlaces(chtApi: ChtApi, contactType: ContactType, atHierarchyLevel?: HierarchyConstraint): Promise<RemotePlace[]> {
     const hierarchyLevels = Config.getHierarchyWithReplacement(contactType, 'desc');
     const fetchAll = hierarchyLevels.map(hierarchyLevel => this.fetchCachedOrRemotePlaces(chtApi, hierarchyLevel));
