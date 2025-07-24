@@ -102,6 +102,7 @@
           "property_name": "telephone",
           "type": "regex",
           "parameter": "^\\d{8}$",
+          "errorDescription": "8 chiffres (eg. 90909090)",
           "required": true
         },
         {
@@ -116,9 +117,24 @@
           "property_name": "email",
           "type": "regex",
           "parameter": "^[a-zA-Z0-9._+-]+@[a-zA-Z0-9.-]+.[a-zA-Z]{2,}$",
-          "required": false
+          "required": true
         }
-      ]
+      ],
+      "superset": {
+        "friendly_name": "Superset Integration",
+        "property_name": "superset_config",
+        "type": "select_one",
+        "parameter": {
+          "disable": "Disable",
+          "enable": "Enable"
+        },
+        "required": true,
+        "hint": "Enable to use the superset integration",
+        "prefix": "SN",
+        "role_template": 16,
+        "rls_template": 6,
+        "rls_group_key": "sanitary_name"
+      }
     },
     {
       "name": "cg70_supervision",
@@ -215,6 +231,7 @@
           "property_name": "telephone",
           "type": "regex",
           "parameter": "^\\d{8}$",
+          "errorDescription": "8 chiffres (eg. 90909090)",
           "required": true
         },
         {
@@ -364,6 +381,7 @@
           "property_name": "telephone",
           "type": "regex",
           "parameter": "^\\d{8}$",
+          "errorDescription": "8 chiffres (eg. 90909090)",
           "required": true
         },
         {

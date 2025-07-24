@@ -1,0 +1,38 @@
+name: Deploy Configuration
+
+on:
+  workflow_call:
+    inputs:
+      config:
+        required: true
+        type: string
+      namespace:
+        required: true
+        type: string
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy ${{ inputs.config }}
+        run: |
+          # Check if secrets file exists and decrypt it if it does
+          if [ -f "scripts/deploy/secrets/users-${{ inputs.config }}-secrets.yaml" ]; then
+            echo "Found secrets file, decrypting..."
+            sops --decrypt scripts/deploy/secrets/users-${{ inputs.config }}-secrets.yaml > secrets.yaml
+            # Deploy with both values and secrets
+            helm upgrade --namespace ${{ inputs.namespace }} \
+              --values scripts/deploy/values/users-${{ inputs.config }}.yaml \
+              --values secrets.yaml \
+              users-${{ inputs.config }} medic/cht-user-management \
+              --set tag=$PKG_VERSION
+            rm secrets.yaml
+          else
+            echo "No secrets file found, deploying without secrets..."
+            # Deploy with only values file
+            helm upgrade --namespace ${{ inputs.namespace }} \
+              --values scripts/deploy/values/users-${{ inputs.config }}.yaml \
+              users-${{ inputs.config }} medic/cht-user-management \
+              --set cht-user-management.image.tag=$PKG_VERSION
+              --set cht-user-management-worker.image.tag=$PKG_VERSION
+          fi 

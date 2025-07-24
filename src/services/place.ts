@@ -1,9 +1,9 @@
 import _ from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
 
-import { Config, ContactProperty, ContactType } from '../config';
+import { Config, ContactProperty, ContactType, SupersetConfig, SupersetMode } from '../config';
 import Contact from './contact';
-import { ContactPropertyValue, HierarchyPropertyValue, IPropertyValue, RemotePlacePropertyValue } from '../property-value';
+import { ContactPropertyValue, HierarchyPropertyValue, SupersetPropertyValue, IPropertyValue, RemotePlacePropertyValue } from '../property-value';
 import { PlacePayload } from '../lib/cht-api';
 // can't use package.json because of rootDir in ts
 import { RemotePlace } from '../lib/remote-place-cache';
@@ -19,6 +19,7 @@ export type UserCreationDetails = {
   password?: string;
   placeId?: string;
   contactId?: string;
+  supersetUserId?: number;
   created_at?: number;
 };
 
@@ -30,15 +31,23 @@ export enum PlaceUploadState {
   IN_PROGRESS = 'in_progress',
 }
 
+export enum UploadState {
+  NOT_ATTEMPTED = 'not_attempted',
+  PENDING = 'pending',
+  SUCCESS = 'success',
+  FAILURE = 'failure',
+}
+
 const PLACE_PREFIX = 'place_';
 const CONTACT_PREFIX = 'contact_';
 const USER_PREFIX = 'user_';
+const SUPERSET_PREFIX = 'superset_';
 
 
 export default class Place {
   public readonly id: string;
   public readonly type: ContactType;
-  public contact : Contact;
+  public contact: Contact;
   public hasSharedUser: boolean = false;
   public readonly creationDetails : UserCreationDetails = {};
   public readonly resolvedHierarchy: (RemotePlace | undefined)[];
@@ -46,9 +55,14 @@ export default class Place {
   public properties: FormattedPropertyCollection;
   public hierarchyProperties: FormattedPropertyCollection;
   public userRoleProperties: FormattedPropertyCollection;
+  public supersetProperties: FormattedPropertyCollection;
   public warnings: string[];
 
   public state : PlaceUploadState;
+  
+  // Track CHT and Superset upload states
+  public chtUploadState: UploadState;
+  public supersetUploadState: UploadState;
 
   public validationErrors?: { [key: string]: string };
   public uploadError? : string;
@@ -60,9 +74,12 @@ export default class Place {
     this.properties = {};
     this.hierarchyProperties = {};
     this.state = PlaceUploadState.STAGED;
+    this.chtUploadState = UploadState.NOT_ATTEMPTED;
+    this.supersetUploadState = UploadState.NOT_ATTEMPTED;
     this.resolvedHierarchy = [];
     this.warnings = [];
     this.userRoleProperties = {};
+    this.supersetProperties = {};
   }
 
   /*
@@ -108,6 +125,19 @@ export default class Place {
       const userRoleValue = Array.isArray(roleFormData) ? roleFormData.join(' ') : roleFormData;
       this.userRoleProperties[propertyName] = new ContactPropertyValue(this, userRoleConfig, USER_PREFIX, userRoleValue);
     }
+
+    if (this.type.superset) {
+      const supersetConfig: SupersetConfig = this.type.superset;
+      const propertyName = supersetConfig.property_name;
+      const supersetMode = formData[`${SUPERSET_PREFIX}${propertyName}`] ?? '';
+
+      this.contact.properties = {
+        ...this.contact.properties,
+        ...getPropertySetWithPrefix(this.type.contact_properties, CONTACT_PREFIX),
+      };
+
+      this.supersetProperties[propertyName] = new SupersetPropertyValue(this, supersetConfig, SUPERSET_PREFIX, supersetMode);
+    }
   }
 
   /**
@@ -131,6 +161,7 @@ export default class Place {
       ...addPrefixToPropertySet(this.properties, PLACE_PREFIX),
       ...addPrefixToPropertySet(this.contact.properties, CONTACT_PREFIX),
       ...addPrefixToPropertySet(this.userRoleProperties, USER_PREFIX),
+      ...addPrefixToPropertySet(this.supersetProperties, SUPERSET_PREFIX),
     };
   }
 
@@ -203,6 +234,7 @@ export default class Place {
     validateCollection(this.properties);
     validateCollection(this.contact.properties);
     validateCollection(this.userRoleProperties);
+    validateCollection(this.supersetProperties);
 
     const extractErrorsFromCollection = (properties: FormattedPropertyCollection) => Object.values(properties).filter(prop => prop.validationError);
     const propertiesWithErrors: IPropertyValue[] = [
@@ -210,6 +242,7 @@ export default class Place {
       ...extractErrorsFromCollection(this.contact.properties),
       ...extractErrorsFromCollection(this.userRoleProperties),
       ...extractErrorsFromCollection(this.hierarchyProperties),
+      ...extractErrorsFromCollection(this.supersetProperties),
     ];
 
     this.validationErrors = {};
@@ -266,8 +299,43 @@ export default class Place {
     return !!this.hierarchyProperties.replacement?.original;
   }
 
-  public get isCreated(): boolean {
-    return !!this.creationDetails.password;
+  public get isChtCreated(): boolean {
+    return !!this.creationDetails.password && this.chtUploadState === UploadState.SUCCESS;
+  }
+
+  public get isSupersetCreated(): boolean {
+    return !this.shouldUploadToSuperset() || (!!this.creationDetails.password && this.supersetUploadState === UploadState.SUCCESS);
+  }
+
+  public get isCreated(): boolean {  
+    if (this.shouldUploadToSuperset()) {
+      return this.chtUploadState === UploadState.SUCCESS && this.supersetUploadState === UploadState.SUCCESS;
+    } 
+    return this.chtUploadState === UploadState.SUCCESS;
+  }
+
+  public isUploadPending(): boolean {
+    return this.chtUploadState === UploadState.PENDING || this.supersetUploadState === UploadState.PENDING;
+  }
+
+  public isUploadFailed(): boolean {
+    return this.chtUploadState === UploadState.FAILURE || this.supersetUploadState === UploadState.FAILURE;
+  }
+
+  public isChtUploadIncomplete(): boolean {
+    return [UploadState.NOT_ATTEMPTED, UploadState.PENDING, UploadState.FAILURE].includes(this.chtUploadState);
+  }
+
+  public isSupersetUploadIncomplete(): boolean {
+    return [UploadState.NOT_ATTEMPTED, UploadState.PENDING, UploadState.FAILURE].includes(this.supersetUploadState);
+  }
+
+  public shouldUploadToSuperset(): boolean {
+    if (!this.type.superset) {
+      return false;
+    }
+    const supersetMode = this.supersetProperties[this.type.superset.property_name];
+    return supersetMode && supersetMode.formatted === SupersetMode.ENABLE.toString();
   }
 
   private buildLineage() {

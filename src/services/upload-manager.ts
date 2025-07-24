@@ -3,12 +3,14 @@ import EventEmitter from 'events';
 import * as RetryLogic from '../lib/retry-logic';
 import { ChtApi, CouchDoc, CreatedPlaceResult, PlacePayload, UserInfo } from '../lib/cht-api';
 import { Config } from '../config';
-import Place, { PlaceUploadState, UserCreationDetails } from './place';
+import Place, { PlaceUploadState, UserCreationDetails, UploadState } from './place';
 import RemotePlaceCache from '../lib/remote-place-cache';
 import { UploadNewPlace } from './upload.new';
 import { UploadReplacementWithDeletion } from './upload.replacement';
 import { UploadReplacementWithDeactivation } from './upload.deactivate';
 import { UserPayload } from './user-payload';
+import { createSupersetIntegration } from './superset-integration';
+import { SupersetUploadManager } from './superset-upload-manager';
 import _ from 'lodash';
 
 const UPLOAD_BATCH_SIZE = 15;
@@ -19,7 +21,11 @@ export interface Uploader {
 }
 
 export class UploadManager extends EventEmitter {
-  doUpload = async (places: Place[], chtApi: ChtApi, ignoreWarnings: boolean = false) => {
+  doUpload = async (
+    places: Place[],
+    chtApi: ChtApi,
+    ignoreWarnings: boolean = false
+  ) => {
     const validPlaces = places.filter(p => {
       return !p.hasValidationErrors && (ignoreWarnings || !p.warnings.length);
     });
@@ -30,12 +36,42 @@ export class UploadManager extends EventEmitter {
     const dependants = placesNeedingUpload.filter(p => p.isDependant && !p.hasSharedUser);
     const sharedUserPlaces = validPlaces.filter(p => p.hasSharedUser);
 
+    // 1. CHT phase
     await this.uploadPlacesInBatches(independants, chtApi);
     await this.uploadPlacesInBatches(dependants, chtApi);
+
+    // 2. Group CHT phase
     await this.uploadGrouped(sharedUserPlaces, chtApi);
+
+    // 3. Superset phase
+    const placesNeedingSuperset = places.filter(p => p.shouldUploadToSuperset());
+    if (placesNeedingSuperset.length > 0) {
+      try {
+        const supersetIntegration = await createSupersetIntegration();
+
+        const supersetUploadManager = new SupersetUploadManager(
+          supersetIntegration,
+          this.eventedUploadStateChange,
+          this.eventedPlaceStateChange
+        );
+        // Superset phase for groups
+        await supersetUploadManager.uploadGrouped(sharedUserPlaces);
+    
+        // Superset phase for non-group places
+        await supersetUploadManager.uploadInBatches([...independants, ...dependants]);
+      } catch (err) {
+        const errorMsg = 'Superset integration unavailable: ' + getErrorDetails(err);
+        placesNeedingSuperset.forEach(place => {
+          place.uploadError = errorMsg;
+          place.supersetUploadState = UploadState.FAILURE;
+          this.eventedPlaceStateChange(place, PlaceUploadState.FAILURE);
+        });
+        return;
+      }
+    }
   };
 
-  uploadGrouped =  async (places: Place[], api: ChtApi) => {
+  uploadGrouped = async(places: Place[], api: ChtApi) => {
     const grouped = _.groupBy(places, place => place.contact.id);
     const keys = Object.keys(grouped);
     for (let i = 0; i < keys.length; i++) {
@@ -100,51 +136,58 @@ export class UploadManager extends EventEmitter {
     }
   }
 
-  private async uploadSinglePlace(place: Place, chtApi: ChtApi) {
+  private async uploadSinglePlace(place: Place, chtApi: ChtApi): Promise<void> {
     this.eventedPlaceStateChange(place, PlaceUploadState.IN_PROGRESS);
 
-    try {
-      const uploader: Uploader = pickUploader(place, chtApi);
-      const payload = place.asChtPayload(chtApi.chtSession.username);
-      await Config.mutate(payload, chtApi, place.isReplacement);
+    if (place.isChtUploadIncomplete()) {
+      try {
+        this.eventedUploadStateChange(place, 'cht', UploadState.PENDING);
+        const uploader: Uploader = pickUploader(place, chtApi);
+        const payload = place.asChtPayload(chtApi.chtSession.username);
+        await Config.mutate(payload, chtApi, place.isReplacement);
 
-      if (!place.creationDetails.contactId) {
-        const contactId = await uploader.handleContact(payload);
-        place.creationDetails.contactId = contactId;
+        if (!place.creationDetails.contactId) {
+          const contactId = await uploader.handleContact(payload);
+          place.creationDetails.contactId = contactId;
+        }
+
+        let placeResult;
+        if (!place.creationDetails.placeId) {
+          placeResult = await uploader.handlePlacePayload(place, payload);
+          place.creationDetails.placeId = placeResult.placeId;
+          place.creationDetails.contactId ||= placeResult.contactId;
+        }
+
+        if (!place.creationDetails.contactId) {
+          throw Error('creationDetails.contactId not set');
+        }
+
+        if (!place.creationDetails.username) {
+          const userPayload = new UserPayload(
+            place, 
+            [place.creationDetails.placeId, ...(placeResult?.placeIds ?? [])], 
+            place.creationDetails.contactId
+          );
+          const { username, password } = await RetryLogic.createUserWithRetries(userPayload, chtApi);
+          place.creationDetails.username = username;
+          place.creationDetails.password = password;
+        }
+
+        this.eventedUploadStateChange(place, 'cht', UploadState.SUCCESS);
+        RemotePlaceCache.add(place, chtApi);
+        console.log(`Successfully created CHT user for place ${place.id}`);
+
+        if (!place.shouldUploadToSuperset()) {
+          this.eventedPlaceStateChange(place, PlaceUploadState.SUCCESS);
+          delete place.uploadError;
+        }
+      } catch (err: any) {
+        const errorDetails = getErrorDetails(err);
+        console.log('Error during CHT user creation', errorDetails);
+        place.uploadError = errorDetails;
+        this.eventedUploadStateChange(place, 'cht', UploadState.FAILURE);
+        this.eventedPlaceStateChange(place, PlaceUploadState.FAILURE);
       }
-
-      let placeResult;
-      if (!place.creationDetails.placeId) {
-        placeResult = await uploader.handlePlacePayload(place, payload);
-        place.creationDetails.placeId = placeResult.placeId;
-        place.creationDetails.contactId ||= placeResult.contactId;
-      }
-
-      if (!place.creationDetails.contactId) {
-        throw Error('creationDetails.contactId not set');
-      }
-
-      if (!place.creationDetails.username) {
-        const userPayload = new UserPayload(
-          place, 
-          [place.creationDetails.placeId, ...(placeResult?.placeIds ?? [])], 
-          place.creationDetails.contactId
-        );
-        const { username, password } = await RetryLogic.createUserWithRetries(userPayload, chtApi);
-        place.creationDetails.username = username;
-        place.creationDetails.password = password;
-      }
-
-      RemotePlaceCache.add(place, chtApi);
-      delete place.uploadError;
-
-      console.log(`successfully created ${JSON.stringify(place.creationDetails)}`);
-      this.eventedPlaceStateChange(place, PlaceUploadState.SUCCESS);
-    } catch (err: any) {
-      const errorDetails = getErrorDetails(err);
-      console.log('error when creating user', errorDetails);
-      place.uploadError = errorDetails;
-      this.eventedPlaceStateChange(place, PlaceUploadState.FAILURE);
     }
   }
 
@@ -163,17 +206,21 @@ export class UploadManager extends EventEmitter {
       try {
         const payload = place.asChtPayload(api.chtSession.username, creationDetails.contactId);
         await Config.mutate(payload, api, place.isReplacement);
-        
         const result = await api.createPlace(payload);
-        
         place.creationDetails.contactId = result.contactId;
         place.creationDetails.placeId = result.placeId;
         placeIds[result.placeId] = undefined;
+        this.eventedUploadStateChange(place, 'cht', UploadState.SUCCESS);
 
+        if (!place.shouldUploadToSuperset()) {
+          this.eventedPlaceStateChange(place, PlaceUploadState.SUCCESS);
+          delete place.uploadError;
+        }
       } catch (err) {
         const errorDetails = getErrorDetails(err);
         console.log('error when creating place', errorDetails);
         place.uploadError = errorDetails;
+        this.eventedUploadStateChange(place, 'cht', UploadState.FAILURE);
         this.eventedPlaceStateChange(place, PlaceUploadState.FAILURE);
       }
     }
@@ -186,21 +233,19 @@ export class UploadManager extends EventEmitter {
         place.creationDetails.username = creationDetails.username;
         place.creationDetails.password = creationDetails.password;
         place.creationDetails.created_at = created_at;
-        this.eventedPlaceStateChange(place, PlaceUploadState.SUCCESS);
       });
 
       this.emit('refresh_grouped', creationDetails.contactId);
-
     } catch (err) {
       const errorDetails = getErrorDetails(err);
       console.log('error when creating user', errorDetails);
       places.filter(p => !p.creationDetails.username).forEach(place => {
         place.uploadError = errorDetails;
+        this.eventedUploadStateChange(place, 'cht', UploadState.FAILURE);
         this.eventedPlaceStateChange(place, PlaceUploadState.FAILURE);
       });
       this.emit('refresh_grouped', creationDetails.contactId);     
     }
-   
   }
 
   public triggerRefresh(place_id: string) {
@@ -217,9 +262,19 @@ export class UploadManager extends EventEmitter {
       this.triggerRefresh(place.id);
     });
   };
+
+  private eventedUploadStateChange = (place: Place, system: 'cht' | 'superset', state: UploadState) => {
+    if (system === 'cht') {
+      place.chtUploadState = state;
+    } else {
+      place.supersetUploadState = state;
+    }
+
+    this.triggerRefresh(place.id);
+  };
 }
 
-function getErrorDetails(err: any) {
+export function getErrorDetails(err: any) {
   if (typeof err.response?.data === 'string') {
     return err.response.data;
   }
@@ -240,4 +295,3 @@ function pickUploader(place: Place, chtApi: ChtApi): Uploader {
     new UploadReplacementWithDeactivation(chtApi) :
     new UploadReplacementWithDeletion(chtApi);
 }
-

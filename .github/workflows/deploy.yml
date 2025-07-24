@@ -56,19 +56,40 @@ jobs:
       - name: Set PKG_VERSION
         run: echo "PKG_VERSION=$(cat package.json | jq -r .version)" >> "$GITHUB_ENV"
 
+      - name: Install SOPS
+        run: |
+          wget https://github.com/mozilla/sops/releases/download/v3.7.3/sops-v3.7.3.linux.amd64 -O sops
+          chmod +x sops
+          sudo mv sops /usr/local/bin/
+
+      - name: Setup SOPS key
+        run: |
+          echo "${{ secrets.SOPS_PRIVATE_KEY }}" > key.txt
+          chmod 600 key.txt
+          export SOPS_AGE_KEY_FILE=$(pwd)/key.txt
+
       - name: Update kubeconfig
         run: |
           aws eks update-kubeconfig --name ${{vars.CLUSTER}} --region ${{vars.AWS_REGION}}
           helm repo add medic https://docs.communityhealthtoolkit.org/helm-charts
 
-      - name: Upgrade users-chis-civ
-        run: |
-          helm upgrade --namespace ${{vars.NAMESPACE}} --values scripts/deploy/values/users-chis-civ.yaml users-chis-civ medic/cht-user-management --set cht-user-management.image.tag=$PKG_VERSION --set cht-user-management-worker.image.tag=$PKG_VERSION
+      - name: Upgrade chis-civ
+        uses: ./.github/workflows/deploy-config.yml
+        with:
+          config: chis-civ
+          namespace: ${{vars.NAMESPACE}}
 
-      - name: Upgrade users-chis-tg
-        run: |
-          helm upgrade --namespace ${{vars.NAMESPACE}} --values scripts/deploy/values/users-chis-tg.yaml users-chis-tg medic/cht-user-management --set cht-user-management.image.tag=$PKG_VERSION --set cht-user-management-worker.image.tag=$PKG_VERSION
+      - name: Upgrade chis-tg
+        uses: ./.github/workflows/deploy-config.yml
+        with:
+          config: chis-tg
+          namespace: ${{vars.NAMESPACE}}
 
-      - name: Upgrade users-chis-ml
-        run: |
-          helm upgrade --namespace ${{vars.NAMESPACE}} --values scripts/deploy/values/users-chis-ml.yaml users-chis-ml medic/cht-user-management --set cht-user-management.image.tag=$PKG_VERSION --set cht-user-management-worker.image.tag=$PKG_VERSION
+      - name: Upgrade chis-ml
+        uses: ./.github/workflows/deploy-config.yml
+        with:
+          config: chis-ml
+          namespace: ${{vars.NAMESPACE}}
+
+      - name: Cleanup
+        run: rm key.txt

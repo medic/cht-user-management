@@ -97,8 +97,8 @@ export default async function sessionCache(fastify: FastifyInstance) {
 
     const chtApi = new ChtApi(req.chtSession);
     uploadManager.doUpload(
-      sessionCache.getPlaces(),
-      chtApi,
+      sessionCache.getPlaces(), 
+      chtApi, 
       ignoreWarnings === 'true'
     );
 

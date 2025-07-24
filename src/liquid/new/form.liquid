@@ -42,6 +42,24 @@
           disabled: show_place_form ==  true
         %}
       {% endfor %}
+      {% if contactType.user_role.size > 1 %}
+        {% render 'components/contact_type_property.liquid',
+          prefix: 'user_',
+          prop: userRoleProperty,
+          place_type: contactType.name,
+          data: data,
+          disabled: show_place_form ==  true
+        %}
+      {% endif %}
+      {% if contactType.superset %}
+        {% render 'components/contact_type_property.liquid',
+          prefix: 'superset_',
+          prop: contactType.superset,
+          place_type: contactType.name,
+          data: data,
+          disabled: show_place_form ==  true
+        %}
+      {% endif %}
     </div>
 
     <div class="notification is-primary is-light">
