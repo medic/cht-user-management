@@ -18,6 +18,9 @@
     {% if contactType.user_role.size > 1 %}
       <th id="{{userRoleProperty.property_name}}">{{ contactType.userRoleProperty.friendly_name }}</th>
     {% endif %}
+    {% if contactType.superset %}
+      <th id="{{contactType.superset.property_name}}">{{ contactType.superset.friendly_name }}</th>
+    {% endif %}
     <th></th>
     <th></th>
   </tr>

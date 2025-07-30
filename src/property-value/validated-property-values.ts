@@ -1,4 +1,4 @@
-import { Config, ContactProperty, HierarchyConstraint } from '../config';
+import { Config, ContactProperty, HierarchyConstraint, SupersetConfig } from '../config';
 import { IPropertyValue } from '.';
 import Place from '../services/place';
 import Validation from '../validation';
@@ -72,3 +72,12 @@ export class HierarchyPropertyValue extends AbstractPropertyValue {
   }
 }
 
+export class SupersetPropertyValue extends AbstractPropertyValue {
+  constructor(place: Place, property: SupersetConfig, prefix: string, value: string) {
+    super(place, property, prefix, value);
+  }
+
+  protected override doValidation(): string | undefined {
+    return Validation.validateSupersetConfig(this.place, this.property as SupersetConfig);
+  }
+}

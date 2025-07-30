@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 
-import Place from '../../src/services/place';
-import { mockSimpleContactType, mockValidContactType } from '../mocks';
+import Place, { UploadState } from '../../src/services/place';
+import { expectInvalidProperties, mockSimpleContactType, mockSupersetContactType, mockValidContactType } from '../mocks';
 import { UnvalidatedPropertyValue, ContactPropertyValue } from '../../src/property-value';
 
 describe('services/place.ts', () => {
@@ -149,5 +149,79 @@ describe('services/place.ts', () => {
       'role1',
       'role2',
     ]);
+  });
+
+  describe('superset integration', () => {
+    it('should handle Superset mode property correctly', () => {
+      const contactType = mockSupersetContactType();
+      
+      const place = new Place(contactType);
+      const formData = {
+        superset_mode: 'enable'
+      };
+      
+      place.setPropertiesFromFormData(formData, 'hierarchy_');
+      expect(place.shouldUploadToSuperset()).to.be.true;
+    });
+
+    it('should throw an error when email is missing in the contact properties', () => {
+      const contactType = mockSupersetContactType(false);
+      
+      const place = new Place(contactType);
+      const formData = {
+        superset_mode: 'enable',
+      };
+      
+      place.setPropertiesFromFormData(formData, 'hierarchy_');
+      expect(() => place.validate()).to.throw(/missing the required "email" contact property/);
+    });
+
+    it('should require email when Superset is enabled', () => {
+      const contactType = mockSupersetContactType();
+      
+      const place = new Place(contactType);
+      const formData = {
+        superset_mode: 'enable',
+        place_name: 'place',
+        place_prop: 'prop',
+        contact_name: 'contact',
+        hierarchy_PARENT: 'parent',
+      };
+      
+      place.setPropertiesFromFormData(formData, 'hierarchy_');
+      place.resolvedHierarchy[1] = {
+        id: 'known',
+        name: new UnvalidatedPropertyValue('parent'),
+        lineage: [],
+        type: 'remote',
+      };
+      place.validate();
+      expectInvalidProperties(place.validationErrors, ['contact_email'], 'Required');
+    });
+    
+
+    it('should track Superset upload state', () => {
+      const contactType = mockSupersetContactType();
+      const place = new Place(contactType);
+
+      const formData = {
+        superset_mode: 'enable',
+        contact_email: 'test@example.com',
+      };
+      
+      place.setPropertiesFromFormData(formData, 'hierarchy_');
+
+      expect(place.isSupersetCreated).to.be.false;
+      expect(place.isSupersetUploadIncomplete()).to.be.true;
+      
+      place.supersetUploadState = UploadState.SUCCESS;
+      place.creationDetails.password = 'password';
+      expect(place.isSupersetCreated).to.be.true;
+      expect(place.isSupersetUploadIncomplete()).to.be.false;
+      
+      place.supersetUploadState = UploadState.FAILURE;
+      delete place.creationDetails.password;
+      expect(place.isSupersetUploadIncomplete()).to.be.true;
+    });
   });
 });

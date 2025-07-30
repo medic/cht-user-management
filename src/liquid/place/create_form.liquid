@@ -68,6 +68,17 @@
     </section>
   {% endif %}
 
+  {% if contactType.superset %}
+    <section class="section is-small">
+      {% render 'components/contact_type_property.liquid',
+        prefix: 'superset_',
+        prop: contactType.superset,
+        place_type: contactType.name,
+        data: data
+      %}
+    </section>
+  {% endif %}
+
   <div class=" field is-grouped is-grouped-right">
     <div class="control">
       <button id="place_create_submit" class="button is-link">Save</button>

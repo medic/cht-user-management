@@ -15,7 +15,7 @@ export default async function newHandler(fastify: FastifyInstance) {
     const sessionCache: SessionCache = req.sessionCache;
     
     const shared = {
-      hierarchy: contactType.hierarchy,
+      hierarchy: Config.getHierarchyWithReplacement(contactType, 'desc'),
       contactType,
       logo: Config.getLogoBase64(),
       show_place_form: false,
@@ -171,6 +171,11 @@ export default async function newHandler(fastify: FastifyInstance) {
       const placeData = { ...place.asFormData('hierarchy_'), ...body };
       await PlaceFactory.editOne(place.id, placeData, sessionCache, chtApi);
     }
+
+    // Re-validate all places sharing this contact
+    const updatedPlaces = sessionCache.getPlaces({ type: body.place_type, contactId: id });
+    updatedPlaces.forEach(place => place.validate());
+    sessionCache.savePlaces(...updatedPlaces);
     
     resp.header('HX-Redirect', `/`);
     return;

@@ -15,8 +15,11 @@ General public is welcome to look at these instructions for who they might use t
 - Check out [helm chart repository](https://github.com/medic/helm-charts/tree/main#usage) so you can reference it locally
 - Be able to [authenticate to Medic kubernetes cluster (EKS)](https://github.com/medic/medic-infrastructure/blob/master/terraform/aws/dev/eks/access/README.md)
 
+### Continuous Deployment
 
-### Known cofigurations:
+The [GitHub Actions workflow](../../.github/workflows/deploy-config.yml#L22) automatically handles secret decryption and deployment. When changes are merged to main, the workflow decrypts the secrets using the SOPS key and includes them in the Helm deployment.
+
+### Known Configurations:
 
 As each deployment needs its own configuration directory, DNS entry and deployment name, we'll list them here and the commands below can be used by replacing the correct value.
 
@@ -134,3 +137,38 @@ helm install \
       --set cht-user-management.image.tag=$PKG_VERSION --set cht-user-management-worker.image.tag=$PKG_VERSION \
       $CONFIG medic/cht-user-management
 ```
+
+## Managing Secrets
+
+### For Medic-hosted Deployments
+- Get the SOPS private key and public key from 1Password.
+- Place the private key in `scripts/deploy/secrets/key.txt` (**never commit this**).
+- Place the public key and rules in `scripts/deploy/secrets/.sops.yaml` (**commit this**).
+- Edit your secrets YAML (e.g., `users-chis-xx-secrets.yaml`), then encrypt with SOPS:
+  ```bash
+  sops --encrypt --input-type yaml --output-type yaml secrets.yaml > users-chis-xx-secrets.yaml
+  ```
+- Commit the encrypted secrets file and `.sops.yaml`.
+- CI/CD will automatically decrypt using the private key from 1Password and inject secrets into the deployment.
+
+### For Self-hosted Deployments
+
+- You can create a plain `users-chis-xx-secrets.yaml` file (not committed to the repo) in `scripts/deploy/secrets/` with your sensitive values:
+  ```yaml
+  cht-user-management:
+      env:
+          CHIS_KE_SUPERSET_BASE_URL: ...
+          CHIS_KE_SUPERSET_ADMIN_USERNAME: ...
+          CHIS_KE_SUPERSET_ADMIN_PASSWORD: ...
+  ```
+- Alternatively, set these values as environment variables directly (e.g., in your Docker Compose file or CI/CD system).
+- If you want to use SOPS for encrypted secrets and CI/CD, you can follow the Medic-hosted instructions above.
+- **Do not commit secrets or private keys to the repo.**
+
+### What to Commit
+- Commit: `.sops.yaml`, encrypted `[config]-secrets.yaml` files
+- Do NOT commit: `key.txt` (private key), unencrypted secrets
+
+### How CI/CD Handles Secrets
+- The pipeline decrypts secrets using the SOPS private key (from 1Password) and injects them into the deployment.
+- No manual decryption is needed during deployment.
