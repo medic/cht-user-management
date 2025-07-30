@@ -1,3 +1,10 @@
+# [2.3.0](https://github.com/medic/cht-user-management/compare/v2.2.3...v2.3.0) (2025-07-24)
+
+
+### Features
+
+* **#310:** optionally set CACHE_TTL from the environment ([3bde23c](https://github.com/medic/cht-user-management/commit/3bde23cca160d9fb374cc6393f9e320a71c70bc0)), closes [#310](https://github.com/medic/cht-user-management/issues/310)
+
 ## [2.2.3](https://github.com/medic/cht-user-management/compare/v2.2.2...v2.2.3) (2025-07-01)
 
 
