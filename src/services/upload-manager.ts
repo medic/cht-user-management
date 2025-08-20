@@ -10,7 +10,7 @@ import { UploadReplacementWithDeletion } from './upload.replacement';
 import { UploadReplacementWithDeactivation } from './upload.deactivate';
 import { UserPayload } from './user-payload';
 import _ from 'lodash';
-import { UploadLog, UploadLogRecord } from './upload-log';
+import { UploadLogRecord, UploadLogger } from './upload-log';
 import ChtSession from '../lib/cht-session';
 
 const UPLOAD_BATCH_SIZE = 15;
@@ -23,14 +23,14 @@ export interface Uploader {
 export class UploadManager extends EventEmitter {
 
   private readonly uploadLogger;
-  constructor(uploadLogger: UploadLog) {
+  constructor(uploadLogger: UploadLogger) {
     super();
     this.uploadLogger = uploadLogger;
   }
 
   getLog = async (session: ChtSession): Promise<UploadLogRecord[]> => {
     return await this.uploadLogger.get(session);
-  }
+  };
 
   doUpload = async (places: Place[], chtApi: ChtApi, ignoreWarnings: boolean = false) => {
     const validPlaces = places.filter(p => {

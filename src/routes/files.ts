@@ -37,11 +37,11 @@ export default async function files(fastify: FastifyInstance) {
       const filter = Object.keys(data).filter(k => data[k] === 'on');
       let records = await uploadManager.getLog(req.chtSession);
       if (filter.length > 0) {
-        records = records.filter(record => filter.includes(record.id))
+        records = records.filter(record => filter.includes(record.id));
       }
       files = getCredentialsFilesFromLog(records, Config.contactTypes());
     } else {
-      return
+      return;
     }
     const zip = new JSZip();
     for (const file of files) {

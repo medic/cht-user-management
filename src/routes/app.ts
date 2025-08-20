@@ -9,7 +9,7 @@ import RemotePlaceResolver from '../lib/remote-place-resolver';
 import SessionCache from '../services/session-cache';
 import { UploadManager } from '../services/upload-manager';
 import WarningSystem from '../warnings';
-import { UploadLog, UploadLogRecord } from '../services/upload-log';
+import { UploadLogRecord } from '../services/upload-log';
 
 export default async function sessionCache(fastify: FastifyInstance) {
   fastify.get('/', async (req, resp) => {
@@ -59,7 +59,9 @@ export default async function sessionCache(fastify: FastifyInstance) {
         users: [...group.map(record => {
           const item: { [key: string]: string } = { id: record.id, name: record.person, phone: record.phone };
           item[`${contactType.friendly}`] = record.place;
-          Object.keys(record.hierarchy).forEach(k => { item[k] = record.hierarchy[k] });
+          Object.keys(record.hierarchy).forEach(k => {
+            item[k] = record.hierarchy[k];
+          });
           return item;
         })]
       });
@@ -75,7 +77,9 @@ export default async function sessionCache(fastify: FastifyInstance) {
         currentType = records[i].contactType;
       }
     }
-    if (current.length > 0) processGroup(contactTypes.find(c => c.name === currentType), current, grouped);
+    if (current.length > 0) {
+      processGroup(contactTypes.find(c => c.name === currentType), current, grouped);
+    }
 
     const data = {
       logo: Config.getLogoBase64(),

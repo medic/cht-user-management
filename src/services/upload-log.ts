@@ -13,7 +13,12 @@ export type UploadLogRecord = {
   hierarchy: { [key: string]: string };
 };
 
-export class UploadLog {
+export interface UploadLogger {
+  log(session: ChtSession, batchNo: number, places: Place[]): Promise<void>;
+  get(session: ChtSession): Promise<UploadLogRecord[]>;
+}
+
+export class RedisUploadLogger {
 
   private readonly redis;
   constructor(redis: Redis) {
@@ -31,7 +36,7 @@ export class UploadLog {
     encrypted += cipher.final('hex');
     const authTag = cipher.getAuthTag().toString('hex');
     return iv.toString('hex') + ':' + authTag + ':' + encrypted;
-  }
+  };
 
   private decrypt = (text: string, secretKey: string): string => {
     const [ivHex, authTagHex, encryptedText] = text.split(':');
@@ -46,7 +51,7 @@ export class UploadLog {
     let decrypted = decipher.update(encryptedText, 'hex', 'utf8');
     decrypted += decipher.final('utf8');
     return decrypted;
-  }
+  };
 
   log = async (session: ChtSession, batch: number, places: Place[]) => {
     const pipeline = this.redis.pipeline();
@@ -69,10 +74,10 @@ export class UploadLog {
       pipeline.expire(key, 3600 * 120); // 5 days, running target
     });
     await pipeline.exec();
-  }
+  };
 
   get = async (session: ChtSession): Promise<UploadLogRecord[]> => {
     const logs = await this.redis.zrevrange(`${session.username}:creation-log`, 0, -1);
     return logs.map(log => JSON.parse(this.decrypt(log, process.env.SECRET_KEY)));
-  }
+  };
 }

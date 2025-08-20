@@ -15,9 +15,14 @@ export function getCredentialsFilesFromLog(records: UploadLogRecord[], contactTy
     if (users.length <= 0) {
       continue;
     }
-    const rows = users.map(record =>
-      [...Object.values(record.hierarchy), record.place, record.person, record.phone, record.credentials.username, record.credentials.password]
-    );
+    const rows = users.map(record => [
+      ...Object.values(record.hierarchy),
+      record.place,
+      record.person,
+      record.phone,
+      record.credentials.username,
+      record.credentials.password
+    ]);
     const content = stringify(rows, {
       header: true,
       columns: [

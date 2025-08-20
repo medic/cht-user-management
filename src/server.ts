@@ -13,7 +13,6 @@ import metricsPlugin from 'fastify-metrics';
 
 import Auth from './lib/authentication';
 import SessionCache from './services/session-cache';
-import { assertRedisConfig, checkRedisConnection } from './config/config-worker';
 import { getChtConfQueue } from './lib/queues';
 
 const PROMETHEUS_ENDPOINT = '/metrics';
