@@ -13,7 +13,7 @@ import metricsPlugin from 'fastify-metrics';
 
 import Auth from './lib/authentication';
 import SessionCache from './services/session-cache';
-import { checkRedisConnection } from './config/config-worker';
+import { assertRedisConfig, checkRedisConnection } from './config/config-worker';
 import { getChtConfQueue } from './lib/queues';
 
 const PROMETHEUS_ENDPOINT = '/metrics';
@@ -74,7 +74,6 @@ const build = (opts: FastifyServerOptions): FastifyInstance => {
   });
 
   Auth.assertEnvironmentSetup();
-  checkRedisConnection();
 
   fastify.addHook('preValidation', async (req: FastifyRequest, reply: FastifyReply) => {
     if (req.unauthenticated) {

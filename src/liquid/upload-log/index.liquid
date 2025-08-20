@@ -1,0 +1,67 @@
+<html>
+  <head>
+    <title>Upload Logs</title>
+    <script src="/public/htmx.min.js"></script>
+    <script src="/public/app.js"></script>
+    <link rel="stylesheet" href="/public/bulma.min.css">
+    <link rel="stylesheet" href="/public/bulma-tooltip.min.css">
+    <link rel="stylesheet" href="/public/material-symbols.css">
+    <link rel="stylesheet" href="/public/bulma-tooltip.min.css">
+    <link rel="stylesheet" href="/public/app.css">
+  </head>
+  <body>
+    {% render 'app/nav.liquid',
+      logo: logo,
+      contactTypes: contactTypes,
+      session: session
+    %}
+    <div class="container is-max-desktop p-4">
+	<form>
+    <div class="is-flex is-justify-content-space-between is-align-content-center">
+      <div>
+        <h4 class="title is-4 mb-0">Users</h4>
+        <h5>List of users you've created recently</h5>
+      </div>
+      <button 
+        class="button"
+        formaction="/files/credentials?source=log"
+        formmethod="post"
+        download="{{ session.authInfo.domain }}.users.csv">
+        <span class="material-symbols-outlined">save_as</span> Save Credentials
+      </button>
+		</div>
+	{% for item in users %}
+		<div class="my-4" style="border: 1px solid #d3d3d3; border-radius: 4px;">
+		<table class="table is-fullwidth is-striped" style="table-layout: fixed;">
+		<thead>
+			<tr>
+				{% for col in item.columns %}
+					<th>{{col}}</th>
+				{% endfor %}
+			</tr>
+		</thead> 
+		<tbody>
+			{% for user in item.users %}
+				<tr>
+          {% for col in item.columns %}
+          {% if col == 'name' %}
+            <td>
+              <label class="checkbox">
+						    <input id="{{user.id}}" name="{{user.id}}" type="checkbox" />
+                <span class="px-2">{{user[col]}}</span> 
+              </label>
+            </td>
+          {% else %}
+					  <td>{{user[col]}}</td>
+          {% endif%}
+				  {% endfor %}
+				</tr>
+			{% endfor %}
+		</tbody>
+		</table>
+		</div>
+  {% endfor %}
+	</form>
+    </div>
+  </body>
+</html>

@@ -1,9 +1,13 @@
 import { FastifyInstance } from 'fastify';
 import fp from 'fastify-plugin';
 import { UploadManager } from '../services/upload-manager';
+import { UploadLog } from '../services/upload-log';
+import { checkRedisConnection } from '../config/config-worker';
 
 async function services(fastify: FastifyInstance) {
-  const uploadManager = new UploadManager();
+  const redis = await checkRedisConnection();
+  const logger = new UploadLog(redis);
+  const uploadManager = new UploadManager(logger);
   fastify.decorate('uploadManager', uploadManager);
 }
 

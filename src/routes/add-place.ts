@@ -9,6 +9,7 @@ import { UploadManager } from '../services/upload-manager';
 import RemotePlaceCache from '../lib/remote-place-cache';
 import WarningSystem from '../warnings';
 import semver from 'semver';
+import { UploadLog } from '../services/upload-log';
 
 export default async function addPlace(fastify: FastifyInstance) {
   fastify.get('/add-place', async (req, resp) => {
