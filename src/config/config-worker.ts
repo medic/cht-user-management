@@ -1,9 +1,9 @@
 import Redis from 'ioredis';
 import { env } from 'process';
 
-const environment = env as unknown as { 
-  REDIS_HOST: string; 
-  REDIS_PORT: string; 
+const environment = env as unknown as {
+  REDIS_HOST: string;
+  REDIS_PORT: string;
 };
 
 export const WorkerConfig = {
@@ -20,8 +20,8 @@ export const WorkerConfig = {
   }
 };
 
-const assertRedisConfig = () => {
-  const {host, port} = WorkerConfig.redisConnection;
+export const assertRedisConfig = () => {
+  const { host, port } = WorkerConfig.redisConnection;
   if (!host) {
     throw new Error('REDIS_HOST is not defined');
   }
@@ -32,14 +32,12 @@ const assertRedisConfig = () => {
 
 export const checkRedisConnection = async () => {
   assertRedisConfig();
-
   const config = WorkerConfig.redisConnection;
-  const redis = new Redis(config.port, config.host, {lazyConnect: true});
+  const redis = new Redis(config.port, config.host, { lazyConnect: true });
   try {
     await redis.connect();
-  } catch (error : any) {
+  } catch (error: any) {
     throw new Error(`Failed to connect to Redis at ${config.host}:${config.port}: ${error}`);
-  } finally {
-    redis?.disconnect();
   }
+  return redis;
 };
