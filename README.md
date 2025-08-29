@@ -174,6 +174,8 @@ Variable | Description | Sample
 `REDIS_PORT` | Redis server port | `6379`
 `CHT_USER_MANAGEMENT_IMAGE` | docker image for cht-user-management service (local development), leave empty to use published one | `cht-user-management:local `
 `CHT_USER_MANAGEMENT_WORKER_IMAGE` | docker image for cht-user-management service (local development), leave empty to use published one | `cht-user-management-worker:local`
+`SECRET_KEY` | Hex encoded secret key used for encryption/decryption of stored credentials. | `eg. openssl rand -hex 32`
+`CREDENTIAL_LOG_TTL` | Duration in seconds to persist the credential log in redis. Defaults to 432000 (5 days). | `432000`
 
 ## Development
 

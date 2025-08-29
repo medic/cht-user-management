@@ -4,7 +4,7 @@ import ChtSession from './cht-session';
 
 const LOGIN_EXPIRES_AFTER_MS = 4 * 24 * 60 * 60 * 1000;
 const QUEUE_SESSION_EXPIRATION = '96h';
-const { COOKIE_PRIVATE_KEY, WORKER_PRIVATE_KEY } = process.env;
+const { COOKIE_PRIVATE_KEY, WORKER_PRIVATE_KEY, SECRET_KEY } = process.env;
 const PRIVATE_KEY_SALT = '$'; // change to logout all users
 const COOKIE_SIGNING_KEY = COOKIE_PRIVATE_KEY + PRIVATE_KEY_SALT;
 
@@ -20,6 +20,9 @@ export default class Auth {
     }
     if (COOKIE_PRIVATE_KEY === WORKER_PRIVATE_KEY) {
       throw new Error('COOKIE_PRIVATE_KEY should be different from WORKER_PRIVATE_KEY');
+    }
+    if (!SECRET_KEY) {
+      throw new Error('.env missing SECRET_KEY');
     }
   }
 
@@ -43,7 +46,7 @@ export default class Auth {
     return new Date(new Date().getTime() + LOGIN_EXPIRES_AFTER_MS);
   }
 
-  
+
   private static encodeToken(session: ChtSession, signingKey: string, expiresIn: string) {
     const data = JSON.stringify(session);
     return jwt.sign({ data }, signingKey, { expiresIn });
