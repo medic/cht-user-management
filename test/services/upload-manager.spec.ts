@@ -412,6 +412,7 @@ class fakestore implements UploadLoggerStore {
   async save(user: string, batch: number, record: string[]): Promise<void> {
     this.items[user] = record;
   }
+
   get(user: string): Promise<string[]> {
     return this.items[user];
   }
