@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { expect } from 'chai';
+import { assert, expect } from 'chai';
 import sinon from 'sinon';
 
 import { UploadManager } from '../../src/services/upload-manager';
@@ -11,6 +11,7 @@ import { Config } from '../../src/config';
 import RemotePlaceResolver from '../../src/lib/remote-place-resolver';
 import { UploadManagerRetryScenario } from '../lib/retry-logic.spec';
 import { mockGroupedFormData } from './place-factory.spec';
+import { UploadLoggerImpl, UploadLoggerStore } from '../../src/services/upload-log';
 
 describe('services/upload-manager.ts', () => {
   beforeEach(() => {
@@ -83,6 +84,26 @@ describe('services/upload-manager.ts', () => {
     const uploadManager = new UploadManager(uploadLogger);
     await uploadManager.doUpload(places, chtApi);
     expect(uploadLogger.log.callCount).to.eq(placeCount);
+  });
+
+  it('credential logger what we save is what we get', async () => {
+    const { fakeFormData, contactType, sessionCache, chtApi } = await createMocks();
+    const place = await PlaceFactory.createOne(fakeFormData, contactType, sessionCache, chtApi);
+
+    process.env.SECRET_KEY = '035a26073018067dd09bb6b5215daac9d20169699d682725db3fd4b925039735';
+
+    const store = new fakestore();
+    const uploadLogger = new UploadLoggerImpl(store);
+    const uploadManager = new UploadManager(uploadLogger);
+    await uploadManager.doUpload([place], chtApi);
+
+    const records = await uploadManager.getLog(chtApi.chtSession);
+    expect(records.length).eq(1);
+    assert.deepEqual(records[0].credentials, place.creationDetails);
+    assert.equal(records[0].place, place.name);
+    assert.equal(records[0].contactType, place.type.name);
+    assert.equal(records[0].person, place.contact.properties.name?.formatted);
+    assert.equal(records[0].phone, place.contact.properties.phone?.formatted);
   });
 
   it('required attributes can be inherited during replacement', async () => {
@@ -386,6 +407,16 @@ it('mock group data is properly sent to chtApi - standard', async () => {
   places.forEach(p => expect(creationDetails.username).equals(p.creationDetails.username));
 });
 
+class fakestore implements UploadLoggerStore {
+  items = {};
+  async save(user: string, batch: number, record: string[]): Promise<void> {
+    this.items[user] = record;
+  }
+  get(user: string): Promise<string[]> {
+    return this.items[user];
+  }
+}
+
 async function createMocks() {
   const contactType = mockValidContactType('string', undefined);
   const subcounty: ChtDoc = {
@@ -422,11 +453,7 @@ async function createMocks() {
     deleteDoc: sinon.stub().resolves(),
   };
 
-  const uploadLogger = {
-    log: sinon.stub(),
-    get: sinon.stub()
-  };
-
+  const uploadLogger = { log: sinon.stub(), get: sinon.stub() };
   const fakeFormData: any = {
     place_name: 'place',
     place_prop: 'foo',

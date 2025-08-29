@@ -18,11 +18,38 @@ export interface UploadLogger {
   get(session: ChtSession): Promise<UploadLogRecord[]>;
 }
 
-export class RedisUploadLogger {
+export interface UploadLoggerStore {
+  save(user: string, batch: number, record: string[]): Promise<void>;
+  get(user: string): Promise<string[]>;
+}
 
+export class RedisStore implements UploadLoggerStore {
   private readonly redis;
   constructor(redis: Redis) {
     this.redis = redis;
+  }
+
+  async save(user: String, batch: number, records: string[]): Promise<void> {
+    const key = `${user}:creation-log`;
+    const pipeline = this.redis.pipeline();
+    records.forEach(record => {
+      pipeline.zadd(key, batch, record);
+      pipeline.expire(key, process.env.CREDENTIAL_LOG_TTL ?? 3600 * 120); // 5 days, running target
+    });
+    await pipeline.exec();
+  }
+
+  async get(username: String): Promise<string[]> {
+    return this.redis.zrevrange(`${username}:creation-log`, 0, -1);
+  }
+
+}
+
+export class UploadLoggerImpl implements UploadLogger {
+
+  private readonly store;
+  constructor(store: UploadLoggerStore) {
+    this.store = store;
   }
 
   private encrypt = (text: string, secretKey: string) => {
@@ -54,8 +81,7 @@ export class RedisUploadLogger {
   };
 
   log = async (session: ChtSession, batch: number, places: Place[]) => {
-    const pipeline = this.redis.pipeline();
-    places.forEach(place => {
+    const records = places.map(place => {
       const record: UploadLogRecord = {
         id: crypto.randomUUID(),
         place: place.name,
@@ -68,16 +94,13 @@ export class RedisUploadLogger {
       Object.keys(place.hierarchyProperties)
         .filter(k => !k.includes('replacement'))
         .forEach(prop => (record.hierarchy[prop] = place.hierarchyProperties[prop].formatted));
-      const encryptedRecord = this.encrypt(JSON.stringify(record), process.env.SECRET_KEY);
-      const key = `${session.username}:creation-log`;
-      pipeline.zadd(key, batch, encryptedRecord);
-      pipeline.expire(key, process.env.CREDENTIAL_LOG_TTL ?? 3600 * 120); // 5 days, running target
+      return this.encrypt(JSON.stringify(record), process.env.SECRET_KEY);
     });
-    await pipeline.exec();
+    await this.store.save(session.username, batch, records);
   };
 
   get = async (session: ChtSession): Promise<UploadLogRecord[]> => {
-    const logs = await this.redis.zrevrange(`${session.username}:creation-log`, 0, -1);
+    const logs = await this.store.get(session.username);
     return logs.map(log => JSON.parse(this.decrypt(log, process.env.SECRET_KEY)));
   };
 }
