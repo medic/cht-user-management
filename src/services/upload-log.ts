@@ -71,7 +71,7 @@ export class RedisUploadLogger {
       const encryptedRecord = this.encrypt(JSON.stringify(record), process.env.SECRET_KEY);
       const key = `${session.username}:creation-log`;
       pipeline.zadd(key, batch, encryptedRecord);
-      pipeline.expire(key, 3600 * 120); // 5 days, running target
+      pipeline.expire(key, process.env.CREDENTIAL_LOG_TTL ?? 3600 * 120); // 5 days, running target
     });
     await pipeline.exec();
   };
