@@ -1,3 +1,10 @@
+# [2.4.0](https://github.com/medic/cht-user-management/compare/v2.3.0...v2.4.0) (2025-09-01)
+
+
+### Features
+
+* **#53:** add user credentials log ([#313](https://github.com/medic/cht-user-management/issues/313)) ([0a96ae5](https://github.com/medic/cht-user-management/commit/0a96ae511e04cc38b8705b192adb835227c4c726)), closes [#53](https://github.com/medic/cht-user-management/issues/53)
+
 # [2.3.0](https://github.com/medic/cht-user-management/compare/v2.2.3...v2.3.0) (2025-07-24)
 
 
