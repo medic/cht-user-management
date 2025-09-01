@@ -2,13 +2,14 @@ import { FastifyInstance } from 'fastify';
 
 import Auth from '../lib/authentication';
 import { ChtApi } from '../lib/cht-api';
-import { Config } from '../config';
+import { Config, ContactType } from '../config';
 import DirectiveModel from '../services/directive-model';
 import RemotePlaceCache from '../lib/remote-place-cache';
 import RemotePlaceResolver from '../lib/remote-place-resolver';
 import SessionCache from '../services/session-cache';
 import { UploadManager } from '../services/upload-manager';
 import WarningSystem from '../warnings';
+import { UploadLogRecord } from '../services/upload-log';
 
 export default async function sessionCache(fastify: FastifyInstance) {
   fastify.get('/', async (req, resp) => {
@@ -39,6 +40,55 @@ export default async function sessionCache(fastify: FastifyInstance) {
     };
 
     return resp.view('src/liquid/app/view.liquid', tmplData);
+  });
+
+  fastify.get('/users/history', async (req, resp) => {
+    const contactTypes = Config.contactTypes();
+    const uploadManager: UploadManager = fastify.uploadManager;
+    const records = await uploadManager.getLog(req.chtSession);
+
+    const grouped: any[] = [];
+    let current: UploadLogRecord[] = [];
+    const processGroup = (contactType: ContactType | undefined, group: UploadLogRecord[], result: any[]) => {
+      if (!contactType) {
+        throw new Error('contact type cannot be null');
+      }
+      const columns = ['name', 'phone', contactType.friendly, ...Object.keys(group[0].hierarchy)];
+      result.push({
+        columns,
+        users: [...group.map(record => {
+          const item: { [key: string]: string } = { id: record.id, name: record.person, phone: record.phone };
+          item[`${contactType.friendly}`] = record.place;
+          Object.keys(record.hierarchy).forEach(k => {
+            item[k] = record.hierarchy[k];
+          });
+          return item;
+        })]
+      });
+    };
+
+    let currentType = records.length > 0 ? records[0].contactType : undefined;
+    for (let i = 0; i < records.length; i++) {
+      if (currentType === records[i].contactType) {
+        current.push(records[i]);
+      } else {
+        processGroup(contactTypes.find(c => c.name === currentType), current, grouped);
+        current = [records[i]];
+        currentType = records[i].contactType;
+      }
+    }
+    if (current.length > 0) {
+      processGroup(contactTypes.find(c => c.name === currentType), current, grouped);
+    }
+
+    const data = {
+      logo: Config.getLogoBase64(),
+      session: req.chtSession,
+      contactTypes,
+      users: grouped
+    };
+
+    return resp.view('src/liquid/upload-log/index.liquid', data);
   });
 
   fastify.get('/app/list', async (req, resp) => {

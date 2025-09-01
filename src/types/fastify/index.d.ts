@@ -18,6 +18,7 @@ declare global {
   namespace NodeJS {
     interface ProcessEnv {
       COOKIE_PRIVATE_KEY: string;
+      SECRET_KEY: string;
     }
   }
 }
