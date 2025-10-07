@@ -188,7 +188,6 @@
       "friendly": "West Pokot",
       "domain": "westpokot.echis.go.ke"
     },
-
     {
       "friendly": "Staging (chis-staging.health.go.ke)",
       "domain": "chis-staging.health.go.ke"
@@ -212,7 +211,9 @@
       "friendly": "Community Health Unit",
       "contact_type": "person",
       "contact_friendly": "Community Health Assistant",
-      "user_role": ["community_health_assistant"],
+      "user_role": [
+        "community_health_assistant"
+      ],
       "username_from_place": false,
       "deactivate_users_on_replace": false,
       "can_assign_multiple": true,
@@ -230,7 +231,13 @@
         "friendly_name": "Affected CHU",
         "property_name": "replacement",
         "type": "name",
-        "parameter": ["\\sCommunity Health Unit", "\\sCommunity Unit", "\\sUnit", "\\sCU", "\\sCHU"],
+        "parameter": [
+          "\\sCommunity Health Unit",
+          "\\sCommunity Unit",
+          "\\sUnit",
+          "\\sCU",
+          "\\sCHU"
+        ],
         "required": true
       },
       "place_properties": [
@@ -238,7 +245,13 @@
           "friendly_name": "CHU Name",
           "property_name": "name",
           "type": "name",
-          "parameter": ["\\sCommunity Health Unit", "\\sCommunity Unit", "\\sUnit", "\\sCU", "\\sCHU"],
+          "parameter": [
+            "\\sCommunity Health Unit",
+            "\\sCommunity Unit",
+            "\\sUnit",
+            "\\sCU",
+            "\\sCHU"
+          ],
           "required": true,
           "unique": "parent"
         },
@@ -271,7 +284,10 @@
           "friendly_name": "CHA Name",
           "property_name": "name",
           "type": "name",
-          "parameter": ["\\(\\s*PHO\\s*\\)", "\\(\\s*CHA\\s*\\)"],
+          "parameter": [
+            "\\(\\s*PHO\\s*\\)",
+            "\\(\\s*CHA\\s*\\)"
+          ],
           "required": true
         },
         {
@@ -280,6 +296,16 @@
           "type": "phone",
           "parameter": "KE",
           "required": true
+        },
+        {
+          "friendly_name": "Require password change",
+          "property_name": "require_password_change",
+          "type": "select_one",
+          "required": false,
+          "parameter": {
+            "yes": "Yes",
+            "false": "No"
+          }
         }
       ]
     },
@@ -287,7 +313,9 @@
       "name": "d_community_health_volunteer_area",
       "friendly": "Community Health Promoter",
       "contact_type": "person",
-      "user_role": ["community_health_volunteer"],
+      "user_role": [
+        "community_health_volunteer"
+      ],
       "username_from_place": false,
       "deactivate_users_on_replace": false,
       "hierarchy": [
@@ -303,7 +331,13 @@
           "friendly_name": "CHU",
           "property_name": "CHU",
           "contact_type": "c_community_health_unit",
-          "parameter": ["\\sCommunity Health Unit", "\\sCommunity Unit", "\\sUnit", "\\sCU", "\\sCHU"],
+          "parameter": [
+            "\\sCommunity Health Unit",
+            "\\sCommunity Unit",
+            "\\sUnit",
+            "\\sCU",
+            "\\sCHU"
+          ],
           "type": "name",
           "required": true,
           "level": 1
@@ -313,7 +347,9 @@
         "friendly_name": "Outgoing CHP",
         "property_name": "replacement",
         "type": "name",
-        "parameter": ["\\sArea"],
+        "parameter": [
+          "\\sArea"
+        ],
         "required": true
       },
       "place_properties": [
@@ -340,6 +376,16 @@
           "type": "phone",
           "required": true,
           "unique": "all"
+        },
+        {
+          "friendly_name": "Require password change",
+          "property_name": "require_password_change",
+          "type": "select_one",
+          "required": false,
+          "parameter": {
+            "yes": "Yes",
+            "false": "No"
+          }
         }
       ]
     }
