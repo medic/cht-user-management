@@ -304,7 +304,7 @@
           "required": false,
           "parameter": {
             "yes": "Yes",
-            "false": "No"
+            "no": "No"
           }
         }
       ]
@@ -384,7 +384,7 @@
           "required": false,
           "parameter": {
             "yes": "Yes",
-            "false": "No"
+            "no": "No"
           }
         }
       ]

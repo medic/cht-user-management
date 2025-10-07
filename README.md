@@ -127,7 +127,7 @@ This can be configured by adding this to your contact properties
       "required": false,
       "parameter": {
         "yes": "Yes",
-        "false": "No"
+        "no": "No"
       }
     }
   ]
