@@ -1,3 +1,10 @@
+## [2.4.1](https://github.com/medic/cht-user-management/compare/v2.4.0...v2.4.1) (2025-10-09)
+
+
+### Bug Fixes
+
+* **#314:** add option to disable password reset ([#316](https://github.com/medic/cht-user-management/issues/316)) ([d49590f](https://github.com/medic/cht-user-management/commit/d49590ffea5be739d4f169d6aac9414c7d6998af)), closes [#314](https://github.com/medic/cht-user-management/issues/314)
+
 # [2.4.0](https://github.com/medic/cht-user-management/compare/v2.3.0...v2.4.0) (2025-09-01)
 
 
