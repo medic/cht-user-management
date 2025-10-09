@@ -9,6 +9,7 @@ export class UserPayload {
   public fullname: string;
   public phone: string;
   public roles: string[];
+  public password_change_required: boolean;
 
   constructor(place: Place, placeId: string | string[], contactId: string) {
     this.username = place.generateUsername();
@@ -18,6 +19,7 @@ export class UserPayload {
     this.contact = contactId;
     this.fullname = place.contact.name;
     this.phone = place.contact.properties.phone?.formatted; // best guess
+    this.password_change_required = place.contact.properties.require_password_change?.formatted === 'yes';
   }
 
   public regeneratePassword(): void {
@@ -26,7 +28,7 @@ export class UserPayload {
 
   public makeUsernameMoreComplex(): void {
     const randomNumber = crypto.randomInt(0, 100);
-    this.username =  `${this.username}${randomNumber.toString()}`;
+    this.username = `${this.username}${randomNumber.toString()}`;
   }
 
   private generatePassword(): string {

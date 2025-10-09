@@ -112,6 +112,28 @@ place | Has the attributes from `place_properties.property_name`
 contact | Has the attributes from `contact_properties.property_name`
 lineage | Has the attributes from `hierarchy.property_name` 
 
+#### Password reset on first login 
+
+Introduced in CHT v4.17 https://docs.communityhealthtoolkit.org/building/login/#password-reset-on-first-login
+This can be configured by adding this to your contact properties
+
+```json
+{
+  "contact_properties": [
+    {
+      "friendly_name": "Require password change",
+      "property_name": "require_password_change",
+      "type": "select_one",
+      "required": false,
+      "parameter": {
+        "yes": "Yes",
+        "no": "No"
+      }
+    }
+  ]
+}
+```
+
 ### Deployment
 This tool is available via Docker by running `docker compose up`. Set the [Environment Variables](#environment-variables).
 
