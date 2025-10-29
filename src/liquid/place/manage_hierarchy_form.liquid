@@ -3,7 +3,7 @@
   autocomplete="off"
   hx-post="/manage-hierarchy"
   hx-target="this"
-  hx-on::after-request="handleHierarchyFormResponse(event)"
+  hx-on::after-request="_paq.push(['trackEvent', 'Confirm', '{{op}}']); handleHierarchyFormResponse(event);"
 >
   {% render 'components/manage_hierarchy_form_content',
     op: op,

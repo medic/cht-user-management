@@ -11,6 +11,7 @@
       type="search"
       class="input"
       hx-post="/search?place_id={{place.id}}&type={{ type }}&op={{op}}&level={{ hierarchy.level }}&prefix={{ prefix }}"
+      hx-on::after-request="_paq.push(['trackEvent', 'Search', 'typing', '{{type}}']);"
       hx-vals=""
       placeholder="start typing to see suggestions"
       hx-trigger="keyup changed delay:200ms, search"
@@ -31,6 +32,7 @@
         id="refresh_{{hierarchy.level}}"
         class="icon is-right search-clear-cache-icon" 
         hx-post="/search?place_id={{place.id}}&type={{ type }}&op={{op}}&level={{ hierarchy.level }}&prefix={{ prefix }}&clear_cache=1"
+        hx-on::after-request="_paq.push(['trackEvent', 'Search', 'bust cache', '{{type}}']);"
         hx-target="#search_results_{{ property_name }}"
         hx-swap="innerHTML"
         hx-indicator="#refresh_{{hierarchy.level}}">
