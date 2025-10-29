@@ -123,7 +123,7 @@ describe('services/place-factory.ts', () => {
 
     const singleCsvBuffer = fs.readFileSync('./test/single-replace.csv');
     const chpType = Config.getContactType('d_community_health_volunteer_area');
-    
+
     const places: Place[] = await PlaceFactory.createFromCsv(singleCsvBuffer, chpType, sessionCache, chtApi);
     expect(places).to.have.property('length', 1);
 
@@ -131,7 +131,7 @@ describe('services/place-factory.ts', () => {
     expect(successfulPlace).to.deep.nested.include({
       name: 'Sally Area',
       'contact.properties.name.formatted': 'Sally',
-      'contact.properties.phone.formatted': '0712 345678',
+      'contact.properties.phone.formatted': '+254712345678',
       creationDetails: {},
       'properties.name.formatted': 'Sally Area',
       'hierarchyProperties.CHU.original': 'chepalungu',
@@ -183,7 +183,7 @@ describe('services/place-factory.ts', () => {
 
   it('ambiguous parent resolves if only one has the replacement', async () => {
     const { parentDoc, sessionCache, contactType, fakeFormData, chtApi } = mockScenario();
-    
+
     const toReplace: ChtDoc = {
       _id: 'id-replace',
       name: 'to-replace',
@@ -230,7 +230,7 @@ describe('services/place-factory.ts', () => {
 
     chtApi.getPlacesWithType
       .onFirstCall().resolves([greatParent, ambiguous])
-      .onSecondCall().resolves([parentDoc, ])
+      .onSecondCall().resolves([parentDoc,])
       .onThirdCall().resolves([]);
 
     const place: Place = await PlaceFactory.createOne(fakeFormData, contactType, sessionCache, chtApi);
@@ -241,13 +241,13 @@ describe('services/place-factory.ts', () => {
 
   it('ambiguous parent disambiguated by grandparent', async () => {
     const { parentDoc, sessionCache, contactType, fakeFormData, chtApi } = mockScenario();
-    
+
     const grandParent: ChtDoc = {
       _id: 'id-grandparent',
       name: 'grand-parent',
     };
     fakeFormData.hierarchy_GRANDPARENT = grandParent.name;
-    
+
     const ambiguous: ChtDoc = {
       ...parentDoc,
       _id: 'id-ambiguous',
@@ -268,7 +268,7 @@ describe('services/place-factory.ts', () => {
 
   it('#91 - no result for optional level in hierarchy causes validation error', async () => {
     const { parentDoc, sessionCache, contactType, fakeFormData, chtApi } = mockScenario();
-    
+
     const grandParent: ChtDoc = {
       _id: 'id-grandparent',
       name: 'grand-parent',
@@ -288,7 +288,7 @@ describe('services/place-factory.ts', () => {
 
   it('hierarchy resolution can be resolved by editing to blank', async () => {
     const { parentDoc, sessionCache, contactType, fakeFormData, chtApi } = mockScenario();
-    
+
     const grandParent: ChtDoc = {
       _id: 'id-grandparent',
       name: 'grand-parent',
@@ -311,7 +311,7 @@ describe('services/place-factory.ts', () => {
 
   it('ambiguous parent disambiguated by greatgrandparent', async () => {
     const { parentDoc, sessionCache, contactType, fakeFormData, chtApi } = mockScenario();
-    
+
     const greatParent: ChtDoc = {
       _id: 'id-great-grandparent',
       name: 'great-grand-parent',
@@ -323,7 +323,7 @@ describe('services/place-factory.ts', () => {
       required: false,
     };
     fakeFormData.hierarchy_GREATGRANDPARENT = greatParent.name;
-    
+
     const ambiguous: ChtDoc = {
       ...parentDoc,
       _id: 'id-ambiguous',
@@ -370,7 +370,7 @@ describe('services/place-factory.ts', () => {
 
   it('replacement place not under parent is invalid', async () => {
     const { parentDoc, sessionCache, contactType, fakeFormData, chtApi } = mockScenario();
-    
+
     const toReplace: ChtDoc = {
       _id: 'id-replace',
       name: 'to-replace',
@@ -387,7 +387,7 @@ describe('services/place-factory.ts', () => {
     expect(place.resolvedHierarchy[1]?.id).to.eq('parent-id');
     expect(place.resolvedHierarchy[0]).to.eq(RemotePlaceResolver.NoResult);
   });
-  
+
   it('place not under users facility is invalid', async () => {
     const { parentDoc, sessionCache, contactType, parentContactType, fakeFormData, chtApi } = mockScenario();
     const parent1 = mockParentPlace(parentContactType, fakeFormData.hierarchy_PARENT);
@@ -517,13 +517,13 @@ it('#165 - create a place when generated property is required', async () => {
 it('create multiple places with single contact', async () => {
   const { sessionCache, contactType, fakeFormData, chtApi } = mockScenario();
   const placeCount = 3;
-  const formData = {...fakeFormData, ...mockGroupedFormData(contactType, placeCount)};
+  const formData = { ...fakeFormData, ...mockGroupedFormData(contactType, placeCount) };
   const places = await PlaceFactory.createManyWithSingleUser(formData, contactType, sessionCache, chtApi);
   expect(places).lengthOf(placeCount);
   const contact = places[0].contact.id;
   for (let i = 0; i < placeCount; i++) {
     const place = places[i];
-    expect(place.name).equals(`Name${i}`); 
+    expect(place.name).equals(`Name${i}`);
     expect(place.validationErrors).to.be.empty;
     expect(place.contact.id).equals(contact);
     expect(place.resolvedHierarchy[1]?.id).to.eq('parent-id');
@@ -559,7 +559,7 @@ function mockScenario() {
     createPlace: sinon.stub().resolves({ placeId: 'created-place-id', contactId: 'created-contact-id' }),
     createUser: sinon.stub().resolves(),
   };
-  const fakeFormData:any = {
+  const fakeFormData: any = {
     place_name: 'place',
     place_prop: 'foo',
     hierarchy_PARENT: parentDoc.name,
@@ -568,7 +568,7 @@ function mockScenario() {
   const parentContactType = mockValidContactType('string', undefined);
   parentContactType.name = contactType.hierarchy[0].contact_type;
 
-  return { 
+  return {
     parentDoc,
     sessionCache,
     fakeFormData,
