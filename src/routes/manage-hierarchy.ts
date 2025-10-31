@@ -20,6 +20,7 @@ export default async function sessionCache(fastify: FastifyInstance) {
       contactType,
       session: req.chtSession,
       ...hierarchyViewModel(params.action, contactType),
+      MATOMO_HOST: process.env.MATOMO_HOST
     };
 
     return resp.view('src/liquid/app/view.liquid', tmplData);

@@ -38,6 +38,7 @@ export default async function addPlace(fastify: FastifyInstance) {
       contactType,
       contactTypes,
       userRoleProperty: Config.getUserRoleConfig(contactType),
+      MATOMO_HOST: process.env.MATOMO_HOST
     };
 
     return resp.view('src/liquid/app/view.liquid', tmplData);
@@ -139,6 +140,7 @@ export default async function addPlace(fastify: FastifyInstance) {
       data,
       errors: transformedErrors,
       userRoleProperty: Config.getUserRoleConfig(place.type),
+      MATOMO_HOST: process.env.MATOMO_HOST
     };
 
     resp.header('HX-Push-Url', `/place/edit/${id}`);
