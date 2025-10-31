@@ -86,6 +86,7 @@ export default async function sessionCache(fastify: FastifyInstance) {
       logo: Config.getLogoBase64(),
       session: req.chtSession,
       contactTypes,
+      MATOMO_HOST: process.env.MATOMO_HOST,
       users: grouped
     };
 

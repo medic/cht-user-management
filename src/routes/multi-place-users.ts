@@ -7,36 +7,37 @@ import Validation from '../validation';
 import crypto from 'crypto';
 
 export default async function newHandler(fastify: FastifyInstance) {
-  
+
   fastify.get('/new', async (req, resp) => {
     const { place_type, contact } = req.query as any;
     const contactType = Config.getContactType(place_type);
     const contactTypes = Config.contactTypes();
     const sessionCache: SessionCache = req.sessionCache;
-    
+
     const shared = {
       hierarchy: contactType.hierarchy,
       contactType,
       logo: Config.getLogoBase64(),
       show_place_form: false,
       session: req.chtSession,
+      MATOMO_HOST: process.env.MATOMO_HOST,
       contactTypes
     };
 
     if (contact) {
       const placeData = sessionCache.getPlaces({ type: contactType.name, contactId: contact }).find(p => p !== undefined)?.asFormData('hierarchy_');
       const placeFormData = {} as any;
-      Object.keys(placeData).filter(k => k.startsWith('contact_') || k.startsWith('hierarchy_') ).forEach(k => placeFormData[k]= placeData[k]);
+      Object.keys(placeData).filter(k => k.startsWith('contact_') || k.startsWith('hierarchy_')).forEach(k => placeFormData[k] = placeData[k]);
       const data = {
         ...shared,
         data: placeFormData,
         show_place_form: true,
-        contact_id: contact 
+        contact_id: contact
       };
       return resp.view('src/liquid/new/index.liquid', data);
     }
 
-    const data = { ...shared  };
+    const data = { ...shared };
     return resp.view('src/liquid/new/index.liquid', data);
   });
 
@@ -46,13 +47,13 @@ export default async function newHandler(fastify: FastifyInstance) {
     const contactType = Config.getContactType(place_type);
     const chtApi = new ChtApi(req.chtSession);
     const sessionCache: SessionCache = req.sessionCache;
-    
-    await PlaceFactory.createManyWithSingleUser(req.body as {[key:string]:string}, contactType, sessionCache, chtApi, contact);
-    
+
+    await PlaceFactory.createManyWithSingleUser(req.body as { [key: string]: string }, contactType, sessionCache, chtApi, contact);
+
     if (another) {
       resp.header('HX-Redirect', `/new?place_type=${place_type}`);
     } else {
-      resp.header('HX-Redirect', `/`); 
+      resp.header('HX-Redirect', `/`);
     }
     return;
   });
@@ -69,10 +70,10 @@ export default async function newHandler(fastify: FastifyInstance) {
   fastify.post('/place_form', async (req, resp) => {
     const { place_type } = req.query as any;
     const contactType = Config.getContactType(place_type);
-    const formData = req.body as { [key:string]: string };
-   
-    const errors: { [key:string]: string } = {};
-    const placeData: { [key:string]: string } = {};
+    const formData = req.body as { [key: string]: string };
+
+    const errors: { [key: string]: string } = {};
+    const placeData: { [key: string]: string } = {};
     contactType.place_properties.forEach(prop => {
       const validator = Validation.getValidatorForType(prop.type);
       const valid = validator?.isValid(formData['place_' + prop.property_name], prop);
@@ -98,31 +99,32 @@ export default async function newHandler(fastify: FastifyInstance) {
       },
     });
   });
-  
-  fastify.post('/new/part/delete/:id', async () => {});
+
+  fastify.post('/new/part/delete/:id', async () => { });
 
   fastify.get('/new/table', async (req, resp) => {
     const { contact } = req.query as any;
     const sessionCache: SessionCache = req.sessionCache;
     const places = sessionCache.getPlaces({ contactId: contact });
     return resp.view('src/liquid/new/place_list.liquid', {
-      contactType: { 
-        ...places[0].type, 
-        hierarchy: Config.getHierarchyWithReplacement(places[0].type, 'desc') },
+      contactType: {
+        ...places[0].type,
+        hierarchy: Config.getHierarchyWithReplacement(places[0].type, 'desc')
+      },
       places,
       can_edit: !places.find(p => p.creationDetails.username)
     });
   });
 
   fastify.get('/edit/contact/:id', async (req, resp) => {
-    const { id } =  req.params as any;
+    const { id } = req.params as any;
     const sessionCache: SessionCache = req.sessionCache;
     const contactTypes = Config.contactTypes();
-    const place = sessionCache.getPlaces({contactId: id}).find(p => p !== undefined);
+    const place = sessionCache.getPlaces({ contactId: id }).find(p => p !== undefined);
     if (!place) {
       throw new Error('could not find place');
     }
-    
+
     const data = place.asFormData('hierarchy_');
     return resp.view('src/liquid/edit/contact/index.liquid', {
       logo: Config.getLogoBase64(),
@@ -131,17 +133,18 @@ export default async function newHandler(fastify: FastifyInstance) {
       contact_id: place.contact.id,
       data,
       hierarchy: place.type.hierarchy,
+      MATOMO_HOST: process.env.MATOMO_HOST,
       contactTypes
     });
   });
 
 
   fastify.put('/contact/:id', async (req, resp) => {
-    const { id } =  req.params as any;
-    const body = req.body as {[key:string]: string};
+    const { id } = req.params as any;
+    const body = req.body as { [key: string]: string };
     const contactType = Config.getContactType(body.place_type);
 
-    const errors = {} as {[key:string]:string};
+    const errors = {} as { [key: string]: string };
     contactType.contact_properties.forEach(prop => {
       const validator = Validation.getValidatorForType(prop.type);
       const valid = validator?.isValid(body['contact_' + prop.property_name], prop);
@@ -171,7 +174,7 @@ export default async function newHandler(fastify: FastifyInstance) {
       const placeData = { ...place.asFormData('hierarchy_'), ...body };
       await PlaceFactory.editOne(place.id, placeData, sessionCache, chtApi);
     }
-    
+
     resp.header('HX-Redirect', `/`);
     return;
   });
