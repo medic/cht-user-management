@@ -20,6 +20,7 @@ export type RemotePlace = {
   ambiguities?: RemotePlace[];
   placeType: string;
   uniquePlaceValues: FormattedPropertyCollection;
+  doc: any;
 
   // these are expensive to fetch on remote places; but are available on staged places
   uniqueContactValues?: FormattedPropertyCollection;
@@ -107,6 +108,7 @@ export default class RemotePlaceCache {
       placeType: hierarchyLevel.contact_type,
       lineage: this.extractLineage(doc),
       uniquePlaceValues: uniqueKeyStringValues,
+      doc,
       type: 'remote',
     };
   }

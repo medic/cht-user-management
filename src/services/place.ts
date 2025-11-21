@@ -189,6 +189,7 @@ export default class Place {
       uniquePlaceValues: this.getUniqueKeys(this.properties, this.type.place_properties),
       uniqueContactValues: this.getUniqueKeys(this.contact.properties, this.type.contact_properties),
       stagedPlace: this,
+      doc: {}, // ????
       lineage: this.buildLineage(),
     };
   }

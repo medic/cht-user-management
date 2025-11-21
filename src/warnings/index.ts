@@ -22,17 +22,18 @@ export interface IWarningClassifier {
 
 export default class WarningSystem {
   public static async setWarnings(contactType: ContactType, chtApi: ChtApi, sessionCache: SessionCache): Promise<void> {
-    const allRemotePlaces = await RemotePlaceCache.getRemotePlaces(chtApi, contactType);
-    const remotePlacesWithType = allRemotePlaces.filter(remotePlace => remotePlace.placeType === contactType.name);
-    const localPlacesWithType = sessionCache.getPlaces({ type: contactType.name });
+    // THIS CODE IS SPENDING ETERNITY FOR NAIROBI DATA
+    // const allRemotePlaces = await RemotePlaceCache.getRemotePlaces(chtApi, contactType);
+    // const remotePlacesWithType = allRemotePlaces.filter(remotePlace => remotePlace.placeType === contactType.name);
+    // const localPlacesWithType = sessionCache.getPlaces({ type: contactType.name });
 
-    localPlacesWithType.forEach(place => place.warnings = []);
+    // localPlacesWithType.forEach(place => place.warnings = []);
 
-    const warningClassifiers = WarningSystem.createClassifiers(contactType);
-    const warnings = WarningSystem.runClassifiers(warningClassifiers, remotePlacesWithType, localPlacesWithType);
-    warnings.forEach(warning => {
-      warning.place.warnings.push(warning.warningString);
-    });
+    // const warningClassifiers = WarningSystem.createClassifiers(contactType);
+    // const warnings = WarningSystem.runClassifiers(warningClassifiers, remotePlacesWithType, localPlacesWithType);
+    // warnings.forEach(warning => {
+    //   warning.place.warnings.push(warning.warningString);
+    // });
   }
 
   private static createClassifiers(contactType: ContactType): IWarningClassifier[] {

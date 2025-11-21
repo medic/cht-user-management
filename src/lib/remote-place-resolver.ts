@@ -19,6 +19,7 @@ export default class RemotePlaceResolver {
     name: new UnvalidatedPropertyValue('Place Not Found'),
     placeType: 'invalid',
     type: 'invalid',
+    doc: {},
     uniquePlaceValues: {},
     lineage: []
   };
@@ -28,6 +29,7 @@ export default class RemotePlaceResolver {
     name: new UnvalidatedPropertyValue('multiple places'),
     placeType: 'invalid',
     type: 'invalid',
+    doc: {},
     uniquePlaceValues: {},
     lineage: []
   };
