@@ -27,13 +27,13 @@ const scenarios: Scenario[] = [
   { type: 'string', prop: 'Université ', isValid: true, formatted: 'Université' },
   { type: 'string', prop: `Infirmière d'Etat`, isValid: true, formatted: `Infirmière d'Etat` },
   { type: 'string', prop: '', isValid: false, formatted: '', error: 'Required' },
-  
+
   { type: 'phone', prop: undefined, isValid: false, error: 'Required', formatted: '' },
-  { type: 'phone', prop: '+254712345678', isValid: true, formatted: '0712 345678', propertyParameter: 'KE' },
-  { type: 'phone', prop: '712345678', isValid: true, formatted: '0712 345678', propertyParameter: 'KE' },
-  { type: 'phone', prop: '+254712345678', isValid: false, formatted: '0712 345678', propertyParameter: 'UG', error: 'Not a valid' },
-  { type: 'phone', prop: '+17058772274', isValid: false, formatted: '(705) 877-2274', propertyParameter: 'KE', error: 'KE' },
-  
+  { type: 'phone', prop: '0712345678', isValid: true, formatted: '+254712345678', propertyParameter: 'KE' },
+  { type: 'phone', prop: '712345678', isValid: true, formatted: '+254712345678', propertyParameter: 'KE' },
+  { type: 'phone', prop: '+255712345678', isValid: false, formatted: '+255712345678', propertyParameter: 'UG', error: 'Not a valid' },
+  { type: 'phone', prop: '(705) 877-2274', isValid: false, formatted: '+17058772274', propertyParameter: 'US', error: 'US' },
+
   { type: 'regex', prop: undefined, isValid: false, error: 'Required', formatted: '' },
   { type: 'regex', propertyParameter: '^\\d{6}$', prop: '123456', isValid: true },
   { type: 'regex', propertyParameter: '^\\d{6}$', prop: ' 123456 *&%', isValid: true, formatted: '123456' },
@@ -41,7 +41,7 @@ const scenarios: Scenario[] = [
   { type: 'regex', propertyParameter: EMAIL_REGEX, prop: 'email@address.com', isValid: true, formatted: 'email@address.com' },
   { type: 'regex', propertyParameter: EMAIL_REGEX, prop: '.com', isValid: false, propertyErrorDescription: 'valid email address', error: 'email' },
   { type: 'regex', propertyParameter: undefined, prop: 'abc', isValid: false, error: 'missing parameter' },
-  
+
   { type: 'name', prop: undefined, isValid: false, error: 'Required', formatted: '' },
   { type: 'name', prop: 'abc', isValid: true, formatted: 'Abc' },
   { type: 'name', prop: 'a b c', isValid: true, formatted: 'A B C' },
@@ -73,7 +73,7 @@ const scenarios: Scenario[] = [
   { type: 'dob', prop: '15/2/1985', isValid: true, formatted: '1985-02-15' },
   { type: 'dob', prop: '1/2/1 985', isValid: true, formatted: '1985-02-01' },
   { type: 'dob', prop: '1/13/1985', isValid: false },
-  
+
   { type: 'select_one', prop: undefined, isValid: false, error: 'Required', formatted: '' },
   { type: 'select_one', prop: ' male', isValid: true, propertyParameter: GENDER_OPTIONS },
   { type: 'select_one', prop: 'female ', isValid: true, propertyParameter: GENDER_OPTIONS },
@@ -87,7 +87,7 @@ const scenarios: Scenario[] = [
   { type: 'select_multiple', prop: ' chocolate  strawberry', isValid: true, propertyParameter: CANDIES_OPTIONS },
   { type: 'select_multiple', prop: 'c,s', isValid: false, propertyParameter: CANDIES_OPTIONS, error: 'Invalid values' },
   { type: 'select_multiple', prop: '', isValid: false, propertyParameter: CANDIES_OPTIONS, error: 'Required' },
-  
+
   { type: 'generated', prop: 'b', propertyParameter: 'a {{ place.prop }} c', isValid: true, formatted: 'a b c' },
   { type: 'generated', prop: 'b', propertyParameter: '{{ contact.name }} ({{ lineage.PARENT }})', isValid: true, formatted: 'Contact (Parent)' },
   { type: 'generated', prop: 'b', propertyParameter: 'x {{ contact.dne }}', isValid: true, formatted: 'x ' },
@@ -119,7 +119,7 @@ describe('validation', () => {
 
   it('property with required:false can be empty', () => {
     const contactType = mockSimpleContactType('string', undefined);
-    contactType.place_properties[contactType.place_properties.length-1].required = false;
+    contactType.place_properties[contactType.place_properties.length - 1].required = false;
 
     const place = mockPlace(contactType);
     place.properties = { name: new UnvalidatedPropertyValue('name') };
@@ -200,7 +200,7 @@ describe('validation', () => {
       garbage: 'ghj',
       user_role: 'supervisor stockmanager',
     });
-    
+
     place.validate();
     expect(place.validationErrors).to.deep.eq({
       user_role: `Invalid values for property "Roles": stockmanager`
