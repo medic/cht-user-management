@@ -18,8 +18,11 @@ services:
       - CHT_DEV_URL_PORT=${CHT_DEV_URL_PORT}
       - REDIS_HOST=${REDIS_HOST:-redis}
       - REDIS_PORT=${REDIS_PORT:-6379}
+      - ALLOW_ADMIN_LOGIN=${ALLOW_ADMIN_LOGIN}
+      - CACHE_TTL=${CACHE_TTL}
+      - MATOMO_HOST=${MATOMO_HOST}
     ports:
-      - '${EXTERNAL_PORT-3500}:${PORT:-3500}'
+      - "${EXTERNAL_PORT-3500}:${PORT:-3500}"
     restart: always
     command: npm start
     depends_on:

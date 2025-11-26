@@ -37,6 +37,7 @@ export default async function sessionCache(fastify: FastifyInstance) {
       contactType,
       contactTypes: placeData,
       directiveModel,
+      MATOMO_HOST: process.env.MATOMO_HOST
     };
 
     return resp.view('src/liquid/app/view.liquid', tmplData);
@@ -85,6 +86,7 @@ export default async function sessionCache(fastify: FastifyInstance) {
       logo: Config.getLogoBase64(),
       session: req.chtSession,
       contactTypes,
+      MATOMO_HOST: process.env.MATOMO_HOST,
       users: grouped
     };
 
