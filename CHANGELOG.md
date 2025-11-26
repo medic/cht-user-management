@@ -1,3 +1,10 @@
+## [2.4.2](https://github.com/medic/cht-user-management/compare/v2.4.1...v2.4.2) (2025-11-26)
+
+
+### Bug Fixes
+
+* **#317:** use E.164 phone number format ([ad6dd24](https://github.com/medic/cht-user-management/commit/ad6dd2471ebf0ed3584be31e6005d52fd57b0ef4)), closes [#317](https://github.com/medic/cht-user-management/issues/317)
+
 ## [2.4.1](https://github.com/medic/cht-user-management/compare/v2.4.0...v2.4.1) (2025-10-09)
 
 
