@@ -22,6 +22,8 @@ cht-user-management:
       secretName: "{{ .Release.Name }}-cht-user-management"
     - env: WORKER_PRIVATE_KEY
       secretName: "{{ .Release.Name }}-cht-user-management"
+    - env: SECRET_KEY
+      secretName: "{{ .Release.Name }}-cht-user-management"
 
   # EKS prod ELB
   ingress:
