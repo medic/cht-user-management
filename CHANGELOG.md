@@ -1,3 +1,10 @@
+# [2.6.0](https://github.com/medic/cht-user-management/compare/v2.5.0...v2.6.0) (2025-12-03)
+
+
+### Features
+
+* add SECRET_KEY to helm values ([#321](https://github.com/medic/cht-user-management/issues/321)) ([4dc61f7](https://github.com/medic/cht-user-management/commit/4dc61f7f7a6bb8c53d7b6eb62b45eaea079d8e68))
+
 # [2.5.0](https://github.com/medic/cht-user-management/compare/v2.4.2...v2.5.0) (2025-11-26)
 
 
