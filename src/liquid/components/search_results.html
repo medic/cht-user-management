@@ -2,8 +2,9 @@
   <div class="dropdown-menu" id="dropdown-menu" role="menu">
     <div class="dropdown-content">
       {% for searchResult in searchResults %}
+        <div class="dropdown-item is-flex is-flex-direction-column">
         <a
-          class="dropdown-item"
+          class="is-size-6 has-text-weight-medium"
           hx-post="/search/select?place_id={{place.id}}&result_name={{searchResult.name}}&level={{level}}&op={{op}}&prefix={{ prefix }}"
           hx-target="#place_form_parent"
           hx-encoding="application/x-www-form-urlencoded"
@@ -12,10 +13,14 @@
             <span class="material-symbols-outlined">cloud_off</span>
           {% endif %}
           {{searchResult.name}} 
+          </a>
           {% if searchResult.immediateParentName != '' %}
-          <b>|</b> {{searchResult.immediateParentName}}
+            <span class="">{{searchResult.immediateParentName}}</span>
           {% endif %}
-        </a>
+        </div>
+        {% unless forloop.last %}
+        <div style="height: 1px; background: #ddd;"></div>
+        {% endunless %}
       {% endfor %}
     </div>
   </div>
