@@ -1,0 +1,41 @@
+<html>
+  <head>
+    <title>
+      Reassign
+      {{ contactType.friendly }}
+    </title>
+    <script src="/public/htmx.min.js"></script>
+    <script src="/public/sse.js"></script>
+    <script src="/public/app.js"></script>
+    <link rel="stylesheet" href="/public/bulma.min.css">
+    <link rel="stylesheet" href="/public/bulma-tooltip.min.css">
+    <link rel="stylesheet" href="/public/material-symbols.css">
+    <link rel="stylesheet" href="/public/app.css">
+  </head>
+  <script>
+    var _paq = window._paq = window._paq || [];
+    _paq.push(['trackPageView']);
+    _paq.push(['enableLinkTracking']);
+    (function() {
+      var u="{{MATOMO_HOST}}";
+      _paq.push(['setTrackerUrl', u+'matomo.php']);
+      _paq.push(['setSiteId', '1']);
+      _paq.push(['setUserId', '{{ session.username }}']);
+      _paq.push(['setDownloadExtensions', "zip"]);
+      var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0];
+      g.async=true; g.src=u+'matomo.js'; s.parentNode.insertBefore(g,s);
+    })();
+  </script>
+  <body>
+    {% render 'app/nav.liquid',
+      op: op,
+      logo: logo,
+      contactTypes: contactTypes,
+      showListControls: showListControls,
+      session: session
+    %}
+    <div class="container is-max-desktop px-4" hx-ext="sse" sse-connect="/events/connection">
+      {% render 'reassign/form.liquid', contactType: contactType, hierarchy: hierarchy, data: data, session: session %}
+    </div>
+  </body>
+</html>

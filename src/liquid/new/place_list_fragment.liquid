@@ -1,0 +1,20 @@
+{% render 'new/new_place_btn.liquid' with contactType.name as place_type %}
+<div
+  id="div_{{item.id}}"
+  class="p-2 is-flex is-justify-content-space-between"
+  style="border-bottom: 1px solid #d3d3d3;"
+>
+  <div class="is-flex is-flex-direction-column is-justify-content-center">
+    <p class="has-text-weight-semibold">{{ item.name }}</p>
+  </div>
+  <button
+    class="button is-small"
+    type="button"
+    hx-post="new/part/delete/{{item.id}}"
+    hx-target="#div_{{ item.id }}"
+    hx-swap="outerHTML"
+  >
+    <span class="material-symbols-outlined sm" data-tooltip="Remove">delete</span>
+  </button>
+  <input name="list_{{ item.id }}" type="text" value="{{ item.value }}" hidden>
+</div>

@@ -1,6 +1,6 @@
 {
   "name": "cht-user-management",
-  "version": "2.1.5",
+  "version": "2.6.0",
   "main": "dist/index.js",
   "dependencies": {
     "@bull-board/api": "^5.17.0",
@@ -22,7 +22,7 @@
     "@types/uuid": "^9.0.6",
     "axios": "^1.5.1",
     "axios-retry": "^4.0.0",
-    "bullmq": "^5.7.6",
+    "bullmq": "^5.41.9",
     "cht-conf": "github:medic/cht-conf#653-merge-primaries",
     "csv": "^6.3.5",
     "dotenv": "^16.3.1",
@@ -37,6 +37,7 @@
     "liquidjs": "^10.9.2",
     "lodash": "^4.17.21",
     "luxon": "^3.4.4",
+    "node-cache": "^5.1.2",
     "pino-pretty": "^10.2.3",
     "ts-node": "^10.9.2",
     "typescript": "^5.2.2",
@@ -44,6 +45,10 @@
   },
   "devDependencies": {
     "@medic/eslint-config": "^1.2.0",
+    "@commitlint/cli": "^19.8.1",
+    "@commitlint/config-conventional": "^19.8.1",
+    "@semantic-release/changelog": "^6.0.3",
+    "@semantic-release/git": "^10.0.1",
     "@types/chai": "^4.3.11",
     "@types/chai-as-promised": "^7.1.8",
     "@types/commander": "^2.12.2",
@@ -61,6 +66,7 @@
     "eslint-plugin-promise": "^6.1.1",
     "mocha": "^10.2.0",
     "rewire": "^7.0.0",
+    "semantic-release": "^24.2.5",
     "sinon": "^17.0.1",
     "ts-mocha": "^10.0.0",
     "tsc-watch": "^6.0.4"
@@ -78,7 +84,8 @@
     "start:worker": "node dist/worker/main.js",
     "docker-start-redis": "npm run docker-stop-redis && docker run -d --rm --name test-redis -p 6363:6379 redis && sh test/scripts/wait_for_redis.sh 6363",
     "docker-stop-redis": "docker stop test-redis || true",
-    "integration-test": "npm run docker-start-redis && npx ts-mocha test/integration/{,**}/*.spec.ts && npm run docker-stop-redis"
+    "integration-test": "npm run docker-start-redis && npx ts-mocha test/integration/{,**}/*.spec.ts && npm run docker-stop-redis",
+    "semantic-release": "semantic-release"
   },
   "repository": {
     "type": "git",

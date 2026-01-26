@@ -1,0 +1,29 @@
+<div class="control">
+  <input
+    name="{{ prop_name }}"
+    {% if isInYears %}
+      type="text"
+    {% else %}
+      type="date"
+    {% endif %}
+    class="input"
+    {% if data[prop_name] %}
+      value="{{ data[prop_name] }}"
+    {% endif %}
+  >
+</div>
+
+<div class="field">
+  <div class="control">
+    <input
+      type="checkbox"
+      name="option_dob_unknown"
+      hx-target="#div_{{prefix}}{{prop.property_name}}"
+      hx-post="/place/dob?place_type={{place_type}}&prefix={{prefix}}&prop_type={{prop.type}}"
+      {% if isInYears %}
+        checked
+      {% endif %}
+    >
+    <label>Date of birth unknown</label>
+  </div>
+</div>

@@ -2,24 +2,17 @@ import { FastifyInstance } from 'fastify';
 
 import { Config } from '../config';
 import { ChtApi } from '../lib/cht-api';
-import { RemotePlace } from '../lib/remote-place-cache';
+import RemotePlaceCache, { RemotePlace } from '../lib/remote-place-cache';
 import SessionCache from '../services/session-cache';
 import SearchLib from '../lib/search';
-
-import { HIERARCHY_ACTIONS } from '../lib/manage-hierarchy';
-import { hierarchyViewModel } from '../services/hierarchy-view-model';
 
 export default async function place(fastify: FastifyInstance) {
   // returns search results dropdown
   fastify.post('/search', async (req, resp) => {
     const queryParams: any = req.query;
-    const {
-      op,
-      place_id: placeId,
-      type,
-      prefix: dataPrefix
-    } = queryParams;
+    const { op, place_id: placeId, type, prefix: dataPrefix } = queryParams;
     const level = parseInt(queryParams.level);
+    const shouldClearCache = parseInt(queryParams.clear_cache) === 1;
 
     const data: any = req.body;
 
@@ -31,15 +24,30 @@ export default async function place(fastify: FastifyInstance) {
     }
 
     const chtApi = new ChtApi(req.chtSession);
-    const hierarchyLevel = Config.getHierarchyWithReplacement(contactType).find(hierarchy => hierarchy.level === level);
+    const hierarchyLevel = Config.getHierarchyWithReplacement(contactType).find(
+      (hierarchy) => hierarchy.level === level
+    );
     if (!hierarchyLevel) {
       throw Error(`not hierarchy constraint at ${level}`);
     }
-    const searchResults: RemotePlace[] = await SearchLib.search(contactType, data, dataPrefix, hierarchyLevel, chtApi, sessionCache);
 
-    return resp.view('src/liquid/components/search_results.html', {
+    if (shouldClearCache) {
+      RemotePlaceCache.clear(chtApi, hierarchyLevel.contact_type);
+    }
+
+    const searchResults: RemotePlace[] = await SearchLib.search(
+      contactType,
+      data,
+      dataPrefix,
+      hierarchyLevel,
+      chtApi,
+      sessionCache
+    );
+
+    return resp.view('src/liquid/components/search_results.liquid', {
       op,
       place,
+      div: `search_container_${dataPrefix}${hierarchyLevel.property_name}`,
       prefix: dataPrefix,
       searchResults,
       level,
@@ -51,51 +59,27 @@ export default async function place(fastify: FastifyInstance) {
     const data: any = req.body;
     const queryParams: any = req.query;
     const {
-      op = 'new',
-      place_id: placeId,
+      op,
       result_name: resultName,
+      place_id,
       prefix: dataPrefix,
     } = queryParams;
     const level = parseInt(queryParams.level);
-
-    const sessionCache: SessionCache = req.sessionCache;
-    const place = sessionCache.getPlace(placeId);
-    if (!resultName) {
-      throw new Error('result must be known');
-    }
-
     const contactType = Config.getContactType(data.place_type);
-    let moveModel;
-    if (HIERARCHY_ACTIONS.includes(op)) {
-      moveModel = hierarchyViewModel(op, contactType);
-    }
-
-    const hierarchyLevel =  Config.getHierarchyWithReplacement(contactType).find(hierarchy => hierarchy.level === level);
+    const hierarchyLevel = Config.getHierarchyWithReplacement(contactType).find(
+      (hierarchy) => hierarchy.level === level
+    );
     if (!hierarchyLevel) {
       throw Error(`not hierarchy constraint at ${level}`);
     }
     data[`${dataPrefix}${hierarchyLevel.property_name}`] = resultName;
-
-    const tmplData: any = {
+    data[`${dataPrefix}${hierarchyLevel.property_name}_id`] = place_id;
+    return resp.view('src/liquid/components/search_input.liquid', {
       op,
+      type: contactType.name,
+      prefix: dataPrefix,
+      hierarchy: hierarchyLevel,
       data,
-      place,
-      contactType,
-      hierarchy: Config.getHierarchyWithReplacement(contactType, 'desc'),
-      userRoleProperty: Config.getUserRoleConfig(contactType),
-      ...moveModel,
-    };
-
-    if (op === 'edit') {
-      if (!place) {
-        throw new Error('unknown place while editing');
-      }
-
-      tmplData.backend = `/place/edit/${place.id}`;
-    } else if (HIERARCHY_ACTIONS.includes(op)) {
-      tmplData.backend = `/manage-hierarchy`;
-    }
-
-    return resp.view('src/liquid/app/form_switch.html', tmplData);
+    });
   });
 }

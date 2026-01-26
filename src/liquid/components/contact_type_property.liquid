@@ -1,0 +1,48 @@
+{% if prop.type != 'generated' %}
+  {% capture prop_name %}{{ prefix }}{{prop.property_name}}{% endcapture %}
+
+  <div id="div_{{ prefix }}{{prop.property_name}}" class="field">
+    <label class="label">
+      {% if data.option_dob_unknown %}
+        Age in Years
+      {% else %}
+        {{ prop.friendly_name }}
+        {% if prop.required %}*{% endif %}
+      {% endif %}
+    </label>
+    {% if prop.type == 'dob' %}
+      {% render 'components/contact_type_dob.liquid',
+        prop_name: prop_name,
+        isInYears: data.option_dob_unknown,
+        place_type: place_type,
+        prefix: prefix,
+        prop: prop,
+        data: data
+      %}
+    {% else %}
+      <div class="control">
+        {% if prop.type == 'select_one' or prop.type == 'select_multiple' %}
+          {% render 'components/contact_type_select.liquid', prop_name: prop_name, prop: prop, data: data %}
+        {% else %}
+          <input
+            name="{{ prop_name }}"
+            type="{% if prop.type == 'dob' %}date{% else %}text{% endif %}"
+            class="input"
+            {% if false and prop.type == 'regex' %}
+              pattern="{{ prop.parameter }}"
+            {% endif %}
+            {% if data[prop_name] %}
+              value="{{ data[prop_name] }}"
+            {% endif %}
+            {% if prop.required == true %}
+              required
+            {% endif %}
+            {% if disabled == true %}
+              disabled
+            {% endif %}
+          >
+        {% endif %}
+      </div>
+    {% endif %}
+  </div>
+{% endif %}

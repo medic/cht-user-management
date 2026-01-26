@@ -22,7 +22,6 @@ As each deployment needs its own configuration directory, DNS entry and deployme
 
 | Name         | Config           | Values                | EKS-Deployment | URL |
 |--------------|------------------|-----------------------|--              |--   |   
-| MoH Kenya    | `users-chis-ke`  | `users-chis-ke.yaml`  | `users-chis-ke-cht-user-management` | users-chis-ke.app.medicmobile.org | 
 | MoH Togo     | `users-chis-tg`  | `users-chis-tg.yaml`  | `users-chis-tg-cht-user-management` | users-chis-tg.app.medicmobile.org | 
 | MoH Mali CIV | `users-chis-civ` | `users-chis-civ.yaml` | `users-chis-civ-cht-user-management` | users-chis-civ.app.medicmobile.org | 
 | MoH Mali CHW | `users-chis-ml`  | `users-chis-ml.yaml`   | `users-chis-ml-cht-user-management` | users-chis-ml.app.medicmobile.org | 
@@ -49,6 +48,7 @@ helm install \
       --kube-context arn:aws:eks:eu-west-2:720541322708:cluster/prod-cht-eks \
       --namespace users-chis-prod \
       --values values/$VALUES \
+      --set cht-user-management.image.tag=$PKG_VERSION --set cht-user-management-worker.image.tag=$PKG_VERSION \
       $CONFIG medic/cht-user-management
 ```
 
@@ -61,6 +61,7 @@ helm upgrade \
       --kube-context arn:aws:eks:eu-west-2:720541322708:cluster/prod-cht-eks \
       --namespace users-chis-prod \
       --values values/$VALUES \
+      --set cht-user-management.image.tag=$PKG_VERSION --set cht-user-management-worker.image.tag=$PKG_VERSION \
       $CONFIG medic/cht-user-management
 ```
 
@@ -130,5 +131,6 @@ helm install \
       --kube-context arn:aws:eks:eu-west-2:720541322708:cluster/prod-cht-eks \
       --namespace users-chis-prod \
       --values values/$VALUES \
+      --set cht-user-management.image.tag=$PKG_VERSION --set cht-user-management-worker.image.tag=$PKG_VERSION \
       $CONFIG medic/cht-user-management
 ```

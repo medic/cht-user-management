@@ -48,6 +48,7 @@ To use the User Management Tool with your CHT project, you'll need to create a n
 `contact_types.contact_properties` | Array<ConfigProperty> | Defines the attributes which are collected and set on the user's primary contact doc. See [ConfigProperty](#ConfigProperty).
 `contact_types.deactivate_users_on_replace` | boolean | Controls what should happen to the defunct contact and user documents when a user is replaced. When `false`, the contact and user account will be deleted. When `true`, the contact will be unaltered and the user account will be assigned the role `deactivated`. This allows for account restoration.
 `contact_types.hint` | string | Provide a brief hint or description to clarify the expected input for the property.
+`contact_types.can_assign_multiple` | boolean | Requires CHT >=4.9.0. Enable support for assigning a single user to multiple places
 `logoBase64` | Image in base64 | Logo image for your project
 
 #### ConfigProperty
@@ -111,6 +112,28 @@ place | Has the attributes from `place_properties.property_name`
 contact | Has the attributes from `contact_properties.property_name`
 lineage | Has the attributes from `hierarchy.property_name` 
 
+#### Password reset on first login 
+
+Introduced in CHT v4.17 https://docs.communityhealthtoolkit.org/building/login/#password-reset-on-first-login
+This can be configured by adding this to your contact properties
+
+```json
+{
+  "contact_properties": [
+    {
+      "friendly_name": "Require password change",
+      "property_name": "require_password_change",
+      "type": "select_one",
+      "required": false,
+      "parameter": {
+        "yes": "Yes",
+        "no": "No"
+      }
+    }
+  ]
+}
+```
+
 ### Deployment
 This tool is available via Docker by running `docker compose up`. Set the [Environment Variables](#environment-variables).
 
@@ -126,17 +149,17 @@ If you don't have redis running locally, you can start it with:
 docker compose -f docker-compose.redis.yml up -d
 ```
 
-Then run:
+Run these two commands  first to ensure the `./dist` folder is properly populated  and all required packages are installed:
 
-```
-npm run dev
-```
-
-or
-
-```
+```shell
+npm ci
 npm run build
-npm start
+```
+
+Then run this to start a local dev instance and reload the app when it sees changes to local files:
+
+```shell
+npm run dev
 ```
 
 ### Docker with static code
@@ -167,15 +190,36 @@ Variable | Description | Sample
 `INTERFACE` | Interface to bind to. Leave as '0.0.0.0' for prod, suggest '127.0.0.1' for development | `127.0.0.1`
 `CHT_DEV_URL_PORT` | CHT instance when in `NODE_ENV===dev`. Needs URL and port | `192-168-1-26.local-ip.medicmobile.org:10463`
 `CHT_DEV_HTTP` |  'true' for http  'false' for https | `false`
+`ALLOW_ADMIN_LOGIN` |  Allow login for admin accounts. Defaults to true. | `true`
+`CACHE_TTL` |  Duration in seconds to cache remote contacts. Defaults to 43200 (12hrs)  | `43200`
 `REDIS_HOST` | Redis server hostname use 'redis' for docker | `redis`
 `REDIS_PORT` | Redis server port | `6379`
 `CHT_USER_MANAGEMENT_IMAGE` | docker image for cht-user-management service (local development), leave empty to use published one | `cht-user-management:local `
 `CHT_USER_MANAGEMENT_WORKER_IMAGE` | docker image for cht-user-management service (local development), leave empty to use published one | `cht-user-management-worker:local`
+`SECRET_KEY` | Hex encoded secret key used for encryption/decryption of stored credentials. | `eg. openssl rand -hex 32`
+`CREDENTIAL_LOG_TTL` | Duration in seconds to persist the credential log in redis. Defaults to 432000 (5 days). | `432000`
 
-## Publishing new docker images
+## Development
 
-Docker images are hosted on [AWS's Elastic Container Registry (ECR)](https://gallery.ecr.aws/medic/cht-user-management). To publish a new version:
+This repo has an automated release process where each feature/bug fix will be released immediately after it is merged to main.
 
-1. Update the [version string](https://github.com/medic/cht-user-management/blob/d992d5d6a911cdc21f610fa48a0ffb3e275bae0d/package.json#L3) in the `package.json`.
-2. Submit a PR and have it merged to `main`. 
-3. [Existing CI](https://github.com/medic/cht-user-management/blob/main/.github/workflows/docker-build.yml) will push an image to ECR.
+1. Create a ticket for the feature/bug fix.
+2. Submit a PR, and make sure that the PR title is clear, readable, and follows the strict commit message format described in the commit message format section below. If the PR title does not comply, automatic release will fail.
+3. Have the PR reviewed.
+4. Squash and merge the PR to main. The commit message should be the already-formatted PR title but double check it's clear, readable, and follows the strict commit message format to make sure the automatic release works as expected.
+5. Close the ticket.
+
+New docker images are published after every release and are hosted on [AWS's Elastic Container Registry (ECR)](https://gallery.ecr.aws/medic/cht-user-management). 
+
+### Commit message format
+
+The commit format should follow the convention outlined in the [CHT docs](https://docs.communityhealthtoolkit.org/contribute/code/workflow/#commit-message-format).
+Examples are provided below.
+
+| Type        | Example commit message                                                                              | Release type |
+|-------------|-----------------------------------------------------------------------------------------------------|--------------|
+| Bug fixes   | fix(#123): infinite spinner when clicking contacts tab twice                                        | patch        |
+| Performance | perf(#789): lazily loaded angular modules                                                           | patch        |
+| Features    | feat(#456): add home tab                                                                            | minor        |
+| Non-code    | chore(#123): update README                                                                          | none         |
+| Breaking    | perf(#2): remove reporting rates feature <br/> BREAKING CHANGE: reporting rates no longer supported | major        |
