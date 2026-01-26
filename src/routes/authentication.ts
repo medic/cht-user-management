@@ -16,15 +16,15 @@ const getLoginErrorMessage = (error: unknown): string => {
 
 export default async function authentication(fastify: FastifyInstance) {
   const unauthenticatedOptions = {
-    preParsing: async (req : FastifyRequest) => {
+    preParsing: async (req: FastifyRequest) => {
       req.unauthenticated = true;
     },
   };
 
   const renderAuthForm = (resp: FastifyReply, error: string) => {
-    return resp.view('src/liquid/auth/authentication_form.html', {
+    return resp.view('src/liquid/auth/authentication_form.liquid', {
       domains: Config.getDomains(),
-      error
+      error,
     });
   };
 
@@ -34,7 +34,7 @@ export default async function authentication(fastify: FastifyInstance) {
       domains: Config.getDomains(),
     };
 
-    return resp.view('src/liquid/auth/view.html', tmplData);
+    return resp.view('src/liquid/auth/view.liquid', tmplData);
   });
 
   fastify.get('/logout', unauthenticatedOptions, async (req, resp) => {
@@ -60,12 +60,15 @@ export default async function authentication(fastify: FastifyInstance) {
         signed: false,
         httpOnly: true,
         expires: Auth.cookieExpiry(),
-        secure: true
+        secure: true,
       });
 
       resp.header('HX-Redirect', '/');
-    } catch (e: any ) {
-      console.error('Login error:', e instanceof AuthError ? e.errorMessage : e);
+    } catch (e: any) {
+      console.error(
+        'Login error:',
+        e instanceof AuthError ? e.errorMessage : e
+      );
       return renderAuthForm(resp, getLoginErrorMessage(e));
     }
   });
@@ -78,4 +81,3 @@ export default async function authentication(fastify: FastifyInstance) {
     return appVersion;
   });
 }
-

@@ -1,8 +1,8 @@
 name: Docker build and publish
 
 on:
-  push:
-    branches: main
+  release:
+    types: [published]
 
 env:
   ECR_REPO: 'public.ecr.aws/s5s3h4s7'

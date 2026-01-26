@@ -12,13 +12,17 @@ services:
       - EXTERNAL_PORT=${EXTERNAL_PORT:-3500}
       - COOKIE_PRIVATE_KEY=${COOKIE_PRIVATE_KEY}
       - WORKER_PRIVATE_KEY=${WORKER_PRIVATE_KEY}
+      - SECRET_KEY=${SECRET_KEY}
       - CONFIG_NAME=${CONFIG_NAME}
       - CHT_DEV_HTTP=${CHT_DEV_HTTP}
       - CHT_DEV_URL_PORT=${CHT_DEV_URL_PORT}
       - REDIS_HOST=${REDIS_HOST:-redis}
       - REDIS_PORT=${REDIS_PORT:-6379}
+      - ALLOW_ADMIN_LOGIN=${ALLOW_ADMIN_LOGIN}
+      - CACHE_TTL=${CACHE_TTL}
+      - MATOMO_HOST=${MATOMO_HOST}
     ports:
-      - '${EXTERNAL_PORT-3500}:${PORT:-3500}'
+      - "${EXTERNAL_PORT-3500}:${PORT:-3500}"
     restart: always
     command: npm start
     depends_on:

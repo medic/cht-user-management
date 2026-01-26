@@ -9,11 +9,17 @@ import view from '@fastify/view';
 import { Liquid } from 'liquidjs';
 import { FastifySSEPlugin } from 'fastify-sse-v2';
 import path from 'path';
-const metricsPlugin = require('fastify-metrics');
+import metricsPlugin from 'fastify-metrics';
 
 import Auth from './lib/authentication';
 import SessionCache from './services/session-cache';
-import { checkRedisConnection } from './config/config-worker';
+import { getChtConfQueue } from './lib/queues';
+
+const PROMETHEUS_ENDPOINT = '/metrics';
+const UNAUTHENTICATED_ENDPOINTS = [
+  '/public/*',
+  PROMETHEUS_ENDPOINT,
+];
 
 const build = (opts: FastifyServerOptions): FastifyInstance => {
   const fastify = Fastify(opts);
@@ -24,12 +30,11 @@ const build = (opts: FastifyServerOptions): FastifyInstance => {
   fastify.register(fastifyCompress);
   fastify.register(view, {
     engine: {
-      liquid: new Liquid({ 
-        extname: '.html', 
-        root: 'src/liquid', 
-        cache: process.env.NODE_ENV === 'production', 
-        jekyllInclude: true, 
-        dynamicPartials: true 
+      liquid: new Liquid({
+        extname: '.liquid',
+        root: 'src/liquid',
+        cache: process.env.NODE_ENV === 'production',
+        dynamicPartials: true
       }),
     },
   });
@@ -44,22 +49,37 @@ const build = (opts: FastifyServerOptions): FastifyInstance => {
     prefix: '/public/',
     serve: true,
   });
-  
+
   fastify.register(metricsPlugin, {
-    endpoint: '/metrics',
+    endpoint: PROMETHEUS_ENDPOINT,
     routeMetrics: {
+      registeredRoutesOnly: false,
+      groupStatusCodes: false,
+      methodBlacklist: ['HEAD', 'OPTIONS', 'TRACE'],
+      invalidRouteGroup: '__unknown__',
       enabled: {
         histogram: true,
-        summary: false
+        summary: true,
       }
     }
   });
 
+  // hijack the response from fastify-metrics appending additional metrics
+  fastify.addHook('onSend', async (request, reply, payload: string) => {
+    if (request.routerPath === PROMETHEUS_ENDPOINT) {
+      const bullmqMetrics = await getChtConfQueue().bullQueue.exportPrometheusMetrics();
+      return payload + bullmqMetrics;
+    }
+  });
+
   Auth.assertEnvironmentSetup();
-  checkRedisConnection();
 
   fastify.addHook('preValidation', async (req: FastifyRequest, reply: FastifyReply) => {
-    if (req.unauthenticated || req.routeOptions.url === '/public/*' || req.routeOptions.url === '/metrics') {
+    if (req.unauthenticated) {
+      return;
+    }
+
+    if (req.routeOptions.url && UNAUTHENTICATED_ENDPOINTS.includes(req.routeOptions.url)) {
       return;
     }
 

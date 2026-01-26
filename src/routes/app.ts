@@ -2,21 +2,20 @@ import { FastifyInstance } from 'fastify';
 
 import Auth from '../lib/authentication';
 import { ChtApi } from '../lib/cht-api';
-import { Config } from '../config';
+import { Config, ContactType } from '../config';
 import DirectiveModel from '../services/directive-model';
 import RemotePlaceCache from '../lib/remote-place-cache';
 import RemotePlaceResolver from '../lib/remote-place-resolver';
 import SessionCache from '../services/session-cache';
 import { UploadManager } from '../services/upload-manager';
 import WarningSystem from '../warnings';
+import { UploadLogRecord } from '../services/upload-log';
 
 export default async function sessionCache(fastify: FastifyInstance) {
   fastify.get('/', async (req, resp) => {
     const contactTypes = Config.contactTypes();
-    const {
-      op = 'table',
-      type: placeTypeName = contactTypes[0].name,
-    } = req.query as any;
+    const { op = 'table', type: placeTypeName = contactTypes[0].name } =
+      req.query as any;
 
     const contactType = Config.getContactType(placeTypeName);
     const sessionCache: SessionCache = req.sessionCache;
@@ -32,16 +31,68 @@ export default async function sessionCache(fastify: FastifyInstance) {
     const tmplData = {
       view: 'list',
       session: req.chtSession,
+      showListControls: true,
       logo: Config.getLogoBase64(),
       op,
       contactType,
       contactTypes: placeData,
       directiveModel,
+      MATOMO_HOST: process.env.MATOMO_HOST
     };
 
-    return resp.view('src/liquid/app/view.html', tmplData);
+    return resp.view('src/liquid/app/view.liquid', tmplData);
   });
-  
+
+  fastify.get('/users/history', async (req, resp) => {
+    const contactTypes = Config.contactTypes();
+    const uploadManager: UploadManager = fastify.uploadManager;
+    const records = await uploadManager.getLog(req.chtSession);
+
+    const grouped: any[] = [];
+    let current: UploadLogRecord[] = [];
+    const processGroup = (contactType: ContactType | undefined, group: UploadLogRecord[], result: any[]) => {
+      if (!contactType) {
+        throw new Error('contact type cannot be null');
+      }
+      const columns = ['name', 'phone', contactType.friendly, ...Object.keys(group[0].hierarchy)];
+      result.push({
+        columns,
+        users: [...group.map(record => {
+          const item: { [key: string]: string } = { id: record.id, name: record.person, phone: record.phone };
+          item[`${contactType.friendly}`] = record.place;
+          Object.keys(record.hierarchy).forEach(k => {
+            item[k] = record.hierarchy[k];
+          });
+          return item;
+        })]
+      });
+    };
+
+    let currentType = records.length > 0 ? records[0].contactType : undefined;
+    for (let i = 0; i < records.length; i++) {
+      if (currentType === records[i].contactType) {
+        current.push(records[i]);
+      } else {
+        processGroup(contactTypes.find(c => c.name === currentType), current, grouped);
+        current = [records[i]];
+        currentType = records[i].contactType;
+      }
+    }
+    if (current.length > 0) {
+      processGroup(contactTypes.find(c => c.name === currentType), current, grouped);
+    }
+
+    const data = {
+      logo: Config.getLogoBase64(),
+      session: req.chtSession,
+      contactTypes,
+      MATOMO_HOST: process.env.MATOMO_HOST,
+      users: grouped
+    };
+
+    return resp.view('src/liquid/upload-log/index.liquid', data);
+  });
+
   fastify.get('/app/list', async (req, resp) => {
     const contactTypes = Config.contactTypes();
     const sessionCache: SessionCache = req.sessionCache;
@@ -49,7 +100,7 @@ export default async function sessionCache(fastify: FastifyInstance) {
     const placeData = contactTypes.map((item) => {
       return {
         ...item,
-        places: sessionCache.getPlaces({
+        places: sessionCache.getPlacesForDisplay({
           type: item.name,
           filter: directiveModel.filter,
         }),
@@ -61,7 +112,7 @@ export default async function sessionCache(fastify: FastifyInstance) {
       session: req.chtSession,
       contactTypes: placeData,
     };
-    return resp.view('src/liquid/place/list.html', tmplData);
+    return resp.view('src/liquid/place/list.liquid', tmplData);
   });
 
   fastify.post('/app/remove-all', async (req, resp) => {
@@ -77,8 +128,10 @@ export default async function sessionCache(fastify: FastifyInstance) {
     RemotePlaceCache.clear(chtApi);
 
     const places = sessionCache.getPlaces({ created: false });
-    await RemotePlaceResolver.resolve(places, sessionCache, chtApi, { fuzz: true });
-    places.forEach(p => p.validate());
+    await RemotePlaceResolver.resolve(places, sessionCache, chtApi, {
+      fuzz: true,
+    });
+    places.forEach((p) => p.validate());
 
     for (const contactType of Config.contactTypes()) {
       await WarningSystem.setWarnings(contactType, chtApi, sessionCache);
@@ -95,10 +148,15 @@ export default async function sessionCache(fastify: FastifyInstance) {
     const directiveModel = new DirectiveModel(sessionCache, req.cookies.filter);
 
     const chtApi = new ChtApi(req.chtSession);
-    uploadManager.doUpload(sessionCache.getPlaces(), chtApi, ignoreWarnings === 'true');
+    uploadManager.doUpload(
+      sessionCache.getPlaces(),
+      chtApi,
+      ignoreWarnings === 'true'
+    );
 
-    return resp.view('src/liquid/place/directive.html', {
-      directiveModel
+    return resp.view('src/liquid/place/directive.liquid', {
+      session: req.chtSession,
+      directiveModel,
     });
   });
 
@@ -111,9 +169,8 @@ export default async function sessionCache(fastify: FastifyInstance) {
       expires: Auth.cookieExpiry(),
       path: '/',
       secure: true,
-      
     });
-    
+
     resp.header('HX-Redirect', '/');
   });
 }

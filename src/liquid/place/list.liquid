@@ -1,0 +1,34 @@
+<div id="place_list">
+  {% for contactType in contactTypes %}
+    <div id="{{contactType.name}}" class="mb-6">
+      <h2 class="title is-4">{{ contactType.friendly }}</h2>
+      {% if contactType.places.length > 0 %}
+        {% for item in contactType.places %}
+          {% if contactType.can_assign_multiple %}
+            {% render 'new/place_list.liquid', places: item.places, can_edit: item.canEdit, contactType: contactType %}
+          {% else %}
+            <table
+              id="table_places"
+              class="table is-fullwidth is-striped is-hoverable"
+              style="table-layout: fixed;"
+            >
+              {% render 'components/table_header.liquid',
+                contactType: contactType,
+                userRoleProperty: userRoleProperty
+              %}
+              <tbody>
+                {% for place in item.places %}
+                  {% render 'components/place_item.liquid', place: place, contactType: contactType, session: session %}
+                {% endfor %}
+              </tbody>
+            </table>
+          {% endif %}
+        {% endfor %}
+      {% else %}
+        <div class="notification is-white">
+          <i>No Results</i>
+        </div>
+      {% endif %}
+    </div>
+  {% endfor %}
+</div>
