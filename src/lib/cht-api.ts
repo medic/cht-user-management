@@ -78,14 +78,14 @@ export class ChtApi {
       placeId = payload._id;
       doc = await this.getDoc(payload._id);
 
-      const payloadClone:any = _.cloneDeep(payload);
+      const payloadClone: any = _.cloneDeep(payload);
       delete payloadClone.contact;
       delete payloadClone.parent;
       Object.assign(doc, payloadClone);
     }
 
     const previousPrimaryContact = doc.contact?._id;
-    Object.assign(doc, { contact: { _id: contactId }});
+    Object.assign(doc, { contact: { _id: contactId } });
     doc.user_attribution ||= {};
     doc.user_attribution.previousPrimaryContacts ||= [];
     if (previousPrimaryContact) {
@@ -172,6 +172,7 @@ export class ChtApi {
     const params = {
       key: JSON.stringify([placeType]),
       include_docs: true,
+      reduce: false
     };
     console.log('axios.get', url, params);
     const resp = await this.axiosInstance.get(url, { params });
@@ -185,7 +186,7 @@ export class ChtApi {
     return resp.data;
   }
 
-  async setDoc(id:string, doc: CouchDoc): Promise<void> {
+  async setDoc(id: string, doc: CouchDoc): Promise<void> {
     const url = `medic/${id}`;
     console.log('axios.put', url);
     const resp = await this.axiosInstance.put(url, doc);
@@ -193,7 +194,7 @@ export class ChtApi {
       throw Error('response from chtApi.updatePlace was not OK');
     }
   }
-  
+
   async getUsersAtPlace(placeId: string): Promise<UserInfo[]> {
     const url = `api/v2/users?facility_id=${placeId}`;
     console.log('axios.get', url);
