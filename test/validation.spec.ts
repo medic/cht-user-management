@@ -26,6 +26,7 @@ const scenarios: Scenario[] = [
   { type: 'string', prop: 'Mr.  Sand(m-a-n)', isValid: true, formatted: 'Mr. Sand(m-a-n)' },
   { type: 'string', prop: 'Université ', isValid: true, formatted: 'Université' },
   { type: 'string', prop: `Infirmière d'Etat`, isValid: true, formatted: `Infirmière d'Etat` },
+  { type: 'string', prop: 'गण्डकी', isValid: true, formatted: 'गण्डकी' },
   { type: 'string', prop: '', isValid: false, formatted: '', error: 'Required' },
 
   { type: 'phone', prop: undefined, isValid: false, error: 'Required', formatted: '' },
@@ -53,6 +54,8 @@ const scenarios: Scenario[] = [
   { type: 'name', prop: 'ma-#ma-(pa-pa)', isValid: true, formatted: 'Ma-Ma-(Pa-Pa)' },
   { type: 'name', prop: 'KYAMBOO/KALILUNI', isValid: true, formatted: 'Kyamboo / Kaliluni' },
   { type: 'name', prop: 'NZATANI / ILALAMBYU', isValid: true, formatted: 'Nzatani / Ilalambyu' },
+  { type: 'name', prop: 'गण्डकी', isValid: true, formatted: 'गण्डकी' },
+  { type: 'name', prop: 'लुम्बिनी', isValid: true, formatted: 'लुम्बिनी' },
   { type: 'name', prop: 'Sam\'s CHU', propertyParameter: ['CHU', 'Comm Unit'], isValid: true, formatted: 'Sam\'s' },
   { type: 'name', prop: 'Jonathan M.Barasa', isValid: true, formatted: 'Jonathan M Barasa' },
   { type: 'name', prop: 'Robert xiv', isValid: true, formatted: 'Robert XIV' },
