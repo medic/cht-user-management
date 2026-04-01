@@ -1,3 +1,10 @@
+## [2.6.2](https://github.com/medic/cht-user-management/compare/v2.6.1...v2.6.2) (2026-04-01)
+
+
+### Bug Fixes
+
+* **#325:** show Nepali characters ([#326](https://github.com/medic/cht-user-management/issues/326)) ([6791dd5](https://github.com/medic/cht-user-management/commit/6791dd572be9285d72cd70ca45e4e8e254be05bf)), closes [#325](https://github.com/medic/cht-user-management/issues/325) [#325](https://github.com/medic/cht-user-management/issues/325) [#325](https://github.com/medic/cht-user-management/issues/325)
+
 ## [2.6.1](https://github.com/medic/cht-user-management/compare/v2.6.0...v2.6.1) (2026-02-06)
 
 
