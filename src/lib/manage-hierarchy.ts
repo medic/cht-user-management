@@ -27,19 +27,21 @@ export type WarningInformation = {
 export default class ManageHierarchyLib {
   private constructor() { }
 
-  public static async scheduleJob(job: JobParams, queueName: IQueue = getChtConfQueue()) {
-    await queueName.add(job);
+  public static async scheduleJob(jobs: JobParams[], queueName: IQueue = getChtConfQueue()) {
+    for (let i = 0; i < jobs.length; i++) {
+      await queueName.add(jobs[i]);
+    }
   }
 
   public static parseHierarchyAction(action: string = ''): HierarchyAction {
     if (!HIERARCHY_ACTIONS.includes(action)) {
       throw Error(`invalid action: "${action}"`);
     }
-  
+
     return action as HierarchyAction;
   }
 
-  public static async getJobDetails(formData: any, contactType: ContactType, sessionCache: SessionCache, chtApi: ChtApi): Promise<JobParams> {
+  public static async getJobDetails(formData: any, contactType: ContactType, sessionCache: SessionCache, chtApi: ChtApi): Promise<JobParams[]> {
     const hierarchyAction = ManageHierarchyLib.parseHierarchyAction(formData.op);
     const sourceLineage = await resolve('source_', formData, contactType, sessionCache, chtApi);
     const destinationLineage = hierarchyAction === 'delete' ? [] : await resolve('destination_', formData, contactType, sessionCache, chtApi);
@@ -52,7 +54,23 @@ export default class ManageHierarchyLib {
       jobData,
     };
 
-    return jobParam;
+    const params = [jobParam];
+
+    if (hierarchyAction === 'merge') {
+      const docs = await chtApi.getDocs([sourceId, destinationId]);
+      const primaryContacts = docs.map((doc: any) => {
+        return typeof doc?.contact === 'string' ? doc.contact : doc?.contact?._id;
+      }).filter(Boolean);
+
+      if (primaryContacts.length === 2) {
+        params.push({
+          jobData: getJobData(hierarchyAction, primaryContacts[0], primaryContacts[1], chtApi),
+          jobName: `${jobName}_primary_contacts`
+        });
+      }
+    }
+
+    return params;
   }
 
   public static async getWarningInfo(job: JobParams, chtApi: ChtApi): Promise<WarningInformation> {
@@ -93,7 +111,7 @@ function describeDateTime(dateTime: DateTime): string {
 
 function getSourceAndDestinationIds(
   hierarchyAction: HierarchyAction,
-  sourceLineage: (RemotePlace | undefined)[], 
+  sourceLineage: (RemotePlace | undefined)[],
   destinationLineage: (RemotePlace | undefined)[]
 ) {
   const sourceId = sourceLineage[0]?.id;
@@ -117,7 +135,7 @@ function getSourceAndDestinationIds(
       throw Error(`Place "${sourceLineage[0]?.name.original}" already has "${destinationLineage[1]?.name.original}" as parent`);
     }
   }
-  
+
   if (hierarchyAction === 'merge') {
     if (destinationId === sourceId) {
       throw Error(`Cannot merge place with self`);
@@ -133,7 +151,7 @@ function getJobName(action: string, sourceLineage: (RemotePlace | undefined)[], 
   const formattedDestinationDescription = destinationDescription && `_to_[${destinationDescription}]`;
   return `${action}_[${sourceDescription}]${formattedDestinationDescription}`;
 
-  function describeLineage(lineage: (RemotePlace | undefined)[]) : string | undefined {
+  function describeLineage(lineage: (RemotePlace | undefined)[]): string | undefined {
     return _.reverse([...lineage])
       .map(element => element?.name)
       .filter(Boolean)

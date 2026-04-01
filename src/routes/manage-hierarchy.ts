@@ -45,18 +45,18 @@ export default async function sessionCache(fastify: FastifyInstance) {
 
     try {
       const isConfirmed = formData.confirmed === 'true';
-      const job = await ManageHierarchyLib.getJobDetails(
+      const jobs = await ManageHierarchyLib.getJobDetails(
         formData,
         contactType,
         sessionCache,
         chtApi
       );
       if (isConfirmed) {
-        await ManageHierarchyLib.scheduleJob(job);
+        await ManageHierarchyLib.scheduleJob(jobs);
         tmplData.success = true;
       } else {
         const warningInfo = await ManageHierarchyLib.getWarningInfo(
-          job,
+          jobs[0],
           chtApi
         );
         tmplData.warningInfo = warningInfo;

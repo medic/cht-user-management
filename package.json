@@ -23,7 +23,7 @@
     "axios": "^1.5.1",
     "axios-retry": "^4.0.0",
     "bullmq": "^5.41.9",
-    "cht-conf": "github:medic/cht-conf#653-merge-primaries",
+    "cht-conf": "^6.0.2",
     "csv": "^6.3.5",
     "dotenv": "^16.3.1",
     "fastify": "^4.27.0",
@@ -44,9 +44,9 @@
     "uuid": "^9.0.1"
   },
   "devDependencies": {
-    "@medic/eslint-config": "^1.2.0",
     "@commitlint/cli": "^19.8.1",
     "@commitlint/config-conventional": "^19.8.1",
+    "@medic/eslint-config": "^1.2.0",
     "@semantic-release/changelog": "^6.0.3",
     "@semantic-release/git": "^10.0.1",
     "@types/chai": "^4.3.11",

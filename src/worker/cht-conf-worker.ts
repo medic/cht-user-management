@@ -1,10 +1,11 @@
 import axios from 'axios';
-import { spawn } from 'child_process'; 
+import { spawn } from 'child_process';
 import { Worker, Job, DelayedError, ConnectionOptions, MinimalJob } from 'bullmq';
 import { DateTime } from 'luxon';
 
 import Auth from '../lib/authentication';
 import { HierarchyAction } from '../lib/manage-hierarchy';
+import { env } from 'process';
 
 export interface ChtConfJobData {
   sourceId: string;
@@ -20,20 +21,20 @@ export interface PostponeReason {
 
 export type JobResult = { success: boolean; message: string };
 
-export class ChtConfWorker {    
+export class ChtConfWorker {
   private static readonly DELAY_IN_MILLIS = 4 * 60 * 60 * 1000;       // 4 hours
   private static readonly MAX_TIMEOUT_IN_MILLIS = 4 * 60 * 60 * 1000; // 4 hours
   private static readonly MAX_CONCURRENCY = 1;              // Limit concurrency to 1 job at a time
-  private static readonly MAX_SENTINEL_BACKLOG = 7000;      // ensure we don't take down the server
+  private static readonly MAX_SENTINEL_BACKLOG = env.MAX_SENTINEL_BACKLOG ?? 7000;      // ensure we don't take down the server
   static worker: Worker;
-  
+
   public static processQueue(queueName: string, connection: ConnectionOptions) {
     this.worker = new Worker(
-      queueName, 
-      this.handleJob, 
-      { 
-        connection, 
-        concurrency: this.MAX_CONCURRENCY, 
+      queueName,
+      this.handleJob,
+      {
+        connection,
+        concurrency: this.MAX_CONCURRENCY,
         settings: {
           backoffStrategy: this.handleRetryBackoff,
         }
@@ -73,7 +74,7 @@ export class ChtConfWorker {
   private static handleRetryBackoff = (
     attemptsMade: number, type: string | undefined, err: Error | undefined, job: MinimalJob | undefined
   ): number => {
-    const {retryTimeFormatted} = this.computeRetryTime();
+    const { retryTimeFormatted } = this.computeRetryTime();
 
     const fullMessage = `Job ${job?.id} will retry at ${retryTimeFormatted}.\
     Attempt Number: ${attemptsMade + 1}. Due to failure: ${type}: ${err?.message}`;
@@ -88,8 +89,8 @@ export class ChtConfWorker {
       const response = await ChtConfWorker.fetchMonitoringApi(instanceUrl);
       const sentinelBacklog = response.data.sentinel?.backlog;
       console.log(`Sentinel backlog at ${sentinelBacklog} of ${this.MAX_SENTINEL_BACKLOG}`);
-      
-      return sentinelBacklog > this.MAX_SENTINEL_BACKLOG 
+
+      return sentinelBacklog > this.MAX_SENTINEL_BACKLOG
         ? { reason: `Sentinel backlog too high at ${sentinelBacklog}` }
         : undefined;
     } catch (err: any) {
@@ -122,7 +123,7 @@ export class ChtConfWorker {
 
       const command = 'cht';
       const args = this.buildCommandArgs(jobData, token);
-      
+
       this.logCommand(command, args);
       await this.executeCommand(command, args, job);
 
@@ -159,7 +160,7 @@ export class ChtConfWorker {
       case 'delete':
         return [`--contacts=${data.sourceId}`, '--disable-users'];
       case 'merge':
-        return [`--sources=${data.sourceId}`, `--destination=${data.destinationId}`, '--merge-primary-contacts', '--disable-users'];
+        return [`--sources=${data.sourceId}`, `--destination=${data.destinationId}`, '--disable-users'];
       default:
         return [`--contacts=${data.sourceId}`, `--parent=${data.destinationId}`];
       }
@@ -219,7 +220,7 @@ export class ChtConfWorker {
     return { retryTime, retryTimeFormatted };
   }
 
-  private static logWithTimestamp(job: Job|MinimalJob|undefined, message: string): void {
+  private static logWithTimestamp(job: Job | MinimalJob | undefined, message: string): void {
     const timestamp = DateTime.now().toISO();
     const fullMessage = `[${timestamp}] ${message}`;
     job?.log(fullMessage);

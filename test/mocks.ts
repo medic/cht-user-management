@@ -14,7 +14,7 @@ export type ChtDoc = {
   [key: string]: string | Object;
 };
 
-export const mockPlace = (contactType: ContactType, formDataOverride?: any) : Place => {
+export const mockPlace = (contactType: ContactType, formDataOverride?: any): Place => {
   const formData = Object.assign({
     place_name: 'name',
     place_prop: 'prop',
@@ -42,6 +42,7 @@ export const mockChtApi = (first: ChtDoc[] = [], second: ChtDoc[] = [], third: C
     .onCall(3).resolves(fourth),
   createPlace: sinon.stub().resolves({ placeId: 'created-place-id', contactId: 'created-contact-id' }),
   createUser: sinon.stub().resolves(),
+  getDocs: sinon.stub().resolves(second),
   getParentAndSibling: sinon.stub().resolves({
     parent: {
       link_facility_code: '12345',
@@ -57,7 +58,7 @@ export const mockSimpleContactType = (
   propertyType: string,
   propertyValidator?: string | string[] | object,
   errorDescription?: string
-) : ContactType => {
+): ContactType => {
   const mockedProperty = mockProperty(propertyType, propertyValidator);
   mockedProperty.errorDescription = errorDescription;
   return {
@@ -103,7 +104,7 @@ export async function createChu(subcounty: ChtDoc, chu_name: string, sessionCach
   return chu;
 }
 
-export const mockValidContactType = (propertyType: string, propertyValidator: string | string[] | undefined) : ContactType => ({
+export const mockValidContactType = (propertyType: string, propertyValidator: string | string[] | undefined): ContactType => ({
   name: 'contacttype-name',
   friendly: 'friendly',
   contact_type: 'contact-type',
@@ -148,7 +149,7 @@ export const mockProperty = (type: string, parameter?: string | string[] | objec
 });
 
 //  Constructor of class ChtSession is private and only accessible within the class declaration.
-export function mockChtSession(userFacilityId: string = '*') : ChtSession {
+export function mockChtSession(userFacilityId: string = '*'): ChtSession {
   const creationDetails = {
     authInfo: {
       friendly: 'domain',

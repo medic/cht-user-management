@@ -61,7 +61,6 @@ describe('worker/cht-conf-worker', () => {
         '--',
         '--sources=sourceId',
         '--destination=destinationId',
-        '--merge-primary-contacts',
         '--disable-users',
       ]);
     });

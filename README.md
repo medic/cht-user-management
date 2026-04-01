@@ -198,6 +198,7 @@ Variable | Description | Sample
 `CHT_USER_MANAGEMENT_WORKER_IMAGE` | docker image for cht-user-management service (local development), leave empty to use published one | `cht-user-management-worker:local`
 `SECRET_KEY` | Hex encoded secret key used for encryption/decryption of stored credentials. | `eg. openssl rand -hex 32`
 `CREDENTIAL_LOG_TTL` | Duration in seconds to persist the credential log in redis. Defaults to 432000 (5 days). | `432000`
+`MAX_SENTINEL_BACKLOG` | Max sentinel backlog count before UMT starts delaying jobs that rely on cht-conf. Defaults to 7000 | `100000`
 
 ## Development
 
