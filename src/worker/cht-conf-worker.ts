@@ -25,7 +25,7 @@ export class ChtConfWorker {
   private static readonly DELAY_IN_MILLIS = 4 * 60 * 60 * 1000;       // 4 hours
   private static readonly MAX_TIMEOUT_IN_MILLIS = 4 * 60 * 60 * 1000; // 4 hours
   private static readonly MAX_CONCURRENCY = 1;              // Limit concurrency to 1 job at a time
-  private static readonly MAX_SENTINEL_BACKLOG = env.MAX_SENTINEL_BACKLOG ?? 7000;      // ensure we don't take down the server
+  private static readonly MAX_SENTINEL_BACKLOG = 7000;      // ensure we don't take down the server
   static worker: Worker;
 
   public static processQueue(queueName: string, connection: ConnectionOptions) {
@@ -85,12 +85,14 @@ export class ChtConfWorker {
 
   private static async shouldPostpone(jobData: ChtConfJobData): Promise<PostponeReason | undefined> {
     try {
+      let threshold = Number.isInteger(env.MAX_SENTINEL_BACKLOG) ? env.MAX_SENTINEL_BACKLOG : this.MAX_SENTINEL_BACKLOG;
+
       const { instanceUrl } = jobData;
       const response = await ChtConfWorker.fetchMonitoringApi(instanceUrl);
       const sentinelBacklog = response.data.sentinel?.backlog;
-      console.log(`Sentinel backlog at ${sentinelBacklog} of ${this.MAX_SENTINEL_BACKLOG}`);
+      console.log(`Sentinel backlog at ${sentinelBacklog} of ${threshold}`);
 
-      return sentinelBacklog > this.MAX_SENTINEL_BACKLOG
+      return sentinelBacklog > threshold
         ? { reason: `Sentinel backlog too high at ${sentinelBacklog}` }
         : undefined;
     } catch (err: any) {
@@ -146,23 +148,23 @@ export class ChtConfWorker {
 
     function getConfActionName() {
       switch (data.action) {
-      case 'delete':
-        return 'delete-contacts';
-      case 'merge':
-        return 'merge-contacts';
-      default:
-        return 'move-contacts';
+        case 'delete':
+          return 'delete-contacts';
+        case 'merge':
+          return 'merge-contacts';
+        default:
+          return 'move-contacts';
       }
     }
 
     function getActionArgs() {
       switch (data.action) {
-      case 'delete':
-        return [`--contacts=${data.sourceId}`, '--disable-users'];
-      case 'merge':
-        return [`--sources=${data.sourceId}`, `--destination=${data.destinationId}`, '--disable-users'];
-      default:
-        return [`--contacts=${data.sourceId}`, `--parent=${data.destinationId}`];
+        case 'delete':
+          return [`--contacts=${data.sourceId}`, '--disable-users'];
+        case 'merge':
+          return [`--sources=${data.sourceId}`, `--destination=${data.destinationId}`, '--merge-primary-contacts', '--disable-users'];
+        default:
+          return [`--contacts=${data.sourceId}`, `--parent=${data.destinationId}`];
       }
     }
   }

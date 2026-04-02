@@ -186,18 +186,6 @@ export class ChtApi {
     return resp.data;
   }
 
-  async getDocs(ids: string[]): Promise<any> {
-    const url = 'medic/_bulk_get';
-    console.log('axios.get', url);
-    const resp = await this.axiosInstance.post(url,
-      {
-        docs: ids.map(id => {
-          return { id };
-        })
-      });
-    return resp.data.results.map((doc: any) => doc.docs[0].ok);
-  }
-
   async setDoc(id: string, doc: CouchDoc): Promise<void> {
     const url = `medic/${id}`;
     console.log('axios.put', url);

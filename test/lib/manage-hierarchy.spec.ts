@@ -21,8 +21,8 @@ describe('lib/manage-hierarchy.ts', () => {
     { _id: 'to-sub', name: 'To Sub' }
   ];
   const chuDocs = [
-    { _id: 'from-chu-id', name: 'c-h-u', contact: 'cha_contact', parent: { _id: 'from-sub' } },
-    { _id: 'to-chu-id', name: 'destination', contact: 'cha2_contact', parent: { _id: 'to-sub' } },
+    { _id: 'from-chu-id', name: 'c-h-u', parent: { _id: 'from-sub' } },
+    { _id: 'to-chu-id', name: 'destination', parent: { _id: 'to-sub' } },
   ];
 
   const chtApiWithDocs = () => mockChtApi(subcountyDocs, chuDocs);
@@ -37,7 +37,7 @@ describe('lib/manage-hierarchy.ts', () => {
   });
 
   describe('move', () => {
-    it('move CHU: success', async () => {
+    it('move CHU: success', async () => {    
       const formData = {
         op: 'move',
         source_replacement: 'c-h-u',
@@ -46,11 +46,8 @@ describe('lib/manage-hierarchy.ts', () => {
       };
       const contactType = Config.getContactType('c_community_health_unit');
       const sessionCache = new SessionCache();
-
-      const details = await ManageHierarchyLib.getJobDetails(formData, contactType, sessionCache, chtApiWithDocs());
-      expect(details).to.have.length(1);
-      const jobParams = details[0];
-
+      
+      const jobParams = await ManageHierarchyLib.getJobDetails(formData, contactType, sessionCache, chtApiWithDocs());
       expect(jobParams).to.have.property('jobName').that.equals('move_[From Sub.C-H-U]_to_[To Sub]');
       expect(jobParams).to.have.property('jobData').that.deep.include({
         action: 'move',
@@ -104,7 +101,7 @@ describe('lib/manage-hierarchy.ts', () => {
   });
 
   describe('merge', () => {
-    it('merge CHU: success', async () => {
+    it('merge CHU: success', async () => {    
       const formData = {
         op: 'merge',
         source_replacement: 'c-h-u',
@@ -114,35 +111,21 @@ describe('lib/manage-hierarchy.ts', () => {
       };
       const contactType = Config.getContactType('c_community_health_unit');
       const sessionCache = new SessionCache();
-
-      const details = await ManageHierarchyLib.getJobDetails(formData, contactType, sessionCache, chtApiWithDocs());
-      expect(details).to.have.length(2);
-
-      const place = details[0];
-      expect(place).to.have.property('jobName').that.equals('merge_[From Sub.C-H-U]_to_[To Sub.Destination]');
-      expect(place).to.have.property('jobData').that.deep.include({
+      
+      const jobParams = await ManageHierarchyLib.getJobDetails(formData, contactType, sessionCache, chtApiWithDocs());
+      expect(jobParams).to.have.property('jobName').that.equals('merge_[From Sub.C-H-U]_to_[To Sub.Destination]');
+      expect(jobParams).to.have.property('jobData').that.deep.include({
         action: 'merge',
         sourceId: 'from-chu-id',
         destinationId: 'to-chu-id',
         instanceUrl: 'http://domain.com',
         sessionToken: 'encoded-token',
       });
-
-      const primaryContact = details[1];
-      expect(primaryContact).to.have.property('jobName').that.equals('merge_[From Sub.C-H-U]_to_[To Sub.Destination]_primary_contacts');
-      expect(primaryContact).to.have.property('jobData').that.deep.include({
-        action: 'merge',
-        sourceId: 'cha_contact',
-        destinationId: 'cha2_contact',
-        instanceUrl: 'http://domain.com',
-        sessionToken: 'encoded-token',
-      });
-
     });
   });
 
   describe('delete', () => {
-    it('delete CHU: success', async () => {
+    it('delete CHU: success', async () => {    
       const formData = {
         op: 'delete',
         source_replacement: 'c-h-u',
@@ -150,11 +133,8 @@ describe('lib/manage-hierarchy.ts', () => {
       };
       const contactType = Config.getContactType('c_community_health_unit');
       const sessionCache = new SessionCache();
-
-      const details = await ManageHierarchyLib.getJobDetails(formData, contactType, sessionCache, chtApiWithDocs());
-      expect(details).to.have.length(1);
-      const jobParams = details[0];
-
+      
+      const jobParams = await ManageHierarchyLib.getJobDetails(formData, contactType, sessionCache, chtApiWithDocs());
       expect(jobParams).to.have.property('jobName').that.equals('delete_[From Sub.C-H-U]');
       expect(jobParams).to.have.property('jobData').that.deep.include({
         action: 'delete',
@@ -175,14 +155,14 @@ describe('lib/manage-hierarchy.ts', () => {
       const fixedDate = DateTime.local(2024, 6, 15).toJSDate();
       clock = sinon.useFakeTimers(fixedDate.getTime());
     });
-
+  
     afterEach(() => {
       // Restore the original system clock behavior after tests.
       clock.restore();
     });
+  
 
-
-    const fakeJob: JobParams = { jobName: 'foo', jobData: { sourceId: 'abc' } };
+    const fakeJob: JobParams = { jobName: 'foo', jobData: { sourceId: 'abc' }};
 
     it('below thresholds', async () => {
       const chtApi = mockChtApi();
