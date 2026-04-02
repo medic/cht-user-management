@@ -85,7 +85,7 @@ export class ChtConfWorker {
 
   private static async shouldPostpone(jobData: ChtConfJobData): Promise<PostponeReason | undefined> {
     try {
-      let threshold = Number.isInteger(env.MAX_SENTINEL_BACKLOG) ? env.MAX_SENTINEL_BACKLOG : this.MAX_SENTINEL_BACKLOG;
+      const threshold = Number.isInteger(env.MAX_SENTINEL_BACKLOG) ? env.MAX_SENTINEL_BACKLOG : this.MAX_SENTINEL_BACKLOG;
 
       const { instanceUrl } = jobData;
       const response = await ChtConfWorker.fetchMonitoringApi(instanceUrl);
@@ -148,23 +148,23 @@ export class ChtConfWorker {
 
     function getConfActionName() {
       switch (data.action) {
-        case 'delete':
-          return 'delete-contacts';
-        case 'merge':
-          return 'merge-contacts';
-        default:
-          return 'move-contacts';
+      case 'delete':
+        return 'delete-contacts';
+      case 'merge':
+        return 'merge-contacts';
+      default:
+        return 'move-contacts';
       }
     }
 
     function getActionArgs() {
       switch (data.action) {
-        case 'delete':
-          return [`--contacts=${data.sourceId}`, '--disable-users'];
-        case 'merge':
-          return [`--sources=${data.sourceId}`, `--destination=${data.destinationId}`, '--merge-primary-contacts', '--disable-users'];
-        default:
-          return [`--contacts=${data.sourceId}`, `--parent=${data.destinationId}`];
+      case 'delete':
+        return [`--contacts=${data.sourceId}`, '--disable-users'];
+      case 'merge':
+        return [`--sources=${data.sourceId}`, `--destination=${data.destinationId}`, '--merge-primary-contacts', '--disable-users'];
+      default:
+        return [`--contacts=${data.sourceId}`, `--parent=${data.destinationId}`];
       }
     }
   }
