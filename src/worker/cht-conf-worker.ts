@@ -85,7 +85,10 @@ export class ChtConfWorker {
 
   private static async shouldPostpone(jobData: ChtConfJobData): Promise<PostponeReason | undefined> {
     try {
-      const threshold = Number.isInteger(env.MAX_SENTINEL_BACKLOG) ? env.MAX_SENTINEL_BACKLOG : this.MAX_SENTINEL_BACKLOG;
+      let threshold = this.MAX_SENTINEL_BACKLOG;
+      if (env.MAX_SENTINEL_BACKLOG && Number.isInteger(env.MAX_SENTINEL_BACKLOG)) {
+        threshold = parseInt(env.MAX_SENTINEL_BACKLOG);
+      }
 
       const { instanceUrl } = jobData;
       const response = await ChtConfWorker.fetchMonitoringApi(instanceUrl);
