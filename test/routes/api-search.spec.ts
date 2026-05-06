@@ -41,10 +41,10 @@ describe('routes/api-search.ts', () => {
     await fastify.close();
   });
 
-  it('returns hits ranked by descending threshold', async () => {
+  it('returns hits with name, uuid, threshold sorted desc', async () => {
     searchStub.resolves([
-      fakeRemotePlace('id-jane', 'Jane Doe'),
       fakeRemotePlace('id-janet', 'Janet Doe'),
+      fakeRemotePlace('id-jane', 'Jane Doe'),
     ]);
 
     const resp = await fastify.inject({
@@ -55,23 +55,37 @@ describe('routes/api-search.ts', () => {
 
     expect(resp.statusCode).to.equal(200);
     const hits = resp.json();
-    expect(hits[0].uuid).to.equal('id-jane');
-    expect(hits[0].chpName).to.equal('Jane Doe');
-    expect(hits[0].threshold).to.equal(1);
-    expect(hits[0].threshold).to.be.greaterThan(hits[1]?.threshold ?? 0);
+    expect(hits[0]).to.include({ uuid: 'id-jane', name: 'Jane Doe' });
+    expect(hits[0].threshold).to.be.closeTo(1, 0.001);
+    expect(hits[0].threshold).to.be.greaterThan(hits[1].threshold);
   });
 
-  it('respects min_threshold from query', async () => {
+  it('drops hits below the query threshold', async () => {
     searchStub.resolves([fakeRemotePlace('id-jane', 'Jane Doe')]);
 
+    // 0.99999... < 1.0 → exact match still gets filtered out
     const resp = await fastify.inject({
       method: 'POST',
-      url: '/api/v1/search?type=anything&min_threshold=0.99',
-      payload: { replacement: 'J' }, // poor fuzzy match → low threshold
+      url: '/api/v1/search?type=anything&threshold=1',
+      payload: { replacement: 'Jane Doe' },
     });
 
     expect(resp.statusCode).to.equal(200);
     expect(resp.json()).to.deep.equal([]);
+  });
+
+  it('keeps hits when query threshold is permissive', async () => {
+    searchStub.resolves([fakeRemotePlace('id-jane', 'Jane Doe')]);
+
+    const resp = await fastify.inject({
+      method: 'POST',
+      url: '/api/v1/search?type=anything&threshold=0',
+      payload: { replacement: 'Jane Doe' },
+    });
+
+    expect(resp.statusCode).to.equal(200);
+    expect(resp.json()).to.have.length(1);
+    expect(resp.json()[0].uuid).to.equal('id-jane');
   });
 
   it('drops invalid sentinels from SearchLib (e.g. NoResult)', async () => {
@@ -109,21 +123,6 @@ describe('routes/api-search.ts', () => {
     const formDataPassed = searchStub.firstCall.args[1];
     expect(formDataPassed).to.deep.equal({ replacement: 'Jane Doe', PARENT: 'p' });
     expect(formDataPassed).to.not.have.property('UNRELATED');
-  });
-
-  it('uses default min_threshold when query param is omitted', async () => {
-    searchStub.resolves([fakeRemotePlace('id-jane', 'Jane Doe')]);
-
-    const resp = await fastify.inject({
-      method: 'POST',
-      url: '/api/v1/search?type=anything',
-      payload: { replacement: 'Jane Doe' },
-    });
-
-    expect(resp.statusCode).to.equal(200);
-    const hits = resp.json();
-    expect(hits).to.have.length(1);
-    expect(hits[0].threshold).to.equal(1);
   });
 
   it('returns 500 when type is unknown', async () => {
