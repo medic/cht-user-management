@@ -4,9 +4,7 @@ import Fuse from 'fuse.js';
 
 import { ChtApi } from '../lib/cht-api';
 import { Config } from '../config';
-import SearchLib from '../lib/search';
 import PlaceFactory from '../services/place-factory';
-import sessionCache from './app';
 import RemotePlaceResolver from '../lib/remote-place-resolver';
 import RemotePlaceCache from '../lib/remote-place-cache';
 
