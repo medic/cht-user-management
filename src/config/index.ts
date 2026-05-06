@@ -141,7 +141,7 @@ export class Config {
   }
 
   public static getAuthenticationInfo(domain: string) : AuthenticationInfo {
-    const domainMatch = Config.getDomains().find(c => c.domain === domain);
+    const domainMatch = Config.getDomains().find(c => c.friendly === domain);
     if (!domainMatch) {
       throw new Error(`unrecognized domain: "${domain}"`);
     }
