@@ -3,17 +3,32 @@ import Fastify, { FastifyInstance } from 'fastify';
 import sinon from 'sinon';
 
 import apiSearch from '../../src/routes/api-search';
-import SearchLib from '../../src/lib/search';
 import { Config } from '../../src/config';
-import { RemotePlace } from '../../src/lib/remote-place-cache';
+import RemotePlaceCache, { RemotePlace } from '../../src/lib/remote-place-cache';
+import RemotePlaceResolver from '../../src/lib/remote-place-resolver';
+import PlaceFactory from '../../src/services/place-factory';
+import Place from '../../src/services/place';
 import { UnvalidatedPropertyValue } from '../../src/property-value';
 import { mockChtSession, mockValidContactType } from '../mocks';
 
-function fakeRemotePlace(id: string, name: string): RemotePlace {
+const PARENT_ID = 'parent-1';
+
+function fakePlace(id: string, name: string, parentId: string = PARENT_ID): RemotePlace {
   return {
     id,
     name: new UnvalidatedPropertyValue(name),
     placeType: 'contacttype-name',
+    lineage: [parentId],
+    uniquePlaceValues: {},
+    type: 'remote',
+  };
+}
+
+function fakeParent(id: string): RemotePlace {
+  return {
+    id,
+    name: new UnvalidatedPropertyValue('parent'),
+    placeType: 'parent',
     lineage: [],
     uniquePlaceValues: {},
     type: 'remote',
@@ -22,7 +37,9 @@ function fakeRemotePlace(id: string, name: string): RemotePlace {
 
 describe('routes/api-search.ts', () => {
   let fastify: FastifyInstance;
-  let searchStub: sinon.SinonStub;
+  let placeFactoryStub: sinon.SinonStub;
+  let resolveStub: sinon.SinonStub;
+  let getRemotePlacesStub: sinon.SinonStub;
 
   beforeEach(async () => {
     fastify = Fastify();
@@ -33,7 +50,14 @@ describe('routes/api-search.ts', () => {
     await fastify.register(apiSearch);
 
     sinon.stub(Config, 'getContactType').returns(mockValidContactType('string', undefined));
-    searchStub = sinon.stub(SearchLib, 'search');
+
+    // PlaceFactory.createOne returns a stub Place; resolveOne fills its
+    // resolvedHierarchy on a per-test basis via callsFake further down.
+    placeFactoryStub = sinon.stub(PlaceFactory, 'createOne').callsFake(async () => {
+      return { resolvedHierarchy: [] } as unknown as Place;
+    });
+    resolveStub = sinon.stub(RemotePlaceResolver, 'resolveOne').resolves();
+    getRemotePlacesStub = sinon.stub(RemotePlaceCache, 'getRemotePlaces').resolves([]);
   });
 
   afterEach(async () => {
@@ -41,88 +65,120 @@ describe('routes/api-search.ts', () => {
     await fastify.close();
   });
 
-  it('returns hits with name, uuid, threshold sorted desc', async () => {
-    searchStub.resolves([
-      fakeRemotePlace('id-janet', 'Janet Doe'),
-      fakeRemotePlace('id-jane', 'Jane Doe'),
+  it('returns places of the requested type under the resolved parent, ranked best-match first', async () => {
+    resolveStub.callsFake(async (place: any) => {
+      place.resolvedHierarchy[1] = fakeParent(PARENT_ID);
+    });
+    getRemotePlacesStub.resolves([
+      fakePlace('p-jane', 'Jane Doe'),
+      fakePlace('p-janet', 'Janet Doe'),
+      fakePlace('p-other', 'Jane Doe', 'other-parent'),
     ]);
 
     const resp = await fastify.inject({
       method: 'POST',
       url: '/api/v1/search?type=anything',
-      payload: { replacement: 'Jane Doe' },
+      payload: { PARENT: 'parent', replacement: 'Jane Doe' },
     });
 
     expect(resp.statusCode).to.equal(200);
     const hits = resp.json();
-    expect(hits[0]).to.include({ uuid: 'id-jane', name: 'Jane Doe' });
-    expect(hits[0].threshold).to.be.closeTo(1, 0.001);
-    expect(hits[0].threshold).to.be.greaterThan(hits[1].threshold);
+    expect(hits.map((h: any) => h.uuid)).to.deep.equal(['p-jane', 'p-janet']);
+    expect(hits[0].name).to.equal('Jane Doe');
+    expect(hits[0].score).to.be.lessThan(hits[1].score); // lower fuse score = better match
   });
 
-  it('drops hits below the query threshold', async () => {
-    searchStub.resolves([fakeRemotePlace('id-jane', 'Jane Doe')]);
-
-    // 0.99999... < 1.0 → exact match still gets filtered out
-    const resp = await fastify.inject({
-      method: 'POST',
-      url: '/api/v1/search?type=anything&threshold=1',
-      payload: { replacement: 'Jane Doe' },
+  it('reports a missing parent in the body when no resolved place is found', async () => {
+    resolveStub.callsFake(async (place: any) => {
+      place.resolvedHierarchy[1] = RemotePlaceResolver.NoResult;
     });
-
-    expect(resp.statusCode).to.equal(200);
-    expect(resp.json()).to.deep.equal([]);
-  });
-
-  it('keeps hits when query threshold is permissive', async () => {
-    searchStub.resolves([fakeRemotePlace('id-jane', 'Jane Doe')]);
-
-    const resp = await fastify.inject({
-      method: 'POST',
-      url: '/api/v1/search?type=anything&threshold=0',
-      payload: { replacement: 'Jane Doe' },
-    });
-
-    expect(resp.statusCode).to.equal(200);
-    expect(resp.json()).to.have.length(1);
-    expect(resp.json()[0].uuid).to.equal('id-jane');
-  });
-
-  it('drops invalid sentinels from SearchLib (e.g. NoResult)', async () => {
-    searchStub.resolves([
-      {
-        id: 'na',
-        name: new UnvalidatedPropertyValue('Place Not Found'),
-        placeType: 'invalid',
-        lineage: [],
-        uniquePlaceValues: {},
-        type: 'invalid' as const,
-      },
-    ]);
 
     const resp = await fastify.inject({
       method: 'POST',
       url: '/api/v1/search?type=anything',
-      payload: { replacement: 'Jane' },
+      payload: { PARENT: 'wrong', replacement: 'Jane Doe' },
+    });
+
+    expect(resp.statusCode).to.equal(200);
+    expect(resp.json()).to.deep.equal({
+      error: 'hierarchy cannot be resolved: index 1 - Place Not Found',
+      parentMissing: true,
+      isAmbiguous: false,
+    });
+  });
+
+  it('reports an ambiguous parent in the body when multiple places match', async () => {
+    resolveStub.callsFake(async (place: any) => {
+      place.resolvedHierarchy[1] = RemotePlaceResolver.Multiple;
+    });
+
+    const resp = await fastify.inject({
+      method: 'POST',
+      url: '/api/v1/search?type=anything',
+      payload: { PARENT: 'ambiguous', replacement: 'Jane Doe' },
+    });
+
+    expect(resp.statusCode).to.equal(200);
+    expect(resp.json()).to.deep.equal({
+      error: 'hierarchy cannot be resolved: index 1 - multiple places',
+      parentMissing: false,
+      isAmbiguous: true,
+    });
+  });
+
+  it('returns empty when no places of the requested type share the resolved parent', async () => {
+    resolveStub.callsFake(async (place: any) => {
+      place.resolvedHierarchy[1] = fakeParent(PARENT_ID);
+    });
+    getRemotePlacesStub.resolves([fakePlace('p-elsewhere', 'Jane Doe', 'other-parent')]);
+
+    const resp = await fastify.inject({
+      method: 'POST',
+      url: '/api/v1/search?type=anything',
+      payload: { PARENT: 'parent', replacement: 'Jane Doe' },
     });
 
     expect(resp.statusCode).to.equal(200);
     expect(resp.json()).to.deep.equal([]);
   });
 
-  it('only forwards configured hierarchy keys to SearchLib', async () => {
-    searchStub.resolves([fakeRemotePlace('id-jane', 'Jane Doe')]);
+  it('only forwards parent hierarchy fields to PlaceFactory (drops leaf and unrelated keys)', async () => {
+    resolveStub.callsFake(async (place: any) => {
+      place.resolvedHierarchy[1] = fakeParent(PARENT_ID);
+    });
+    getRemotePlacesStub.resolves([fakePlace('p-jane', 'Jane Doe')]);
 
     await fastify.inject({
       method: 'POST',
       url: '/api/v1/search?type=anything',
-      payload: { replacement: 'Jane Doe', PARENT: 'p', UNRELATED: 'noise' },
+      payload: { PARENT: 'p', GRANDPARENT: 'gp', replacement: 'Jane Doe', UNRELATED: 'noise' },
     });
 
-    expect(searchStub.calledOnce).to.be.true;
-    const formDataPassed = searchStub.firstCall.args[1];
-    expect(formDataPassed).to.deep.equal({ replacement: 'Jane Doe', PARENT: 'p' });
-    expect(formDataPassed).to.not.have.property('UNRELATED');
+    expect(placeFactoryStub.calledOnce).to.be.true;
+    const dataPassed = placeFactoryStub.firstCall.args[0];
+    expect(dataPassed).to.deep.equal({ PARENT: 'p', GRANDPARENT: 'gp' });
+    expect(dataPassed).to.not.have.property('replacement');
+    expect(dataPassed).to.not.have.property('UNRELATED');
+  });
+
+  it('honours the query threshold by tightening Fuse cutoff', async () => {
+    resolveStub.callsFake(async (place: any) => {
+      place.resolvedHierarchy[1] = fakeParent(PARENT_ID);
+    });
+    getRemotePlacesStub.resolves([
+      fakePlace('p-jane', 'Jane Doe'),
+      fakePlace('p-totally', 'Totally Different XYZ'),
+    ]);
+
+    const resp = await fastify.inject({
+      method: 'POST',
+      url: '/api/v1/search?type=anything&threshold=0.1',
+      payload: { PARENT: 'parent', replacement: 'Jane Doe' },
+    });
+
+    expect(resp.statusCode).to.equal(200);
+    const hits = resp.json();
+    expect(hits.map((h: any) => h.uuid)).to.deep.equal(['p-jane']);
   });
 
   it('returns 500 when type is unknown', async () => {

@@ -5,13 +5,17 @@ import Fuse from 'fuse.js';
 import { ChtApi } from '../lib/cht-api';
 import { Config } from '../config';
 import SearchLib from '../lib/search';
+import PlaceFactory from '../services/place-factory';
+import sessionCache from './app';
+import RemotePlaceResolver from '../lib/remote-place-resolver';
+import RemotePlaceCache from '../lib/remote-place-cache';
 
 const DEFAULT_THRESHOLD = 0.6;
 
 type SearchResult = {
-  name: string;
-  threshold: number;
   uuid: string;
+  name: string;
+  score: number;
 };
 
 export default async function apiSearch(fastify: FastifyInstance) {
@@ -26,46 +30,46 @@ export default async function apiSearch(fastify: FastifyInstance) {
 
     const contactType = Config.getContactType(type);
     const hierarchyLevels = Config.getHierarchyWithReplacement(contactType);
-    const relevantFields = hierarchyLevels.map(level => level.property_name);
+
+    const relevantFields = hierarchyLevels.slice(1).map(level => level.property_name);
     const relevantData = _.pick(formBody, relevantFields);
 
-    const hierarchyLevel = hierarchyLevels[0];
-    if (!hierarchyLevel) {
-      throw Error(`no hierarchy level configured for type "${type}"`);
+    const [baseHierarchyLevel] = hierarchyLevels;
+    const chtApi = new ChtApi(req.chtSession);
+    const place = await PlaceFactory.createOne(relevantData, contactType, req.sessionCache, chtApi, '');
+    await RemotePlaceResolver.resolveOne(place, req.sessionCache, chtApi, { fuzz: true });
+
+    const invalidIndex = place.resolvedHierarchy.findIndex(level => level?.type === 'invalid');
+    if (invalidIndex !== -1) {
+      const invalid = place.resolvedHierarchy[invalidIndex];
+      const isAmbiguous = invalid?.id === RemotePlaceResolver.Multiple.id;
+      const parentMissing = invalid?.id === RemotePlaceResolver.NoResult.id;
+      
+      return {
+        error: `hierarchy cannot be resolved: index ${invalidIndex} - ${invalid?.name.formatted}`,
+        isAmbiguous,
+        parentMissing,
+      };
     }
 
-    const chtApi = new ChtApi(req.chtSession);
-
-    const searchResults = await SearchLib.search(
-      contactType,
-      relevantData,
-      '',
-      hierarchyLevel,
-      chtApi,
-      req.sessionCache,
-    );
-
-    const candidates = searchResults
-      .filter(r => r.type !== 'invalid')
-      .map(r => ({ name: r.name.formatted, uuid: r.id }));
-
-    const fuse = new Fuse(candidates, {
-      keys: ['name'],
+    const parentId = place.resolvedHierarchy[1]?.id;
+    const placesHavingParent = (await RemotePlaceCache.getRemotePlaces(chtApi, contactType, baseHierarchyLevel))
+      .filter(remotePlace => remotePlace.lineage[0] === parentId);
+    
+    const fuse = new Fuse(placesHavingParent, {
+      keys: ['name.formatted'],
       includeScore: true,
-      threshold: 1.0,
-      ignoreLocation: true,
+      threshold,
     });
 
     const hits: SearchResult[] = fuse
-      .search(formBody[hierarchyLevel.property_name] ?? '')
+      .search(formBody[baseHierarchyLevel.property_name] ?? '')
       .map(({ item, score }) => ({
-        name: item.name,
-        uuid: item.uuid,
-        // Fuse score: 0 = perfect, 1 = no match
-        threshold: 1 - (score ?? 1),
+        name: item.name.original,
+        uuid: item.id,
+        score: score ?? 1,
       }))
-      .filter(h => h.threshold >= threshold)
-      .sort((a, b) => b.threshold - a.threshold);
+      .sort((a, b) => a.score - b.score);
 
     return hits;
   });

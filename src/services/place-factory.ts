@@ -17,10 +17,10 @@ export default class PlaceFactory {
     return places;
   }
 
-  public static createOne = async (formData: any, contactType: ContactType, sessionCache: SessionCache, chtApi: ChtApi)
+  public static createOne = async (formData: any, contactType: ContactType, sessionCache: SessionCache, chtApi: ChtApi, hierarchyPrefix: string = 'hierarchy_')
     : Promise<Place> => {
     const place = new Place(contactType);
-    place.setPropertiesFromFormData(formData, 'hierarchy_');
+    place.setPropertiesFromFormData(formData, hierarchyPrefix);
     await PlaceFactory.finalizePlaces([place], sessionCache, chtApi, contactType);
     return place;
   };
