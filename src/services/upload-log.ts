@@ -1,6 +1,6 @@
 import Redis from 'ioredis';
 import Place, { UserCreationDetails } from './place';
-import ChtSession from '../lib/cht-session';
+import { IChtSession } from '../lib/cht-session';
 import crypto from 'crypto';
 
 export type UploadLogRecord = {
@@ -14,8 +14,8 @@ export type UploadLogRecord = {
 };
 
 export interface UploadLogger {
-  log(session: ChtSession, batchNo: number, places: Place[]): Promise<void>;
-  get(session: ChtSession): Promise<UploadLogRecord[]>;
+  log(session: IChtSession, batchNo: number, places: Place[]): Promise<void>;
+  get(session: IChtSession): Promise<UploadLogRecord[]>;
 }
 
 export interface UploadLoggerStore {
@@ -80,7 +80,7 @@ export class UploadLoggerImpl implements UploadLogger {
     return decrypted;
   };
 
-  log = async (session: ChtSession, batch: number, places: Place[]) => {
+  log = async (session: IChtSession, batch: number, places: Place[]) => {
     const records = places.map(place => {
       const record: UploadLogRecord = {
         id: crypto.randomUUID(),
@@ -99,7 +99,7 @@ export class UploadLoggerImpl implements UploadLogger {
     await this.store.save(session.username, batch, records);
   };
 
-  get = async (session: ChtSession): Promise<UploadLogRecord[]> => {
+  get = async (session: IChtSession): Promise<UploadLogRecord[]> => {
     const logs = await this.store.get(session.username);
     return logs.map(log => JSON.parse(this.decrypt(log, process.env.SECRET_KEY)));
   };

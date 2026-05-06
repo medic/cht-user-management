@@ -1,6 +1,6 @@
 import _ from 'lodash';
 import { AxiosInstance } from 'axios';
-import ChtSession from './cht-session';
+import { IChtSession } from './cht-session';
 import { Config, ContactType } from '../config';
 import { DateTime } from 'luxon';
 import { UserPayload } from '../services/user-payload';
@@ -36,10 +36,10 @@ export type UserInfo = {
 };
 
 export class ChtApi {
-  public readonly chtSession: ChtSession;
+  public readonly chtSession: IChtSession;
   private axiosInstance: AxiosInstance;
 
-  constructor(session: ChtSession) {
+  constructor(session: IChtSession) {
     this.chtSession = session;
     this.axiosInstance = session.axiosInstance;
   }

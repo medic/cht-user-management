@@ -14,6 +14,7 @@ import metricsPlugin from 'fastify-metrics';
 import Auth from './lib/authentication';
 import SessionCache from './services/session-cache';
 import { getChtConfQueue } from './lib/queues';
+import { createSessionFromRequest } from './lib/cht-session';
 
 const PROMETHEUS_ENDPOINT = '/metrics';
 const UNAUTHENTICATED_ENDPOINTS = [
@@ -83,14 +84,12 @@ const build = (opts: FastifyServerOptions): FastifyInstance => {
       return;
     }
 
-    const cookieToken = req.cookies[Auth.AUTH_COOKIE_NAME] as string;
-    if (!cookieToken) {
-      reply.redirect('/login');
-      throw new Error('user must login');
-    }
-
     try {
-      const chtSession = Auth.createCookieSession(cookieToken);
+      const chtSession = await createSessionFromRequest(req);
+      if (!chtSession) {
+        reply.redirect('/login');
+        throw new Error('user must login');
+      }
       req.chtSession = chtSession;
       req.sessionCache = SessionCache.getForSession(chtSession);
     } catch (e) {

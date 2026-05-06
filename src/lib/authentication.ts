@@ -1,6 +1,6 @@
 import process from 'process';
 import jwt from 'jsonwebtoken';
-import ChtSession from './cht-session';
+import { CookieChtSession } from './cht-session';
 
 const LOGIN_EXPIRES_AFTER_MS = 4 * 24 * 60 * 60 * 1000;
 const QUEUE_SESSION_EXPIRATION = '96h';
@@ -26,19 +26,19 @@ export default class Auth {
     }
   }
 
-  public static encodeTokenForCookie(session: ChtSession) {
+  public static encodeTokenForCookie(session: CookieChtSession) {
     return this.encodeToken(session, COOKIE_SIGNING_KEY, '1 day');
   }
 
-  public static createCookieSession(token: string): ChtSession {
+  public static createCookieSession(token: string): CookieChtSession {
     return this.createSessionFromToken(token, COOKIE_SIGNING_KEY);
   }
 
-  public static encodeTokenForWorker(session: ChtSession) {
+  public static encodeTokenForWorker(session: CookieChtSession) {
     return this.encodeToken(session, `${WORKER_PRIVATE_KEY}`, QUEUE_SESSION_EXPIRATION);
   }
 
-  public static createWorkerSession(token: string): ChtSession {
+  public static createWorkerSession(token: string): CookieChtSession {
     return this.createSessionFromToken(token, `${WORKER_PRIVATE_KEY}`);
   }
 
@@ -47,17 +47,17 @@ export default class Auth {
   }
 
 
-  private static encodeToken(session: ChtSession, signingKey: string, expiresIn: string) {
+  private static encodeToken(session: CookieChtSession, signingKey: string, expiresIn: string) {
     const data = JSON.stringify(session);
     return jwt.sign({ data }, signingKey, { expiresIn });
   }
 
-  private static createSessionFromToken(token: string, signingKey: string): ChtSession {
+  private static createSessionFromToken(token: string, signingKey: string): CookieChtSession {
     if (!token) {
       throw new Error('invalid authentication token');
     }
 
     const { data } = jwt.verify(token, signingKey) as any;
-    return ChtSession.createFromDataString(data);
+    return CookieChtSession.createFromDataString(data);
   }
 }

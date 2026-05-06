@@ -11,7 +11,7 @@ import { UploadReplacementWithDeactivation } from './upload.deactivate';
 import { UserPayload } from './user-payload';
 import _ from 'lodash';
 import { UploadLogRecord, UploadLogger } from './upload-log';
-import ChtSession from '../lib/cht-session';
+import { IChtSession } from '../lib/cht-session';
 
 const UPLOAD_BATCH_SIZE = 15;
 
@@ -28,7 +28,7 @@ export class UploadManager extends EventEmitter {
     this.uploadLogger = uploadLogger;
   }
 
-  getLog = async (session: ChtSession): Promise<UploadLogRecord[]> => {
+  getLog = async (session: IChtSession): Promise<UploadLogRecord[]> => {
     return await this.uploadLogger.get(session);
   };
 

@@ -2,7 +2,7 @@ import { expect } from 'chai';
 import sinon from 'sinon';
 
 import { ChtApi } from '../src/lib/cht-api';
-import ChtSession from '../src/lib/cht-session';
+import { CookieChtSession } from '../src/lib/cht-session';
 import { Config, ContactProperty, ContactType } from '../src/config';
 import Place from '../src/services/place';
 import PlaceFactory from '../src/services/place-factory';
@@ -147,8 +147,8 @@ export const mockProperty = (type: string, parameter?: string | string[] | objec
   required: true
 });
 
-//  Constructor of class ChtSession is private and only accessible within the class declaration.
-export function mockChtSession(userFacilityId: string = '*') : ChtSession {
+//  Constructor of class CookieChtSession is private and only accessible within the class declaration.
+export function mockChtSession(userFacilityId: string = '*') : CookieChtSession {
   const creationDetails = {
     authInfo: {
       friendly: 'domain',
@@ -160,7 +160,7 @@ export function mockChtSession(userFacilityId: string = '*') : ChtSession {
     facilityIds: [userFacilityId],
     chtCoreVersion: '4.7.0',
   };
-  return new ChtSession(creationDetails);
+  return new CookieChtSession(creationDetails);
 }
 
 export function expectInvalidProperties(

@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import ChtSession from '../lib/cht-session';
+import { IChtSession } from '../lib/cht-session';
 import { DirectiveFilter } from './directive-model';
 import Place, { PlaceUploadState } from './place';
 import { Config } from '../config';
@@ -12,8 +12,8 @@ export default class SessionCache {
 
   private constructor() {}
 
-  public static getForSession = (session: ChtSession): SessionCache => {
-    const lookup = session.sessionToken;
+  public static getForSession = (session: IChtSession): SessionCache => {
+    const lookup = session.cacheKey;
     let sessionCache = this.caches.get(lookup);
     if (!sessionCache) {
       sessionCache = new SessionCache();

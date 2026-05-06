@@ -4,7 +4,7 @@ import Auth from '../lib/authentication';
 import { AuthError } from '../lib/authentication-error';
 import { Config } from '../config';
 import { version as appVersion } from '../package.json';
-import ChtSession from '../lib/cht-session';
+import { CookieChtSession } from '../lib/cht-session';
 
 const getLoginErrorMessage = (error: unknown): string => {
   if (error instanceof AuthError) {
@@ -53,7 +53,7 @@ export default async function authentication(fastify: FastifyInstance) {
         throw AuthError.MISSING_CREDENTIALS();
       }
 
-      const chtSession = await ChtSession.create(authInfo, username, password);
+      const chtSession = await CookieChtSession.create(authInfo, username, password);
       const tokenizedSession = Auth.encodeTokenForCookie(chtSession);
 
       resp.setCookie(Auth.AUTH_COOKIE_NAME, tokenizedSession, {

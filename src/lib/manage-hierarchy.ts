@@ -3,6 +3,7 @@ import { DateTime } from 'luxon';
 
 import Auth from './authentication';
 import { ChtApi } from './cht-api';
+import { CookieChtSession } from './cht-session';
 import { ChtConfJobData } from '../worker/cht-conf-worker';
 import { ContactType } from '../config';
 import { JobParams, IQueue, getChtConfQueue } from './queues';
@@ -143,6 +144,9 @@ function getJobName(action: string, sourceLineage: (RemotePlace | undefined)[], 
 
 function getJobData(action: HierarchyAction, sourceId: string, destinationId: string, chtApi: ChtApi): ChtConfJobData {
   const { authInfo } = chtApi.chtSession;
+  if (!(chtApi.chtSession instanceof CookieChtSession)) {
+    throw new Error('hierarchy operations require a cookie-based CHT session (cht-conf needs an AuthSession token)');
+  }
   return {
     action,
     instanceUrl: `http${authInfo.useHttp ? '' : 's'}://${authInfo.domain}`,
