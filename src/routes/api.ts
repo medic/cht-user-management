@@ -112,7 +112,7 @@ export default async function api(fastify: FastifyInstance) {
     return hits;
   });
 
-  fastify.post('/api/v1/manage-hierarchy', async (req, resp) => {
+  fastify.post('/api/v1/manage-hierarchy', async (req) => {
     const sessionCache: SessionCache = req.sessionCache;
     const chtApi = new ChtApi(req.chtSession);
     
