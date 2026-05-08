@@ -251,7 +251,7 @@ describe('routes/api.ts', () => {
       });
 
       expect(resp.statusCode).to.equal(500);
-      expect(resp.json().message).to.contain('request body must be a JSON object');
+      expect(resp.json().message).to.contain('body expected as application/json');
       expect(placeFactoryStub.called).to.be.false;
     });
 
@@ -264,7 +264,7 @@ describe('routes/api.ts', () => {
       });
 
       expect(resp.statusCode).to.equal(500);
-      expect(resp.json().message).to.contain('request body must be a JSON object');
+      expect(resp.json().message).to.contain('body expected as application/json');
     });
   });
 
@@ -373,7 +373,7 @@ describe('routes/api.ts', () => {
       });
 
       expect(resp.statusCode).to.equal(500);
-      expect(resp.json().message).to.contain('request body must be a JSON object');
+      expect(resp.json().message).to.contain('body expected as application/json');
       expect(placeFactoryStub.called).to.be.false;
       expect(uploadStub.called).to.be.false;
     });
@@ -387,7 +387,7 @@ describe('routes/api.ts', () => {
       });
 
       expect(resp.statusCode).to.equal(500);
-      expect(resp.json().message).to.contain('request body must be a JSON object');
+      expect(resp.json().message).to.contain('body expected as application/json');
       expect(uploadStub.called).to.be.false;
     });
   });
@@ -484,7 +484,7 @@ describe('routes/api.ts', () => {
       });
 
       expect(resp.statusCode).to.equal(500);
-      expect(resp.json().message).to.contain('request body must be a JSON object');
+      expect(resp.json().message).to.contain('body expected as application/json');
       expect(getJobDetailsStub.called).to.be.false;
       expect(scheduleJobStub.called).to.be.false;
     });
@@ -498,7 +498,7 @@ describe('routes/api.ts', () => {
       });
 
       expect(resp.statusCode).to.equal(500);
-      expect(resp.json().message).to.contain('request body must be a JSON object');
+      expect(resp.json().message).to.contain('body expected as application/json');
       expect(getJobDetailsStub.called).to.be.false;
     });
   });
