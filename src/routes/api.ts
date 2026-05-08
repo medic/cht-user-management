@@ -6,6 +6,8 @@ import { FastifyInstance } from 'fastify';
 import Fuse from 'fuse.js';
 import Place from '../services/place';
 import PlaceFactory from '../services/place-factory';
+import ManageHierarchyLib from '../lib/manage-hierarchy';
+import SessionCache from '../services/session-cache';
 import RemotePlaceCache from '../lib/remote-place-cache';
 import RemotePlaceResolver from '../lib/remote-place-resolver';
 import WarningSystem from '../warnings';
@@ -30,6 +32,7 @@ export default async function api(fastify: FastifyInstance) {
     const { type } = queryParams;
 
     const formBody: any = req.body;
+    ensureJsonObjectBody(formBody);
 
     const contactType = Config.getContactType(type);
     const chtApi = new ChtApi(req.chtSession);
@@ -68,6 +71,7 @@ export default async function api(fastify: FastifyInstance) {
       : DEFAULT_THRESHOLD;
 
     const formBody: any = req.body;
+    ensureJsonObjectBody(formBody);
 
     const contactType = Config.getContactType(type);
     const [baseHierarchyLevel] = Config.getHierarchyWithReplacement(contactType);
@@ -107,6 +111,42 @@ export default async function api(fastify: FastifyInstance) {
 
     return hits;
   });
+
+  fastify.post('/api/v1/manage-hierarchy', async (req, resp) => {
+    const sessionCache: SessionCache = req.sessionCache;
+    const chtApi = new ChtApi(req.chtSession);
+    
+    const formBody: any = req.body;
+    ensureJsonObjectBody(formBody);
+    const contactType = Config.getContactType(formBody.place_type);
+
+    try {
+      const job = await ManageHierarchyLib.getJobDetails(
+        formBody,
+        contactType,
+        sessionCache,
+        chtApi
+      );
+
+      await ManageHierarchyLib.scheduleJob(job);
+
+      return {
+        jobName: job.jobName,
+        action: job.jobData.action,
+        instanceUrl: job.jobData.instanceUrl,
+        sourceId: job.jobData.sourceId,
+        destinationId: job.jobData.destinationId,
+      };
+    } catch (e: any) {
+      return { error: e.toString() };
+    }
+  });
+}
+
+function ensureJsonObjectBody(body: unknown) {
+  if (!_.isPlainObject(body)) {
+    throw new Error('body expected as application/json');
+  }
 }
 
 function hierarchyResolutionError(place: Place): HierarchyResolutionError | null {

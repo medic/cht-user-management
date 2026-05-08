@@ -9,6 +9,7 @@ import RemotePlaceResolver from '../../src/lib/remote-place-resolver';
 import PlaceFactory from '../../src/services/place-factory';
 import Place from '../../src/services/place';
 import WarningSystem from '../../src/warnings';
+import ManageHierarchyLib from '../../src/lib/manage-hierarchy';
 import { UnvalidatedPropertyValue } from '../../src/property-value';
 import { mockChtSession, mockValidContactType } from '../mocks';
 
@@ -36,12 +37,28 @@ function fakeParent(id: string): RemotePlace {
   };
 }
 
+function fakeJob(overrides: Record<string, any> = {}) {
+  return {
+    jobName: 'move_[a]_to_[b]',
+    jobData: {
+      action: 'move' as const,
+      instanceUrl: 'http://cht.example.com',
+      sessionToken: 'tok',
+      sourceId: 'src-1',
+      destinationId: 'dst-1',
+      ...overrides,
+    },
+  };
+}
+
 describe('routes/api.ts', () => {
   let fastify: FastifyInstance;
   let placeFactoryStub: sinon.SinonStub;
   let getRemotePlacesStub: sinon.SinonStub;
   let setWarningsStub: sinon.SinonStub;
   let uploadStub: sinon.SinonStub;
+  let getJobDetailsStub: sinon.SinonStub;
+  let scheduleJobStub: sinon.SinonStub;
 
   /**
    * Configure PlaceFactory.createOne to return a Place stub whose
@@ -97,6 +114,8 @@ describe('routes/api.ts', () => {
     } as unknown as Place));
     getRemotePlacesStub = sinon.stub(RemotePlaceCache, 'getRemotePlaces').resolves([]);
     setWarningsStub = sinon.stub(WarningSystem, 'setWarnings').resolves();
+    getJobDetailsStub = sinon.stub(ManageHierarchyLib, 'getJobDetails').resolves(fakeJob());
+    scheduleJobStub = sinon.stub(ManageHierarchyLib, 'scheduleJob').resolves();
   });
 
   afterEach(async () => {
@@ -222,6 +241,31 @@ describe('routes/api.ts', () => {
       expect(resp.statusCode).to.equal(500);
       expect(resp.json().message).to.contain('unrecognized contact type');
     });
+
+    it('rejects a non-object body (array)', async () => {
+      const resp = await fastify.inject({
+        method: 'POST',
+        url: '/api/v1/search?type=anything',
+        headers: { 'Content-Type': 'application/json' },
+        payload: '["not","an","object"]',
+      });
+
+      expect(resp.statusCode).to.equal(500);
+      expect(resp.json().message).to.contain('request body must be a JSON object');
+      expect(placeFactoryStub.called).to.be.false;
+    });
+
+    it('rejects a null body', async () => {
+      const resp = await fastify.inject({
+        method: 'POST',
+        url: '/api/v1/search?type=anything',
+        headers: { 'Content-Type': 'application/json' },
+        payload: 'null',
+      });
+
+      expect(resp.statusCode).to.equal(500);
+      expect(resp.json().message).to.contain('request body must be a JSON object');
+    });
   });
 
   describe('POST /api/v1/create', () => {
@@ -319,6 +363,143 @@ describe('routes/api.ts', () => {
       expect(resp.statusCode).to.equal(500);
       expect(resp.json().message).to.contain('unrecognized contact type');
       expect(uploadStub.called).to.be.false;
+    });
+
+    it('rejects a non-object body (array)', async () => {
+      const resp = await fastify.inject({
+        method: 'POST',
+        url: '/api/v1/create?type=anything',
+        payload: [{ name: 'Jane' }],
+      });
+
+      expect(resp.statusCode).to.equal(500);
+      expect(resp.json().message).to.contain('request body must be a JSON object');
+      expect(placeFactoryStub.called).to.be.false;
+      expect(uploadStub.called).to.be.false;
+    });
+
+    it('rejects a null body', async () => {
+      const resp = await fastify.inject({
+        method: 'POST',
+        url: '/api/v1/create?type=anything',
+        headers: { 'Content-Type': 'application/json' },
+        payload: 'null',
+      });
+
+      expect(resp.statusCode).to.equal(500);
+      expect(resp.json().message).to.contain('request body must be a JSON object');
+      expect(uploadStub.called).to.be.false;
+    });
+  });
+
+  describe('POST /api/v1/manage-hierarchy', () => {
+    it('schedules the job and returns its summary fields', async () => {
+      getJobDetailsStub.resolves({
+        jobName: 'merge_[src]_to_[dst]',
+        jobData: {
+          action: 'merge',
+          instanceUrl: 'http://cht.example.com',
+          sessionToken: 'tok',
+          sourceId: 'chu-source',
+          destinationId: 'chu-dest',
+        },
+      });
+
+      const resp = await fastify.inject({
+        method: 'POST',
+        url: '/api/v1/manage-hierarchy',
+        payload: {
+          place_type: 'anything',
+          op: 'merge',
+          source_replacement: 'A',
+          destination_replacement: 'B',
+        },
+      });
+
+      expect(resp.statusCode).to.equal(200);
+      expect(resp.json()).to.deep.equal({
+        jobName: 'merge_[src]_to_[dst]',
+        action: 'merge',
+        instanceUrl: 'http://cht.example.com',
+        sourceId: 'chu-source',
+        destinationId: 'chu-dest',
+      });
+      expect(getJobDetailsStub.calledOnce).to.be.true;
+      expect(scheduleJobStub.calledOnce).to.be.true;
+    });
+
+    it('returns the error envelope when getJobDetails throws', async () => {
+      getJobDetailsStub.rejects(new Error('source place could not be resolved'));
+
+      const resp = await fastify.inject({
+        method: 'POST',
+        url: '/api/v1/manage-hierarchy',
+        payload: { place_type: 'anything', op: 'move' },
+      });
+
+      expect(resp.statusCode).to.equal(200);
+      expect(resp.json()).to.deep.equal({
+        error: 'Error: source place could not be resolved',
+      });
+      expect(scheduleJobStub.called).to.be.false;
+    });
+
+    it('returns the error envelope when scheduleJob throws', async () => {
+      scheduleJobStub.rejects(new Error('queue unavailable'));
+
+      const resp = await fastify.inject({
+        method: 'POST',
+        url: '/api/v1/manage-hierarchy',
+        payload: { place_type: 'anything', op: 'move' },
+      });
+
+      expect(resp.statusCode).to.equal(200);
+      expect(resp.json()).to.deep.equal({
+        error: 'Error: queue unavailable',
+      });
+      expect(getJobDetailsStub.calledOnce).to.be.true;
+    });
+
+    it('returns 500 when place_type is unknown (Config.getContactType throws outside the try)', async () => {
+      (Config.getContactType as sinon.SinonStub).restore();
+      sinon.stub(Config, 'getContactType').throws(new Error('unrecognized contact type: "bogus"'));
+
+      const resp = await fastify.inject({
+        method: 'POST',
+        url: '/api/v1/manage-hierarchy',
+        payload: { place_type: 'bogus', op: 'move' },
+      });
+
+      expect(resp.statusCode).to.equal(500);
+      expect(resp.json().message).to.contain('unrecognized contact type');
+      expect(getJobDetailsStub.called).to.be.false;
+      expect(scheduleJobStub.called).to.be.false;
+    });
+
+    it('rejects a non-object body (array)', async () => {
+      const resp = await fastify.inject({
+        method: 'POST',
+        url: '/api/v1/manage-hierarchy',
+        payload: ['not', 'an', 'object'],
+      });
+
+      expect(resp.statusCode).to.equal(500);
+      expect(resp.json().message).to.contain('request body must be a JSON object');
+      expect(getJobDetailsStub.called).to.be.false;
+      expect(scheduleJobStub.called).to.be.false;
+    });
+
+    it('rejects a null body', async () => {
+      const resp = await fastify.inject({
+        method: 'POST',
+        url: '/api/v1/manage-hierarchy',
+        headers: { 'Content-Type': 'application/json' },
+        payload: 'null',
+      });
+
+      expect(resp.statusCode).to.equal(500);
+      expect(resp.json().message).to.contain('request body must be a JSON object');
+      expect(getJobDetailsStub.called).to.be.false;
     });
   });
 });
