@@ -15,7 +15,7 @@ import WarningSystem from '../warnings';
 const DEFAULT_THRESHOLD = 0.6;
 
 type SearchResult = {
-  uuid: string;
+  place_id: string;
   name: string;
   score: number;
 };
@@ -29,12 +29,11 @@ type HierarchyResolutionError = {
 export default async function api(fastify: FastifyInstance) {
   fastify.post('/api/v1/create', async (req) => {
     const queryParams: any = req.query;
-    const { type } = queryParams;
 
     const formBody: any = req.body;
     ensureJsonObjectBody(formBody);
 
-    const contactType = Config.getContactType(type);
+    const contactType = Config.getContactType(formBody.type);
     const chtApi = new ChtApi(req.chtSession);
     const sessionCache = req.sessionCache;
 
@@ -65,7 +64,6 @@ export default async function api(fastify: FastifyInstance) {
 
   fastify.post('/api/v1/search', async (req) => {
     const queryParams: any = req.query;
-    const { type } = queryParams;
     const threshold = queryParams.threshold !== undefined
       ? parseFloat(queryParams.threshold)
       : DEFAULT_THRESHOLD;
@@ -73,7 +71,7 @@ export default async function api(fastify: FastifyInstance) {
     const formBody: any = req.body;
     ensureJsonObjectBody(formBody);
 
-    const contactType = Config.getContactType(type);
+    const contactType = Config.getContactType(formBody.type);
     const [baseHierarchyLevel] = Config.getHierarchyWithReplacement(contactType);
 
     const chtApi = new ChtApi(req.chtSession);
@@ -104,7 +102,7 @@ export default async function api(fastify: FastifyInstance) {
       .search(formBody[baseHierarchyLevel.property_name] ?? '')
       .map(({ item, score }) => ({
         name: item.name.original,
-        uuid: item.id,
+        place_id: item.id,
         score: score ?? 1,
       }))
       .sort((a, b) => a.score - b.score);
