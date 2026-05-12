@@ -158,7 +158,7 @@ export function mockChtSession(userFacilityId: string = '*') : ChtSession {
     sessionToken: 'session-token',
     username: 'username',
     facilityIds: [userFacilityId],
-    chtCoreVersion: '4.7.0',
+    chtCoreVersion: '4.9.0',
   };
   return new ChtSession(creationDetails);
 }

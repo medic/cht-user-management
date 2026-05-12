@@ -4,7 +4,7 @@ import { ChtApi } from '../lib/cht-api';
 import { Config } from '../config';
 import { FastifyInstance } from 'fastify';
 import Fuse from 'fuse.js';
-import Place from '../services/place';
+import Place, { PlaceUploadState } from '../services/place';
 import PlaceFactory from '../services/place-factory';
 import ManageHierarchyLib from '../lib/manage-hierarchy';
 import SessionCache from '../services/session-cache';
@@ -49,15 +49,21 @@ export default async function api(fastify: FastifyInstance) {
 
     place.validate();
     if (place.hasValidationErrors) {
-      return { errors: place.validationErrors };
+      return { success: false, errors: place.validationErrors };
     }
 
     await WarningSystem.setWarnings(contactType, chtApi, req.sessionCache);
-    await fastify.uploadManager.doUpload([place], chtApi);
+    await fastify.uploadManager.doUpload([place], chtApi, true);
+
+    if (place.state !== PlaceUploadState.SUCCESS) {
+      return { success: false, errors: place.uploadError };
+    }
 
     return {
-      place_id: place.id,
-      contact_id: place.contact.id,
+      place_id: place.creationDetails.placeId,
+      contact_id: place.creationDetails.contactId,
+      username: place.creationDetails.username,
+      password: place.creationDetails.password,
       warnings: place.warnings,
     };
   });

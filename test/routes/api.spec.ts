@@ -7,7 +7,7 @@ import { Config } from '../../src/config';
 import RemotePlaceCache, { RemotePlace } from '../../src/lib/remote-place-cache';
 import RemotePlaceResolver from '../../src/lib/remote-place-resolver';
 import PlaceFactory from '../../src/services/place-factory';
-import Place from '../../src/services/place';
+import Place, { PlaceUploadState } from '../../src/services/place';
 import WarningSystem from '../../src/warnings';
 import ManageHierarchyLib from '../../src/lib/manage-hierarchy';
 import { UnvalidatedPropertyValue } from '../../src/property-value';
@@ -81,7 +81,11 @@ describe('routes/api.ts', () => {
     validationErrors?: Record<string, string>;
     id?: string;
     contactId?: string;
+    username?: string;
+    password?: string;
     warnings?: string[];
+    state?: PlaceUploadState;
+    uploadError?: string;
   } = {}) {
     const place = {
       id: opts.id ?? 'place-1',
@@ -91,6 +95,14 @@ describe('routes/api.ts', () => {
       hasValidationErrors: !!opts.validationErrors,
       validationErrors: opts.validationErrors ?? {},
       warnings: opts.warnings ?? [],
+      state: opts.state ?? PlaceUploadState.SUCCESS,
+      uploadError: opts.uploadError,
+      creationDetails: {
+        placeId: opts.id ?? 'place-1',
+        contactId: opts.contactId ?? 'contact-1',
+        username: opts.username ?? 'user-1',
+        password: opts.password ?? 'pw-1',
+      },
     };
     placeFactoryStub.callsFake(async () => place as unknown as Place);
     return place;
@@ -140,7 +152,7 @@ describe('routes/api.ts', () => {
 
       expect(resp.statusCode).to.equal(200);
       const hits = resp.json();
-      expect(hits.map((h: any) => h.uuid)).to.deep.equal(['p-jane', 'p-janet']);
+      expect(hits.map((h: any) => h.place_id)).to.deep.equal(['p-jane', 'p-janet']);
       expect(hits[0].name).to.equal('Jane Doe');
       expect(hits[0].score).to.be.lessThan(hits[1].score); // lower fuse score = better match
     });
@@ -225,7 +237,7 @@ describe('routes/api.ts', () => {
 
       expect(resp.statusCode).to.equal(200);
       const hits = resp.json();
-      expect(hits.map((h: any) => h.uuid)).to.deep.equal(['p-jane']);
+      expect(hits.map((h: any) => h.place_id)).to.deep.equal(['p-jane']);
     });
 
     it('returns 500 when type is unknown', async () => {
@@ -287,6 +299,8 @@ describe('routes/api.ts', () => {
       expect(resp.json()).to.deep.equal({
         place_id: 'p-1',
         contact_id: 'c-1',
+        username: 'user-1',
+        password: 'pw-1',
         warnings: ['heads up'],
       });
       expect(setWarningsStub.calledOnce).to.be.true;
@@ -345,9 +359,31 @@ describe('routes/api.ts', () => {
       });
 
       expect(resp.statusCode).to.equal(200);
-      expect(resp.json()).to.deep.equal({ errors });
+      expect(resp.json()).to.deep.equal({ success: false, errors });
       expect(uploadStub.called).to.be.false;
       expect(setWarningsStub.called).to.be.false;
+    });
+
+    it('returns the upload-failure envelope when state is not SUCCESS after upload', async () => {
+      stubCreatedPlace({
+        parent: fakeParent(PARENT_ID),
+        state: PlaceUploadState.FAILURE,
+        uploadError: 'CHT api rejected: 500',
+      });
+
+      const resp = await fastify.inject({
+        method: 'POST',
+        url: '/api/v1/create?type=anything',
+        payload: { PARENT: 'parent', name: 'Jane', phone: '0712345678' },
+      });
+
+      expect(resp.statusCode).to.equal(200);
+      expect(resp.json()).to.deep.equal({
+        success: false,
+        errors: 'CHT api rejected: 500',
+      });
+      expect(setWarningsStub.calledOnce).to.be.true;
+      expect(uploadStub.calledOnce).to.be.true;
     });
 
     it('returns 500 when type is unknown', async () => {
