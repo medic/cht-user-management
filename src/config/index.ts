@@ -178,17 +178,11 @@ export class Config {
   public static getDomains() : AuthenticationInfo[] {
     const domains = [...config.domains];
 
-    // because all .env vars imported as strings, let's get the AuthenticationInfo object a boolean
-    let TMP_USE_HTTP = true;
-    if (CHT_DEV_HTTP === 'false') {
-      TMP_USE_HTTP = false;
-    }
-
     if (NODE_ENV !== 'production') {
       domains.push({
-        friendly: '$Development Instance (' + CHT_DEV_URL_PORT + ')',
+        friendly: '$Development',
         domain: CHT_DEV_URL_PORT as string,
-        useHttp: TMP_USE_HTTP,
+        useHttp: CHT_DEV_HTTP !== 'false',
       });
     }
 
