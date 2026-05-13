@@ -12,7 +12,7 @@ import { RemotePlace } from './remote-place-cache';
 import { ssoLogin } from './sso-login';
 import { UserPermissionService } from '../services/user-permissions';
 
-export const COUCH_AUTH_COOKIE_NAME = 'AuthSession=';
+export const COUCH_AUTH_COOKIE_NAME = 'AuthSession';
 const ADMIN_FACILITY_ID = '*';
 export const ADMIN_ROLES = ['admin', '_admin'];
 const ALLOW_ADMIN_LOGIN = process.env.ALLOW_ADMIN_LOGIN ?? 'true';
@@ -104,7 +104,7 @@ export default class ChtSession {
       );
       const setCookieHeader = (resp.headers as AxiosHeaders).get('set-cookie') as AxiosHeaders;
       const token = setCookieHeader?.[0]?.split(';')
-        .find((header: string) => header.startsWith(COUCH_AUTH_COOKIE_NAME));
+        .find((header: string) => header.startsWith(`${COUCH_AUTH_COOKIE_NAME}=`));
       if (!token) {
         throw AuthError.TOKEN_CREATION_FAILED(username, authInfo.domain);
       }

@@ -30,17 +30,16 @@ export async function ssoLogin(authInfo: AuthenticationInfo, accessToken: string
   const start = `${chtBaseUrl}/medic/login/oidc/authorize`;
   const { jar, finalUrl } = await follow(start, accessToken);
 
-  const cookieKey = COUCH_AUTH_COOKIE_NAME.replace(/=$/, '');
   // CHT may redirect across hostnames mid-chain (e.g. localhost <-> LAN IP).
   // Pick whichever bucket actually carries the session cookie.
-  const bucket = findBucketWith(jar, cookieKey);
-  const sessionValue = bucket?.get(cookieKey);
+  const bucket = findBucketWith(jar, COUCH_AUTH_COOKIE_NAME);
+  const sessionValue = bucket?.get(COUCH_AUTH_COOKIE_NAME);
   if (!sessionValue) {
-    throw new Error(`SSO dance completed at ${finalUrl} but no ${cookieKey} cookie was set in any bucket`);
+    throw new Error(`SSO dance completed at ${finalUrl} but no ${COUCH_AUTH_COOKIE_NAME} cookie was set in any bucket`);
   }
 
   const username = getUsername(bucket, finalUrl, authInfo.domain);
-  return { sessionToken: `${COUCH_AUTH_COOKIE_NAME}${sessionValue}`, username };
+  return { sessionToken: `${COUCH_AUTH_COOKIE_NAME}=${sessionValue}`, username };
 }
 
 function findBucketWith(jar: CookieJar, cookieName: string): Map<string, string> | undefined {
