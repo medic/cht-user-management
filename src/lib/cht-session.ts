@@ -9,9 +9,10 @@ import { AuthError } from './authentication-error';
 import { AuthenticationInfo } from '../config';
 import { axiosRetryConfig } from './retry-logic';
 import { RemotePlace } from './remote-place-cache';
+import { ssoLogin } from './sso-login';
 import { UserPermissionService } from '../services/user-permissions';
 
-const COUCH_AUTH_COOKIE_NAME = 'AuthSession=';
+export const COUCH_AUTH_COOKIE_NAME = 'AuthSession=';
 const ADMIN_FACILITY_ID = '*';
 export const ADMIN_ROLES = ['admin', '_admin'];
 const ALLOW_ADMIN_LOGIN = process.env.ALLOW_ADMIN_LOGIN ?? 'true';
@@ -61,6 +62,16 @@ export default class ChtSession {
     return new ChtSession(creationDetails);
   }
 
+  public static async createFromSSO(authInfo: AuthenticationInfo, accessToken: string): Promise<ChtSession> {
+    try {
+      const { sessionToken, username } = await ssoLogin(authInfo, accessToken);
+      const creationDetails = await ChtSession.fetchCreationDetails(authInfo, username, sessionToken);
+      return new ChtSession(creationDetails);
+    } catch (e: any) {
+      throw ChtSession.mapAuthError(e, authInfo.domain);
+    }
+  }
+
   public static createFromDataString(data: string): ChtSession {
     const parsed: any = JSON.parse(data);
     return new ChtSession(parsed);
@@ -99,16 +110,7 @@ export default class ChtSession {
       }
       return token;
     } catch (e: any) {
-      if (e?.response?.status === 401) {
-        throw AuthError.INVALID_CREDENTIALS();
-      }
-      if (e.code === 'ENOTFOUND' || e.errno === -3008) {
-        throw AuthError.INSTANCE_OFFLINE();
-      }
-      if (e.code === 'ETIMEDOUT' || e?.cause?.code === 'ETIMEDOUT' || e?.cause?.code === 'ECONNREFUSED') {
-        throw AuthError.CONNECTION_TIMEOUT(authInfo.domain);
-      }
-      throw e;
+      throw ChtSession.mapAuthError(e, authInfo.domain);
     }
   }
 
@@ -165,5 +167,18 @@ export default class ChtSession {
   private static createUrl(authInfo: AuthenticationInfo, path: string) {
     const protocol = authInfo.useHttp ? 'http' : 'https';
     return `${protocol}://${authInfo.domain}${path ? '/' : ''}${path}`;
+  }
+
+  private static mapAuthError(e: any, domain: string): Error {
+    if (e?.response?.status === 401) {
+      return AuthError.INVALID_CREDENTIALS();
+    }
+    if (e.code === 'ENOTFOUND' || e.errno === -3008) {
+      return AuthError.INSTANCE_OFFLINE();
+    }
+    if (e.code === 'ETIMEDOUT' || e?.cause?.code === 'ETIMEDOUT' || e?.cause?.code === 'ECONNREFUSED') {
+      return AuthError.CONNECTION_TIMEOUT(domain);
+    }
+    return e;
   }
 }
