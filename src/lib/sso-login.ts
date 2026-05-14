@@ -3,19 +3,9 @@
 import axios, { AxiosResponse } from 'axios';
 import { AuthenticationInfo } from '../config';
 import { COUCH_AUTH_COOKIE_NAME } from './cht-session';
-import { createAliasedAgents } from './aliased-agent';
 
 export type SsoLoginResult = { sessionToken: string; username: string };
 type CookieJar = Map<string, Map<string, string>>;
-
-// DEV-ONLY: host.docker.internal is used as oidc_provider.discovery_url when
-// CHT is running in a container. We need to override it while leaving the
-// Host header / TLS SNI intact.
-const HOST_ALIASES: Record<string, string> = {
-  'host.docker.internal': '127.0.0.1',
-};
-
-const agents = createAliasedAgents(HOST_ALIASES);
 
 /**
  * Drive the OIDC dance and return the resulting CHT session. The access token
@@ -97,8 +87,6 @@ async function follow(start: string, accessToken: string, maxHops = 12): Promise
       method: 'GET',
       url: current,
       headers,
-      httpAgent: agents.http,
-      httpsAgent: agents.https,
       maxRedirects: 0,
       validateStatus: () => true,
       responseType: 'text',
