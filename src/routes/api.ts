@@ -28,8 +28,6 @@ type HierarchyResolutionError = {
 
 export default async function api(fastify: FastifyInstance) {
   fastify.post('/api/v1/create', async (req) => {
-    const queryParams: any = req.query;
-
     const formBody: any = req.body;
     ensureJsonObjectBody(formBody);
 
