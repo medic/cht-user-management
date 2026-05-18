@@ -59,6 +59,7 @@ describe('routes/api.ts', () => {
   let uploadStub: sinon.SinonStub;
   let getJobDetailsStub: sinon.SinonStub;
   let scheduleJobStub: sinon.SinonStub;
+  let cancelJobStub: sinon.SinonStub;
 
   /**
    * Configure PlaceFactory.createOne to return a Place stub whose
@@ -127,7 +128,8 @@ describe('routes/api.ts', () => {
     getRemotePlacesStub = sinon.stub(RemotePlaceCache, 'getRemotePlaces').resolves([]);
     setWarningsStub = sinon.stub(WarningSystem, 'setWarnings').resolves();
     getJobDetailsStub = sinon.stub(ManageHierarchyLib, 'getJobDetails').resolves(fakeJob());
-    scheduleJobStub = sinon.stub(ManageHierarchyLib, 'scheduleJob').resolves();
+    scheduleJobStub = sinon.stub(ManageHierarchyLib, 'scheduleJob').resolves('job-uuid-stub');
+    cancelJobStub = sinon.stub(ManageHierarchyLib, 'cancelJob').resolves('cancelled');
   });
 
   afterEach(async () => {
@@ -454,6 +456,7 @@ describe('routes/api.ts', () => {
 
       expect(resp.statusCode).to.equal(200);
       expect(resp.json()).to.deep.equal({
+        jobId: 'job-uuid-stub',
         jobName: 'merge_[src]_to_[dst]',
         action: 'merge',
         instanceUrl: 'http://cht.example.com',
@@ -536,6 +539,80 @@ describe('routes/api.ts', () => {
       expect(resp.statusCode).to.equal(500);
       expect(resp.json().message).to.contain('body expected as application/json');
       expect(getJobDetailsStub.called).to.be.false;
+    });
+  });
+
+  describe('POST /api/v1/cancel-job', () => {
+    it('returns 200 with cancelled:true when the job is removed', async () => {
+      cancelJobStub.resolves('cancelled');
+
+      const resp = await fastify.inject({
+        method: 'POST',
+        url: '/api/v1/cancel-job',
+        payload: { jobId: 'job-uuid-stub', reason: 'Failure in submitTransferDecision' },
+      });
+
+      expect(resp.statusCode).to.equal(200);
+      expect(resp.json()).to.deep.equal({ cancelled: true, jobId: 'job-uuid-stub' });
+      expect(cancelJobStub.calledOnceWithExactly('job-uuid-stub')).to.be.true;
+    });
+
+    it('returns 200 with cancelled:false when the job is not found', async () => {
+      cancelJobStub.resolves('not_found');
+
+      const resp = await fastify.inject({
+        method: 'POST',
+        url: '/api/v1/cancel-job',
+        payload: { jobId: 'missing-id' },
+      });
+
+      expect(resp.statusCode).to.equal(200);
+      expect(resp.json()).to.deep.equal({
+        cancelled: false,
+        jobId: 'missing-id',
+        error: 'Job not found (already completed or evicted).',
+      });
+    });
+
+    it('returns 200 with cancelled:false when the job is mid-execution', async () => {
+      cancelJobStub.resolves('locked');
+
+      const resp = await fastify.inject({
+        method: 'POST',
+        url: '/api/v1/cancel-job',
+        payload: { jobId: 'in-flight-id' },
+      });
+
+      expect(resp.statusCode).to.equal(200);
+      expect(resp.json()).to.deep.equal({
+        cancelled: false,
+        jobId: 'in-flight-id',
+        error: 'Job is already executing and cannot be cancelled.',
+      });
+    });
+
+    it('returns 200 with cancelled:false when jobId is missing or blank', async () => {
+      const resp = await fastify.inject({
+        method: 'POST',
+        url: '/api/v1/cancel-job',
+        payload: { reason: 'no id provided' },
+      });
+
+      expect(resp.statusCode).to.equal(200);
+      expect(resp.json()).to.deep.equal({ cancelled: false, error: 'jobId is required' });
+      expect(cancelJobStub.called).to.be.false;
+    });
+
+    it('rejects a non-object body', async () => {
+      const resp = await fastify.inject({
+        method: 'POST',
+        url: '/api/v1/cancel-job',
+        payload: ['not', 'an', 'object'],
+      });
+
+      expect(resp.statusCode).to.equal(500);
+      expect(resp.json().message).to.contain('body expected as application/json');
+      expect(cancelJobStub.called).to.be.false;
     });
   });
 });

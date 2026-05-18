@@ -2,9 +2,12 @@ import { v4 } from 'uuid';
 import { JobsOptions, Queue, ConnectionOptions, DefaultJobOptions } from 'bullmq';
 import { WorkerConfig } from '../config/config-worker';
 
+export type CancelResult = 'cancelled' | 'not_found' | 'locked';
+
 export interface IQueue {
   name: string;
   add(jobParams: any): Promise<string>;
+  cancel(jobId: string): Promise<CancelResult>;
 }
 
 export interface JobParams {
@@ -28,6 +31,24 @@ export class BullQueue implements IQueue {
 
     await this.bullQueue.add(jobName, jobData, { jobId, ...jobOpts });
     return jobId;
+  }
+
+  public async cancel(jobId: string): Promise<CancelResult> {
+    const job = await this.bullQueue.getJob(jobId);
+    if (!job) {
+      return 'not_found';
+    }
+    try {
+      await job.remove();
+      return 'cancelled';
+    } catch (e: any) {
+      // BullMQ throws "Job <id> is locked" when a worker has already picked
+      // up the job and removal is no longer safe.
+      if (/locked/i.test(e?.message ?? '')) {
+        return 'locked';
+      }
+      throw e;
+    }
   }
 
   public async close(): Promise<void> {

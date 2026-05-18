@@ -114,6 +114,32 @@ export default async function api(fastify: FastifyInstance) {
     return hits;
   });
 
+  fastify.post('/api/v1/cancel-job', async (req) => {
+    const formBody: any = req.body;
+    ensureJsonObjectBody(formBody);
+
+    const jobId = typeof formBody.jobId === 'string' ? formBody.jobId.trim() : '';
+    const reason = typeof formBody.reason === 'string' ? formBody.reason.trim() : '';
+    if (!jobId) {
+      return { cancelled: false, error: 'jobId is required' };
+    }
+
+    const result = await ManageHierarchyLib.cancelJob(jobId);
+    if (result === 'cancelled') {
+      req.log.info({ jobId, reason }, 'job cancelled');
+      return { cancelled: true, jobId };
+    }
+
+    const error = result === 'not_found' ? 'Job not found (already completed or evicted).'
+      : 'Job is already executing and cannot be cancelled.';
+  
+    return {
+      cancelled: false,
+      jobId,
+      error,
+    };
+  });
+
   fastify.post('/api/v1/manage-hierarchy', async (req) => {
     const sessionCache: SessionCache = req.sessionCache;
     const chtApi = new ChtApi(req.chtSession);
@@ -130,9 +156,10 @@ export default async function api(fastify: FastifyInstance) {
         chtApi
       );
 
-      await ManageHierarchyLib.scheduleJob(job);
+      const jobId = await ManageHierarchyLib.scheduleJob(job);
 
       return {
+        jobId,
         jobName: job.jobName,
         action: job.jobData.action,
         instanceUrl: job.jobData.instanceUrl,

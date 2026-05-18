@@ -5,7 +5,7 @@ import Auth from './authentication';
 import { ChtApi } from './cht-api';
 import { ChtConfJobData } from '../worker/cht-conf-worker';
 import { ContactType } from '../config';
-import { JobParams, IQueue, getChtConfQueue } from './queues';
+import { JobParams, IQueue, getChtConfQueue, CancelResult } from './queues';
 import Place from '../services/place';
 import RemotePlaceResolver from './remote-place-resolver';
 import SessionCache from '../services/session-cache';
@@ -27,8 +27,12 @@ export type WarningInformation = {
 export default class ManageHierarchyLib {
   private constructor() { }
 
-  public static async scheduleJob(job: JobParams, queueName: IQueue = getChtConfQueue()) {
-    await queueName.add(job);
+  public static async scheduleJob(job: JobParams, queueName: IQueue = getChtConfQueue()): Promise<string> {
+    return queueName.add(job);
+  }
+
+  public static async cancelJob(jobId: string, queueName: IQueue = getChtConfQueue()): Promise<CancelResult> {
+    return queueName.cancel(jobId);
   }
 
   public static parseHierarchyAction(action: string = ''): HierarchyAction {
