@@ -12,38 +12,13 @@
         "<node_internals>/**"
       ],
       "program": "${workspaceFolder}/dist/index.js",
-      "envFile": "${workspaceFolder}/.env",
-      "runtimeExecutable": "/home/kenn/.nvm/versions/node/v22.22.2/bin/node"
+      "envFile": "${workspaceFolder}/.env"
     },
     {
       "command": "npm test",
       "name": "Run npm test",
       "request": "launch",
       "type": "node-terminal"
-    },
-    {
-      "type": "node",
-      "request": "launch",
-      "name": "Debug src/kenya.ts (ts-node)",
-      "skipFiles": ["<node_internals>/**"],
-      "runtimeArgs": ["-r", "ts-node/register"],
-      "args": ["${workspaceFolder}/src/kenya.ts"],
-      "cwd": "${workspaceFolder}",
-      "envFile": "${workspaceFolder}/.env",
-      "internalConsoleOptions": "openOnSessionStart",
-      "runtimeExecutable": "/home/kenn/.nvm/versions/node/v22.22.2/bin/node"
-    },
-    {
-      "type": "node",
-      "request": "launch",
-      "name": "Debug Web Server (ts-node)",
-      "skipFiles": ["<node_internals>/**"],
-      "runtimeArgs": ["-r", "ts-node/register"],
-      "args": ["${workspaceFolder}/src/index.ts"],
-      "cwd": "${workspaceFolder}",
-      "envFile": "${workspaceFolder}/.env",
-      "internalConsoleOptions": "openOnSessionStart",
-      "runtimeExecutable": "/home/kenn/.nvm/versions/node/v22.22.2/bin/node"
     }
   ]
 }
