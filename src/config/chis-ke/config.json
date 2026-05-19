@@ -73,7 +73,7 @@
       "domain": "busia.echis.go.ke"
     },
     {
-      "friendly": "Elgeyo-Marakwet",
+      "friendly": "Elgeyo Marakwet",
       "domain": "elgeyomarakwet.echis.go.ke"
     },
     {
@@ -137,7 +137,7 @@
       "domain": "mombasa.echis.go.ke"
     },
     {
-      "friendly": "Murangaa",
+      "friendly": "Muranga",
       "domain": "muranga.echis.go.ke"
     },
     {
@@ -165,19 +165,19 @@
       "domain": "siaya.echis.go.ke"
     },
     {
-      "friendly": "Taita-Taveta",
+      "friendly": "Taita Taveta",
       "domain": "taitataveta.echis.go.ke"
     },
     {
-      "friendly": "Tana-River",
+      "friendly": "Tana River",
       "domain": "tanariver.echis.go.ke"
     },
     {
-      "friendly": "Tharaka-Nithi",
+      "friendly": "Tharaka Nithi",
       "domain": "tharakanithi.echis.go.ke"
     },
     {
-      "friendly": "Trans-Nzoia",
+      "friendly": "Trans Nzoia",
       "domain": "transnzoia.echis.go.ke"
     },
     {
@@ -194,15 +194,19 @@
     },
     {
       "friendly": "Training 1",
-      "domain": "chis-training.health.go.ke"
+      "domain": "training-1.echis.go.ke"
     },
     {
       "friendly": "Training 2",
-      "domain": "chis-training-2.health.go.ke"
+      "domain": "training-2.echis.go.ke"
     },
     {
       "friendly": "Training 3",
-      "domain": "chis-training-3.health.go.ke"
+      "domain": "training-3.echis.go.ke"
+    },
+    {
+      "friendly": "Training 4",
+      "domain": "training-4.echis.go.ke"
     }
   ],
   "contact_types": [
