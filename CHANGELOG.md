@@ -1,3 +1,10 @@
+# [2.7.0](https://github.com/medic/cht-user-management/compare/v2.6.3...v2.7.0) (2026-05-19)
+
+
+### Features
+
+* **#332:** authentication changes for Kenya's CHW-R registry ([#333](https://github.com/medic/cht-user-management/issues/333)) ([4323476](https://github.com/medic/cht-user-management/commit/4323476f5d2e6ed12f39d478aa1be2e6f0748902)), closes [#332](https://github.com/medic/cht-user-management/issues/332)
+
 ## [2.6.3](https://github.com/medic/cht-user-management/compare/v2.6.2...v2.6.3) (2026-04-02)
 
 
