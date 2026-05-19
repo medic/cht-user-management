@@ -23,7 +23,7 @@ export class AuthError extends Error {
   }
 
   static INCOMPATIBLE_CHT_CORE_VERSION(domain: string, chtCoreVersion: string) {
-    return new AuthError(`CHT Core Version must be 4.7.0 or higher. "${domain}" is running ${chtCoreVersion}.`);
+    return new AuthError(`CHT Core Version must be 4.9.0 or higher. "${domain}" is running ${chtCoreVersion}.`);
   }
 
   static CANNOT_PARSE_CHT_VERSION(chtCoreVersion: string, domain: string) {
