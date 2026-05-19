@@ -31,6 +31,8 @@ export type CouchDoc = {
 
 export type UserInfo = {
   username: string;
+  fullname?: string;
+  phone?: string;
   place?: CouchDoc[] | CouchDoc | string[] | string;
   roles?: string[];
 };
@@ -195,14 +197,29 @@ export class ChtApi {
     }
   }
 
+  async getAllUsers(): Promise<UserInfo[]> {
+    const url = `api/v2/users`;
+    console.log('axios.get', url);
+    const resp = await this.axiosInstance.get(url);
+    return resp.data?.map((doc: any): UserInfo => ({
+      username: doc.username,
+      fullname: doc.fullname,
+      phone: doc.phone,
+      place: doc.place,
+      roles: doc.roles,
+    })) || [];
+  }
+
   async getUsersAtPlace(placeId: string): Promise<UserInfo[]> {
     const url = `api/v2/users?facility_id=${placeId}`;
     console.log('axios.get', url);
     const resp = await this.axiosInstance.get(url);
     return resp.data?.map((doc: any): UserInfo => ({
       username: doc.username,
+      fullname: doc.fullname,
+      phone: doc.phone,
       place: doc.place,
-      roles: doc.roles
+      roles: doc.roles,
     }));
   }
 
@@ -212,8 +229,10 @@ export class ChtApi {
     const resp = await this.axiosInstance.get(url);
     return resp.data?.map((doc: any): UserInfo => ({
       username: doc.username,
+      fullname: doc.fullname,
+      phone: doc.phone,
       place: doc.place,
-      roles: doc.roles
+      roles: doc.roles,
     }))[0];
   }
 

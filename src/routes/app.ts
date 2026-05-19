@@ -10,6 +10,7 @@ import SessionCache from '../services/session-cache';
 import { UploadManager } from '../services/upload-manager';
 import WarningSystem from '../warnings';
 import { UploadLogRecord } from '../services/upload-log';
+import { getUserExportData } from '../lib/user-details-export';
 
 export default async function sessionCache(fastify: FastifyInstance) {
   fastify.get('/', async (req, resp) => {
@@ -91,6 +92,21 @@ export default async function sessionCache(fastify: FastifyInstance) {
     };
 
     return resp.view('src/liquid/upload-log/index.liquid', data);
+  });
+
+  fastify.get('/users/export', async (req, resp) => {
+    const contactTypes = Config.contactTypes();
+    const chtApi = new ChtApi(req.chtSession);
+    const { groups, totalCount } = await getUserExportData(contactTypes, chtApi);
+
+    return resp.view('src/liquid/user-export/index.liquid', {
+      logo: Config.getLogoBase64(),
+      session: req.chtSession,
+      navContactTypes: contactTypes,
+      MATOMO_HOST: process.env.MATOMO_HOST,
+      groups,
+      totalCount,
+    });
   });
 
   fastify.get('/app/list', async (req, resp) => {

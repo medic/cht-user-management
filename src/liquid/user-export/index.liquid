@@ -1,0 +1,103 @@
+<html>
+  <head>
+    <title>Export Users</title>
+    <script src="/public/htmx.min.js"></script>
+    <script src="/public/app.js"></script>
+    <link rel="stylesheet" href="/public/bulma.min.css">
+    <link rel="stylesheet" href="/public/bulma-tooltip.min.css">
+    <link rel="stylesheet" href="/public/material-symbols.css">
+    <link rel="stylesheet" href="/public/app.css">
+    <style>
+      .material-symbols-outlined { margin-right: 5px; }
+      .user-count-badge {
+        font-size: 0.85rem;
+        vertical-align: middle;
+        margin-left: 0.5rem;
+      }
+    </style>
+  </head>
+  <script>
+    var _paq = window._paq = window._paq || [];
+    _paq.push(['trackPageView']);
+    _paq.push(['enableLinkTracking']);
+    (function() {
+      var u="{{MATOMO_HOST}}";
+      _paq.push(['setTrackerUrl', u+'matomo.php']);
+      _paq.push(['setSiteId', '1']);
+      _paq.push(['setUserId', '{{ session.username }}']);
+      _paq.push(['setDownloadExtensions', "zip"]);
+      var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0];
+      g.async=true; g.src=u+'matomo.js'; s.parentNode.insertBefore(g,s);
+    })();
+  </script>
+  <body>
+    {% render 'app/nav.liquid',
+      logo: logo,
+      contactTypes: navContactTypes,
+      session: session
+    %}
+
+    <div class="container is-max-desktop p-4">
+
+      <div class="is-flex is-justify-content-space-between is-align-items-center mb-5">
+        <div>
+          <h4 class="title is-4 mb-1">Export Users</h4>
+          <p class="subtitle is-6 mt-0">
+            <span class="material-symbols-outlined" style="font-size:1rem; vertical-align:middle;">group</span>
+            <strong>{{ totalCount }}</strong> user{{ totalCount != 1 | default: 's' }} in
+            <em>{{ session.authInfo.friendly }}</em>
+          </p>
+        </div>
+        <a class="button is-primary" href="/files/user-details">
+          <span class="material-symbols-outlined">download</span>
+          Export as CSV
+        </a>
+      </div>
+
+      {% if totalCount == 0 %}
+        <div class="notification is-info is-light">
+          <span class="material-symbols-outlined">info</span>
+          No users of the configured contact types were found in this CHT instance.
+        </div>
+      {% else %}
+        {% for group in groups %}
+          <div class="mb-5">
+            <h5 class="title is-5 mb-2">
+              {{ group.contactType.friendly }}
+              <span class="tag is-info is-light user-count-badge">{{ group.users | size }}</span>
+            </h5>
+            <div style="border: 1px solid #d3d3d3; border-radius: 4px; overflow-x: auto;">
+              <table class="table is-fullwidth is-striped is-hoverable mb-0">
+                <thead>
+                  <tr>
+                    <th>Username</th>
+                    <th>Full Name</th>
+                    <th>Phone</th>
+                    <th>Roles</th>
+                    <th>Place</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for user in group.users %}
+                    <tr>
+                      <td><code>{{ user.username }}</code></td>
+                      <td>{{ user.fullname }}</td>
+                      <td>{{ user.phone }}</td>
+                      <td>
+                        {% if user.roles != '' %}
+                          <span class="tag is-light">{{ user.roles }}</span>
+                        {% endif %}
+                      </td>
+                      <td>{{ user.place }}</td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        {% endfor %}
+      {% endif %}
+
+    </div>
+  </body>
+</html>

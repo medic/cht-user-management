@@ -8,6 +8,8 @@ import { Config, ContactProperty } from '../config';
 import getCredentialsFiles, { getCredentialsFilesFromLog } from '../lib/credentials-file';
 import SessionCache from '../services/session-cache';
 import { UploadManager } from '../services/upload-manager';
+import { ChtApi } from '../lib/cht-api';
+import { getUserExportData, getUserExportFiles } from '../lib/user-details-export';
 
 export default async function files(fastify: FastifyInstance) {
   fastify.get('/files/template/:placeType', async (req) => {
@@ -51,6 +53,22 @@ export default async function files(fastify: FastifyInstance) {
     return zip.generateNodeStream();
   });
 
+  fastify.get('/files/user-details', async (req, reply) => {
+    const contactTypes = Config.contactTypes();
+    const chtApi = new ChtApi(req.chtSession);
+    const { groups } = await getUserExportData(contactTypes, chtApi);
+    const files = getUserExportFiles(groups);
+
+    const zip = new JSZip();
+    for (const file of files) {
+      zip.file(file.filename, file.content);
+    }
+    reply.header(
+      'Content-Disposition',
+      `attachment; filename="${Date.now()}_${req.chtSession.authInfo.friendly}_all_users.zip"`
+    );
+    return zip.generateNodeStream();
+  });
 }
 
 function getCsvTemplateColumns(placeType: string) {
