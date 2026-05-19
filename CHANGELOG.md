@@ -1,3 +1,10 @@
+# [2.8.0](https://github.com/medic/cht-user-management/compare/v2.7.0...v2.8.0) (2026-05-19)
+
+
+### Features
+
+* **#330:** add new /api endpoints for programmatic integrations ([#331](https://github.com/medic/cht-user-management/issues/331)) ([d7190e8](https://github.com/medic/cht-user-management/commit/d7190e84b74a9f0d5d6d7ffc207a5755641c0e9d)), closes [#330](https://github.com/medic/cht-user-management/issues/330)
+
 # [2.7.0](https://github.com/medic/cht-user-management/compare/v2.6.3...v2.7.0) (2026-05-19)
 
 
