@@ -24,14 +24,14 @@ export async function ssoLogin(authInfo: AuthenticationInfo, accessToken: string
   const allowedOrigins = idpOrigins.map(o => new URL(o));
   const chtBaseUrl = `${authInfo.useHttp ? 'http' : 'https'}://${authInfo.domain}`;
   const start = `${chtBaseUrl}/medic/login/oidc/authorize`;
-  const { chtCookies, finalUrl } = await follow(start, authInfo.domain, allowedOrigins, accessToken);
+  const { chtCookies } = await follow(start, authInfo.domain, allowedOrigins, accessToken);
 
   const sessionValue = chtCookies.get(COUCH_AUTH_COOKIE_NAME);
   if (!sessionValue) {
-    throw new Error(`SSO dance completed at ${finalUrl} but no ${COUCH_AUTH_COOKIE_NAME} cookie was set for ${authInfo.domain}`);
+    throw new Error(`SSO dance completed but no ${COUCH_AUTH_COOKIE_NAME} cookie was set for ${authInfo.domain}`);
   }
 
-  const username = getUsername(chtCookies, finalUrl, authInfo.domain);
+  const username = getUsername(chtCookies, authInfo.domain);
   return { sessionToken: `${COUCH_AUTH_COOKIE_NAME}=${sessionValue}`, username };
 }
 
@@ -69,7 +69,7 @@ async function follow(start: string, chtHost: string, allowedOrigins: URL[], acc
     if (allowedOrigins.some(o => o.protocol === url.protocol && o.host === url.host)) {
       headers.Authorization = `Bearer ${accessToken}`;
     }
-    
+
     const serialized = serializeCookies(cookies);
     if (serialized) {
       headers.Cookie = serialized;
@@ -109,10 +109,10 @@ async function follow(start: string, chtHost: string, allowedOrigins: URL[], acc
   throw new Error(`SSO dance failed at ${current}: exceeded ${MAX_REDIRECT_HOPS} hops`);
 }
 
-function getUsername(chtCookies: Cookies, finalUrl: string, chtHost: string): string {
+function getUsername(chtCookies: Cookies, chtHost: string): string {
   const userCtxRaw = chtCookies.get('userCtx');
   if (!userCtxRaw) {
-    throw new Error(`SSO dance completed at ${finalUrl} but no userCtx cookie was set for ${chtHost}`);
+    throw new Error(`SSO dance completed but no userCtx cookie was set for ${chtHost}`);
   }
 
   let username: string | undefined;
