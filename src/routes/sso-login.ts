@@ -12,11 +12,11 @@ export default async function ssoLoginRoute(fastify: FastifyInstance) {
     ensureJsonObjectBody(formBody);
 
     const { domain, access_token } = formBody;
-    if (!domain || !access_token) {
-      throw AuthError.MISSING_CREDENTIALS();
+    const authInfo = Config.getAuthenticationInfo(domain);
+    if (!access_token) {
+      throw AuthError.MISSING_ACCESS_TOKEN();
     }
 
-    const authInfo = Config.getAuthenticationInfo(domain);
     const chtSession = await ChtSession.createFromSSO(authInfo, access_token);
     const tokenizedSession = Auth.encodeTokenForCookie(chtSession);
 
