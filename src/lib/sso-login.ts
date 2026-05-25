@@ -53,7 +53,8 @@ function serializeCookies(cookies: Cookies): string {
   return Array.from(cookies.entries()).map(([n, v]) => `${n}=${v}`).join('; ');
 }
 
-async function follow(start: string, chtHost: string, allowedOrigins: URL[], accessToken: string): Promise<{ chtCookies: Cookies; finalUrl: string }> {
+async function follow(start: string, chtHost: string, allowedOrigins: URL[], accessToken: string)
+  : Promise<{ chtCookies: Cookies; finalUrl: string }> {
   const chtCookies: Cookies = new Map();
   const idpCookies: Cookies = new Map();
   let current = start;
