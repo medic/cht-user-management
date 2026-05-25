@@ -7,6 +7,8 @@ export type ConfigSystem = {
   domains: AuthenticationInfo[];
   contact_types: ContactType[];
   logoBase64: string;
+  // Trusted IdP origins for SSO
+  idpOrigins?: string[];
 };
 
 export type PartnerConfig = {
@@ -173,6 +175,10 @@ export class Config {
       ...requiredPlaceProps,
       ...requiredUserRole
     ];
+  }
+
+  public static getIdpOrigins(): string[] {
+    return config.idpOrigins ?? [];
   }
 
   public static getDomains() : AuthenticationInfo[] {

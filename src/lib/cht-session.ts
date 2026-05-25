@@ -6,7 +6,7 @@ import axiosRetry from 'axios-retry';
 import * as semver from 'semver';
 
 import { AuthError } from './authentication-error';
-import { AuthenticationInfo } from '../config';
+import { AuthenticationInfo, Config } from '../config';
 import { axiosRetryConfig } from './retry-logic';
 import { RemotePlace } from './remote-place-cache';
 import { ssoLogin } from './sso-login';
@@ -64,7 +64,7 @@ export default class ChtSession {
 
   public static async createFromSSO(authInfo: AuthenticationInfo, accessToken: string): Promise<ChtSession> {
     try {
-      const { sessionToken, username } = await ssoLogin(authInfo, accessToken);
+      const { sessionToken, username } = await ssoLogin(authInfo, accessToken, Config.getIdpOrigins());
       const creationDetails = await ChtSession.fetchCreationDetails(authInfo, username, sessionToken);
       return new ChtSession(creationDetails);
     } catch (e: any) {

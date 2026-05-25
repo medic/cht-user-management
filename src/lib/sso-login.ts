@@ -17,10 +17,14 @@ type Cookies = Map<string, string>;
  * - `username` is taken from the `userCtx` cookie CHT sets alongside
  *   `AuthSession` on the callback hop.
  */
-export async function ssoLogin(authInfo: AuthenticationInfo, accessToken: string): Promise<SsoLoginResult> {
+export async function ssoLogin(authInfo: AuthenticationInfo, accessToken: string, idpOrigins: string[]): Promise<SsoLoginResult> {
+  if (!idpOrigins?.length) {
+    throw new Error(`SSO is not configured: idpOrigins allowlist is empty`);
+  }
+  const allowedOrigins = idpOrigins.map(o => new URL(o));
   const chtBaseUrl = `${authInfo.useHttp ? 'http' : 'https'}://${authInfo.domain}`;
   const start = `${chtBaseUrl}/medic/login/oidc/authorize`;
-  const { chtCookies, finalUrl } = await follow(start, authInfo.domain, accessToken);
+  const { chtCookies, finalUrl } = await follow(start, authInfo.domain, allowedOrigins, accessToken);
 
   const sessionValue = chtCookies.get(COUCH_AUTH_COOKIE_NAME);
   if (!sessionValue) {
@@ -49,7 +53,7 @@ function serializeCookies(cookies: Cookies): string {
   return Array.from(cookies.entries()).map(([n, v]) => `${n}=${v}`).join('; ');
 }
 
-async function follow(start: string, chtHost: string, accessToken: string): Promise<{ chtCookies: Cookies; finalUrl: string }> {
+async function follow(start: string, chtHost: string, allowedOrigins: URL[], accessToken: string): Promise<{ chtCookies: Cookies; finalUrl: string }> {
   const chtCookies: Cookies = new Map();
   const idpCookies: Cookies = new Map();
   let current = start;
@@ -57,10 +61,15 @@ async function follow(start: string, chtHost: string, accessToken: string): Prom
     const url = new URL(current);
     const cookies = url.host === chtHost ? chtCookies : idpCookies;
     const headers: Record<string, string> = {
-      Authorization: `Bearer ${accessToken}`,
       Accept: '*/*',
       'User-Agent': 'cht-user-management/sso-login',
     };
+
+    // Only forward the OIDC access token to a trusted IdP origins
+    if (allowedOrigins.some(o => o.protocol === url.protocol && o.host === url.host)) {
+      headers.Authorization = `Bearer ${accessToken}`;
+    }
+    
     const serialized = serializeCookies(cookies);
     if (serialized) {
       headers.Cookie = serialized;

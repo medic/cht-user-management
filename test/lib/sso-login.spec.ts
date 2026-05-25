@@ -15,6 +15,7 @@ const mockAuthInfo: AuthenticationInfo = {
   useHttp: true,
 };
 
+const IDP_ORIGINS = ['http://idp.example.com'];
 const ACCESS_TOKEN = 'rsa-access-token';
 
 const userCtxCookie = (name: string) => `userCtx=${encodeURIComponent(JSON.stringify({ name }))}`;
@@ -64,17 +65,57 @@ describe('lib/sso-login.ts', () => {
         { status: 200, headers: {} },
       );
 
-      const result = await ssoLogin(mockAuthInfo, ACCESS_TOKEN);
+      const result = await ssoLogin(mockAuthInfo, ACCESS_TOKEN, IDP_ORIGINS);
 
       expect(result.sessionToken).to.eq('AuthSession=session-value');
       expect(result.username).to.eq('chw-registry-service-account');
       expect(stub.callCount).to.eq(8);
       // First hop hits CHT's authorize endpoint
       expect(stub.firstCall.args[0].url).to.eq('http://cht.example.com/medic/login/oidc/authorize');
-      // Bearer header is forwarded on every hop
+      // Bearer header goes only to the IdP host — not to CHT hops (initial, callback, /admin).
       stub.getCalls().forEach(call => {
-        expect(call.args[0].headers.Authorization).to.eq(`Bearer ${ACCESS_TOKEN}`);
+        const onIdp = new URL(call.args[0].url).host === 'idp.example.com';
+        const auth = call.args[0].headers.Authorization;
+        if (onIdp) {
+          expect(auth).to.eq(`Bearer ${ACCESS_TOKEN}`);
+        } else {
+          expect(auth).to.be.undefined;
+        }
       });
+    });
+
+    it('does not forward the access token to a lookalike host', async () => {
+      const stub = stubResponses(
+        // CHT redirects to a host that looks like the IdP but isn't.
+        { status: 302, headers: { location: 'http://idp.example.com.attacker.com/auth' } },
+        { status: 200, headers: { 'set-cookie': ['AuthSession=tok', userCtxCookie('rsa')] } },
+      );
+
+      // The dance "succeeds" (mocked) but we just want to verify no header leaked.
+      await ssoLogin(mockAuthInfo, ACCESS_TOKEN, IDP_ORIGINS).catch(() => undefined);
+
+      const attackerCall = stub.getCalls().find(c => new URL(c.args[0].url).host === 'idp.example.com.attacker.com');
+      expect(attackerCall, 'attacker host was visited').to.exist;
+      expect(attackerCall!.args[0].headers.Authorization).to.be.undefined;
+    });
+
+    it('throws when idpOrigins allowlist is empty', async () => {
+      await expect(ssoLogin(mockAuthInfo, ACCESS_TOKEN, []))
+        .to.eventually.be.rejectedWith(/SSO is not configured.*idpOrigins allowlist is empty/);
+    });
+
+    it('accepts any origin in the allowlist', async () => {
+      const stub = stubResponses(
+        // CHT redirects to the second allowlisted IdP.
+        { status: 302, headers: { location: 'http://other-idp.example.com/auth' } },
+        { status: 303, headers: { location: 'http://cht.example.com/medic/login/oidc?code=z' } },
+        { status: 200, headers: { 'set-cookie': ['AuthSession=tok', userCtxCookie('rsa')] } },
+      );
+
+      await ssoLogin(mockAuthInfo, ACCESS_TOKEN, ['http://idp.example.com', 'http://other-idp.example.com']);
+
+      const idpCall = stub.getCalls().find(c => new URL(c.args[0].url).host === 'other-idp.example.com');
+      expect(idpCall!.args[0].headers.Authorization).to.eq(`Bearer ${ACCESS_TOKEN}`);
     });
 
     it('replays cookies on subsequent requests to the same host', async () => {
@@ -83,7 +124,7 @@ describe('lib/sso-login.ts', () => {
         { status: 200, headers: { 'set-cookie': ['AuthSession=tok', userCtxCookie('rsa')] } },
       );
 
-      await ssoLogin(mockAuthInfo, ACCESS_TOKEN);
+      await ssoLogin(mockAuthInfo, ACCESS_TOKEN, IDP_ORIGINS);
 
       // Second hop must include the cookie set on the first.
       const secondHopHeaders = stub.getCall(1).args[0].headers;
@@ -96,7 +137,7 @@ describe('lib/sso-login.ts', () => {
         { status: 200, headers: { 'set-cookie': ['AuthSession=tok', userCtxCookie('rsa')] } },
       );
 
-      await ssoLogin(mockAuthInfo, ACCESS_TOKEN);
+      await ssoLogin(mockAuthInfo, ACCESS_TOKEN, IDP_ORIGINS);
       expect(stub.getCall(1).args[0].url).to.eq('http://cht.example.com/medic/login/oidc?code=z');
     });
 
@@ -105,7 +146,7 @@ describe('lib/sso-login.ts', () => {
         { status: 200, headers: { 'set-cookie': [userCtxCookie('rsa')] } },
       );
 
-      await expect(ssoLogin(mockAuthInfo, ACCESS_TOKEN))
+      await expect(ssoLogin(mockAuthInfo, ACCESS_TOKEN, IDP_ORIGINS))
         .to.eventually.be.rejectedWith(/no AuthSession cookie was set/);
     });
 
@@ -114,7 +155,7 @@ describe('lib/sso-login.ts', () => {
         { status: 200, headers: { 'set-cookie': ['AuthSession=tok'] } },
       );
 
-      await expect(ssoLogin(mockAuthInfo, ACCESS_TOKEN))
+      await expect(ssoLogin(mockAuthInfo, ACCESS_TOKEN, IDP_ORIGINS))
         .to.eventually.be.rejectedWith(/no userCtx cookie was set/);
     });
 
@@ -123,7 +164,7 @@ describe('lib/sso-login.ts', () => {
         { status: 200, headers: { 'set-cookie': ['AuthSession=tok', 'userCtx=%7Bnot-json'] } },
       );
 
-      await expect(ssoLogin(mockAuthInfo, ACCESS_TOKEN))
+      await expect(ssoLogin(mockAuthInfo, ACCESS_TOKEN, IDP_ORIGINS))
         .to.eventually.be.rejectedWith(/userCtx cookie has no usable name/);
     });
 
@@ -132,7 +173,7 @@ describe('lib/sso-login.ts', () => {
         { status: 200, headers: { 'set-cookie': ['AuthSession=tok', `userCtx=${encodeURIComponent('{}')}`] } },
       );
 
-      await expect(ssoLogin(mockAuthInfo, ACCESS_TOKEN))
+      await expect(ssoLogin(mockAuthInfo, ACCESS_TOKEN, IDP_ORIGINS))
         .to.eventually.be.rejectedWith(/userCtx cookie has no usable name/);
     });
 
@@ -141,7 +182,7 @@ describe('lib/sso-login.ts', () => {
         { status: 500, headers: {}, data: 'kaboom' },
       );
 
-      await expect(ssoLogin(mockAuthInfo, ACCESS_TOKEN))
+      await expect(ssoLogin(mockAuthInfo, ACCESS_TOKEN, IDP_ORIGINS))
         .to.eventually.be.rejectedWith(/HTTP 500/);
     });
 
@@ -154,7 +195,7 @@ describe('lib/sso-login.ts', () => {
         data: '',
       } as any);
 
-      await expect(ssoLogin(mockAuthInfo, ACCESS_TOKEN))
+      await expect(ssoLogin(mockAuthInfo, ACCESS_TOKEN, IDP_ORIGINS))
         .to.eventually.be.rejectedWith(/exceeded \d+ hops/);
     });
 
@@ -164,7 +205,7 @@ describe('lib/sso-login.ts', () => {
         { status: 200, headers: { 'set-cookie': ['AuthSession=tok', userCtxCookie('rsa')] } },
       );
 
-      await ssoLogin(httpsAuth, ACCESS_TOKEN);
+      await ssoLogin(httpsAuth, ACCESS_TOKEN, IDP_ORIGINS);
       expect(stub.firstCall.args[0].url).to.eq('https://cht.example.com/medic/login/oidc/authorize');
     });
   });

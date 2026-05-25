@@ -209,6 +209,10 @@
       "domain": "training-4.echis.go.ke"
     }
   ],
+  "idpOrigins": [
+    "https://chpregistry-staging.echis.go.ke",
+    "https://chpregistry.echis.go.ke"
+  ],
   "contact_types": [
     {
       "name": "c_community_health_unit",
