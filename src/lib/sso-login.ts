@@ -4,6 +4,8 @@ import axios, { AxiosResponse } from 'axios';
 import { AuthenticationInfo } from '../config';
 import { COUCH_AUTH_COOKIE_NAME } from './cht-session';
 
+const MAX_REDIRECT_HOPS = 12;
+
 export type SsoLoginResult = { sessionToken: string; username: string };
 type CookieJar = Map<string, Map<string, string>>;
 
@@ -68,10 +70,10 @@ function serializeCookies(jar: CookieJar, host: string): string {
   return Array.from(bucket.entries()).map(([n, v]) => `${n}=${v}`).join('; ');
 }
 
-async function follow(start: string, accessToken: string, maxHops = 12): Promise<{ jar: CookieJar; finalUrl: string }> {
+async function follow(start: string, accessToken: string): Promise<{ jar: CookieJar; finalUrl: string }> {
   const jar: CookieJar = new Map();
   let current = start;
-  for (let hop = 0; hop < maxHops; hop++) {
+  for (let hop = 0; hop < MAX_REDIRECT_HOPS; hop++) {
     const url = new URL(current);
     const cookies = serializeCookies(jar, url.host);
     const headers: Record<string, string> = {
@@ -103,7 +105,7 @@ async function follow(start: string, accessToken: string, maxHops = 12): Promise
         loc = body.trim();
       }
       if (loc) {
-        current = loc.startsWith('http') ? loc : new URL(loc, current).toString();
+        current = new URL(loc, current).toString();
         continue;
       }
     }
@@ -113,7 +115,8 @@ async function follow(start: string, accessToken: string, maxHops = 12): Promise
     const errBody = typeof res.data === 'string' ? res.data.slice(0, 200) : '';
     throw new Error(`SSO dance failed at ${current}: HTTP ${res.status} ${errBody}`);
   }
-  throw new Error(`SSO dance exceeded ${maxHops} hops`);
+  
+  throw new Error(`SSO dance failed at ${current}: exceeded ${MAX_REDIRECT_HOPS} hops`);
 }
 
 function getUsername(bucket: Map<string, string> | undefined, finalUrl: string, chtHost: string): string {
