@@ -253,6 +253,10 @@ export default class Place {
     return Object.keys(this.validationErrors as any).length > 0;
   }
 
+  public get validationErrorSummary(): string {
+    return Object.values(this.validationErrors || {}).join('\n');
+  }
+
   public get isDependant() : boolean {
     return !!this.resolvedHierarchy.find(hierarchy => hierarchy?.type === 'local') || this.hasSharedUser;
   }

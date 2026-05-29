@@ -80,9 +80,9 @@ const scenarios: Scenario[] = [
   { type: 'select_one', prop: undefined, isValid: false, error: 'Required', formatted: '' },
   { type: 'select_one', prop: ' male', isValid: true, propertyParameter: GENDER_OPTIONS },
   { type: 'select_one', prop: 'female ', isValid: true, propertyParameter: GENDER_OPTIONS },
-  { type: 'select_one', prop: 'FeMale ', isValid: false, propertyParameter: GENDER_OPTIONS },
-  { type: 'select_one', prop: 'f', isValid: false, propertyParameter: GENDER_OPTIONS },
-  { type: 'select_one', prop: '', isValid: false, propertyParameter: GENDER_OPTIONS },
+  { type: 'select_one', prop: 'FeMale ', isValid: false, propertyParameter: GENDER_OPTIONS, error: 'Valid choices' },
+  { type: 'select_one', prop: 'f', isValid: false, propertyParameter: GENDER_OPTIONS, error: 'Valid choices' },
+  { type: 'select_one', prop: '', isValid: false, propertyParameter: GENDER_OPTIONS, error: 'Required' },
 
   { type: 'select_multiple', prop: undefined, isValid: false, error: 'Required', formatted: '' },
   { type: 'select_multiple', prop: 'chocolate', isValid: true, propertyParameter: CANDIES_OPTIONS },
