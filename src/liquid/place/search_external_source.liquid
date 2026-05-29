@@ -1,0 +1,15 @@
+<form
+  id="form_place_from_external_source"
+  hx-target="this"
+  hx-swap="outerHTML"
+  autocomplete="off"
+>
+  <div class="notification is-danger is-light">Message from {{ source.friendly_name }}</div>
+  <div>{{ source.url }}/{{ source.api_endpoint }}</div>
+  <div class=" field is-grouped is-grouped-right">
+    <div class="control">
+      <button id="place_search_external_submit" class="button is-link">Search {{ source.friendly_name }}</button>
+      <a href="/" class="button">Cancel</a>
+    </div>
+  </div>
+</form>

@@ -16,6 +16,8 @@
         {{ header_caption }}
         {% if op == 'replace' %}
           {{ contactType.contact_friendly | default: contactType.friendly }}
+        {% elsif op == 'add_from_external_source' %}
+          {{ contactType.contact_friendly | default: contactType.friendly }} from {{ source.friendly_name }}
         {% else %}
           {{ contactType.friendly }}
         {% endif %}
@@ -38,6 +40,8 @@
 
   {% if op == 'bulk' %}
     {% render 'place/bulk_create_form.liquid', contactType: contactType, userRoleProperty: userRoleProperty %}
+  {% elsif op == 'add_from_external_source' %}
+    {%  render 'place/search_external_source.liquid', contactType: contactType, source: source %}
   {% elsif op == 'move' or op == 'merge' or op == 'delete' %}
     {% render 'place/manage_hierarchy_form.liquid',
       op: op,
@@ -57,7 +61,8 @@
       backend: backend,
       data: data,
       userRoleProperty: userRoleProperty,
-      errors: errors
+      errors: errors,
+      externalSources: externalSources
     %}
   {% endif %}
 </div>

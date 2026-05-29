@@ -14,6 +14,8 @@ export default async function addPlace(fastify: FastifyInstance) {
   fastify.get('/add-place', async (req, resp) => {
     const queryParams: any = req.query;
 
+    const externalSources = Config.getExternalSources();
+
     const contactTypes = Config.contactTypes();
     const contactType = queryParams.type
       ? Config.getContactType(queryParams.type)
@@ -38,6 +40,32 @@ export default async function addPlace(fastify: FastifyInstance) {
       contactType,
       contactTypes,
       userRoleProperty: Config.getUserRoleConfig(contactType),
+      externalSources,
+      MATOMO_HOST: process.env.MATOMO_HOST
+    };
+
+    return resp.view('src/liquid/app/view.liquid', tmplData);
+  });
+
+  fastify.get('/add-from-external-source', async (req, resp) => {
+    const queryParams: any = req.query;
+    const { source_id: sourceId, type } = queryParams;
+
+    const externalSources = Config.getExternalSources();
+    const source = externalSources.find((source) => source.id === sourceId);
+    if (!source) {
+      throw new Error(`external source ${sourceId} not found`);
+    }
+
+    const contactType = Config.getContactType(type);
+    const tmplData = {
+      view: 'add_from_external_source',
+      op: 'add_from_external_source',
+      logo: Config.getLogoBase64(),
+      session: req.chtSession,
+      contactType,
+      contactTypes: Config.contactTypes(),
+      source,
       MATOMO_HOST: process.env.MATOMO_HOST
     };
 
@@ -140,6 +168,7 @@ export default async function addPlace(fastify: FastifyInstance) {
       data,
       errors: transformedErrors,
       userRoleProperty: Config.getUserRoleConfig(place.type),
+      externalSources: Config.getExternalSources(),
       MATOMO_HOST: process.env.MATOMO_HOST
     };
 

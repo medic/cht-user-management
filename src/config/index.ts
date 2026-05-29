@@ -5,9 +5,17 @@ import Validation from '../validation';
 
 export type ConfigSystem = {
   domains: AuthenticationInfo[];
+  external_sources?: ExternalSources[];
   contact_types: ContactType[];
   logoBase64: string;
 };
+
+export type ExternalSources = {
+  id: string;
+  friendly_name: string;
+  url: string;
+  api_endpoint: string;
+}
 
 export type PartnerConfig = {
   config: ConfigSystem;
@@ -28,6 +36,7 @@ export type ContactType = {
   deactivate_users_on_replace: boolean;
   can_assign_multiple?: boolean;
   hint?: string;
+  external_sources?: string[];
 };
 
 const KnownContactPropertyTypes = [...Validation.getKnownContactPropertyTypes()] as const;
@@ -75,6 +84,10 @@ const { config } = partnerConfig;
 
 export class Config {
   private constructor() {}
+
+  public static getExternalSources(): ExternalSources[] {
+    return config.external_sources || [];
+  }
 
   public static contactTypes(): ContactType[] {
     return config.contact_types;

@@ -1,0 +1,19 @@
+<div class="dropdown is-hoverable">
+  <div class="dropdown-trigger">
+    <button class="button is-link" aria-haspopup="true" aria-controls="external-registry-menu" type="button">
+      <span>Use external source</span>
+      <span class="icon is-small">
+        <span class="material-symbols-outlined">expand_more</span>
+      </span>
+    </button>
+  </div>
+  <div class="dropdown-menu" id="external-registry-menu" role="menu">
+    <div class="dropdown-content">
+      {% for externalSource in externalSources %}
+        <a href="/add-from-external-source?source_id={{ externalSource.id }}&type={{ contactType.name }}" class="dropdown-item">
+          Create {{ contactType.friendly }} from CHWR {{ externalSource.friendly_name }}
+        </a>
+      {% endfor %}
+    </div>
+  </div>
+</div>
