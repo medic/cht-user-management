@@ -18,6 +18,7 @@ type Scenario = {
 const EMAIL_REGEX = '^[a-zA-Z0-9._+-]+@[a-zA-Z0-9.-]+.[a-zA-Z]{2,}$';
 const GENDER_OPTIONS = { male: 'Male', female: 'Female' };
 const CANDIES_OPTIONS = { chocolate: 'Chocolate', strawberry: 'Strawberry' };
+const YES_NO_OPTIONS = { yes: 'Yes', no: 'No' };
 
 const scenarios: Scenario[] = [
   { type: 'string', prop: undefined, isValid: false, error: 'Required', formatted: '' },
@@ -83,6 +84,7 @@ const scenarios: Scenario[] = [
   { type: 'select_one', prop: 'FeMale ', isValid: false, propertyParameter: GENDER_OPTIONS, error: 'Valid choices' },
   { type: 'select_one', prop: 'f', isValid: false, propertyParameter: GENDER_OPTIONS, error: 'Valid choices' },
   { type: 'select_one', prop: '', isValid: false, propertyParameter: GENDER_OPTIONS, error: 'Required' },
+  { type: 'select_one', prop: 'No', isValid: false, propertyParameter: YES_NO_OPTIONS, error: 'Valid choices are: yes, no' },
 
   { type: 'select_multiple', prop: undefined, isValid: false, error: 'Required', formatted: '' },
   { type: 'select_multiple', prop: 'chocolate', isValid: true, propertyParameter: CANDIES_OPTIONS },
@@ -118,6 +120,14 @@ describe('validation', () => {
   it('unknown property type throws', () => {
     const contactType = mockSimpleContactType('unknown`', undefined);
     expect(() => mockPlace(contactType)).to.throw('unvalidatable');
+  });
+
+  it('validationErrorSummary is a plain property set after validate()', () => {
+    const contactType = mockSimpleContactType('select_one', YES_NO_OPTIONS);
+    const place = mockPlace(contactType, { place_prop: 'No' });
+
+    expect(place.validationErrorSummary).to.include('Valid choices are: yes, no');
+    expect(Object.prototype.hasOwnProperty.call(place, 'validationErrorSummary')).to.be.true;
   });
 
   it('property with required:false can be empty', () => {

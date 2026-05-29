@@ -51,6 +51,7 @@ export default class Place {
   public state : PlaceUploadState;
 
   public validationErrors?: { [key: string]: string };
+  public validationErrorSummary: string = '';
   public uploadError? : string;
 
   constructor(type: ContactType) {
@@ -216,6 +217,7 @@ export default class Place {
     for (const property of propertiesWithErrors) {
       this.validationErrors[property.propertyNameWithPrefix] = property.validationError as string;
     }
+    this.validationErrorSummary = Object.values(this.validationErrors).join('\n');
   }
 
   public generateUsername(): string {
@@ -251,10 +253,6 @@ export default class Place {
 
   public get hasValidationErrors() : boolean {
     return Object.keys(this.validationErrors as any).length > 0;
-  }
-
-  public get validationErrorSummary(): string {
-    return Object.values(this.validationErrors || {}).join('\n');
   }
 
   public get isDependant() : boolean {
