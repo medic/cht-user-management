@@ -1,12 +1,29 @@
+{% assign categories = 'hierarchy,place_properties,contact_properties' | split: ',' %}
 <form
   id="form_place_from_external_source"
   hx-target="this"
   hx-swap="outerHTML"
   autocomplete="off"
+  hx-get="/search-external-source"
 >
   <div class="notification is-danger is-light">Message from {{ source.friendly_name }}</div>
-  <div>{{ source.url }}/{{ source.api_endpoint }}</div>
-  <div class=" field is-grouped is-grouped-right">
+  <input name="type" value="{{ contactType.name }}" hidden>
+  <input name="source_id" value="{{ source.id }}" hidden>
+  <section class="section is-small">
+    {% for c in categories %}
+      {% assign prefix = c | split: '_' | first | append: '_' %}
+      {% for prop in contactType[c] %}
+        {% if prop.external_mapping[source.id].is_filter %}
+          {% render 'components/contact_type_property.liquid',
+            prefix: prefix,
+            prop: prop,
+            place_type: contactType.name
+          %}
+        {% endif %}
+      {% endfor %}
+    {% endfor %}
+  </section>
+  <div class="field is-grouped is-grouped-centered">
     <div class="control">
       <button id="place_search_external_submit" class="button is-link">Search {{ source.friendly_name }}</button>
       <a href="/" class="button">Cancel</a>

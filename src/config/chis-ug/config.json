@@ -19,22 +19,29 @@
   ],
   "external_sources": [
     {
-      "id": "dhis2",
-      "friendly_name": "DHIS2",
-      "url": "https://play.dhis2.org",
-      "api_endpoint": "dhis-web-commons/api/29/metadata"
+      "id": "chwr",
+      "friendly_name": "CHWR",
+      "url": "https://play.chwr.org",
+      "api_endpoint": "dhis-web-commons/api/29/metadata",
+      "resultKey": "chws",
+      "other_filters": {
+        "active": "true",
+        "limit": "3"
+      }
     },
     {
       "id": "commcare",
       "friendly_name": "CommCare",
       "url": "https://www.commcarehq.org",
-      "api_endpoint": "api/api/v0.5/form/"
+      "api_endpoint": "api/api/v0.5/form/",
+      "resultKey": "forms"
     },
     {
       "id": "odk",
       "friendly_name": "ODK",
       "url": "https://api.odk-x.org",
-      "api_endpoint": "v1/projects/submissions"
+      "api_endpoint": "v1/projects/submissions",
+      "resultKey": "submissions"
     }
   ],
   "contact_types": [
@@ -42,6 +49,7 @@
       "name": "c50-health_center",
       "friendly": "VHT Area",
       "contact_type": "person",
+      "external_sources": ["chwr", "commcare", "odk"],
       "user_role": [
         "vht"
       ],
@@ -54,7 +62,10 @@
           "contact_type": "c40-parish",
           "type": "string",
           "required": true,
-          "level": 1
+          "level": 1,
+          "external_mapping": {
+            "chwr": { "name": "position.parish", "is_filter": true }
+          }
         },
         {
           "friendly_name": "Health Facility",
@@ -62,7 +73,10 @@
           "contact_type": "c30-district_hospital",
           "required": true,
           "type": "string",
-          "level": 2
+          "level": 2,
+          "external_mapping": {
+            "chwr": { "name": "position.facility", "is_filter": true }
+          }
         }
       ],
       "replacement_property": {
@@ -98,7 +112,10 @@
           "parameter": [
             "\\scounty\\s"
           ],
-          "required": true
+          "required": true,
+          "external_mapping": {
+            "chwr": { "name": "position.county", "is_filter": true }
+          }
         },
         {
           "friendly_name": "Sub County",
@@ -108,7 +125,10 @@
             "\\ssub\\s",
             "\\scounty\\s"
           ],
-          "required": true
+          "required": true,
+          "external_mapping": {
+            "chwr": { "name": "position.sub_county", "is_filter": true }
+          }
         },
         {
           "friendly_name": "Village",
@@ -117,7 +137,10 @@
             "\\svillage\\s"
           ],
           "type": "name",
-          "required": true
+          "required": true,
+          "external_mapping": {
+            "chwr": { "name": "position.village", "is_filter": true }
+          }
         }
       ],
       "contact_properties": [
@@ -125,7 +148,10 @@
           "friendly_name": "VHT Name",
           "property_name": "name",
           "type": "name",
-          "required": true
+          "required": true,
+          "external_mapping": {
+            "chwr": { "name": "fullName", "is_filter": true }
+          }
         },
         {
           "friendly_name": "Phone Number",
@@ -133,13 +159,19 @@
           "type": "phone",
           "parameter": "UG",
           "required": true,
-          "unique": "all"
+          "unique": "all",
+          "external_mapping": {
+            "chwr": { "name": "phone" }
+          }
         },
         {
           "friendly_name": "Date of Birth",
           "property_name": "date_of_birth",
           "type": "dob",
-          "required": true
+          "required": true,
+          "external_mapping": {
+            "chwr": { "name": "birthDate" }
+          }
         },
         {
           "friendly_name": "Sex",
@@ -149,7 +181,8 @@
             "male": "Male",
             "female": "Female"
           },
-          "required": true
+          "required": true,
+          "external_mapping": {"chwr": { "name": "gender" }}
         }
       ]
     }

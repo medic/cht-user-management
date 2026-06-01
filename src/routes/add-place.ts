@@ -72,6 +72,22 @@ export default async function addPlace(fastify: FastifyInstance) {
     return resp.view('src/liquid/app/view.liquid', tmplData);
   });
 
+  fastify.get('/search-external-source', async (req, resp) => {
+    const queryParams: any = req.query;
+    const { source_id: sourceId, type, ...search } = queryParams;
+    console.log('~~~~~~~~~~~~~~~~~~~~> ', { sourceId, type, search });
+
+    const externalSources = Config.getExternalSources();
+    const source = externalSources.find((source) => source.id === sourceId);
+    if (!source) {
+      throw new Error(`external source ${sourceId} not found`);
+    }
+    const result = Config.getExternalSourceConfigById(sourceId, type);
+    console.log('===================> ', result);
+    //searchExternalSource = await SearchExternalSource.search(search, result);
+    return result;
+  });
+
   fastify.post('/place/dob', async (req, resp) => {
     const { place_type, prefix, prop_type } = req.query as any;
     const contactType = Config.getContactType(place_type)
