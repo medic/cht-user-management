@@ -10,6 +10,7 @@ import PlaceFactory from '../../src/services/place-factory';
 import Place, { PlaceUploadState } from '../../src/services/place';
 import WarningSystem from '../../src/warnings';
 import ManageHierarchyLib from '../../src/lib/manage-hierarchy';
+import { DisableUsers } from '../../src/lib/disable-users';
 import { UnvalidatedPropertyValue } from '../../src/property-value';
 import { mockChtSession, mockValidContactType } from '../mocks';
 
@@ -59,6 +60,7 @@ describe('routes/api.ts', () => {
   let uploadStub: sinon.SinonStub;
   let getJobDetailsStub: sinon.SinonStub;
   let scheduleJobStub: sinon.SinonStub;
+  let deactivateUsersStub: sinon.SinonStub;
 
   /**
    * Configure PlaceFactory.createOne to return a Place stub whose
@@ -128,6 +130,7 @@ describe('routes/api.ts', () => {
     setWarningsStub = sinon.stub(WarningSystem, 'setWarnings').resolves();
     getJobDetailsStub = sinon.stub(ManageHierarchyLib, 'getJobDetails').resolves(fakeJob());
     scheduleJobStub = sinon.stub(ManageHierarchyLib, 'scheduleJob').resolves();
+    deactivateUsersStub = sinon.stub(DisableUsers, 'deactivateUsersAt').resolves([]);
   });
 
   afterEach(async () => {
@@ -277,6 +280,79 @@ describe('routes/api.ts', () => {
 
       expect(resp.statusCode).to.equal(500);
       expect(resp.json().message).to.contain('body expected as application/json');
+    });
+  });
+
+  describe('POST /api/v1/deactivate-users', () => {
+    it('deactivates users at the best-match facility resolved from the hierarchy', async () => {
+      stubResolvedParent(fakeParent(PARENT_ID));
+      getRemotePlacesStub.resolves([
+        fakeChild('chp-jane', 'Jane Doe'),
+        fakeChild('chp-janet', 'Janet Doe'),
+      ]);
+      deactivateUsersStub.resolves(['user-a', 'user-b']);
+
+      const resp = await fastify.inject({
+        method: 'POST',
+        url: '/api/v1/deactivate-users?type=anything',
+        payload: { COUNTY: 'county', SUBCOUNTY: 'subcounty', CHU: 'chu', replacement: 'Jane Doe' },
+      });
+
+      expect(resp.statusCode).to.equal(200);
+      expect(resp.json()).to.deep.equal({
+        place_id: 'chp-jane',
+        place_name: 'Jane Doe',
+        deactivated: ['user-a', 'user-b'],
+      });
+      expect(deactivateUsersStub.calledOnceWithExactly(['chp-jane'], sinon.match.any)).to.be.true;
+    });
+
+    it('returns a not-found envelope and skips deactivation when no facility matches', async () => {
+      stubResolvedParent(fakeParent(PARENT_ID));
+      getRemotePlacesStub.resolves([fakeChild('chp-elsewhere', 'Jane Doe', 'other-parent')]);
+
+      const resp = await fastify.inject({
+        method: 'POST',
+        url: '/api/v1/deactivate-users?type=anything',
+        payload: { COUNTY: 'county', replacement: 'Jane Doe' },
+      });
+
+      expect(resp.statusCode).to.equal(200);
+      expect(resp.json()).to.deep.equal({
+        success: false,
+        error: 'no facility found matching the provided hierarchy',
+      });
+      expect(deactivateUsersStub.called).to.be.false;
+    });
+
+    it('propagates the hierarchy error envelope and skips deactivation', async () => {
+      stubResolvedParent(RemotePlaceResolver.NoResult);
+
+      const resp = await fastify.inject({
+        method: 'POST',
+        url: '/api/v1/deactivate-users?type=anything',
+        payload: { COUNTY: 'wrong', replacement: 'Jane Doe' },
+      });
+
+      expect(resp.statusCode).to.equal(200);
+      expect(resp.json()).to.deep.equal({
+        error: 'hierarchy cannot be resolved: index 1 - Place Not Found',
+        parentMissing: true,
+        isAmbiguous: false,
+      });
+      expect(deactivateUsersStub.called).to.be.false;
+    });
+
+    it('rejects a non-object body (array)', async () => {
+      const resp = await fastify.inject({
+        method: 'POST',
+        url: '/api/v1/deactivate-users?type=anything',
+        payload: ['not', 'an', 'object'],
+      });
+
+      expect(resp.statusCode).to.equal(500);
+      expect(resp.json().message).to.contain('body expected as application/json');
+      expect(deactivateUsersStub.called).to.be.false;
     });
   });
 

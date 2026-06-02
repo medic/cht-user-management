@@ -11,6 +11,7 @@ import SessionCache from '../services/session-cache';
 import RemotePlaceCache from '../lib/remote-place-cache';
 import RemotePlaceResolver from '../lib/remote-place-resolver';
 import WarningSystem from '../warnings';
+import { DisableUsers } from '../lib/disable-users';
 
 const DEFAULT_THRESHOLD = 0.6;
 
@@ -67,51 +68,39 @@ export default async function api(fastify: FastifyInstance) {
   });
 
   fastify.post('/api/v1/search', async (req) => {
-    const queryParams: any = req.query;
-    const threshold = queryParams.threshold !== undefined
-      ? parseFloat(queryParams.threshold)
-      : DEFAULT_THRESHOLD;
-
     const formBody: any = req.body;
     ensureJsonObjectBody(formBody);
 
-    const contactType = Config.getContactType(formBody.type);
-    const [baseHierarchyLevel] = Config.getHierarchyWithReplacement(contactType);
-
     const chtApi = new ChtApi(req.chtSession);
-
-    const { sessionCache } = req;
-    // API requests are intended to be atomic and should not rely on the state of the session
-    sessionCache.removeAll();
-    
-    const data = _.pick(formBody, Config.getHierarchyWithReplacement(contactType).slice(1).map(l => l.property_name));
-    const place = await PlaceFactory.createOne(data, contactType, sessionCache, chtApi, '');
-
-    const hierarchyError = hierarchyResolutionError(place);
-    if (hierarchyError) {
-      return hierarchyError;
+    const resolution = await resolvePlacesFromHierarchy(formBody, getThreshold(req.query), chtApi, req.sessionCache);
+    if ('error' in resolution) {
+      return resolution;
     }
 
-    const parentId = place.resolvedHierarchy[1]?.id;
-    const placesHavingParent = (await RemotePlaceCache.getRemotePlaces(chtApi, contactType, baseHierarchyLevel))
-      .filter(remotePlace => remotePlace.lineage[0] === parentId);
+    return resolution.hits;
+  });
 
-    const fuse = new Fuse(placesHavingParent, {
-      keys: ['name.formatted'],
-      includeScore: true,
-      threshold,
-    });
+  fastify.post('/api/v1/deactivate-users', async (req) => {
+    const formBody: any = req.body;
+    ensureJsonObjectBody(formBody);
 
-    const hits: SearchResult[] = fuse
-      .search(formBody[baseHierarchyLevel.property_name] ?? '')
-      .map(({ item, score }) => ({
-        name: item.name.original,
-        place_id: item.id,
-        score: score ?? 1,
-      }))
-      .sort((a, b) => a.score - b.score);
+    const chtApi = new ChtApi(req.chtSession);
+    const resolution = await resolvePlacesFromHierarchy(formBody, getThreshold(req.query), chtApi, req.sessionCache);
+    if ('error' in resolution) {
+      return resolution;
+    }
 
-    return hits;
+    const [facility] = resolution.hits;
+    if (!facility) {
+      return { success: false, error: 'no facility found matching the provided hierarchy' };
+    }
+
+    const deactivated = await DisableUsers.deactivateUsersAt([facility.place_id], chtApi);
+    return {
+      place_id: facility.place_id,
+      place_name: facility.name,
+      deactivated,
+    };
   });
 
   fastify.post('/api/v1/manage-hierarchy', async (req) => {
@@ -149,6 +138,56 @@ function ensureJsonObjectBody(body: unknown) {
   if (!_.isPlainObject(body)) {
     throw new Error('body expected as application/json');
   }
+}
+
+function getThreshold(query: unknown): number {
+  const threshold = (query as any)?.threshold;
+  return threshold !== undefined ? parseFloat(threshold) : DEFAULT_THRESHOLD;
+}
+
+// Resolves the parent hierarchy from form data and fuzzy-matches the base-level place by name,
+// returning the candidate places ranked best-first. Shared by /search and /deactivate-users so
+// both resolve a facility identically.
+async function resolvePlacesFromHierarchy(
+  formBody: any,
+  threshold: number,
+  chtApi: ChtApi,
+  sessionCache: SessionCache,
+): Promise<HierarchyResolutionError | { hits: SearchResult[] }> {
+  const contactType = Config.getContactType(formBody.type);
+  const [baseHierarchyLevel] = Config.getHierarchyWithReplacement(contactType);
+
+  // API requests are intended to be atomic and should not rely on the state of the session
+  sessionCache.removeAll();
+
+  const data = _.pick(formBody, Config.getHierarchyWithReplacement(contactType).slice(1).map(l => l.property_name));
+  const place = await PlaceFactory.createOne(data, contactType, sessionCache, chtApi, '');
+
+  const hierarchyError = hierarchyResolutionError(place);
+  if (hierarchyError) {
+    return hierarchyError;
+  }
+
+  const parentId = place.resolvedHierarchy[1]?.id;
+  const placesHavingParent = (await RemotePlaceCache.getRemotePlaces(chtApi, contactType, baseHierarchyLevel))
+    .filter(remotePlace => remotePlace.lineage[0] === parentId);
+
+  const fuse = new Fuse(placesHavingParent, {
+    keys: ['name.formatted'],
+    includeScore: true,
+    threshold,
+  });
+
+  const hits: SearchResult[] = fuse
+    .search(formBody[baseHierarchyLevel.property_name] ?? '')
+    .map(({ item, score }) => ({
+      name: item.name.original,
+      place_id: item.id,
+      score: score ?? 1,
+    }))
+    .sort((a, b) => a.score - b.score);
+
+  return { hits };
 }
 
 function hierarchyResolutionError(place: Place): HierarchyResolutionError | null {
