@@ -78,7 +78,7 @@ export default async function addPlace(fastify: FastifyInstance) {
     const { source_id: sourceId, type, ...searchParams } = queryParams;
     //console.log('~~~~~~~~~~~~~~~~~~~~> ', { sourceId, type, search });
 
-    const externalSources = Config.getExternalSources();
+    const externalSources = Config.getSanitizedExternalSources();
     const source = externalSources.find((source) => source.id === sourceId);
     if (!source) {
       throw new Error(`external source ${sourceId} not found`);
@@ -95,7 +95,21 @@ export default async function addPlace(fastify: FastifyInstance) {
         data: searchParams,
       });
     }
-    return result;
+
+    if (!result || result.length === 0) {
+      return resp.view('src/liquid/place/search_external_source.liquid', {
+        contactType: Config.getContactType(type),
+        source: source,
+        data: searchParams,
+        error: 'No results found',
+      });
+    }
+
+    const sessionCache: SessionCache = req.sessionCache;
+    const chtApi = new ChtApi(req.chtSession);
+    await PlaceFactory.loadPlaceFromExternalSource(result, Config.getContactType(type), sessionCache, chtApi, source);
+    resp.header('HX-Redirect', `/`);
+    return;
   });
 
   fastify.post('/place/dob', async (req, resp) => {

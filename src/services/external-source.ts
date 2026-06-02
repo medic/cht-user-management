@@ -9,7 +9,7 @@ export type ExternalSourceSearchResult = {
     propertyName: string;
     propertyType: 'place' | 'contact' | 'hierarchy';
     externalSourceField: string;
-    value: unknown;
+    value: string;
   }>;
 };
 

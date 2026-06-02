@@ -91,6 +91,7 @@ export interface ExternalSourceConfig extends ExternalSource {
     isFilter?: boolean;
   }>;
 }
+export type SanitizedExternalSource = Required<Pick<ExternalSource, 'id' | 'friendly_name'>>;
 
 
 const {
@@ -115,6 +116,11 @@ export class Config {
       return [source];
     }
     return config.external_sources || [];
+  }
+
+  public static getSanitizedExternalSources():SanitizedExternalSource[] {
+    const result = config.external_sources?.map(s => ({ id: s.id, friendly_name: s.friendly_name })) || [];
+    return result;
   }
 
   public static contactTypes(): ContactType[] {
