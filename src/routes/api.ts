@@ -2,7 +2,7 @@ import _ from 'lodash';
 
 import { ChtApi } from '../lib/cht-api';
 import { Config } from '../config';
-import { FastifyInstance } from 'fastify';
+import { FastifyInstance, FastifyRequest } from 'fastify';
 import Fuse from 'fuse.js';
 import Place, { PlaceUploadState } from '../services/place';
 import PlaceFactory from '../services/place-factory';
@@ -13,6 +13,7 @@ import RemotePlaceResolver from '../lib/remote-place-resolver';
 import WarningSystem from '../warnings';
 import { DisableUsers } from '../lib/disable-users';
 import { SetUserFacilities } from '../services/set-user-facilities';
+import { OidcUserPayload } from '../services/oidc-user-payload';
 
 const DEFAULT_THRESHOLD = 0.6;
 
@@ -29,7 +30,7 @@ type HierarchyResolutionError = {
 };
 
 export default async function api(fastify: FastifyInstance) {
-  fastify.post('/api/v1/create', async (req) => {
+  const createUserAndPlace = async (req: FastifyRequest) => {
     const formBody: any = req.body;
     ensureJsonObjectBody(formBody);
 
@@ -66,6 +67,30 @@ export default async function api(fastify: FastifyInstance) {
       password: place.creationDetails.password,
       warnings: place.warnings,
     };
+  };
+  // /create-user-and-place is the descriptive name; /create is kept as an alias for compatibility.
+  fastify.post('/api/v1/create', createUserAndPlace);
+  fastify.post('/api/v1/create-user-and-place', createUserAndPlace);
+
+  fastify.post('/api/v1/create-user', async (req) => {
+    const formBody: any = req.body;
+    ensureJsonObjectBody(formBody);
+
+    const roles = normalizeRoles(formBody);
+    const { oidc_username: oidcUsername, facility_ids: facilityIds, contact_id: contactId } = formBody;
+    const validationError = validateCreateUser(oidcUsername, roles, facilityIds, contactId);
+    if (validationError) {
+      return { success: false, errors: validationError };
+    }
+
+    const chtApi = new ChtApi(req.chtSession);
+    try {
+      const payload = new OidcUserPayload(oidcUsername, roles, facilityIds, contactId);
+      await chtApi.createUser(payload);
+      return { success: true, username: payload.username };
+    } catch (e: any) {
+      return { error: e.response?.data?.error?.message ?? e.toString() };
+    }
   });
 
   fastify.post('/api/v1/search', async (req) => {
@@ -159,15 +184,50 @@ function ensureJsonObjectBody(body: unknown) {
   }
 }
 
+// Accepts either `roles` (array) or `role` (string) from the payload and returns a clean list.
+function normalizeRoles(body: any): string[] {
+  const raw = body.roles ?? body.role;
+  const list = Array.isArray(raw) ? raw : [raw];
+  return list.filter(role => typeof role === 'string' && role.trim());
+}
+
+function isNonEmptyStringArray(value: unknown): value is string[] {
+  return Array.isArray(value)
+    && value.length > 0
+    && value.every(item => typeof item === 'string' && item.trim() !== '');
+}
+
+function validateCreateUser(
+  oidcUsername: unknown,
+  roles: string[],
+  facilityIds: unknown,
+  contactId: unknown,
+): string | null {
+  if (typeof oidcUsername !== 'string' || !oidcUsername.trim()) {
+    return 'oidc_username is required';
+  }
+
+  if (!roles.length) {
+    return 'role is required';
+  }
+
+  if (!isNonEmptyStringArray(facilityIds)) {
+    return 'facility_ids must be a non-empty array of place ids';
+  }
+
+  if (typeof contactId !== 'string' || !contactId.trim()) {
+    return 'contact_id is required';
+  }
+
+  return null;
+}
+
 function validateSetUserFacilities(username: unknown, facilityIds: unknown): string | null {
   if (typeof username !== 'string' || !username.trim()) {
     return 'username is required';
   }
 
-  const isNonEmptyStringArray = Array.isArray(facilityIds)
-    && facilityIds.length > 0
-    && facilityIds.every(id => typeof id === 'string' && id.trim());
-  if (!isNonEmptyStringArray) {
+  if (!isNonEmptyStringArray(facilityIds)) {
     return 'facility_ids must be a non-empty array of place ids';
   }
 

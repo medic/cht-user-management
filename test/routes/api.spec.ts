@@ -12,6 +12,7 @@ import WarningSystem from '../../src/warnings';
 import ManageHierarchyLib from '../../src/lib/manage-hierarchy';
 import { DisableUsers } from '../../src/lib/disable-users';
 import { SetUserFacilities } from '../../src/services/set-user-facilities';
+import { ChtApi } from '../../src/lib/cht-api';
 import { UnvalidatedPropertyValue } from '../../src/property-value';
 import { mockChtSession, mockValidContactType } from '../mocks';
 
@@ -63,6 +64,7 @@ describe('routes/api.ts', () => {
   let scheduleJobStub: sinon.SinonStub;
   let deactivateUsersStub: sinon.SinonStub;
   let setUserFacilitiesStub: sinon.SinonStub;
+  let createUserStub: sinon.SinonStub;
 
   /**
    * Configure PlaceFactory.createOne to return a Place stub whose
@@ -136,6 +138,7 @@ describe('routes/api.ts', () => {
     setUserFacilitiesStub = sinon.stub(SetUserFacilities, 'setFacilities').resolves({
       username: 'target', facilityIds: ['fac-a'], unassigned: [],
     });
+    createUserStub = sinon.stub(ChtApi.prototype, 'createUser').resolves();
   });
 
   afterEach(async () => {
@@ -584,6 +587,137 @@ describe('routes/api.ts', () => {
       expect(resp.statusCode).to.equal(500);
       expect(resp.json().message).to.contain('body expected as application/json');
       expect(uploadStub.called).to.be.false;
+    });
+  });
+
+  describe('POST /api/v1/create-user-and-place (alias of /create)', () => {
+    it('behaves like /api/v1/create', async () => {
+      stubCreatedPlace({ parent: fakeParent(PARENT_ID), id: 'p-1', contactId: 'c-1' });
+
+      const resp = await fastify.inject({
+        method: 'POST',
+        url: '/api/v1/create-user-and-place?type=anything',
+        payload: { PARENT: 'parent', name: 'Jane Doe', phone: '0712345678' },
+      });
+
+      expect(resp.statusCode).to.equal(200);
+      expect(resp.json()).to.deep.equal({
+        place_id: 'p-1',
+        contact_id: 'c-1',
+        username: 'user-1',
+        password: 'pw-1',
+        warnings: [],
+      });
+      expect(uploadStub.calledOnce).to.be.true;
+    });
+  });
+
+  describe('POST /api/v1/create-user', () => {
+    it('creates an offline multi-place OIDC user with a derived username', async () => {
+      const resp = await fastify.inject({
+        method: 'POST',
+        url: '/api/v1/create-user',
+        payload: {
+          oidc_username: 'demo@email.com', role: 'chw', facility_ids: ['fac-a', 'fac-b'], contact_id: 'contact-1',
+        },
+      });
+
+      expect(resp.statusCode).to.equal(200);
+      expect(resp.json()).to.deep.equal({ success: true, username: 'demoemailcom' });
+      expect(createUserStub.calledOnce).to.be.true;
+      expect({ ...createUserStub.firstCall.args[0] }).to.deep.equal({
+        username: 'demoemailcom',
+        oidc_username: 'demo@email.com',
+        roles: ['chw'],
+        place: ['fac-a', 'fac-b'],
+        contact: 'contact-1',
+      });
+    });
+
+    it('accepts a roles array', async () => {
+      await fastify.inject({
+        method: 'POST',
+        url: '/api/v1/create-user',
+        payload: { oidc_username: 'demo@email.com', roles: ['chw', 'supervisor'], facility_ids: ['fac-a'], contact_id: 'contact-1' },
+      });
+
+      expect(createUserStub.firstCall.args[0].roles).to.deep.equal(['chw', 'supervisor']);
+    });
+
+    it('rejects a missing oidc_username without calling createUser', async () => {
+      const resp = await fastify.inject({
+        method: 'POST',
+        url: '/api/v1/create-user',
+        payload: { role: 'chw', facility_ids: ['fac-a'] },
+      });
+
+      expect(resp.statusCode).to.equal(200);
+      expect(resp.json()).to.deep.equal({ success: false, errors: 'oidc_username is required' });
+      expect(createUserStub.called).to.be.false;
+    });
+
+    it('rejects a missing role without calling createUser', async () => {
+      const resp = await fastify.inject({
+        method: 'POST',
+        url: '/api/v1/create-user',
+        payload: { oidc_username: 'demo@email.com', facility_ids: ['fac-a'] },
+      });
+
+      expect(resp.statusCode).to.equal(200);
+      expect(resp.json()).to.deep.equal({ success: false, errors: 'role is required' });
+      expect(createUserStub.called).to.be.false;
+    });
+
+    it('rejects empty facility_ids without calling createUser', async () => {
+      const resp = await fastify.inject({
+        method: 'POST',
+        url: '/api/v1/create-user',
+        payload: { oidc_username: 'demo@email.com', role: 'chw', facility_ids: [] },
+      });
+
+      expect(resp.statusCode).to.equal(200);
+      expect(resp.json()).to.deep.equal({
+        success: false,
+        errors: 'facility_ids must be a non-empty array of place ids',
+      });
+      expect(createUserStub.called).to.be.false;
+    });
+
+    it('rejects a non-string contact_id without calling createUser', async () => {
+      const resp = await fastify.inject({
+        method: 'POST',
+        url: '/api/v1/create-user',
+        payload: { oidc_username: 'demo@email.com', role: 'chw', facility_ids: ['fac-a'], contact_id: 42 },
+      });
+
+      expect(resp.statusCode).to.equal(200);
+      expect(resp.json()).to.deep.equal({ success: false, errors: 'contact_id must be a contact id' });
+      expect(createUserStub.called).to.be.false;
+    });
+
+    it('returns the error envelope when createUser fails', async () => {
+      createUserStub.rejects({ response: { data: { error: { message: 'oidc_username already exists' } } } });
+
+      const resp = await fastify.inject({
+        method: 'POST',
+        url: '/api/v1/create-user',
+        payload: { oidc_username: 'dupe@email.com', role: 'chw', facility_ids: ['fac-a'] },
+      });
+
+      expect(resp.statusCode).to.equal(200);
+      expect(resp.json()).to.deep.equal({ error: 'oidc_username already exists' });
+    });
+
+    it('rejects a non-object body (array)', async () => {
+      const resp = await fastify.inject({
+        method: 'POST',
+        url: '/api/v1/create-user',
+        payload: ['not', 'an', 'object'],
+      });
+
+      expect(resp.statusCode).to.equal(500);
+      expect(resp.json().message).to.contain('body expected as application/json');
+      expect(createUserStub.called).to.be.false;
     });
   });
 
