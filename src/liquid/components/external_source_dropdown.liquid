@@ -11,7 +11,7 @@
     <div class="dropdown-content">
       {% for externalSource in externalSources %}
         <a href="/add-from-external-source?source_id={{ externalSource.id }}&type={{ contactType.name }}" class="dropdown-item">
-          Create {{ contactType.friendly }} from CHWR {{ externalSource.friendly_name }}
+          Create {{ contactType.friendly }} from {{ externalSource.friendly_name }}
         </a>
       {% endfor %}
     </div>

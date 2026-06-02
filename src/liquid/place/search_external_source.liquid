@@ -6,7 +6,9 @@
   autocomplete="off"
   hx-get="/search-external-source"
 >
-  <div class="notification is-danger is-light">Message from {{ source.friendly_name }}</div>
+  {% if error %}
+    <div class="notification is-danger is-light">{{ error }}</div>
+  {% endif %}
   <input name="type" value="{{ contactType.name }}" hidden>
   <input name="source_id" value="{{ source.id }}" hidden>
   <section class="section is-small">
@@ -14,10 +16,12 @@
       {% assign prefix = c | split: '_' | first | append: '_' %}
       {% for prop in contactType[c] %}
         {% if prop.external_mapping[source.id].is_filter %}
-          {% render 'components/contact_type_property.liquid',
+          {%
+            render 'components/contact_type_property.liquid',
             prefix: prefix,
             prop: prop,
-            place_type: contactType.name
+            place_type: contactType.name,
+            data: data
           %}
         {% endif %}
       {% endfor %}
@@ -30,3 +34,11 @@
     </div>
   </div>
 </form>
+
+<script>
+  document.getElementById('form_place_from_external_source').addEventListener('submit', function () {
+    const btn = document.getElementById('place_search_external_submit');
+    btn.disabled = true;
+    btn.textContent = 'Searching...';
+  });
+</script>

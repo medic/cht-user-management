@@ -21,8 +21,8 @@
     {
       "id": "chwr",
       "friendly_name": "CHWR",
-      "url": "https://play.chwr.org",
-      "api_endpoint": "dhis-web-commons/api/29/metadata",
+      "url": "https://dummyjson.com",
+      "api_endpoint": "/c/7462-0d92-4436-a0a3",
       "resultKey": "chws",
       "other_filters": {
         "active": "true",
@@ -75,7 +75,7 @@
           "type": "string",
           "level": 2,
           "external_mapping": {
-            "chwr": { "name": "position.facility", "is_filter": true }
+            "chwr": { "name": "position.facility.name", "is_filter": true }
           }
         }
       ],
@@ -139,7 +139,7 @@
           "type": "name",
           "required": true,
           "external_mapping": {
-            "chwr": { "name": "position.village", "is_filter": true }
+            "chwr": { "name": "village", "position": "position.villages[0]", "is_filter": true }
           }
         }
       ],

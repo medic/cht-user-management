@@ -68,6 +68,7 @@ export type AuthenticationInfo = {
 export type ExternalMapping = {
   [sourceId: string]: {
     name: string;
+    position?: string;
     is_filter?: boolean;
   };
 };
@@ -86,6 +87,7 @@ export interface ExternalSourceConfig extends ExternalSource {
     propertyName: string;
     propertyType: 'place' | 'contact' | 'hierarchy';
     externalSourceField: string;
+    position?: string;
     isFilter?: boolean;
   }>;
 }
@@ -141,8 +143,9 @@ export class Config {
         .map(prop => ({
           propertyName: prop.property_name,
           propertyType: type,
-          externalSourceField: prop.external_mapping?.[sourceId].name || '',
-          isFilter: prop.external_mapping?.[sourceId].is_filter || false,
+          externalSourceField: prop.external_mapping?.[sourceId]?.name || '',
+          position: prop.external_mapping?.[sourceId]?.position,
+          isFilter: prop.external_mapping?.[sourceId]?.is_filter || false,
         }));
     };
 
