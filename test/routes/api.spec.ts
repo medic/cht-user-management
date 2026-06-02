@@ -11,6 +11,7 @@ import Place, { PlaceUploadState } from '../../src/services/place';
 import WarningSystem from '../../src/warnings';
 import ManageHierarchyLib from '../../src/lib/manage-hierarchy';
 import { DisableUsers } from '../../src/lib/disable-users';
+import { SetUserFacilities } from '../../src/services/set-user-facilities';
 import { UnvalidatedPropertyValue } from '../../src/property-value';
 import { mockChtSession, mockValidContactType } from '../mocks';
 
@@ -61,6 +62,7 @@ describe('routes/api.ts', () => {
   let getJobDetailsStub: sinon.SinonStub;
   let scheduleJobStub: sinon.SinonStub;
   let deactivateUsersStub: sinon.SinonStub;
+  let setUserFacilitiesStub: sinon.SinonStub;
 
   /**
    * Configure PlaceFactory.createOne to return a Place stub whose
@@ -131,6 +133,9 @@ describe('routes/api.ts', () => {
     getJobDetailsStub = sinon.stub(ManageHierarchyLib, 'getJobDetails').resolves(fakeJob());
     scheduleJobStub = sinon.stub(ManageHierarchyLib, 'scheduleJob').resolves();
     deactivateUsersStub = sinon.stub(DisableUsers, 'deactivateUsersAt').resolves([]);
+    setUserFacilitiesStub = sinon.stub(SetUserFacilities, 'setFacilities').resolves({
+      username: 'target', facilityIds: ['fac-a'], unassigned: [],
+    });
   });
 
   afterEach(async () => {
@@ -353,6 +358,84 @@ describe('routes/api.ts', () => {
       expect(resp.statusCode).to.equal(500);
       expect(resp.json().message).to.contain('body expected as application/json');
       expect(deactivateUsersStub.called).to.be.false;
+    });
+  });
+
+  describe('POST /api/v1/set-user-facilities', () => {
+    it('sets the facilities for the user and returns the service result', async () => {
+      setUserFacilitiesStub.resolves({
+        username: 'jdoe',
+        facilityIds: ['fac-a', 'fac-b'],
+        unassigned: [{ username: 'other', remaining: ['fac-z'] }],
+      });
+
+      const resp = await fastify.inject({
+        method: 'POST',
+        url: '/api/v1/set-user-facilities',
+        payload: { username: 'jdoe', facility_ids: ['fac-a', 'fac-b'] },
+      });
+
+      expect(resp.statusCode).to.equal(200);
+      expect(resp.json()).to.deep.equal({
+        username: 'jdoe',
+        facilityIds: ['fac-a', 'fac-b'],
+        unassigned: [{ username: 'other', remaining: ['fac-z'] }],
+      });
+      const [username, facilityIds] = setUserFacilitiesStub.firstCall.args;
+      expect(username).to.equal('jdoe');
+      expect(facilityIds).to.deep.equal(['fac-a', 'fac-b']);
+    });
+
+    it('rejects a missing username without calling the service', async () => {
+      const resp = await fastify.inject({
+        method: 'POST',
+        url: '/api/v1/set-user-facilities',
+        payload: { facility_ids: ['fac-a'] },
+      });
+
+      expect(resp.statusCode).to.equal(200);
+      expect(resp.json()).to.deep.equal({ success: false, errors: 'username is required' });
+      expect(setUserFacilitiesStub.called).to.be.false;
+    });
+
+    it('rejects an empty facility_ids array without calling the service', async () => {
+      const resp = await fastify.inject({
+        method: 'POST',
+        url: '/api/v1/set-user-facilities',
+        payload: { username: 'jdoe', facility_ids: [] },
+      });
+
+      expect(resp.statusCode).to.equal(200);
+      expect(resp.json()).to.deep.equal({
+        success: false,
+        errors: 'facility_ids must be a non-empty array of place ids',
+      });
+      expect(setUserFacilitiesStub.called).to.be.false;
+    });
+
+    it('returns the error envelope when the service throws', async () => {
+      setUserFacilitiesStub.rejects(new Error('Not Found'));
+
+      const resp = await fastify.inject({
+        method: 'POST',
+        url: '/api/v1/set-user-facilities',
+        payload: { username: 'ghost', facility_ids: ['fac-a'] },
+      });
+
+      expect(resp.statusCode).to.equal(200);
+      expect(resp.json()).to.deep.equal({ error: 'Error: Not Found' });
+    });
+
+    it('rejects a non-object body (array)', async () => {
+      const resp = await fastify.inject({
+        method: 'POST',
+        url: '/api/v1/set-user-facilities',
+        payload: ['not', 'an', 'object'],
+      });
+
+      expect(resp.statusCode).to.equal(500);
+      expect(resp.json().message).to.contain('body expected as application/json');
+      expect(setUserFacilitiesStub.called).to.be.false;
     });
   });
 
