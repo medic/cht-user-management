@@ -98,6 +98,11 @@ export default async function api(fastify: FastifyInstance) {
     ensureJsonObjectBody(formBody);
 
     const chtApi = new ChtApi(req.chtSession);
+    
+    if (shouldClearCache(req.query)) {
+      RemotePlaceCache.clear(chtApi);
+    }
+
     const resolution = await resolvePlacesFromHierarchy(formBody, getThreshold(req.query), chtApi, req.sessionCache);
     if ('error' in resolution) {
       return resolution;
@@ -248,6 +253,11 @@ function validateSetUserFacilities(username: unknown, facilityIds: unknown): str
 function getThreshold(query: unknown): number {
   const threshold = (query as any)?.threshold;
   return threshold !== undefined ? parseFloat(threshold) : DEFAULT_THRESHOLD;
+}
+
+function shouldClearCache(query: any): boolean {
+  const raw = query?.clear_cache;
+  return raw === '1' || raw === 1 || raw === 'true' || raw === true;
 }
 
 // Resolves the parent hierarchy from form data and fuzzy-matches the base-level place by name,

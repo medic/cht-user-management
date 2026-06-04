@@ -251,6 +251,36 @@ describe('routes/api.ts', () => {
       expect(hits.map((h: any) => h.place_id)).to.deep.equal(['p-jane']);
     });
 
+    it('clears the cache before searching when clear_cache=1', async () => {
+      const clearStub = sinon.stub(RemotePlaceCache, 'clear');
+      stubResolvedParent(fakeParent(PARENT_ID));
+      getRemotePlacesStub.resolves([fakeChild('p-jane', 'Jane Doe')]);
+
+      const resp = await fastify.inject({
+        method: 'POST',
+        url: '/api/v1/search?type=anything&clear_cache=1',
+        payload: { PARENT: 'parent', replacement: 'Jane Doe' },
+      });
+
+      expect(resp.statusCode).to.equal(200);
+      expect(clearStub.calledOnce).to.be.true;
+    });
+
+    it('does not clear the cache when clear_cache is absent', async () => {
+      const clearStub = sinon.stub(RemotePlaceCache, 'clear');
+      stubResolvedParent(fakeParent(PARENT_ID));
+      getRemotePlacesStub.resolves([fakeChild('p-jane', 'Jane Doe')]);
+
+      const resp = await fastify.inject({
+        method: 'POST',
+        url: '/api/v1/search?type=anything',
+        payload: { PARENT: 'parent', replacement: 'Jane Doe' },
+      });
+
+      expect(resp.statusCode).to.equal(200);
+      expect(clearStub.called).to.be.false;
+    });
+
     it('returns 500 when type is unknown', async () => {
       (Config.getContactType as sinon.SinonStub).restore();
       sinon.stub(Config, 'getContactType').throws(new Error('unrecognized contact type: "bogus"'));
