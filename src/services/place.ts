@@ -185,7 +185,8 @@ export default class Place {
   public asRemotePlace() : RemotePlace {
     const nameProperty = Config.getPropertyWithName(this.type.place_properties, 'name');
     return {
-      id: this.id,
+      // once created, identify by the real CHT doc id (not the local staging uuid)
+      id: this.creationDetails.placeId ?? this.id,
       name: new RemotePlacePropertyValue(this.name, nameProperty),
       placeType: this.type.name,
       type: this.isCreated ? 'remote' : 'local',
