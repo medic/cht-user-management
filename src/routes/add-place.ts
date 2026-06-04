@@ -107,7 +107,7 @@ export default async function addPlace(fastify: FastifyInstance) {
 
     const sessionCache: SessionCache = req.sessionCache;
     const chtApi = new ChtApi(req.chtSession);
-    await PlaceFactory.loadPlaceFromExternalSource(result, Config.getContactType(type), sessionCache, chtApi, source);
+    await PlaceFactory.loadPlaceFromExternalSource(result, Config.getContactType(type), sessionCache, chtApi);
     resp.header('HX-Redirect', `/`);
     return;
   });

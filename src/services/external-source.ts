@@ -21,6 +21,7 @@ export default class ExternalSourceService {
       //throw new Error('Simulated error for testing');
       const response = await axios.get(`${config.url}/${config.api_endpoint}`,
         {
+          auth: { username: 'admin', password: 'secret' },
           params: paramResult,
           timeout: 5000,
         });
@@ -51,7 +52,7 @@ export default class ExternalSourceService {
         propertyName: prop.propertyName,
         propertyType: prop.propertyType,
         externalSourceField: prop.externalSourceField,
-        value: _.get(item, prop.position || prop.externalSourceField)
+        value: _.get(item, prop.path || prop.externalSourceField)
       }));
       result.push({ id, propertyValues });
     }
@@ -65,9 +66,9 @@ export default class ExternalSourceService {
     mapping: ExternalSourceConfig['mapping']
   ): Record<string, string> {
     if (!mapping || mapping.length === 0) {
-      throw new Error('mapping configuration is required to generate payload');
+      throw new Error('mapping configuration is required to generate query parameters');
     }
-    const payload = { ...otherFilters };
+    const queryParams = { ...otherFilters };
 
     for (const [key, value] of Object.entries(params)) {
       const [propertyType, ...propertyNameParts] = key.split('_');
@@ -78,11 +79,11 @@ export default class ExternalSourceService {
       const payloadKey = mappingEntry?.externalSourceField.split('.').pop();
 
       if (payloadKey) {
-        payload[payloadKey] = value;
+        queryParams[payloadKey] = value;
       } else {
         console.warn(`No mapping found for key: ${key}`);
       }
     }
-    return payload;
+    return queryParams;
   }
 }

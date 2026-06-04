@@ -21,8 +21,8 @@
     {
       "id": "chwr",
       "friendly_name": "CHWR",
-      "url": "https://dummyjson.com",
-      "api_endpoint": "/c/7462-0d92-4436-a0a3",
+      "url": "http://localhost:3400",
+      "api_endpoint": "api/chw",
       "resultKey": "chws",
       "other_filters": {
         "active": "true",
@@ -127,7 +127,7 @@
           ],
           "required": true,
           "external_mapping": {
-            "chwr": { "name": "position.sub_county", "is_filter": true }
+            "chwr": { "name": "locationHierarchy[1].name", "is_filter": true }
           }
         },
         {
@@ -139,7 +139,7 @@
           "type": "name",
           "required": true,
           "external_mapping": {
-            "chwr": { "name": "village", "position": "position.villages[0]", "is_filter": true }
+            "chwr": { "name": "village", "path": "position.villages[0]", "is_filter": true }
           }
         }
       ],
@@ -151,6 +151,16 @@
           "required": true,
           "external_mapping": {
             "chwr": { "name": "fullName", "is_filter": true }
+          }
+        },
+        {
+          "friendly_name": "CHWR ID",
+          "property_name": "chwr_id",
+          "type": "generated",
+          "parameter": "",
+          "required": false,
+          "external_mapping": {
+            "chwr": { "name": "id" }
           }
         },
         {

@@ -1,7 +1,7 @@
 import { parse } from 'csv';
 
 import { ChtApi, CouchDoc, UserInfo } from '../lib/cht-api';
-import { Config, ContactProperty, ContactType, SanitizedExternalSource } from '../config';
+import { Config, ContactProperty, ContactType } from '../config';
 import Place, { FormattedPropertyCollection } from './place';
 import SessionCache from './session-cache';
 import RemotePlaceResolver from '../lib/remote-place-resolver';
@@ -32,17 +32,13 @@ export default class PlaceFactory {
   };
   
   static async loadPlaceFromExternalSource(sourceResult: ExternalSourceSearchResult[], contactType: ContactType, sessionCache: SessionCache,
-    chtApi: ChtApi, source: SanitizedExternalSource): Promise<Place[]> {
+    chtApi: ChtApi): Promise<Place[]> {
     const places: Place[] = [];
 
     for (const result of sourceResult) {
       const data: Record<string, string> = {};
       result.propertyValues.forEach(p =>  data[`${p.propertyType}_${p.propertyName}`] = p.value || '' );
       const place = await PlaceFactory.createOne(data, contactType, sessionCache, chtApi);
-      place.externalSource = {
-        id: source.id,
-        name: source.friendly_name
-      };
       places.push(place);
     }
     return places;
