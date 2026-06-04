@@ -2,59 +2,59 @@
   "domains": [
     {
       "friendly": "Migori",
-      "domain": "migori-echis.health.go.ke"
+      "domain": "migori.echis.go.ke"
     },
     {
       "friendly": "Kisumu",
-      "domain": "kisumu-echis.health.go.ke"
+      "domain": "kisumu.echis.go.ke"
     },
     {
       "friendly": "Nyeri",
-      "domain": "nyeri-echis.health.go.ke"
+      "domain": "nyeri.echis.go.ke"
     },
     {
       "friendly": "Kilifi",
-      "domain": "kilifi-echis.health.go.ke"
+      "domain": "kilifi.echis.go.ke"
     },
     {
       "friendly": "Machakos",
-      "domain": "machakos-echis.health.go.ke"
+      "domain": "machakos.echis.go.ke"
     },
     {
       "friendly": "Garissa",
-      "domain": "garissa-echis.health.go.ke"
+      "domain": "garissa.echis.go.ke"
     },
     {
       "friendly": "Nakuru",
-      "domain": "nakuru-echis.health.go.ke"
+      "domain": "nakuru.echis.go.ke"
     },
     {
       "friendly": "Isiolo",
-      "domain": "isiolo-echis.health.go.ke"
+      "domain": "isiolo.echis.go.ke"
     },
     {
       "friendly": "Nairobi",
-      "domain": "nairobi-echis.health.go.ke"
+      "domain": "nairobi.echis.go.ke"
     },
     {
       "friendly": "Turkana",
-      "domain": "turkana-echis.health.go.ke"
+      "domain": "turkana.echis.go.ke"
     },
     {
       "friendly": "Kakamega",
-      "domain": "kakamega-echis.health.go.ke"
+      "domain": "kakamega.echis.go.ke"
     },
     {
       "friendly": "Vihiga",
-      "domain": "vihiga-echis.health.go.ke"
+      "domain": "vihiga.echis.go.ke"
     },
     {
       "friendly": "Kitui",
-      "domain": "kitui-echis.health.go.ke"
+      "domain": "kitui.echis.go.ke"
     },
     {
       "friendly": "Uasin Gishu",
-      "domain": "uasingishu-echis.health.go.ke"
+      "domain": "uasingishu.echis.go.ke"
     },
     {
       "friendly": "Baringo",
@@ -189,8 +189,8 @@
       "domain": "westpokot.echis.go.ke"
     },
     {
-      "friendly": "Staging (chis-staging.health.go.ke)",
-      "domain": "chis-staging.health.go.ke"
+      "friendly": "Staging",
+      "domain": "staging.echis.go.ke"
     },
     {
       "friendly": "Training 1",
