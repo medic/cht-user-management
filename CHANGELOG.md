@@ -1,3 +1,10 @@
+## [2.9.1](https://github.com/medic/cht-user-management/compare/v2.9.0...v2.9.1) (2026-06-04)
+
+
+### Bug Fixes
+
+* **#346:** sync Kenyan eCHIS URLs to match production domains ([#337](https://github.com/medic/cht-user-management/issues/337)) ([fa57170](https://github.com/medic/cht-user-management/commit/fa57170c55bf1ceda4110daccc1d4c8e59083cb7)), closes [#346](https://github.com/medic/cht-user-management/issues/346)
+
 # [2.9.0](https://github.com/medic/cht-user-management/compare/v2.8.0...v2.9.0) (2026-06-04)
 
 
