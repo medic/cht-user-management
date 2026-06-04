@@ -106,7 +106,7 @@ export default async function api(fastify: FastifyInstance) {
     return resolution.hits;
   });
 
-  fastify.post('/api/v1/deactivate-users', async (req) => {
+  fastify.post('/api/v1/disable-users-at', async (req) => {
     const formBody: any = req.body;
     ensureJsonObjectBody(formBody);
 
@@ -121,11 +121,22 @@ export default async function api(fastify: FastifyInstance) {
       return { success: false, error: 'no facility found matching the provided hierarchy' };
     }
 
-    const deactivated = await DisableUsers.deactivateUsersAt([facility.place_id], chtApi);
+    // Abort rather than guess
+    const tiedForBestMatch = resolution.hits.filter(hit => hit.score === facility.score);
+    if (tiedForBestMatch.length > 1) {
+      const joinedNames = tiedForBestMatch.map(hit => hit.name).join(', ');
+      return {
+        success: false,
+        isDuplicate: true,
+        error: `ambiguous match: ${tiedForBestMatch.length} facilities tie for the best match (${joinedNames})`,
+      };
+    }
+
+    const disabled = await DisableUsers.disableUsersAt([facility.place_id], chtApi);
     return {
       place_id: facility.place_id,
       place_name: facility.name,
-      deactivated,
+      disabled,
     };
   });
 

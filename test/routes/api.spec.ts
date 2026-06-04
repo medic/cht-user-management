@@ -291,7 +291,7 @@ describe('routes/api.ts', () => {
     });
   });
 
-  describe('POST /api/v1/deactivate-users', () => {
+  describe('POST /api/v1/disable-users-at', () => {
     it('deactivates users at the best-match facility resolved from the hierarchy', async () => {
       stubResolvedParent(fakeParent(PARENT_ID));
       getRemotePlacesStub.resolves([
@@ -302,7 +302,7 @@ describe('routes/api.ts', () => {
 
       const resp = await fastify.inject({
         method: 'POST',
-        url: '/api/v1/deactivate-users?type=anything',
+        url: '/api/v1/disable-users-at?type=anything',
         payload: { COUNTY: 'county', SUBCOUNTY: 'subcounty', CHU: 'chu', replacement: 'Jane Doe' },
       });
 
@@ -315,13 +315,34 @@ describe('routes/api.ts', () => {
       expect(deactivateUsersStub.calledOnceWithExactly(['chp-jane'], sinon.match.any)).to.be.true;
     });
 
+    it('aborts and skips deactivation when multiple facilities tie for the best match', async () => {
+      stubResolvedParent(fakeParent(PARENT_ID));
+      getRemotePlacesStub.resolves([
+        fakeChild('chp-jane', 'Jane Doe'),
+        fakeChild('chp-jane-dup', 'Jane Doe'),
+      ]);
+
+      const resp = await fastify.inject({
+        method: 'POST',
+        url: '/api/v1/disable-users-at?type=anything',
+        payload: { COUNTY: 'county', SUBCOUNTY: 'subcounty', CHU: 'chu', replacement: 'Jane Doe' },
+      });
+
+      expect(resp.statusCode).to.equal(200);
+      const body = resp.json();
+      expect(body.success).to.be.false;
+      expect(body.isDuplicate).to.be.true;
+      expect(body.error).to.contain('tie for the best match');
+      expect(deactivateUsersStub.called).to.be.false;
+    });
+
     it('returns a not-found envelope and skips deactivation when no facility matches', async () => {
       stubResolvedParent(fakeParent(PARENT_ID));
       getRemotePlacesStub.resolves([fakeChild('chp-elsewhere', 'Jane Doe', 'other-parent')]);
 
       const resp = await fastify.inject({
         method: 'POST',
-        url: '/api/v1/deactivate-users?type=anything',
+        url: '/api/v1/disable-users-at?type=anything',
         payload: { COUNTY: 'county', replacement: 'Jane Doe' },
       });
 
@@ -338,7 +359,7 @@ describe('routes/api.ts', () => {
 
       const resp = await fastify.inject({
         method: 'POST',
-        url: '/api/v1/deactivate-users?type=anything',
+        url: '/api/v1/disable-users-at?type=anything',
         payload: { COUNTY: 'wrong', replacement: 'Jane Doe' },
       });
 
@@ -354,7 +375,7 @@ describe('routes/api.ts', () => {
     it('rejects a non-object body (array)', async () => {
       const resp = await fastify.inject({
         method: 'POST',
-        url: '/api/v1/deactivate-users?type=anything',
+        url: '/api/v1/disable-users-at?type=anything',
         payload: ['not', 'an', 'object'],
       });
 
@@ -672,7 +693,7 @@ describe('routes/api.ts', () => {
       const resp = await fastify.inject({
         method: 'POST',
         url: '/api/v1/create-user',
-        payload: { oidc_username: 'demo@email.com', role: 'chw', facility_ids: [] },
+        payload: { oidc_username: 'demo@email.com', role: 'chw', facility_ids: [], contact_id: 'contact-1' },
       });
 
       expect(resp.statusCode).to.equal(200);
@@ -680,6 +701,18 @@ describe('routes/api.ts', () => {
         success: false,
         errors: 'facility_ids must be a non-empty array of place ids',
       });
+      expect(createUserStub.called).to.be.false;
+    });
+
+    it('rejects a missing contact_id without calling createUser', async () => {
+      const resp = await fastify.inject({
+        method: 'POST',
+        url: '/api/v1/create-user',
+        payload: { oidc_username: 'demo@email.com', role: 'chw', facility_ids: ['fac-a'] },
+      });
+
+      expect(resp.statusCode).to.equal(200);
+      expect(resp.json()).to.deep.equal({ success: false, errors: 'contact_id is required' });
       expect(createUserStub.called).to.be.false;
     });
 
@@ -691,7 +724,7 @@ describe('routes/api.ts', () => {
       });
 
       expect(resp.statusCode).to.equal(200);
-      expect(resp.json()).to.deep.equal({ success: false, errors: 'contact_id must be a contact id' });
+      expect(resp.json()).to.deep.equal({ success: false, errors: 'contact_id is required' });
       expect(createUserStub.called).to.be.false;
     });
 
@@ -701,7 +734,7 @@ describe('routes/api.ts', () => {
       const resp = await fastify.inject({
         method: 'POST',
         url: '/api/v1/create-user',
-        payload: { oidc_username: 'dupe@email.com', role: 'chw', facility_ids: ['fac-a'] },
+        payload: { oidc_username: 'dupe@email.com', role: 'chw', facility_ids: ['fac-a'], contact_id: 'contact-1' },
       });
 
       expect(resp.statusCode).to.equal(200);
