@@ -62,7 +62,7 @@ describe('routes/api.ts', () => {
   let uploadStub: sinon.SinonStub;
   let getJobDetailsStub: sinon.SinonStub;
   let scheduleJobStub: sinon.SinonStub;
-  let deactivateUsersStub: sinon.SinonStub;
+  let disableUsersStub: sinon.SinonStub;
   let setUserFacilitiesStub: sinon.SinonStub;
   let createUserStub: sinon.SinonStub;
 
@@ -134,7 +134,7 @@ describe('routes/api.ts', () => {
     setWarningsStub = sinon.stub(WarningSystem, 'setWarnings').resolves();
     getJobDetailsStub = sinon.stub(ManageHierarchyLib, 'getJobDetails').resolves(fakeJob());
     scheduleJobStub = sinon.stub(ManageHierarchyLib, 'scheduleJob').resolves();
-    deactivateUsersStub = sinon.stub(DisableUsers, 'deactivateUsersAt').resolves([]);
+    disableUsersStub = sinon.stub(DisableUsers, 'disableUsersAt').resolves([]);
     setUserFacilitiesStub = sinon.stub(SetUserFacilities, 'setFacilities').resolves({
       username: 'target', facilityIds: ['fac-a'], unassigned: [],
     });
@@ -322,13 +322,13 @@ describe('routes/api.ts', () => {
   });
 
   describe('POST /api/v1/disable-users-at', () => {
-    it('deactivates users at the best-match facility resolved from the hierarchy', async () => {
+    it('disables users at the best-match facility resolved from the hierarchy', async () => {
       stubResolvedParent(fakeParent(PARENT_ID));
       getRemotePlacesStub.resolves([
         fakeChild('chp-jane', 'Jane Doe'),
         fakeChild('chp-janet', 'Janet Doe'),
       ]);
-      deactivateUsersStub.resolves(['user-a', 'user-b']);
+      disableUsersStub.resolves(['user-a', 'user-b']);
 
       const resp = await fastify.inject({
         method: 'POST',
@@ -340,12 +340,12 @@ describe('routes/api.ts', () => {
       expect(resp.json()).to.deep.equal({
         place_id: 'chp-jane',
         place_name: 'Jane Doe',
-        deactivated: ['user-a', 'user-b'],
+        disabled: ['user-a', 'user-b'],
       });
-      expect(deactivateUsersStub.calledOnceWithExactly(['chp-jane'], sinon.match.any)).to.be.true;
+      expect(disableUsersStub.calledOnceWithExactly(['chp-jane'], sinon.match.any)).to.be.true;
     });
 
-    it('aborts and skips deactivation when multiple facilities tie for the best match', async () => {
+    it('aborts and skips disabling when multiple facilities tie for the best match', async () => {
       stubResolvedParent(fakeParent(PARENT_ID));
       getRemotePlacesStub.resolves([
         fakeChild('chp-jane', 'Jane Doe'),
@@ -363,10 +363,10 @@ describe('routes/api.ts', () => {
       expect(body.success).to.be.false;
       expect(body.isDuplicate).to.be.true;
       expect(body.error).to.contain('tie for the best match');
-      expect(deactivateUsersStub.called).to.be.false;
+      expect(disableUsersStub.called).to.be.false;
     });
 
-    it('returns a not-found envelope and skips deactivation when no facility matches', async () => {
+    it('returns a not-found envelope and skips disabling when no facility matches', async () => {
       stubResolvedParent(fakeParent(PARENT_ID));
       getRemotePlacesStub.resolves([fakeChild('chp-elsewhere', 'Jane Doe', 'other-parent')]);
 
@@ -381,10 +381,10 @@ describe('routes/api.ts', () => {
         success: false,
         error: 'no facility found matching the provided hierarchy',
       });
-      expect(deactivateUsersStub.called).to.be.false;
+      expect(disableUsersStub.called).to.be.false;
     });
 
-    it('propagates the hierarchy error envelope and skips deactivation', async () => {
+    it('propagates the hierarchy error envelope and skips disabling', async () => {
       stubResolvedParent(RemotePlaceResolver.NoResult);
 
       const resp = await fastify.inject({
@@ -399,7 +399,7 @@ describe('routes/api.ts', () => {
         parentMissing: true,
         isAmbiguous: false,
       });
-      expect(deactivateUsersStub.called).to.be.false;
+      expect(disableUsersStub.called).to.be.false;
     });
 
     it('rejects a non-object body (array)', async () => {
@@ -411,7 +411,7 @@ describe('routes/api.ts', () => {
 
       expect(resp.statusCode).to.equal(500);
       expect(resp.json().message).to.contain('body expected as application/json');
-      expect(deactivateUsersStub.called).to.be.false;
+      expect(disableUsersStub.called).to.be.false;
     });
   });
 
