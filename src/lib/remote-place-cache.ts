@@ -62,15 +62,22 @@ export default class RemotePlaceCache {
     const cacheKey = this.getCacheKey(domain, placeType);
 
     const places = this.cache.get<RemotePlace[]>(cacheKey);
-    if (places) {
-      const existingIndex = places.findIndex(p => p.id === place.id);
-      if (existingIndex >= 0) {
-        places[existingIndex] = place.asRemotePlace();
-      } else {
-        places.push(place.asRemotePlace());
-      }
-      this.cache.set(cacheKey, places);
+    // Only patch an already-populated list. If this type isn't cached, leave it absent so the next
+    // fetch loads the full set from CHT 
+    if (!places) {
+      return;
     }
+
+    // asRemotePlace() already keys a created place by its real CHT doc id, so this entry matches a
+    // fresh fetch and re-adds dedupe correctly.
+    const remotePlace = place.asRemotePlace();
+    const existingIndex = places.findIndex(p => p.id === remotePlace.id);
+    if (existingIndex >= 0) {
+      places[existingIndex] = remotePlace;
+    } else {
+      places.push(remotePlace);
+    }
+    this.cache.set(cacheKey, places);
   }
 
   public static clear(chtApi: ChtApi, contactTypeName?: string): void {
