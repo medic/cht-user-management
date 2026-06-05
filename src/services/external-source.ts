@@ -18,12 +18,16 @@ export default class ExternalSourceService {
     Promise<ExternalSourceSearchResult[] | { error: string }> {
     const paramResult = ExternalSourceService.generateRequestParams(searchParams, config.other_filters, config.mapping);
     try {
-      const response = await axios.get(`${config.url}/${config.api_endpoint}`,
+      const url = this.buildUrl(config.url, config.api_endpoint);
+      console.log('axios.get external source', url, paramResult);
+      const response = await axios.get(
+        url,
         {
           auth: { username: 'admin', password: 'secret' },
           params: paramResult,
           timeout: 10 * 1000,
-        });
+        }
+      );
       const apiResult = _.get(response.data, config.resultKey, []);
       const mappedResult = ExternalSourceService.mapAPIResult(apiResult, config.mapping);
       if (mappedResult.length === 0) {
@@ -91,5 +95,24 @@ export default class ExternalSourceService {
       }
     }
     return queryParams;
+  }
+
+  static buildUrl(baseUrl: string, endpoint: string): string {
+    if (!endpoint || !baseUrl) {
+      throw new Error('Endpoint and base URL are required');
+    }
+
+    let url: URL;
+    try {
+      url = new URL(baseUrl);
+    } catch (error) {
+      throw new Error(`Invalid base URL: ${baseUrl}`);
+    }
+    if (!['http:', 'https:'].includes(url.protocol)) {
+      throw new Error(`Unsupported URL protocol "${url.protocol}" ${baseUrl}`);
+    }
+    const base = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+    const path = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+    return `${base}${path}`;
   }
 }

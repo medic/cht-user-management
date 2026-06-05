@@ -1,5 +1,5 @@
 <div>
-  {% if externalSources.size > 0 %}
+  {% if externalSources.size > 0 and op == 'new' %}
     {% render 'components/external_source_dropdown.liquid',
       contactType: contactType,
       externalSources: externalSources

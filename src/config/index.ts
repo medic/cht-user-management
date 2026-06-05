@@ -2,6 +2,7 @@ import _ from 'lodash';
 import { ChtApi, PlacePayload } from '../lib/cht-api';
 import getConfigByKey from './config-factory';
 import Validation from '../validation';
+import ExternalSourceService from '../services/external-source';
 
 export type ConfigSystem = {
   domains: AuthenticationInfo[];
@@ -315,10 +316,11 @@ export class Config {
       }
     }
 
-    this.getSanitizedExternalSources().forEach(source => {
+    this.getExternalSources().forEach(source => {
       if (!externalSourcesFieldCounts[source.id] || externalSourcesFieldCounts[source.id] < 1) {
         throw Error(`External source "${source.id}" requires at least one filtering property mapped to it`);
       }
+      ExternalSourceService.buildUrl(source.url, source.api_endpoint);
     });
   }
 }
