@@ -18,6 +18,7 @@ import { getChtConfQueue } from './lib/queues';
 const PROMETHEUS_ENDPOINT = '/metrics';
 const UNAUTHENTICATED_ENDPOINTS = [
   '/public/*',
+  '/api/v1/sso-login',
   PROMETHEUS_ENDPOINT,
 ];
 

@@ -14,6 +14,10 @@ export class AuthError extends Error {
     return new AuthError('Missing username or password');
   }
 
+  static MISSING_ACCESS_TOKEN() {
+    return new AuthError('Missing access token');
+  }
+
   static TOKEN_CREATION_FAILED(username: string, domain: string) {
     return new AuthError(`Failed to obtain token for ${username} at ${domain}`);
   }
