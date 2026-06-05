@@ -76,7 +76,6 @@ export default async function addPlace(fastify: FastifyInstance) {
   fastify.get('/search-external-source', async (req, resp) => {
     const queryParams: any = req.query;
     const { source_id: sourceId, type, ...searchParams } = queryParams;
-    //console.log('~~~~~~~~~~~~~~~~~~~~> ', { sourceId, type, search });
 
     const externalSources = Config.getSanitizedExternalSources();
     const source = externalSources.find((source) => source.id === sourceId);
@@ -84,7 +83,6 @@ export default async function addPlace(fastify: FastifyInstance) {
       throw new Error(`external source ${sourceId} not found`);
     }
     const externalSourceConfig = Config.getExternalSourceConfigById(sourceId, type);
-    //console.log('===================> ', searchParams);
     
     const result = await ExternalSource.search(externalSourceConfig, searchParams);
     if ('error' in result) {
@@ -95,16 +93,6 @@ export default async function addPlace(fastify: FastifyInstance) {
         data: searchParams,
       });
     }
-
-    if (!result || result.length === 0) {
-      return resp.view('src/liquid/place/search_external_source.liquid', {
-        contactType: Config.getContactType(type),
-        source: source,
-        data: searchParams,
-        error: 'No results found',
-      });
-    }
-
     const sessionCache: SessionCache = req.sessionCache;
     const chtApi = new ChtApi(req.chtSession);
     await PlaceFactory.loadPlaceFromExternalSource(result, Config.getContactType(type), sessionCache, chtApi);

@@ -18,24 +18,31 @@ export default class ExternalSourceService {
     Promise<ExternalSourceSearchResult[] | { error: string }> {
     const paramResult = ExternalSourceService.generateRequestParams(searchParams, config.other_filters, config.mapping);
     try {
-      //throw new Error('Simulated error for testing');
       const response = await axios.get(`${config.url}/${config.api_endpoint}`,
         {
           auth: { username: 'admin', password: 'secret' },
           params: paramResult,
-          timeout: 5000,
+          timeout: 10 * 1000,
         });
-      const apiResult = _.get(response.data, config.resultKey);
-      return ExternalSourceService.mapAPIResult(apiResult, config.mapping);
+      const apiResult = _.get(response.data, config.resultKey, []);
+      const mappedResult = ExternalSourceService.mapAPIResult(apiResult, config.mapping);
+      if (mappedResult.length === 0) {
+        return { error: 'No results found' };
+      }
+      return mappedResult;
     } catch (error) {
       if (axios.isAxiosError(error)) {
         console.error('Axios error:', {
           message: error.message,
           response: error.response?.data,
         });
-      } else {
-        console.error('Unexpected error:', error);
+        if (error.response?.status === 404) {
+          return { error: 'No results found' };
+        }
+        return { error: `Failed to get results from ${config.friendly_name}`};
       }
+      
+      console.error('Unexpected error:', error);
       return { error: `An error occurred while searching ${config.friendly_name}` };
     }
   }
@@ -43,8 +50,7 @@ export default class ExternalSourceService {
   static mapAPIResult(apiResult: unknown, mapping: ExternalSourceConfig['mapping']): Array<ExternalSourceSearchResult> {
     const result: ExternalSourceSearchResult[] = [];
     if (!Array.isArray(apiResult)) {
-      console.warn('Expected result to be an array, but got:', apiResult);
-      return result;
+      throw new Error(`Expected result to be an array, but got: ${apiResult}`);
     }
     for (const item of apiResult) {
       const id = item.id || item.uuid || 'unknown_id';
@@ -52,7 +58,7 @@ export default class ExternalSourceService {
         propertyName: prop.propertyName,
         propertyType: prop.propertyType,
         externalSourceField: prop.externalSourceField,
-        value: _.get(item, prop.path || prop.externalSourceField)
+        value: _.get(item, prop.path || prop.externalSourceField, '')
       }));
       result.push({ id, propertyValues });
     }

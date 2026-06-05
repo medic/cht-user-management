@@ -35,13 +35,6 @@
       "url": "https://www.commcarehq.org",
       "api_endpoint": "api/api/v0.5/form/",
       "resultKey": "forms"
-    },
-    {
-      "id": "odk",
-      "friendly_name": "ODK",
-      "url": "https://api.odk-x.org",
-      "api_endpoint": "v1/projects/submissions",
-      "resultKey": "submissions"
     }
   ],
   "contact_types": [
@@ -114,7 +107,8 @@
           ],
           "required": true,
           "external_mapping": {
-            "chwr": { "name": "position.county", "is_filter": true }
+            "chwr": { "name": "position.county", "is_filter": true },
+            "commcare": { "name": "locationHierarchy[0].name", "is_filter": true }
           }
         },
         {
@@ -157,7 +151,7 @@
           "friendly_name": "CHWR ID",
           "property_name": "chwr_id",
           "type": "generated",
-          "parameter": "",
+          "parameter": "{{ contact.chwr_id }}",
           "required": false,
           "external_mapping": {
             "chwr": { "name": "id" }

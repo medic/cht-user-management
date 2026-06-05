@@ -30,15 +30,21 @@
   <div class="field is-grouped is-grouped-centered">
     <div class="control">
       <button id="place_search_external_submit" class="button is-link">Search {{ source.friendly_name }}</button>
-      <a href="/" class="button">Cancel</a>
+      <a href="/" id = "cancel_btn" class="button">Cancel</a>
     </div>
   </div>
 </form>
 
 <script>
   document.getElementById('form_place_from_external_source').addEventListener('submit', function () {
-    const btn = document.getElementById('place_search_external_submit');
-    btn.disabled = true;
-    btn.textContent = 'Searching...';
+    const cancelButton = document.getElementById('cancel_btn');
+    const submitButton = document.getElementById('place_search_external_submit');
+    submitButton.disabled = true;
+    submitButton.textContent = 'Searching...';
+
+    cancelButton.setAttribute('disabled', 'true');
+    cancelButton.addEventListener('click', function (event) {
+      event.preventDefault();
+    });
   });
 </script>

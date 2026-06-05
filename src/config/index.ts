@@ -66,11 +66,11 @@ export type AuthenticationInfo = {
 };
 
 export type ExternalMapping = {
-  [sourceId: string]: {
+  [key: string]: {
     name: string;
     path?: string;
     is_filter?: boolean;
-  };
+  } | undefined;
 };
 
 export interface ExternalSource {
@@ -118,7 +118,7 @@ export class Config {
     return config.external_sources || [];
   }
 
-  public static getSanitizedExternalSources():SanitizedExternalSource[] {
+  public static getSanitizedExternalSources(): SanitizedExternalSource[] {
     const result = config.external_sources?.map(s => ({ id: s.id, friendly_name: s.friendly_name })) || [];
     return result;
   }
@@ -142,7 +142,7 @@ export class Config {
       throw new Error(`unrecognized contact type: "${contactTypeName}"`);
     }
     const getMappedProperties = (
-      properties: ContactProperty[] | HierarchyConstraint[], 
+      properties: ContactProperty[] | HierarchyConstraint[],
       type: 'place' | 'contact' | 'hierarchy'
     ): ExternalSourceConfig['mapping'] => {
       return properties.filter(prop => !!prop.external_mapping)
@@ -155,7 +155,7 @@ export class Config {
         }));
     };
 
-    return { 
+    return {
       ...source,
       mapping: [
         ...getMappedProperties(contactType.place_properties, 'place'),
@@ -273,6 +273,7 @@ export class Config {
 
   // TODO: Joi? Chai?
   public static assertValid({ config }: PartnerConfig = partnerConfig) {
+    const externalSourcesFieldCounts: Record<string, number> = {};
     for (const contactType of config.contact_types) {
       const allHierarchyProperties = [...contactType.hierarchy, contactType.replacement_property];
       const allProperties = [
@@ -299,6 +300,13 @@ export class Config {
         if (!KnownContactPropertyTypes.includes(property.type)) {
           throw Error(`Unknown property type "${property.type}"`);
         }
+        if (property.external_mapping) {
+          Object.keys(property.external_mapping).forEach(key => {
+            if (property?.external_mapping?.[key]?.is_filter) {
+              externalSourcesFieldCounts[key] = (externalSourcesFieldCounts[key] || 0) + 1; 
+            }
+          });
+        }
       });
 
       const generatedHierarchyProperties = allHierarchyProperties.filter(hierarchy => hierarchy.type === 'generated');
@@ -306,6 +314,12 @@ export class Config {
         throw Error('Hierarchy properties cannot be of type "generated"');
       }
     }
+
+    this.getSanitizedExternalSources().forEach(source => {
+      if (!externalSourcesFieldCounts[source.id] || externalSourcesFieldCounts[source.id] < 1) {
+        throw Error(`External source "${source.id}" requires at least one filtering property mapped to it`);
+      }
+    });
   }
 }
 
