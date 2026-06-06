@@ -21,8 +21,13 @@
     {
       "id": "chwr",
       "friendly_name": "CHWR",
-      "url": "http://localhost:3400",
-      "api_endpoint": "api/chw",
+      "url": "https://hris5.health.go.ug",
+      "auth": {
+        "type": "token",
+        "token_endpoint": "/auth/token",
+        "expiration": 90
+      },
+      "api_endpoint": "chw",
       "resultKey": "chws",
       "other_filters": {
         "active": "true",
@@ -33,6 +38,9 @@
       "id": "commcare",
       "friendly_name": "CommCare",
       "url": "https://www.commcarehq.org",
+      "auth": {
+        "type": "basic"
+      },
       "api_endpoint": "api/api/v0.5/form/",
       "resultKey": "forms"
     }

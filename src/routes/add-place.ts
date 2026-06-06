@@ -83,6 +83,8 @@ export default async function addPlace(fastify: FastifyInstance) {
       throw new Error(`external source ${sourceId} not found`);
     }
     const externalSourceConfig = Config.getExternalSourceConfigById(sourceId, type);
+    const token = await fastify.authTokenManager.getToken(source.id);
+    console.log('token =============> ', token);
     
     const result = await ExternalSource.search(externalSourceConfig, searchParams);
     if ('error' in result) {

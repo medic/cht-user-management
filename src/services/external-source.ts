@@ -51,7 +51,7 @@ export default class ExternalSourceService {
     }
   }
 
-  static mapAPIResult(apiResult: unknown, mapping: ExternalSourceConfig['mapping']): Array<ExternalSourceSearchResult> {
+  private static mapAPIResult(apiResult: unknown, mapping: ExternalSourceConfig['mapping']): Array<ExternalSourceSearchResult> {
     const result: ExternalSourceSearchResult[] = [];
     if (!Array.isArray(apiResult)) {
       throw new Error(`Expected result to be an array, but got: ${apiResult}`);
@@ -70,7 +70,7 @@ export default class ExternalSourceService {
     return result;
   }
 
-  static generateRequestParams(
+  private static generateRequestParams(
     params: Record<string, string>,
     otherFilters: ExternalSource['other_filters'],
     mapping: ExternalSourceConfig['mapping']

@@ -78,6 +78,8 @@ export interface ExternalSource {
   id: string;
   friendly_name: string;
   url: string;
+  auth: { type: string; token_endpoint: string; expiration: number } |
+  { type: string; token_endpoint?: never; expiration?: never };
   api_endpoint: string;
   resultKey: string;
   other_filters?: { [key: string]: string };
@@ -304,7 +306,7 @@ export class Config {
         if (property.external_mapping) {
           Object.keys(property.external_mapping).forEach(key => {
             if (property?.external_mapping?.[key]?.is_filter) {
-              externalSourcesFieldCounts[key] = (externalSourcesFieldCounts[key] || 0) + 1; 
+              externalSourcesFieldCounts[key] = (externalSourcesFieldCounts[key] || 0) + 1;
             }
           });
         }
@@ -317,6 +319,9 @@ export class Config {
     }
 
     this.getExternalSources().forEach(source => {
+      if (!['token', 'basic'].includes(source.auth.type)) {
+        throw Error(`Supported types for auth are "token" and "basic" for external source "${source.id}"`);
+      }
       if (!externalSourcesFieldCounts[source.id] || externalSourcesFieldCounts[source.id] < 1) {
         throw Error(`External source "${source.id}" requires at least one filtering property mapped to it`);
       }
