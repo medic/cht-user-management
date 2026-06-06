@@ -41,6 +41,10 @@ $spinner-color: $_gray-dark;
     border: $spinner-width solid white;
     border-width: 2px;
     border-right-color: transparent;
+    &#login-spinner {
+      width: 21px;
+      height: 21px;
+    }
   }
 }
 
