@@ -69,7 +69,7 @@ export type AuthenticationInfo = {
 };
 
 export type ExternalMapping = {
-  [key: string]: {
+  [sourceId: string]: {
     name: string;
     path?: string;
     is_filter?: boolean;
@@ -80,15 +80,15 @@ export type ExternalSource = {
   id: string;
   friendly_name: string;
   url: string;
+  api_endpoint: string;
   auth: {
     type: string;
     token_endpoint?: string;
     expiration?: number;
     mapping?: { client_id: string; client_secret: string };
   };
-  api_endpoint: string;
   resultKey: string;
-  other_filters?: { [key: string]: string };
+  other_filters?: { [filter: string]: string };
 }
 
 export type ExternalSourceConfig = ExternalSource & {
@@ -144,6 +144,7 @@ export class Config {
     return contactMatch;
   }
 
+  // get all external source parameters from configuration
   public static getExternalSourceConfigById(sourceId: string, contactTypeName: string): ExternalSourceConfig {
     const source = Config.getExternalSources(sourceId)[0];
     const contactType: ContactType | undefined = config.contact_types.find(ct => ct.name === contactTypeName);

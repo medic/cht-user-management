@@ -42,7 +42,6 @@ export default async function addPlace(fastify: FastifyInstance) {
       contactTypes,
       userRoleProperty: Config.getUserRoleConfig(contactType),
       externalSources,
-      MATOMO_HOST: process.env.MATOMO_HOST
     };
 
     return resp.view('src/liquid/app/view.liquid', tmplData);
