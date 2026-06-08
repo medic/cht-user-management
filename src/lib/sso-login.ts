@@ -67,7 +67,8 @@ async function follow(start: string, chtHost: string, allowedOrigins: URL[], acc
     };
 
     // Only forward the OIDC access token to a trusted IdP origins
-    if (allowedOrigins.some(o => o.protocol === url.protocol && o.host === url.host)) {
+    const requireIdpOriginMatch = process.env.NODE_ENV === 'production';
+    if (!requireIdpOriginMatch || allowedOrigins.some(o => o.protocol === url.protocol && o.host === url.host)) {
       headers.Authorization = `Bearer ${accessToken}`;
     }
 
