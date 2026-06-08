@@ -3,7 +3,7 @@ import fp from 'fastify-plugin';
 import { UploadManager } from '../services/upload-manager';
 import { RedisStore, UploadLoggerImpl } from '../services/upload-log';
 import { checkRedisConnection } from '../config/config-worker';
-import AuthTokenManager from '../services/auth-token-manager';
+import ExternalSourceAuthManager from '../services/external-source-auth-manager';
 import { Config } from '../config';
 
 async function services(fastify: FastifyInstance) {
@@ -11,9 +11,9 @@ async function services(fastify: FastifyInstance) {
   const redisStore = new RedisStore(redis);
   const logger = new UploadLoggerImpl(redisStore);
   const uploadManager = new UploadManager(logger);
-  const authTokenManager = new AuthTokenManager(Config.getExternalSources());
+  const externalSourceAuthManager = new ExternalSourceAuthManager(Config.getExternalSources());
   fastify.decorate('uploadManager', uploadManager);
-  fastify.decorate('authTokenManager', authTokenManager);
+  fastify.decorate('externalSourceAuthManager', externalSourceAuthManager);
 }
 
 export default fp(services, {

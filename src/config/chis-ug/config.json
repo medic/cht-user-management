@@ -25,7 +25,11 @@
       "auth": {
         "type": "token",
         "token_endpoint": "/auth/token",
-        "expiration": 90
+        "expiration": 0,
+        "mapping": {
+          "client_id": "email",
+          "client_secret": "password"
+        }
       },
       "api_endpoint": "chw",
       "resultKey": "chws",
@@ -34,15 +38,15 @@
         "limit": "3"
       }
     },
-    {
+    { 
       "id": "commcare",
       "friendly_name": "CommCare",
-      "url": "https://www.commcarehq.org",
+      "url": "http://localhost:3400",
       "auth": {
         "type": "basic"
       },
-      "api_endpoint": "api/api/v0.5/form/",
-      "resultKey": "forms"
+      "api_endpoint": "api/chw",
+      "resultKey": "chws"
     }
   ],
   "contact_types": [
@@ -50,7 +54,6 @@
       "name": "c50-health_center",
       "friendly": "VHT Area",
       "contact_type": "person",
-      "external_sources": ["chwr", "commcare", "odk"],
       "user_role": [
         "vht"
       ],
@@ -113,11 +116,7 @@
           "parameter": [
             "\\scounty\\s"
           ],
-          "required": true,
-          "external_mapping": {
-            "chwr": { "name": "position.county", "is_filter": true },
-            "commcare": { "name": "locationHierarchy[0].name", "is_filter": true }
-          }
+          "required": true
         },
         {
           "friendly_name": "Sub County",
@@ -129,7 +128,7 @@
           ],
           "required": true,
           "external_mapping": {
-            "chwr": { "name": "locationHierarchy[1].name", "is_filter": true }
+            "chwr": { "name": "subcounty", "path": "locationHierarchy[1].name", "is_filter": true }
           }
         },
         {
@@ -152,7 +151,17 @@
           "type": "name",
           "required": true,
           "external_mapping": {
-            "chwr": { "name": "fullName", "is_filter": true }
+            "chwr": { "name": "fullName", "is_filter": true },
+            "commcare": { "name": "fullName", "is_filter": true }
+          }
+        },
+        {
+          "friendly_name": "National ID",
+          "property_name": "national_id",
+          "type": "string",
+          "required": false,
+          "external_mapping": {
+            "chwr": { "name": "nationalId" }
           }
         },
         {

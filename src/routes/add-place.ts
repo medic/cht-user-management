@@ -83,10 +83,9 @@ export default async function addPlace(fastify: FastifyInstance) {
       throw new Error(`external source ${sourceId} not found`);
     }
     const externalSourceConfig = Config.getExternalSourceConfigById(sourceId, type);
-    const token = await fastify.authTokenManager.getToken(source.id);
-    console.log('token =============> ', token);
+    const auth = await fastify.externalSourceAuthManager.getAuth(source.id);
     
-    const result = await ExternalSource.search(externalSourceConfig, searchParams);
+    const result = await ExternalSource.search(externalSourceConfig, searchParams, auth);
     if ('error' in result) {
       return resp.view('src/liquid/place/search_external_source.liquid', {
         contactType: Config.getContactType(type),

@@ -14,7 +14,7 @@ export type ExternalSourceSearchResult = {
 };
 
 export default class ExternalSourceService {
-  public static async search(config: ExternalSourceConfig, searchParams: Record<string, string>):
+  public static async search(config: ExternalSourceConfig, searchParams: Record<string, string>, auth: string):
     Promise<ExternalSourceSearchResult[] | { error: string }> {
     const paramResult = ExternalSourceService.generateRequestParams(searchParams, config.other_filters, config.mapping);
     try {
@@ -23,9 +23,11 @@ export default class ExternalSourceService {
       const response = await axios.get(
         url,
         {
-          auth: { username: 'admin', password: 'secret' },
+          headers: {
+            Authorization: auth,
+          },
           params: paramResult,
-          timeout: 10 * 1000,
+          timeout: 60 * 1000,
         }
       );
       const apiResult = _.get(response.data, config.resultKey, []);

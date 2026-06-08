@@ -1,12 +1,12 @@
 import ChtSession from '../../lib/cht-session';
-import AuthTokenManager from '../../services/auth-token-manager';
+import ExternalSourceAuthManager from '../../services/external-source-auth-manager';
 import SessionCache from '../../services/session-cache';
 import { UploadManager } from '../../services/upload-manager';
 
 declare module 'fastify' {
   interface FastifyInstance {
     uploadManager: UploadManager;
-    authTokenManager: AuthTokenManager;
+    externalSourceAuthManager: ExternalSourceAuthManager;
   }
 
   interface FastifyRequest {
