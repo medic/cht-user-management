@@ -41,6 +41,7 @@ export default async function addPlace(fastify: FastifyInstance) {
       contactType,
       contactTypes,
       userRoleProperty: Config.getUserRoleConfig(contactType),
+      MATOMO_HOST: process.env.MATOMO_HOST,
       externalSources,
     };
 
