@@ -7,13 +7,14 @@ export type ExternalSourceSearchResult = {
   id: string;
   propertyValues: Array<{
     propertyName: string;
+    friendlyName: string;
     propertyType: 'place' | 'contact' | 'hierarchy';
     externalSourceField: string;
     value: string;
   }>;
 };
 
-export class ExternalSourceError extends Error {}
+export class ExternalSourceError extends Error { }
 
 export default class ExternalSourceService {
   public static async search(config: ExternalSourceConfig, searchParams: Record<string, string>, auth: string):
@@ -61,6 +62,7 @@ export default class ExternalSourceService {
       const propertyValues = mapping.map(prop => ({
         propertyName: prop.propertyName,
         propertyType: prop.propertyType,
+        friendlyName: prop.friendlyName,
         externalSourceField: prop.externalSourceField,
         value: _.get(item, prop.path || prop.externalSourceField, '')
       }));
@@ -114,5 +116,12 @@ export default class ExternalSourceService {
     const base = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
     const path = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
     return `${base}${path}`;
+  }
+
+  static toExternalSourceMessage(error: unknown, sourceName: string): string {
+    if (error instanceof ExternalSourceError) {
+      return error.message;
+    }
+    return `Something went wrong connecting to ${sourceName}. Please try again or contact support.`;
   }
 }

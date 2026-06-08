@@ -4,7 +4,7 @@ import { Config } from '../config';
 import { ChtApi } from '../lib/cht-api';
 import PlaceFactory from '../services/place-factory';
 import SessionCache from '../services/session-cache';
-import ExternalSource, { ExternalSourceError } from '../services/external-source';
+import ExternalSource from '../services/external-source';
 import RemotePlaceResolver from '../lib/remote-place-resolver';
 import { UploadManager } from '../services/upload-manager';
 import RemotePlaceCache from '../lib/remote-place-cache';
@@ -89,13 +89,6 @@ export default async function addPlace(fastify: FastifyInstance) {
       });
     };
 
-    const toUserMessage = function (error: unknown, sourceName: string): string {
-      if (error instanceof ExternalSourceError) {
-        return error.message;
-      }
-      return `Something went wrong connecting to ${sourceName}. Please try again or contact support.`;
-    };
-
     if (!source) {
       return renderError(`Unkown external source ${sourceId}`);
     }
@@ -104,17 +97,18 @@ export default async function addPlace(fastify: FastifyInstance) {
       const externalSourceConfig = Config.getExternalSourceConfigById(sourceId, type);
       const auth = await fastify.externalSourceAuthManager.getAuth(source.id);
 
-      const result = await ExternalSource.search(externalSourceConfig, searchParams, auth);
-      if (result.length === 0) {
+      const results = await ExternalSource.search(externalSourceConfig, searchParams, auth);
+      if (results.length === 0) {
         return renderError('No results found');
       }
-      const sessionCache: SessionCache = req.sessionCache;
-      const chtApi = new ChtApi(req.chtSession);
-      await PlaceFactory.loadPlaceFromExternalSource(result, contactType, sessionCache, chtApi);
-      resp.header('HX-Redirect', `/`);
+      return resp.view('src/liquid/place/select_external_source_result.liquid', {
+        contactType,
+        source,
+        results,
+      });
     } catch (error) {
       req.log.error(error);
-      return renderError(toUserMessage(error, source.friendly_name));
+      return renderError(ExternalSource.toExternalSourceMessage(error, source.friendly_name));
     }
   });
 

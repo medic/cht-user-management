@@ -1,0 +1,54 @@
+<form
+  id="form_select_external_source_result"
+  hx-post="/place?op=new&type={{ contactType.name }}"
+  hx-target="this"
+  hx-swap="outerHTML"
+  hx-encoding="application/x-www-form-urlencoded"
+  autocomplete="off"
+>
+  {% if error %}
+    <div class="notification is-danger is-light">{{ error }}</div>
+  {% endif %}
+  
+  {% for result in results %}
+    {% for field in result.propertyValues %}
+    <input name="{{ field.propertyType }}_{{ field.propertyName }}" value="{{ field.value }}" hidden>
+    {% endfor %}
+  {% endfor %}
+
+  <section class="section is-small">
+    <p class="block">
+      <strong>Select one result to add as {{ contactType.contact_friendly | default: contactType.friendly }} </strong>
+    </p>
+
+    {% for result in results %}
+      <label class="box external-source-result" style="display:block; cursor:pointer;">
+        <div class="columns is-vcentered is-mobile">
+          <div class="column is-narrow">
+            <input type="radio" name="selected_id" value="{{ result.id }}" required>
+          </div>
+          <div class="column">
+            {% for field in result.propertyValues %}
+              <div><strong>{{ field.friendlyName }}:</strong> {{ field.value }}</div>
+            {% endfor %}
+          </div>
+        </div>
+      </label>
+    {% endfor %}
+  </section>
+
+  <div class="field is-grouped is-grouped-centered">
+    <div class="control">
+      <button id="add_selected_result" class="button is-link" type="submit">Add Selected</button>
+      <a href="/" id="cancel_btn" class="button">Cancel</a>
+    </div>
+  </div>
+</form>
+
+<script>
+  document.getElementById('form_select_external_source_result').addEventListener('submit', function () {
+    const submitButton = document.getElementById('add_selected_result');
+    submitButton.disabled = true;
+    submitButton.textContent = 'Adding...';
+  });
+</script>

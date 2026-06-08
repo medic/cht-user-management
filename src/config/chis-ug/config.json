@@ -68,7 +68,8 @@
           "required": true,
           "level": 1,
           "external_mapping": {
-            "chwr": { "name": "position.parish", "is_filter": true }
+            "chwr": { "name": "position.parish", "is_filter": true },
+            "commcare": { "name": "position.parish", "is_filter": true }
           }
         },
         {
@@ -79,7 +80,19 @@
           "type": "string",
           "level": 2,
           "external_mapping": {
-            "chwr": { "name": "position.facility.name", "is_filter": true }
+            "chwr": { "name": "position.facility.name", "is_filter": true },
+            "commcare": { "name": "position.facility.name", "is_filter": true }
+          }
+        },
+        {
+          "friendly_name": "District",
+          "property_name": "DISTRICT",
+          "contact_type": "c20-district",
+          "required": true,
+          "type": "string",
+          "level": 3,
+          "external_mapping": {
+            "commcare": { "name": "district", "path": "locationHierarchy[0].name", "is_filter": true }
           }
         }
       ],
@@ -116,7 +129,7 @@
           "parameter": [
             "\\scounty\\s"
           ],
-          "required": true
+          "required": false
         },
         {
           "friendly_name": "Sub County",
@@ -128,7 +141,8 @@
           ],
           "required": true,
           "external_mapping": {
-            "chwr": { "name": "subcounty", "path": "locationHierarchy[1].name", "is_filter": true }
+            "chwr": { "name": "subcounty", "path": "locationHierarchy[1].name", "is_filter": true },
+            "commcare": { "name": "subcounty", "path": "locationHierarchy[1].name", "is_filter": true }
           }
         },
         {
@@ -140,7 +154,8 @@
           "type": "name",
           "required": true,
           "external_mapping": {
-            "chwr": { "name": "village", "path": "position.villages[0]", "is_filter": true }
+            "chwr": { "name": "village", "path": "position.villages[0]", "is_filter": true },
+            "commcare": { "name": "village", "path": "position.villages[0]", "is_filter": true }
           }
         }
       ],
@@ -161,7 +176,8 @@
           "type": "string",
           "required": false,
           "external_mapping": {
-            "chwr": { "name": "nationalId" }
+            "chwr": { "name": "nationalId" },
+            "commcare": { "name": "nationalId" }
           }
         },
         {
@@ -171,7 +187,8 @@
           "parameter": "{{ contact.chwr_id }}",
           "required": false,
           "external_mapping": {
-            "chwr": { "name": "id" }
+            "chwr": { "name": "id" },
+            "commcare": { "name": "id" }
           }
         },
         {
@@ -182,7 +199,8 @@
           "required": true,
           "unique": "all",
           "external_mapping": {
-            "chwr": { "name": "phone" }
+            "chwr": { "name": "phone" },
+            "commcare": { "name": "phone" }
           }
         },
         {
@@ -191,7 +209,8 @@
           "type": "dob",
           "required": true,
           "external_mapping": {
-            "chwr": { "name": "birthDate" }
+            "chwr": { "name": "birthDate" },
+            "commcare": { "name": "birthDate" }
           }
         },
         {
@@ -203,7 +222,7 @@
             "female": "Female"
           },
           "required": true,
-          "external_mapping": {"chwr": { "name": "gender" }}
+          "external_mapping": {"chwr": { "name": "gender" }, "commcare": { "name": "gender" }}
         }
       ]
     }

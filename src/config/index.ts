@@ -94,6 +94,7 @@ export type ExternalSource = {
 export type ExternalSourceConfig = ExternalSource & {
   mapping: Array<{
     propertyName: string;
+    friendlyName: string;
     propertyType: 'place' | 'contact' | 'hierarchy';
     externalSourceField: string;
     path?: string;
@@ -158,6 +159,7 @@ export class Config {
       return properties.filter(prop => !!prop.external_mapping)
         .map(prop => ({
           propertyName: prop.property_name,
+          friendlyName: prop.friendly_name,
           propertyType: type,
           externalSourceField: prop.external_mapping?.[sourceId]?.name || '',
           path: prop.external_mapping?.[sourceId]?.path,
