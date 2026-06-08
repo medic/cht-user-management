@@ -9,6 +9,8 @@ export type ConfigSystem = {
   external_sources?: ExternalSource[];
   contact_types: ContactType[];
   logoBase64: string;
+  // Trusted IdP origins for SSO
+  idpOrigins?: string[];
 };
 
 export type PartnerConfig = {
@@ -258,7 +260,11 @@ export class Config {
     ];
   }
 
-  public static getDomains(): AuthenticationInfo[] {
+  public static getIdpOrigins(): string[] {
+    return config.idpOrigins ?? [];
+  }
+
+  public static getDomains() : AuthenticationInfo[] {
     const domains = [...config.domains];
 
     if (NODE_ENV !== 'production') {
