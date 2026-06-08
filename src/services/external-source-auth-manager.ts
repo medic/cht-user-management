@@ -7,7 +7,7 @@ export type ExternalSourceAuth = {
   url: string;
   type: 'token' | 'basic';
   token_endpoint?: string;
-  token: string | null;
+  token?: string;
   mapping?: { client_id: string; client_secret: string };
   expiresAt: number;
   expiration: number;
@@ -23,7 +23,6 @@ export default class ExternalSourceAuthManager {
         id: source.id,
         url: source.url,
         type: source.auth.type === 'token' ? 'token' : 'basic',
-        token: null,
         token_endpoint: source.auth.token_endpoint,
         mapping: source.auth.mapping,
         expiresAt: 0,
@@ -34,69 +33,74 @@ export default class ExternalSourceAuthManager {
   }
 
   async getAuth(externalSourceId: string): Promise<string> {
-    const authType = this.externalSourceAuth[externalSourceId].type;
+    const { type } = this.externalSourceAuth[externalSourceId];
     const token = await this.getToken(externalSourceId);
-    if (authType === 'basic') {
-      return `Basic ${token}`;
+    if (!token) {
+      throw new Error(`Authentication error`);
     }
-    return `Bearer ${token}`;
+    return type === 'token' ? `Bearer ${token}` : `Basic ${token}`;
   }
 
-  private async getToken(externalSourceId: string): Promise<string | null> {
+  private async getToken(externalSourceId: string): Promise<string> {
     const secretKey = `${externalSourceId}_SECRET`.toUpperCase();
     const tokenSecret = process.env[secretKey];
+    if (!tokenSecret) {
+      throw new Error(`${secretKey} not set`);
+    }
 
     if (this.externalSourceAuth[externalSourceId].type === 'basic') {
-      if (!tokenSecret) {
-        throw new Error(`${secretKey} not set`);
-      }
       return tokenSecret;
     }
 
-    const now = Date.now();
     const expiresAt = this.externalSourceAuth[externalSourceId].expiresAt;
     const currentToken = this.externalSourceAuth[externalSourceId].token;
+    const now = Date.now();
     if (currentToken && expiresAt > now) {
       console.log('using cached token for external source: ', externalSourceId);
       return currentToken;
     }
 
     if (this.externalSourceAuth[externalSourceId].refreshingToken) {
-      return this.externalSourceAuth[externalSourceId].refreshingToken;
+      return this.externalSourceAuth[externalSourceId].refreshingToken as Promise<string>;
     }
 
     this.externalSourceAuth[externalSourceId].refreshingToken = this.fetchToken(externalSourceId, tokenSecret);
     try {
-      this.externalSourceAuth[externalSourceId].token = await this.externalSourceAuth[externalSourceId].refreshingToken as string;
+      const result = await this.externalSourceAuth[externalSourceId].refreshingToken as string;
+      this.externalSourceAuth[externalSourceId].token = result;
       this.externalSourceAuth[externalSourceId].expiresAt = now + (this.externalSourceAuth[externalSourceId].expiration) * 1000;
-      return this.externalSourceAuth[externalSourceId].token || null;
+      return this.externalSourceAuth[externalSourceId].token as string;
     } finally {
       this.externalSourceAuth[externalSourceId].refreshingToken = null;
     }
   }
 
   private async fetchToken(externalSourceId: string, tokenSecret: string = ''): Promise<string> {
+    const [clientId, clientSecret] = Buffer.from(tokenSecret, 'base64').toString('utf-8').split(':');
+    const baseUrl = this.externalSourceAuth[externalSourceId].url;
+    const tokenUrl = this.externalSourceAuth[externalSourceId].token_endpoint || '';
+    const url = ExternalSourceService.buildUrl(baseUrl, tokenUrl);
+    const payLoad = {
+      [this.externalSourceAuth[externalSourceId].mapping?.client_id || 'client_id']: clientId,
+      [this.externalSourceAuth[externalSourceId].mapping?.client_secret || 'client_secret']: clientSecret,
+    };
+
+    console.log('axios.post: token for external source ', externalSourceId, url);
     try {
-      if (!tokenSecret) {
-        throw new Error(`${externalSourceId}_SECRET not set`);
+      const response = await axios.post(url, payLoad, { timeout: 10_000 });
+      const token = response.data.access_token || response.data.token;
+      if (!token) {
+        throw new Error(`Token endpoint for "${externalSourceId}" returned no access_token/token`);
       }
-
-      const [clientId, clientSecret] = Buffer.from(tokenSecret, 'base64').toString('utf-8').split(':');
-      const baseUrl = this.externalSourceAuth[externalSourceId].url;
-      const tokenUrl = this.externalSourceAuth[externalSourceId].token_endpoint || '';
-      const url = ExternalSourceService.buildUrl(baseUrl, tokenUrl);
-      const payLoad = {
-        [this.externalSourceAuth[externalSourceId].mapping?.client_id || 'client_id']: clientId,
-        [this.externalSourceAuth[externalSourceId].mapping?.client_secret || 'client_secret']: clientSecret,
-        timeout: 10_000,
-      };
-
-      console.log('axios.post: token for external source ', externalSourceId);
-      const response = await axios.post(url, payLoad);
       return response.data.access_token || response.data.token;
     } catch (error) {
-      console.error('error', error);
-      return '';
+      if (axios.isAxiosError(error)) {
+        console.error('Axios error:', {
+          message: error.message,
+          response: error.response?.data,
+        });
+      }
+      throw error;
     }
   }
 

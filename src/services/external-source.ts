@@ -13,13 +13,15 @@ export type ExternalSourceSearchResult = {
   }>;
 };
 
+export class ExternalSourceError extends Error {}
+
 export default class ExternalSourceService {
   public static async search(config: ExternalSourceConfig, searchParams: Record<string, string>, auth: string):
-    Promise<ExternalSourceSearchResult[] | { error: string }> {
+    Promise<ExternalSourceSearchResult[]> {
     const paramResult = ExternalSourceService.generateRequestParams(searchParams, config.other_filters, config.mapping);
     try {
       const url = this.buildUrl(config.url, config.api_endpoint);
-      console.log('axios.get external source', url, paramResult);
+      console.log('axios.get external source search ', url);
       const response = await axios.get(
         url,
         {
@@ -32,9 +34,6 @@ export default class ExternalSourceService {
       );
       const apiResult = _.get(response.data, config.resultKey, []);
       const mappedResult = ExternalSourceService.mapAPIResult(apiResult, config.mapping);
-      if (mappedResult.length === 0) {
-        return { error: 'No results found' };
-      }
       return mappedResult;
     } catch (error) {
       if (axios.isAxiosError(error)) {
@@ -43,13 +42,12 @@ export default class ExternalSourceService {
           response: error.response?.data,
         });
         if (error.response?.status === 404) {
-          return { error: 'No results found' };
+          throw new ExternalSourceError(`No results found`);
         }
-        return { error: `Failed to get results from ${config.friendly_name}`};
+        throw new ExternalSourceError(`Could not connect to ${config.friendly_name}`);
       }
-      
-      console.error('Unexpected error:', error);
-      return { error: `An error occurred while searching ${config.friendly_name}` };
+      console.error(error);
+      throw error;
     }
   }
 

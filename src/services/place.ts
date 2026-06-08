@@ -47,7 +47,6 @@ export default class Place {
   public hierarchyProperties: FormattedPropertyCollection;
   public userRoleProperties: FormattedPropertyCollection;
   public warnings: string[];
-  public externalSource?: { id: string; name: string };
 
   public state : PlaceUploadState;
 

@@ -4,7 +4,7 @@ import { Config } from '../config';
 import { ChtApi } from '../lib/cht-api';
 import PlaceFactory from '../services/place-factory';
 import SessionCache from '../services/session-cache';
-import ExternalSource from '../services/external-source';
+import ExternalSource, { ExternalSourceError } from '../services/external-source';
 import RemotePlaceResolver from '../lib/remote-place-resolver';
 import { UploadManager } from '../services/upload-manager';
 import RemotePlaceCache from '../lib/remote-place-cache';
@@ -76,29 +76,46 @@ export default async function addPlace(fastify: FastifyInstance) {
   fastify.get('/search-external-source', async (req, resp) => {
     const queryParams: any = req.query;
     const { source_id: sourceId, type, ...searchParams } = queryParams;
-
     const externalSources = Config.getSanitizedExternalSources();
     const source = externalSources.find((source) => source.id === sourceId);
-    if (!source) {
-      throw new Error(`external source ${sourceId} not found`);
-    }
-    const externalSourceConfig = Config.getExternalSourceConfigById(sourceId, type);
-    const auth = await fastify.externalSourceAuthManager.getAuth(source.id);
-    
-    const result = await ExternalSource.search(externalSourceConfig, searchParams, auth);
-    if ('error' in result) {
+    const contactType = Config.getContactType(type);
+
+    const renderError = (error: string) => {
       return resp.view('src/liquid/place/search_external_source.liquid', {
-        contactType: Config.getContactType(type),
+        contactType,
         source: source,
-        error: result.error,
+        error,
         data: searchParams,
       });
+    };
+
+    const toUserMessage = function (error: unknown, sourceName: string): string {
+      if (error instanceof ExternalSourceError) {
+        return error.message;
+      }
+      return `Something went wrong connecting to ${sourceName}. Please try again or contact support.`;
+    };
+
+    if (!source) {
+      return renderError(`Unkown external source ${sourceId}`);
     }
-    const sessionCache: SessionCache = req.sessionCache;
-    const chtApi = new ChtApi(req.chtSession);
-    await PlaceFactory.loadPlaceFromExternalSource(result, Config.getContactType(type), sessionCache, chtApi);
-    resp.header('HX-Redirect', `/`);
-    return;
+
+    try {
+      const externalSourceConfig = Config.getExternalSourceConfigById(sourceId, type);
+      const auth = await fastify.externalSourceAuthManager.getAuth(source.id);
+
+      const result = await ExternalSource.search(externalSourceConfig, searchParams, auth);
+      if (result.length === 0) {
+        return renderError('No results found');
+      }
+      const sessionCache: SessionCache = req.sessionCache;
+      const chtApi = new ChtApi(req.chtSession);
+      await PlaceFactory.loadPlaceFromExternalSource(result, contactType, sessionCache, chtApi);
+      resp.header('HX-Redirect', `/`);
+    } catch (error) {
+      req.log.error(error);
+      return renderError(toUserMessage(error, source.friendly_name));
+    }
   });
 
   fastify.post('/place/dob', async (req, resp) => {
