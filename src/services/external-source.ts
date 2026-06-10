@@ -58,7 +58,7 @@ export default class ExternalSourceService {
       throw new Error(`Expected result to be an array, but got: ${apiResult}`);
     }
     for (const item of apiResult) {
-      const id = item.id || item.uuid || 'unknown_id';
+      const id = item.id || item.uuid || item._id;
       const propertyValues = mapping.map(prop => ({
         propertyName: prop.propertyName,
         propertyType: prop.propertyType,
@@ -67,8 +67,10 @@ export default class ExternalSourceService {
         value: _.get(item, prop.path || prop.externalSourceField, '')
       }));
       result.push({ id, propertyValues });
+      if (result.length >= 10) {
+        break;
+      }
     }
-
     return result;
   }
 

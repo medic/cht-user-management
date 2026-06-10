@@ -8,7 +8,6 @@ import RemotePlaceResolver from '../lib/remote-place-resolver';
 import { HierarchyPropertyValue, ContactPropertyValue, IPropertyValue } from '../property-value';
 import WarningSystem from '../warnings';
 import Contact from './contact';
-import { ExternalSourceSearchResult } from './external-source';
 
 export default class PlaceFactory {
   public static async createFromCsv(csvBuffer: Buffer, contactType: ContactType, sessionCache: SessionCache, chtApi: ChtApi)
@@ -30,19 +29,6 @@ export default class PlaceFactory {
     await PlaceFactory.finalizePlaces([place], sessionCache, chtApi, contactType);
     return place;
   };
-  
-  static async loadPlaceFromExternalSource(sourceResult: ExternalSourceSearchResult[], contactType: ContactType, sessionCache: SessionCache,
-    chtApi: ChtApi): Promise<Place[]> {
-    const places: Place[] = [];
-
-    for (const result of sourceResult) {
-      const data: Record<string, string> = {};
-      result.propertyValues.forEach(p =>  data[`${p.propertyType}_${p.propertyName}`] = p.value || '' );
-      const place = await PlaceFactory.createOne(data, contactType, sessionCache, chtApi);
-      places.push(place);
-    }
-    return places;
-  }
 
   public static createManyWithSingleUser = async (
     formData: { [key: string]: string },

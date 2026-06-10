@@ -68,7 +68,7 @@
           "required": true,
           "level": 1,
           "external_mapping": {
-            "chwr": { "name": "position.parish", "is_filter": true },
+            "chwr": { "name": "parish", "is_filter": true },
             "commcare": { "name": "position.parish", "is_filter": true }
           }
         },
@@ -92,7 +92,8 @@
           "type": "string",
           "level": 3,
           "external_mapping": {
-            "commcare": { "name": "district", "path": "locationHierarchy[0].name", "is_filter": true }
+            "commcare": { "name": "district", "path": "locationHierarchy[0].name", "is_filter": true },
+            "chwr": { "name": "district", "path": "district.name", "is_filter": true }
           }
         }
       ],
@@ -141,7 +142,7 @@
           ],
           "required": true,
           "external_mapping": {
-            "chwr": { "name": "subcounty", "path": "locationHierarchy[1].name", "is_filter": true },
+            "chwr": { "name": "subcounty", "path": "subcounty.name", "is_filter": true },
             "commcare": { "name": "subcounty", "path": "locationHierarchy[1].name", "is_filter": true }
           }
         },
@@ -154,7 +155,7 @@
           "type": "name",
           "required": true,
           "external_mapping": {
-            "chwr": { "name": "village", "path": "position.villages[0]", "is_filter": true },
+            "chwr": { "name": "village", "path": "villages[0]", "is_filter": true },
             "commcare": { "name": "village", "path": "position.villages[0]", "is_filter": true }
           }
         }
