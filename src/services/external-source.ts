@@ -22,7 +22,7 @@ export default class ExternalSourceService {
     const paramResult = ExternalSourceService.generateRequestParams(searchParams, config.other_filters, config.mapping);
     try {
       const url = this.buildUrl(config.url, config.api_endpoint);
-      console.log('axios.get external source search ', url);
+      console.log('axios.get external source search ', url, JSON.stringify(paramResult));
       const response = await axios.get(
         url,
         {
@@ -95,8 +95,6 @@ export default class ExternalSourceService {
 
       if (payloadKey) {
         queryParams[payloadKey] = value;
-      } else {
-        console.warn(`No mapping found for key: ${key}`);
       }
     }
     return queryParams;

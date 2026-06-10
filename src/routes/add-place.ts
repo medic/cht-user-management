@@ -65,6 +65,7 @@ export default async function addPlace(fastify: FastifyInstance) {
       logo: Config.getLogoBase64(),
       session: req.chtSession,
       contactType,
+      hierarchy: Config.getHierarchyWithReplacement(contactType, 'desc'),
       contactTypes: Config.contactTypes(),
       source,
       MATOMO_HOST: process.env.MATOMO_HOST
@@ -83,6 +84,7 @@ export default async function addPlace(fastify: FastifyInstance) {
     const renderError = (error: string) => {
       return resp.view('src/liquid/place/search_external_source.liquid', {
         contactType,
+        hierarchy: Config.getHierarchyWithReplacement(contactType, 'desc'),
         source: source,
         error,
         data: searchParams,

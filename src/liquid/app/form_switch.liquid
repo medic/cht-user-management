@@ -41,7 +41,12 @@
   {% if op == 'bulk' %}
     {% render 'place/bulk_create_form.liquid', contactType: contactType, userRoleProperty: userRoleProperty %}
   {% elsif op == 'add_from_external_source' %}
-    {%  render 'place/search_external_source.liquid', contactType: contactType, source: source %}
+    {%  render 'place/search_external_source.liquid', 
+      contactType: contactType, 
+      source: source,
+      hierarchy: hierarchy,
+      data: data
+    %}
   {% elsif op == 'move' or op == 'merge' or op == 'delete' %}
     {% render 'place/manage_hierarchy_form.liquid',
       op: op,

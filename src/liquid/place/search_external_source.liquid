@@ -10,14 +10,24 @@
     <div class="notification is-danger is-light">{{ error }}</div>
   {% endif %}
   <input name="type" value="{{ contactType.name }}" hidden>
+  <input name="place_type" value="{{ contactType.name }}" hidden>
   <input name="source_id" value="{{ source.id }}" hidden>
   <section class="section is-small">
+    {% for hierarchy in hierarchy %}
+      {% if hierarchy.level != 0 and hierarchy.external_mapping[source.id].is_filter %}
+        {% render 'components/search_input.liquid',
+          type: contactType.name,
+          hierarchy: hierarchy,
+          prefix: 'hierarchy_',
+          data: data
+        %}
+      {% endif %}
+    {% endfor %}
     {% for c in categories %}
       {% assign prefix = c | split: '_' | first | append: '_' %}
       {% for prop in contactType[c] %}
-        {% if prop.external_mapping[source.id].is_filter %}
-          {%
-            render 'components/contact_type_property.liquid',
+        {% if prop.external_mapping[source.id].is_filter and c != 'hierarchy' %}
+          {% render 'components/contact_type_property.liquid',
             prefix: prefix,
             prop: prop,
             place_type: contactType.name,
@@ -30,7 +40,7 @@
   <div class="field is-grouped is-grouped-centered">
     <div class="control">
       <button id="place_search_external_submit" class="button is-link">Search {{ source.friendly_name }}</button>
-      <a href="/" id = "cancel_btn" class="button">Cancel</a>
+      <a href="/" id="cancel_btn" class="button">Cancel</a>
     </div>
   </div>
 </form>
