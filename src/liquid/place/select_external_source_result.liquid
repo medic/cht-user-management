@@ -39,6 +39,27 @@
   {% endfor %}
 
   <div class="field is-grouped is-grouped-right p-2">
-    <a href="/" id="cancel_btn" class="button">Cancel</a>
+    <a href="/add-from-external-source?source_id={{source.id}}&type={{ contactType.name }}" id="cancel_btn" class="button">Cancel</a>
   </div>
 </div>
+
+<script>
+  document.querySelectorAll('form').forEach(function (form) {
+    form.addEventListener('submit', function () {
+      const cancelButton = document.getElementById('cancel_btn');
+      cancelButton.setAttribute('disabled', 'true');
+      cancelButton.addEventListener('click', function (event) {
+        event.preventDefault();
+      });
+
+      document.querySelectorAll('button[type="submit"]').forEach(function (submitButton) {
+        submitButton.disabled = true;
+      });
+
+      const clickedButton = form.querySelector('button[type="submit"]');
+      if (clickedButton) {
+        clickedButton.textContent = 'Adding...';
+      }
+    });
+  });
+</script>

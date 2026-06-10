@@ -20,7 +20,7 @@
   "external_sources": [
     {
       "id": "chwr",
-      "friendly_name": "CHWR",
+      "friendly_name": "Community Health Workers Registry",
       "url": "https://hris5.health.go.ug",
       "auth": {
         "type": "token",
@@ -35,7 +35,7 @@
       "resultKey": "chws",
       "other_filters": {
         "active": "true",
-        "limit": "3"
+        "limit": "20"
       }
     }
   ],
@@ -58,7 +58,7 @@
           "required": true,
           "level": 1,
           "external_mapping": {
-            "chwr": { "name": "parish", "is_filter": true }
+            "chwr": { "name": "parish" }
           }
         },
         {
@@ -69,7 +69,7 @@
           "type": "string",
           "level": 2,
           "external_mapping": {
-            "chwr": { "name": "position.facility.name", "is_filter": true }
+            "chwr": { "name": "facility", "path": "position.facility.name", "is_filter": true }
           }
         },
         {
@@ -101,16 +101,6 @@
           "unique": "parent"
         },
         {
-          "friendly_name": "Sub District",
-          "property_name": "sub_district",
-          "parameter": [
-            "\\ssub\\s",
-            "\\sdistrict\\s"
-          ],
-          "type": "name",
-          "required": false
-        },
-        {
           "friendly_name": "County",
           "property_name": "county",
           "type": "name",
@@ -129,7 +119,7 @@
           ],
           "required": true,
           "external_mapping": {
-            "chwr": { "name": "subcounty", "path": "subcounty.name", "is_filter": true }
+            "chwr": { "name": "subcounty", "path": "subcounty.name" }
           }
         },
         {
@@ -152,7 +142,7 @@
           "type": "name",
           "required": true,
           "external_mapping": {
-            "chwr": { "name": "fullName", "is_filter": true }
+            "chwr": { "name": "fullName" }
           }
         },
         {

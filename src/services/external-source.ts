@@ -67,7 +67,8 @@ export default class ExternalSourceService {
         value: _.get(item, prop.path || prop.externalSourceField, '')
       }));
       result.push({ id, propertyValues });
-      if (result.length >= 10) {
+      // limit to 50 results
+      if (result.length >= 50) {
         break;
       }
     }
