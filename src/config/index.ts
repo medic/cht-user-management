@@ -170,9 +170,9 @@ export class Config {
     return {
       ...source,
       mapping: [
-        ...getMappedProperties(contactType.place_properties, 'place'),
         ...getMappedProperties(contactType.contact_properties, 'contact'),
         ...getMappedProperties(contactType.hierarchy, 'hierarchy'),
+        ...getMappedProperties(contactType.place_properties, 'place'),
       ]
     };
   }
