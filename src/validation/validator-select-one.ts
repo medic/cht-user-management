@@ -16,7 +16,10 @@ export default class ValidatorSelectOne implements IValidator {
     }
     
     const validValues = Object.keys(property.parameter);
-    return validValues.includes(trimmedInput);
+    if (!validValues.includes(trimmedInput)) {
+      return `Valid choices are: ${validValues.join(', ')}`;
+    }
+    return true;
   }
 
   format(input: string): string {

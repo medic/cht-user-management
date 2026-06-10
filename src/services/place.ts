@@ -51,6 +51,7 @@ export default class Place {
   public state : PlaceUploadState;
 
   public validationErrors?: { [key: string]: string };
+  declare validationErrorSummary: string;
   public uploadError? : string;
 
   constructor(type: ContactType) {
@@ -63,6 +64,11 @@ export default class Place {
     this.resolvedHierarchy = [];
     this.warnings = [];
     this.userRoleProperties = {};
+    Object.defineProperty(this, 'validationErrorSummary', {
+      enumerable: true,
+      configurable: true,
+      get: () => Object.values(this.validationErrors ?? {}).join('\n'),
+    });
   }
 
   /*
