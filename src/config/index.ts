@@ -85,7 +85,8 @@ export type ExternalSource = {
     type: string;
     token_endpoint?: string;
     expiration?: number;
-    mapping?: { client_id: string; client_secret: string };
+    client_id: string;
+    client_secret: string;
   };
   resultKey: string;
   other_filters?: { [filter: string]: string };
