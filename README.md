@@ -204,6 +204,7 @@ Variable | Description | Sample
 `PORT` | For localhost development environment | `3500`
 `COOKIE_PRIVATE_KEY` | A string used to two-way encryption of main app cookies. Production values need to be a secret. Suggest `uuidgen` to generate | `589a7f23-5bb2-4b77-ac78-f202b9b6d5e3`
 `WORKER_PRIVATE_KEY` | A string used to two-way encryption sensitive data passed to workers. Recommend to be different from `COOKIE_PRIVATE_KEY`. Production values need to be a secret. Suggest `uuidgen` to generate | `2b57pd5e-f272-og90-8u97-89a7589a7f23`
+`{EXTERNAL_SOURCE_ID}_SECRET` | Base64 encoded secret for external source auth | `bmFtZTpwYXNz` (ie. `name:pass`)
 `INTERFACE` | Interface to bind to. Leave as '0.0.0.0' for prod, suggest '127.0.0.1' for development | `127.0.0.1`
 `CHT_DEV_URL_PORT` | CHT instance when in `NODE_ENV===dev`. Needs URL and port | `192-168-1-26.local-ip.medicmobile.org:10463`
 `CHT_DEV_HTTP` |  'true' for http  'false' for https | `false`
