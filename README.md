@@ -38,8 +38,8 @@ To use the User Management Tool with your CHT project, you'll need to create a n
 `external_sources[].id` | string | The id of the external source
 `external_sources[].friendly_name` | string | The friendly name of the external source
 `external_sources[].url` | string | The url of the external source.
-`external_sources[].auth` | Object | Authentication details for the external source
 `external_sources[].api_endpoint` | string | The API endpoint of the external source used to query for users.
+`external_sources[].auth` | Object | Authentication details for the external source
 `external_sources[].auth.type` | string | The type of authentication to use. Supports `token` | `basic`.
 `external_sources[].auth.token_endpoint` | string | The token endpoint for the external source used to get an access token. Required for auth type token. Expects a response from the token endpoint with a `token` or `access_token` field.
 `external_sources[].auth.expiration` | number | The number of minutes before the token expires. Required for auth type token.
