@@ -20,7 +20,7 @@
   "external_sources": [
     {
       "id": "chwr",
-      "friendly_name": "Community Health Workers Registry",
+      "friendly_name": "Community Health Worker Registry",
       "url": "https://hris5.health.go.ug",
       "auth": {
         "type": "token",
@@ -148,7 +148,8 @@
         {
           "friendly_name": "National ID",
           "property_name": "national_id",
-          "type": "string",
+          "type": "generated",
+          "parameter": "{{ contact.national_id }}",
           "required": false,
           "external_mapping": {
             "chwr": { "name": "nationalId" }

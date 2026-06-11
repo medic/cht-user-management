@@ -6,13 +6,13 @@
   autocomplete="off"
   hx-get="/search-external-source"
 >
-  {% if error %}
-    <div class="notification is-danger is-light">{{ error }}</div>
-  {% endif %}
   <input name="type" value="{{ contactType.name }}" hidden>
   <input name="place_type" value="{{ contactType.name }}" hidden>
   <input name="source_id" value="{{ source.id }}" hidden>
   <section class="section is-small">
+    {% if error %}
+      <div class="notification is-danger is-light">{{ error }}</div>
+    {% endif %}
     {% for hierarchy in hierarchy %}
       {% if hierarchy.level != 0 and hierarchy.external_mapping[source.id].is_filter %}
         {% render 'components/search_input.liquid',
@@ -39,7 +39,7 @@
   </section>
   <div class="field is-grouped is-grouped-centered">
     <div class="control">
-      <button id="place_search_external_submit" class="button is-link">Search {{ source.friendly_name }}</button>
+      <button id="place_search_external_submit" class="button is-link">Search</button>
       <a href="/" id="cancel_btn" class="button">Cancel</a>
     </div>
   </div>

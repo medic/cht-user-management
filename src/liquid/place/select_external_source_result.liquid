@@ -1,13 +1,14 @@
 <div>
-  {% if error %}
-    <div class="notification is-danger is-light">{{ error }}</div>
-  {% endif %}
-  {% if results.length > 0 %}
-    <div class="notification is-success is-light">
-      <strong>Found {{ results.length }} result(s). Select one to add</strong>
-    </div>
-  {% endif %}
-
+  <section class="section p-2">
+    {% if error %}
+      <div class="notification is-danger is-light">{{ error }}</div>
+    {% endif %}
+    {% if results.length > 0 %}
+      <div class="notification is-success is-light">
+        <strong>Found {{ results.length }} result(s). Select one to add</strong>
+      </div>
+    {% endif %}
+  </section>
   {% for result in results %}
     <form
       hx-post="/place?op=new&type={{ contactType.name }}"
@@ -17,7 +18,7 @@
       autocomplete="off"
     >
       <section class="section p-2">
-        <label class="box external-source-result">
+        <label class="box">
           <div class="is-vcentered is-mobile">
             {% for field in result.propertyValues %}
               <input name="{{ field.propertyType }}_{{ field.propertyName }}" value="{{ field.value }}" hidden>
@@ -39,7 +40,12 @@
   {% endfor %}
 
   <div class="field is-grouped is-grouped-right p-2">
-    <a href="/add-from-external-source?source_id={{source.id}}&type={{ contactType.name }}" id="cancel_btn" class="button">Cancel</a>
+    <a
+      href="/add-from-external-source?source_id={{source.id}}&type={{ contactType.name }}"
+      id="cancel_btn"
+      class="button"
+      >Cancel</a
+    >
   </div>
 </div>
 
