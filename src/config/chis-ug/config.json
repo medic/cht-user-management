@@ -26,10 +26,8 @@
         "type": "token",
         "token_endpoint": "/auth/token",
         "expiration": 0,
-        "mapping": {
-          "client_id": "email",
-          "client_secret": "password"
-        }
+        "client_id": "email",
+        "client_secret": "password"
       },
       "api_endpoint": "chw",
       "resultKey": "chws",
@@ -58,7 +56,9 @@
           "required": true,
           "level": 1,
           "external_mapping": {
-            "chwr": { "name": "parish" }
+            "chwr": {
+              "name": "parish"
+            }
           }
         },
         {
@@ -69,7 +69,11 @@
           "type": "string",
           "level": 2,
           "external_mapping": {
-            "chwr": { "name": "facility", "path": "position.facility.name", "is_filter": true }
+            "chwr": {
+              "name": "facility",
+              "path": "position.facility.name",
+              "is_filter": true
+            }
           }
         },
         {
@@ -80,7 +84,11 @@
           "type": "string",
           "level": 3,
           "external_mapping": {
-            "chwr": { "name": "district", "path": "district.name", "is_filter": true }
+            "chwr": {
+              "name": "district",
+              "path": "district.name",
+              "is_filter": true
+            }
           }
         }
       ],
@@ -119,7 +127,10 @@
           ],
           "required": true,
           "external_mapping": {
-            "chwr": { "name": "subcounty", "path": "subcounty.name" }
+            "chwr": {
+              "name": "subcounty",
+              "path": "subcounty.name"
+            }
           }
         },
         {
@@ -131,7 +142,11 @@
           "type": "name",
           "required": true,
           "external_mapping": {
-            "chwr": { "name": "village", "path": "villages[0]", "is_filter": true }
+            "chwr": {
+              "name": "village",
+              "path": "villages[0]",
+              "is_filter": true
+            }
           }
         }
       ],
@@ -142,7 +157,9 @@
           "type": "name",
           "required": true,
           "external_mapping": {
-            "chwr": { "name": "fullName" }
+            "chwr": {
+              "name": "fullName"
+            }
           }
         },
         {
@@ -152,7 +169,9 @@
           "parameter": "{{ contact.national_id }}",
           "required": false,
           "external_mapping": {
-            "chwr": { "name": "nationalId" }
+            "chwr": {
+              "name": "nationalId"
+            }
           }
         },
         {
@@ -162,7 +181,9 @@
           "parameter": "{{ contact.chwr_id }}",
           "required": false,
           "external_mapping": {
-            "chwr": { "name": "id" }
+            "chwr": {
+              "name": "id"
+            }
           }
         },
         {
@@ -173,7 +194,9 @@
           "required": true,
           "unique": "all",
           "external_mapping": {
-            "chwr": { "name": "phone" }
+            "chwr": {
+              "name": "phone"
+            }
           }
         },
         {
@@ -182,7 +205,9 @@
           "type": "dob",
           "required": true,
           "external_mapping": {
-            "chwr": { "name": "birthDate" }
+            "chwr": {
+              "name": "birthDate"
+            }
           }
         },
         {
@@ -194,7 +219,11 @@
             "female": "Female"
           },
           "required": true,
-          "external_mapping": {"chwr": { "name": "gender" }}
+          "external_mapping": {
+            "chwr": {
+              "name": "gender"
+            }
+          }
         }
       ]
     }
