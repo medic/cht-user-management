@@ -94,7 +94,7 @@ export default class ExternalSourceAuthManager {
       if (!token) {
         throw new Error(`Token endpoint for "${externalSourceId}" returned no access_token/token`);
       }
-      return response.data.access_token || response.data.token;
+      return token;
     } catch (error) {
       if (axios.isAxiosError(error)) {
         console.error('Axios error:', {
