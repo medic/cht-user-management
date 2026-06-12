@@ -70,7 +70,7 @@ export default class ExternalSourceAuthManager {
     try {
       const result = await this.externalSourceAuth[externalSourceId].refreshingToken as string;
       this.externalSourceAuth[externalSourceId].token = result;
-      this.externalSourceAuth[externalSourceId].expiresAt = now + (this.externalSourceAuth[externalSourceId].expiration) * 1000;
+      this.externalSourceAuth[externalSourceId].expiresAt = now + (this.externalSourceAuth[externalSourceId].expiration) * 60_000;
       return this.externalSourceAuth[externalSourceId].token as string;
     } finally {
       this.externalSourceAuth[externalSourceId].refreshingToken = null;
