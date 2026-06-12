@@ -12,6 +12,7 @@ const { expect } = Chai;
 const SOURCE_ID = 'source-a';
 const SECRET_KEY = `${SOURCE_ID}_SECRET`.toUpperCase();
 const TOKEN_SECRET = Buffer.from('my-client:my-secret', 'utf-8').toString('base64');
+const TOKEN_EXPIRATION = 5;
 
 const mockSource = (overrides: Partial<ExternalSource> = {}): ExternalSource => ({
   id: SOURCE_ID,
@@ -22,7 +23,7 @@ const mockSource = (overrides: Partial<ExternalSource> = {}): ExternalSource => 
   auth: {
     type: 'token',
     token_endpoint: '/oauth/token',
-    expiration: 5,
+    expiration: TOKEN_EXPIRATION,
     client_id: 'client_id',
     client_secret: 'client_secret',
     ...overrides.auth,
@@ -79,12 +80,15 @@ describe('services/external-source-auth-manager.ts', () => {
 
     it('reuses a cached token while it is still valid', async () => {
       process.env[SECRET_KEY] = TOKEN_SECRET;
-      const manager = new ExternalSourceAuthManager([mockSource()]);
+      const clock = sinon.useFakeTimers();
+      const config = mockSource();
+      const manager = new ExternalSourceAuthManager([config]);
       const post = sinon.stub(axios, 'post').resolves({ data: { access_token: 'tok-123' } } as any);
 
       await manager.getAuth(SOURCE_ID);
+      // a millisecond before expiration
+      clock.tick(TOKEN_EXPIRATION * (60_000 - 1));
       await manager.getAuth(SOURCE_ID);
-
       expect(post.calledOnce).to.be.true;
     });
 
