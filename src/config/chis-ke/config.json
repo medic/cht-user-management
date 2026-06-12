@@ -210,8 +210,9 @@
     }
   ],
   "idpOrigins": [
+    "https://chpregistry.echis.go.ke",
     "https://chpregistry-staging.echis.go.ke",
-    "https://chpregistry.echis.go.ke"
+    "https://chw-registry-dev.test.co.ke"
   ],
   "contact_types": [
     {
