@@ -123,6 +123,6 @@ export default class ExternalSourceService {
     if (error instanceof ExternalSourceError) {
       return error.message;
     }
-    return `Something went wrong connecting to ${sourceName}. Please try again or contact support.`;
+    return `Something went wrong while connecting to ${sourceName}. Please try again or contact support.`;
   }
 }
