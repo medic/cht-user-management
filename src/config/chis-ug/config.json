@@ -123,6 +123,7 @@
           "type": "name",
           "parameter": [
             "\\ssub\\s",
+            "\\sSubcounty",
             "\\scounty\\s"
           ],
           "required": true,
