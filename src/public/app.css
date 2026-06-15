@@ -16,3 +16,9 @@
   width: auto;
   right: 8;
 }
+
+.cell-wrap {
+  word-break: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
+}
