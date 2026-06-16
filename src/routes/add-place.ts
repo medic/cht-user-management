@@ -15,8 +15,7 @@ export default async function addPlace(fastify: FastifyInstance) {
   fastify.get('/add-place', async (req, resp) => {
     const queryParams: any = req.query;
 
-    const externalSources = Config.getExternalSources();
-
+    const externalSources = Config.getSanitizedExternalSources();
     const contactTypes = Config.contactTypes();
     const contactType = queryParams.type
       ? Config.getContactType(queryParams.type)

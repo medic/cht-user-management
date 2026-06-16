@@ -70,7 +70,7 @@ export default class ExternalSourceAuthManager {
     try {
       const result = await this.externalSourceAuth[externalSourceId].refreshingToken as string;
       this.externalSourceAuth[externalSourceId].token = result;
-      this.externalSourceAuth[externalSourceId].expiresAt = now + (this.externalSourceAuth[externalSourceId].expiration) * 1000;
+      this.externalSourceAuth[externalSourceId].expiresAt = now + (this.externalSourceAuth[externalSourceId].expiration) * 60_000;
       return this.externalSourceAuth[externalSourceId].token as string;
     } finally {
       this.externalSourceAuth[externalSourceId].refreshingToken = null;
@@ -94,7 +94,7 @@ export default class ExternalSourceAuthManager {
       if (!token) {
         throw new Error(`Token endpoint for "${externalSourceId}" returned no access_token/token`);
       }
-      return response.data.access_token || response.data.token;
+      return token;
     } catch (error) {
       if (axios.isAxiosError(error)) {
         console.error('Axios error:', {

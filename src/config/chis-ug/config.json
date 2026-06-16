@@ -25,7 +25,7 @@
       "auth": {
         "type": "token",
         "token_endpoint": "/auth/token",
-        "expiration": 0,
+        "expiration": 90,
         "client_id": "email",
         "client_secret": "password"
       },
@@ -123,6 +123,7 @@
           "type": "name",
           "parameter": [
             "\\ssub\\s",
+            "\\sSubcounty",
             "\\scounty\\s"
           ],
           "required": true,

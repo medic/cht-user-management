@@ -30,12 +30,11 @@ export default class ExternalSourceService {
             Authorization: auth,
           },
           params: paramResult,
-          timeout: 60 * 1000,
+          timeout: 60_000,
         }
       );
       const apiResult = _.get(response.data, config.resultKey, []);
-      const mappedResult = ExternalSourceService.mapAPIResult(apiResult, config.mapping);
-      return mappedResult;
+      return ExternalSourceService.mapAPIResult(apiResult, config.mapping);
     } catch (error) {
       if (axios.isAxiosError(error)) {
         console.error('Axios error:', {
@@ -123,6 +122,6 @@ export default class ExternalSourceService {
     if (error instanceof ExternalSourceError) {
       return error.message;
     }
-    return `Something went wrong connecting to ${sourceName}. Please try again or contact support.`;
+    return `Something went wrong while connecting to ${sourceName}. Please try again or contact support.`;
   }
 }
