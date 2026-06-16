@@ -1,7 +1,7 @@
 <td
   id="{{ propertyName }}"
   {% if place.validationErrors[propertyName] %}
-    class="is-danger has-tooltip-arrow has-tooltipl-multiline"
+    class="is-danger has-tooltip-arrow has-tooltip-multiline"
     data-tooltip="{{ place.validationErrors[propertyName] | escape }}"
   {% endif %}
 >

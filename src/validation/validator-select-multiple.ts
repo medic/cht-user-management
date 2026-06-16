@@ -16,11 +16,11 @@ export default class ValidatorSelectMultiple implements IValidator {
     const selectOneValidator = new ValidatorSelectOne();
     const stringValidator = new ValidatorString();
 
-    const selectedValues = this.parseInput(input, stringValidator); 
+    const selectedValues = this.parseInput(input, stringValidator);
     const invalidValues = selectedValues.filter(
-      value => !selectOneValidator.isValid(value, property)
+      value => selectOneValidator.isValid(value, property) !== true
     );
-
+    
     if (invalidValues.length > 0) {
       return `Invalid values for property "${property.friendly_name}": ${invalidValues.join(', ')}`;
     }

@@ -16,7 +16,7 @@
             </span>
             <span
               {% if places[0].validationErrors[propertyName] %}
-                class="has-text-danger has-text-weight-semibold has-tooltip-arrow has-tooltipl-multiline"
+                class="has-text-danger has-text-weight-semibold has-tooltip-arrow has-tooltip-multiline"
                 style="background-color: #feecf0; color: #cc0f35 display: inline-block; min-width: 80px; height: 20px;"
                 data-tooltip="{{ places[0].validationErrors[propertyName] | escape }}"
               {% endif %}
