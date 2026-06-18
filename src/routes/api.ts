@@ -68,8 +68,7 @@ export default async function api(fastify: FastifyInstance) {
       warnings: place.warnings,
     };
   };
-  // /create-user-and-place is the descriptive name; /create is kept as an alias for compatibility.
-  fastify.post('/api/v1/create', createUserAndPlace);
+  
   fastify.post('/api/v1/create-user-and-place', createUserAndPlace);
 
   fastify.post('/api/v1/create-user', async (req) => {
@@ -85,7 +84,8 @@ export default async function api(fastify: FastifyInstance) {
 
     const chtApi = new ChtApi(req.chtSession);
     try {
-      const payload = new OidcUserPayload(oidcUsername, roles, facilityIds, contactId);
+      const resolvedContactId = await resolveContactId(contactId, facilityIds, chtApi);
+      const payload = new OidcUserPayload(oidcUsername, roles, facilityIds, resolvedContactId);
       await chtApi.createUser(payload);
       return { success: true, username: payload.username };
     } catch (e: any) {
@@ -235,11 +235,41 @@ function validateCreateUser(
     return 'facility_ids must be a non-empty array of place ids';
   }
 
-  if (typeof contactId !== 'string' || !contactId.trim()) {
-    return 'contact_id is required';
+  // contact_id is optional: when omitted, it defaults to the first facility's primary contact
+  if (contactId !== undefined && contactId !== null && (typeof contactId !== 'string' || !contactId.trim())) {
+    return 'contact_id must be a non-empty string when provided';
   }
 
   return null;
+}
+
+// Resolves the contact id for the new user. When the caller does not supply one, default to the
+// primary contact of the first facility
+async function resolveContactId(
+  contactId: unknown,
+  facilityIds: string[],
+  chtApi: ChtApi,
+): Promise<string> {
+  if (typeof contactId === 'string' && contactId.trim()) {
+    return contactId;
+  }
+
+  const [facilityId] = facilityIds;
+  let facility: any;
+  try {
+    facility = await chtApi.getDoc(facilityId);
+  } catch (e: any) {
+    if (e.response?.status === 404) {
+      throw new Error(`CHU not found: no place with id "${facilityId}" exists in eCHIS`);
+    }
+    throw e;
+  }
+  const primaryContactId = facility?.contact?._id;
+  if (typeof primaryContactId !== 'string' || !primaryContactId.trim()) {
+    throw new Error(`contact_id is required: facility ${facilityId} has no primary contact`);
+  }
+
+  return primaryContactId;
 }
 
 function validateSetUserFacilities(username: unknown, facilityIds: unknown): string | null {
