@@ -1,3 +1,10 @@
+# [2.10.0](https://github.com/medic/cht-user-management/compare/v2.9.2...v2.10.0) (2026-06-18)
+
+
+### Features
+
+* **#355:** additional API endpoints for CHW-R integration ([#343](https://github.com/medic/cht-user-management/issues/343)) ([b304ac2](https://github.com/medic/cht-user-management/commit/b304ac26bcb1e8c3d967a1fa65ef6a23cf0a4185)), closes [#355](https://github.com/medic/cht-user-management/issues/355)
+
 ## [2.9.2](https://github.com/medic/cht-user-management/compare/v2.9.1...v2.9.2) (2026-06-18)
 
 
