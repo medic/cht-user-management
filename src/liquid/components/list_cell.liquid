@@ -1,8 +1,10 @@
 <td
   id="{{ propertyName }}"
   {% if place.validationErrors[propertyName] %}
-    class="is-danger has-tooltip-arrow has-tooltipl-multiline"
+    class="cell-wrap is-danger has-tooltip-arrow has-tooltipl-multiline"
     data-tooltip="{{ place.validationErrors[propertyName] | escape }}"
+  {% else %}
+    class="cell-wrap"
   {% endif %}
 >
   {% if values[property.property_name] != empty %}
