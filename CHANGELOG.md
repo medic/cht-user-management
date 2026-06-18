@@ -1,3 +1,10 @@
+## [2.9.2](https://github.com/medic/cht-user-management/compare/v2.9.1...v2.9.2) (2026-06-18)
+
+
+### Bug Fixes
+
+* **#352:** wrap cell content so it doesn't overflow ([919f2e3](https://github.com/medic/cht-user-management/commit/919f2e32ed2c3f6d4874667c8c0b0aeda54b3788)), closes [#352](https://github.com/medic/cht-user-management/issues/352)
+
 ## [2.9.1](https://github.com/medic/cht-user-management/compare/v2.9.0...v2.9.1) (2026-06-04)
 
 
