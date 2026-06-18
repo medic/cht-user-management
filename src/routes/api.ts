@@ -137,12 +137,16 @@ export default async function api(fastify: FastifyInstance) {
       };
     }
 
-    const disabled = await DisableUsers.disableUsersAt([facility.place_id], chtApi);
-    return {
-      place_id: facility.place_id,
-      place_name: facility.name,
-      disabled,
-    };
+    try {
+      const disabled = await DisableUsers.disableUsersAt([facility.place_id], chtApi);
+      return {
+        place_id: facility.place_id,
+        place_name: facility.name,
+        disabled,
+      };
+    } catch (e: any) {
+      return { error: e.response?.data?.error?.message ?? e.toString() };
+    }
   });
 
   fastify.post('/api/v1/set-user-facilities', async (req) => {
