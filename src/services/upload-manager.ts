@@ -201,6 +201,11 @@ export class UploadManager extends EventEmitter {
         place.creationDetails.username = creationDetails.username;
         place.creationDetails.password = creationDetails.password;
         place.creationDetails.created_at = created_at;
+        
+        if (place.creationDetails.placeId && !place.uploadError) {
+          RemotePlaceCache.add(place, api);
+        }
+        
         this.eventedPlaceStateChange(place, PlaceUploadState.SUCCESS);
       });
 

@@ -63,6 +63,39 @@ describe('lib/remote-place-cache.ts', () => {
     expect(chtApi.getPlacesWithType.callCount).to.eq(2);
   });
 
+  it('add keys on the created CHT placeId, not the local staging id', async () => {
+    const contactType = mockSimpleContactType('string', undefined);
+    const place = mockPlace(contactType, 'prop');
+    place.creationDetails.placeId = 'created-cht-id';
+    const chtApi = mockChtApi([doc]);
+
+    await RemotePlaceCache.getRemotePlaces(chtApi, contactType);
+    RemotePlaceCache.add(place, chtApi);
+
+    const second = await RemotePlaceCache.getRemotePlaces(chtApi, contactType);
+    expect(second).to.have.property('length', 2);
+    expect(second[1].id).to.eq('created-cht-id');
+
+    // re-adding the same created place must dedupe rather than duplicate
+    RemotePlaceCache.add(place, chtApi);
+    const third = await RemotePlaceCache.getRemotePlaces(chtApi, contactType);
+    expect(third).to.have.property('length', 2);
+  });
+
+  it('add is a no-op when the place type has not been cached yet', async () => {
+    const contactType = mockSimpleContactType('string', undefined);
+    const place = mockPlace(contactType, 'prop');
+    const chtApi = mockChtApi([doc]);
+
+    // never populated the cache for this type, so add() must not seed a partial list
+    RemotePlaceCache.add(place, chtApi);
+
+    const places = await RemotePlaceCache.getRemotePlaces(chtApi, contactType);
+    // the subsequent fetch loads the full remote set (just `doc`), unpolluted by the un-cached add
+    expect(places).to.have.property('length', 1);
+    expect(places[0]).to.deep.nested.include(docAsRemotePlace);
+  });
+
   it('clear', async () => {
     const contactType = mockSimpleContactType('string', undefined);
     const place = mockPlace(contactType, 'prop');
