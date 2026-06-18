@@ -17,6 +17,11 @@
   right: 8;
 }
 
+.scroll-box {
+  max-height: 20rem;
+  overflow-y: scroll;
+}
+
 .cell-wrap {
   word-break: break-word;
   overflow-wrap: break-word;
