@@ -211,6 +211,10 @@
   ],
   "idpOrigins": [
     "https://chpregistry.echis.go.ke",
+    "https://chwregistry-training.echis.go.ke",
+    "https://chwregistry-dev.echis.go.ke",
+    "https://chwregistry-uat.echis.go.ke",
+    
     "https://chpregistry-staging.echis.go.ke",
     "https://chw-registry-dev.test.co.ke"
   ],
