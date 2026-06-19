@@ -4,6 +4,7 @@ import ChtSession from './cht-session';
 import { Config, ContactType } from '../config';
 import { DateTime } from 'luxon';
 import { UserPayload } from '../services/user-payload';
+import { OidcUserPayload } from '../services/oidc-user-payload';
 
 export type PlacePayload = {
   name: string;
@@ -139,7 +140,7 @@ export class ChtApi {
     return resp.data?.rows?.length || 0;
   }
 
-  async createUser(user: UserPayload): Promise<void> {
+  async createUser(user: UserPayload | OidcUserPayload): Promise<void> {
     const url = `api/v3/users`;
     console.log('axios.post', url);
     const axiosRequestionConfig = {

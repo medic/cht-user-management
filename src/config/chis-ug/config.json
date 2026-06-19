@@ -137,10 +137,9 @@
         {
           "friendly_name": "Village",
           "property_name": "village",
-          "parameter": [
-            "\\svillage\\s"
-          ],
-          "type": "name",
+          "parameter": "^[a-zA-Z- ]+$",
+          "errorDescription": "Only letters accepted",
+          "type": "regex",
           "required": true,
           "external_mapping": {
             "chwr": {

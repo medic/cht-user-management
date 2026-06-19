@@ -8,6 +8,7 @@ import { PlacePayload } from '../lib/cht-api';
 // can't use package.json because of rootDir in ts
 import { RemotePlace } from '../lib/remote-place-cache';
 import RemotePlaceResolver from '../lib/remote-place-resolver';
+import { sanitizeUsername } from './username';
 import { version as appVersion } from '../package.json';
 
 export type FormattedPropertyCollection = {
@@ -184,7 +185,8 @@ export default class Place {
   public asRemotePlace() : RemotePlace {
     const nameProperty = Config.getPropertyWithName(this.type.place_properties, 'name');
     return {
-      id: this.id,
+      // once created, identify by the real CHT doc id (not the local staging uuid)
+      id: this.creationDetails.placeId ?? this.id,
       name: new RemotePlacePropertyValue(this.name, nameProperty),
       placeType: this.type.name,
       type: this.isCreated ? 'remote' : 'local',
@@ -221,18 +223,8 @@ export default class Place {
   public generateUsername(): string {
     const propertySource = this.type.username_from_place ? this.properties : this.contact.properties;
     // if name is not present, it must be a replacement
-    let username = propertySource.name?.formatted || this.hierarchyProperties.replacement?.formatted;
-    username = username
-      ?.replace(/[ ]/g, '_')
-      ?.replace(/[^a-zA-Z0-9_]/g, '')
-      ?.replace(/_+/g, '_')
-      ?.toLowerCase();
-
-    if (!username) {
-      throw Error('username cannot be empty');
-    }
-
-    return username;
+    const source = propertySource.name?.formatted || this.hierarchyProperties.replacement?.formatted;
+    return sanitizeUsername(source);
   }
 
   public get userRoles(): string[] {
