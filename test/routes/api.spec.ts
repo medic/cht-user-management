@@ -64,6 +64,7 @@ describe('routes/api.ts', () => {
   let scheduleJobStub: sinon.SinonStub;
   let disableUsersStub: sinon.SinonStub;
   let setUserFacilitiesStub: sinon.SinonStub;
+  let unassignFacilitiesStub: sinon.SinonStub;
   let createUserStub: sinon.SinonStub;
 
   /**
@@ -138,6 +139,7 @@ describe('routes/api.ts', () => {
     setUserFacilitiesStub = sinon.stub(SetUserFacilities, 'setFacilities').resolves({
       username: 'target', facilityIds: ['fac-a'], unassigned: [],
     });
+    unassignFacilitiesStub = sinon.stub(SetUserFacilities, 'unassignFacilitiesFromOthers').resolves([]);
     createUserStub = sinon.stub(ChtApi.prototype, 'createUser').resolves();
   });
 
@@ -440,6 +442,25 @@ describe('routes/api.ts', () => {
       expect(facilityIds).to.deep.equal(['fac-a', 'fac-b']);
     });
 
+    it('derives the username from oidc_username when provided', async () => {
+      setUserFacilitiesStub.resolves({
+        username: 'demoemailcom',
+        facilityIds: ['fac-a'],
+        unassigned: [],
+      });
+
+      const resp = await fastify.inject({
+        method: 'POST',
+        url: '/api/v1/set-user-facilities',
+        payload: { oidc_username: 'demo@email.com', facility_ids: ['fac-a'] },
+      });
+
+      expect(resp.statusCode).to.equal(200);
+      const [username, facilityIds] = setUserFacilitiesStub.firstCall.args;
+      expect(username).to.equal('demoemailcom');
+      expect(facilityIds).to.deep.equal(['fac-a']);
+    });
+
     it('rejects a missing username without calling the service', async () => {
       const resp = await fastify.inject({
         method: 'POST',
@@ -683,6 +704,28 @@ describe('routes/api.ts', () => {
         place: ['fac-a', 'fac-b'],
         contact: 'contact-1',
       });
+      // Without the opt-in flag, other users keep their facilities.
+      expect(unassignFacilitiesStub.called).to.be.false;
+    });
+
+    it('strips the facilities from other users when exclusiveFacilities=true', async () => {
+      unassignFacilitiesStub.resolves([{ username: 'other', remaining: [] }]);
+
+      const resp = await fastify.inject({
+        method: 'POST',
+        url: '/api/v1/create-user?exclusiveFacilities=true',
+        payload: {
+          oidc_username: 'demo@email.com', role: 'chw', facility_ids: ['fac-a', 'fac-b'], contact_id: 'contact-1',
+        },
+      });
+
+      expect(resp.statusCode).to.equal(200);
+      expect(resp.json()).to.deep.equal({
+        success: true,
+        username: 'demoemailcom',
+        unassigned: [{ username: 'other', remaining: [] }],
+      });
+      expect(unassignFacilitiesStub.calledOnceWithExactly(['fac-a', 'fac-b'], 'demoemailcom', sinon.match.any)).to.be.true;
     });
 
     it('accepts a roles array', async () => {

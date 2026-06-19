@@ -14,6 +14,7 @@ import WarningSystem from '../warnings';
 import { DisableUsers } from '../lib/disable-users';
 import { SetUserFacilities } from '../services/set-user-facilities';
 import { OidcUserPayload } from '../services/oidc-user-payload';
+import { sanitizeUsername } from '../services/username';
 
 const DEFAULT_THRESHOLD = 0.6;
 
@@ -87,7 +88,17 @@ export default async function api(fastify: FastifyInstance) {
     try {
       const payload = new OidcUserPayload(oidcUsername, roles, facilityIds, contactId);
       await chtApi.createUser(payload);
-      return { success: true, username: payload.username };
+
+      // Opt-in via ?exclusiveFacilities=true: makes facilities exclusive
+      const unassigned = isQueryFlagSet(req.query, 'exclusiveFacilities')
+        ? await SetUserFacilities.unassignFacilitiesFromOthers(facilityIds, payload.username, chtApi)
+        : undefined;
+
+      return {
+        success: true,
+        username: payload.username,
+        ...(unassigned ? { unassigned } : {}),
+      };
     } catch (e: any) {
       return { error: e.response?.data?.error?.message ?? e.toString() };
     }
@@ -99,7 +110,7 @@ export default async function api(fastify: FastifyInstance) {
 
     const chtApi = new ChtApi(req.chtSession);
     
-    if (shouldClearCache(req.query)) {
+    if (isQueryFlagSet(req.query, 'clear_cache')) {
       RemotePlaceCache.clear(chtApi);
     }
 
@@ -149,15 +160,16 @@ export default async function api(fastify: FastifyInstance) {
     const formBody: any = req.body;
     ensureJsonObjectBody(formBody);
 
-    const { username, facility_ids: facilityIds } = formBody;
-    const validationError = validateSetUserFacilities(username, facilityIds);
+    const { username, oidc_username: oidcUsername, facility_ids: facilityIds } = formBody;
+    const resolvedUsername = oidcUsername ? sanitizeUsername(oidcUsername) : username;
+    const validationError = validateSetUserFacilities(resolvedUsername, facilityIds);
     if (validationError) {
       return { success: false, errors: validationError };
     }
 
     const chtApi = new ChtApi(req.chtSession);
     try {
-      return await SetUserFacilities.setFacilities(username, facilityIds, chtApi);
+      return await SetUserFacilities.setFacilities(resolvedUsername as string, facilityIds, chtApi);
     } catch (e: any) {
       return { error: e.response?.data?.error?.message ?? e.toString() };
     }
@@ -255,8 +267,8 @@ function getThreshold(query: unknown): number {
   return threshold !== undefined ? parseFloat(threshold) : DEFAULT_THRESHOLD;
 }
 
-function shouldClearCache(query: any): boolean {
-  const raw = query?.clear_cache;
+function isQueryFlagSet(query: any, name: string): boolean {
+  const raw = query?.[name];
   return raw === '1' || raw === 1 || raw === 'true' || raw === true;
 }
 

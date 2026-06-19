@@ -1,9 +1,15 @@
 import { ChtApi, CouchDoc, UserInfo } from '../lib/cht-api';
 
+export type UnassignedFacilityResult = {
+  username: string;
+  remaining: string[];
+  error?: string;
+};
+
 export type SetUserFacilitiesResult = {
   username: string;
   facilityIds: string[];
-  unassigned: { username: string; remaining: string[] }[];
+  unassigned: UnassignedFacilityResult[];
 };
 
 // Sets a CHT user's facilities to exactly `facilityIds` (keyed on username), treating
@@ -24,15 +30,43 @@ export class SetUserFacilities {
     await chtApi.updateUser({ username, place: facilityIds });
 
     // Strip the reassigned facilities from every other user that held them.
-    const reassigned = new Set(facilityIds);
-    const unassigned: { username: string; remaining: string[] }[] = [];
-    for (const user of displaced) {
-      const remaining = user.placeIds.filter(id => !reassigned.has(id));
-      await chtApi.updateUser({ username: user.username, place: remaining });
-      unassigned.push({ username: user.username, remaining });
-    }
+    const unassigned = await this.stripFacilitiesFrom(displaced, facilityIds, chtApi);
 
     return { username, facilityIds, unassigned };
+  }
+
+  // Removes `facilityIds` from every user *other than* excludeUsername
+  public static async unassignFacilitiesFromOthers(
+    facilityIds: string[],
+    excludeUsername: string,
+    chtApi: ChtApi,
+  ): Promise<UnassignedFacilityResult[]> {
+    const displaced = await this.getOtherUsersAt(facilityIds, excludeUsername, chtApi);
+    return this.stripFacilitiesFrom(displaced, facilityIds, chtApi);
+  }
+
+  // Replaces each displaced user's facility list with whatever remains after removing facilityIds.
+  // Each user is attempted independently: one user's update failing is recorded as an `error` on
+  // that entry and does not prevent the others from being attempted.
+  private static async stripFacilitiesFrom(
+    displaced: { username: string; placeIds: string[] }[],
+    facilityIds: string[],
+    chtApi: ChtApi,
+  ): Promise<UnassignedFacilityResult[]> {
+    const reassigned = new Set(facilityIds);
+    const unassigned: UnassignedFacilityResult[] = [];
+    for (const user of displaced) {
+      const remaining = user.placeIds.filter(id => !reassigned.has(id));
+      try {
+        await chtApi.updateUser({ username: user.username, place: remaining });
+        unassigned.push({ username: user.username, remaining });
+      } catch (e: any) {
+        const error = e.response?.data?.error?.message ?? e.message ?? String(e);
+        console.error(`Failed to unassign facilities from ${user.username}: ${error}`);
+        unassigned.push({ username: user.username, remaining, error });
+      }
+    }
+    return unassigned;
   }
 
   private static async getOtherUsersAt(
