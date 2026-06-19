@@ -9,7 +9,7 @@ import { PlacePayload } from '../lib/cht-api';
 import { RemotePlace } from '../lib/remote-place-cache';
 import RemotePlaceResolver from '../lib/remote-place-resolver';
 import { sanitizeUsername } from './username';
-import { version as appVersion } from '../../package.json';
+import { version as appVersion } from '../package.json';
 
 export type FormattedPropertyCollection = {
   [key: string]: IPropertyValue;
