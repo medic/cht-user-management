@@ -1,3 +1,10 @@
+## [2.10.1](https://github.com/medic/cht-user-management/compare/v2.10.0...v2.10.1) (2026-06-19)
+
+
+### Bug Fixes
+
+* **#349:** additional idpOrigins for CHW-R ([38a63c5](https://github.com/medic/cht-user-management/commit/38a63c58300460bc1b92a9f6cb7e970310acc967)), closes [#349](https://github.com/medic/cht-user-management/issues/349)
+
 # [2.10.0](https://github.com/medic/cht-user-management/compare/v2.9.2...v2.10.0) (2026-06-18)
 
 
