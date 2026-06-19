@@ -173,7 +173,7 @@ export default async function api(fastify: FastifyInstance) {
 
     const chtApi = new ChtApi(req.chtSession);
     try {
-      return await SetUserFacilities.setFacilities(resolvedUsername as string, facilityIds, chtApi);
+      return await SetUserFacilities.setFacilities(resolvedUsername, facilityIds, chtApi);
     } catch (e: any) {
       return { error: e.response?.data?.error?.message ?? e.toString() };
     }

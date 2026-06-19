@@ -702,10 +702,10 @@ describe('routes/api.ts', () => {
       expect(resp.statusCode).to.equal(200);
       expect(resp.json()).to.deep.equal({
         success: true,
-        username: 'demoemailcom',
+        username: 'demo_at_email_dot_com',
         unassigned: [{ username: 'other', remaining: [] }],
       });
-      expect(unassignFacilitiesStub.calledOnceWithExactly(['fac-a', 'fac-b'], 'demoemailcom', sinon.match.any)).to.be.true;
+      expect(unassignFacilitiesStub.calledOnceWithExactly(['fac-a', 'fac-b'], 'demo_at_email_dot_com', sinon.match.any)).to.be.true;
     });
 
     it('accepts a roles array', async () => {
