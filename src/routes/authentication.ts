@@ -3,7 +3,7 @@ import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import Auth from '../lib/authentication';
 import { AuthError } from '../lib/authentication-error';
 import { Config } from '../config';
-import { version as appVersion } from '../package.json';
+import { version as appVersion } from '../../package.json';
 import ChtSession from '../lib/cht-session';
 
 const getLoginErrorMessage = (error: unknown): string => {
