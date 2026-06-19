@@ -88,4 +88,62 @@ describe('SetUserFacilities', () => {
       { username: 'doc-arr', remaining: ['fac-y'] },
     ]);
   });
+
+  describe('unassignFacilitiesFromOthers', () => {
+    it('strips the facilities from other users without assigning them to anyone', async () => {
+      const chtApi = fakeChtApi({
+        'fac-a': [{ username: 'other', place: [{ _id: 'fac-a' }, { _id: 'fac-z' }] }],
+      });
+
+      const unassigned = await SetUserFacilities.unassignFacilitiesFromOthers(
+        ['fac-a'],
+        'target',
+        chtApi
+      );
+
+      // Only the displaced user is rewritten — no assignment write for the target.
+      expect(chtApi.updateUser.calledOnceWithExactly({ username: 'other', place: ['fac-z'] })).to.be
+        .true;
+      expect(unassigned).to.deep.equal([{ username: 'other', remaining: ['fac-z'] }]);
+    });
+
+    it('does not touch the excluded (target) user even if it holds the facility', async () => {
+      const chtApi = fakeChtApi({
+        'fac-a': [{ username: 'target', place: ['fac-a'] }],
+      });
+
+      const unassigned = await SetUserFacilities.unassignFacilitiesFromOthers(
+        ['fac-a'],
+        'target',
+        chtApi
+      );
+
+      expect(chtApi.updateUser.called).to.be.false;
+      expect(unassigned).to.deep.equal([]);
+    });
+
+    it('still attempts the other users when one update fails, recording the error', async () => {
+      const chtApi = fakeChtApi({
+        'fac-a': [
+          { username: 'bad', place: ['fac-a'] },
+          { username: 'good', place: [{ _id: 'fac-a' }, { _id: 'fac-keep' }] },
+        ],
+      });
+      chtApi.updateUser.withArgs(sinon.match({ username: 'bad' })).rejects(new Error('boom'));
+
+      const unassigned = await SetUserFacilities.unassignFacilitiesFromOthers(
+        ['fac-a'],
+        'target',
+        chtApi
+      );
+
+      // 'good' is still stripped despite 'bad' failing.
+      expect(chtApi.updateUser.calledWithExactly({ username: 'good', place: ['fac-keep'] })).to.be
+        .true;
+      expect(unassigned).to.deep.equal([
+        { username: 'bad', remaining: [], error: 'boom' },
+        { username: 'good', remaining: ['fac-keep'] },
+      ]);
+    });
+  });
 });
