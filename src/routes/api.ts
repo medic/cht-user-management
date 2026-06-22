@@ -77,16 +77,16 @@ export default async function api(fastify: FastifyInstance) {
     ensureJsonObjectBody(formBody);
 
     const roles = normalizeRoles(formBody);
-    const { oidc_username: oidcUsername, facility_ids: facilityIds, contact_id: contactId } = formBody;
-    const validationError = validateCreateUser(oidcUsername, roles, facilityIds, contactId);
+    const { oidc_username: oidcUsername, facility_ids: facilityIds, contact } = formBody;
+    const validationError = validateCreateUser(oidcUsername, roles, facilityIds, contact);
     if (validationError) {
       return { success: false, errors: validationError };
     }
 
     const chtApi = new ChtApi(req.chtSession);
     try {
-      const resolvedContactId = await resolveContactId(contactId, facilityIds, chtApi);
-      const payload = new OidcUserPayload(oidcUsername, roles, facilityIds, resolvedContactId);
+      const contactId = await createPrimaryContactForFacilities(contact, facilityIds, chtApi);
+      const payload = new OidcUserPayload(oidcUsername, roles, facilityIds, contactId);
       await chtApi.createUser(payload);
 
       // Opt-in via ?exclusiveFacilities=true: makes facilities exclusive
@@ -233,7 +233,7 @@ function validateCreateUser(
   oidcUsername: unknown,
   roles: string[],
   facilityIds: unknown,
-  contactId: unknown,
+  contact: any,
 ): string | null {
   if (typeof oidcUsername !== 'string' || !oidcUsername.trim()) {
     return 'oidc_username is required';
@@ -247,41 +247,32 @@ function validateCreateUser(
     return 'facility_ids must be a non-empty array of place ids';
   }
 
-  // contact_id is optional: when omitted, it defaults to the first facility's primary contact
-  if (contactId !== undefined && contactId !== null && (typeof contactId !== 'string' || !contactId.trim())) {
-    return 'contact_id must be a non-empty string when provided';
+  const isValidContact = !!contact &&
+    typeof contact === 'object' &&
+    typeof contact.name === 'string' &&
+    contact.name.trim();
+  if (!isValidContact) {
+    return 'contact is required and must include a name';
   }
 
   return null;
 }
 
-// Resolves the contact id for the new user. When the caller does not supply one, default to the
-// primary contact of the first facility
-async function resolveContactId(
-  contactId: unknown,
+// Always creates a fresh person from the supplied contact details and makes it the primary contact of
+// every facility passed
+async function createPrimaryContactForFacilities(
+  contact: Record<string, unknown>,
   facilityIds: string[],
   chtApi: ChtApi,
 ): Promise<string> {
-  if (typeof contactId === 'string' && contactId.trim()) {
-    return contactId;
+  const [firstFacilityId] = facilityIds;
+  const contactId = await chtApi.createPersonUnderPlace(firstFacilityId, contact);
+
+  for (const facilityId of facilityIds) {
+    await chtApi.updatePlace(facilityId, contactId);
   }
 
-  const [facilityId] = facilityIds;
-  let facility: any;
-  try {
-    facility = await chtApi.getDoc(facilityId);
-  } catch (e: any) {
-    if (e.response?.status === 404) {
-      throw new Error(`CHU not found: no place with id "${facilityId}" exists in eCHIS`);
-    }
-    throw e;
-  }
-  const primaryContactId = facility?.contact?._id;
-  if (typeof primaryContactId !== 'string' || !primaryContactId.trim()) {
-    throw new Error(`contact_id is required: facility ${facilityId} has no primary contact`);
-  }
-
-  return primaryContactId;
+  return contactId;
 }
 
 function validateSetUserFacilities(username: unknown, facilityIds: unknown): string | null {
