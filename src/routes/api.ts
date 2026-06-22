@@ -14,7 +14,7 @@ import WarningSystem from '../warnings';
 import { DisableUsers } from '../lib/disable-users';
 import { SetUserFacilities } from '../services/set-user-facilities';
 import { OidcUserPayload } from '../services/oidc-user-payload';
-import { sanitizeUsername } from '../services/username';
+import { sanitizeOidcUsername } from '../services/username';
 
 const DEFAULT_THRESHOLD = 0.6;
 
@@ -165,7 +165,7 @@ export default async function api(fastify: FastifyInstance) {
     ensureJsonObjectBody(formBody);
 
     const { username, oidc_username: oidcUsername, facility_ids: facilityIds } = formBody;
-    const resolvedUsername = oidcUsername ? sanitizeUsername(oidcUsername) : username;
+    const resolvedUsername = oidcUsername ? sanitizeOidcUsername(oidcUsername) : username;
     const validationError = validateSetUserFacilities(resolvedUsername, facilityIds);
     if (validationError) {
       return { success: false, errors: validationError };

@@ -447,9 +447,9 @@ describe('routes/api.ts', () => {
       expect(facilityIds).to.deep.equal(['fac-a', 'fac-b']);
     });
 
-    it('derives the username from oidc_username when provided', async () => {
+    it('derives the username from oidc_username the same way user creation does', async () => {
       setUserFacilitiesStub.resolves({
-        username: 'demoemailcom',
+        username: 'demo_at_email_dot_com',
         facilityIds: ['fac-a'],
         unassigned: [],
       });
@@ -462,7 +462,8 @@ describe('routes/api.ts', () => {
 
       expect(resp.statusCode).to.equal(200);
       const [username, facilityIds] = setUserFacilitiesStub.firstCall.args;
-      expect(username).to.equal('demoemailcom');
+      // Must match OidcUserPayload's sanitizeOidcUsername (_at_/_dot_), not a stripped form.
+      expect(username).to.equal('demo_at_email_dot_com');
       expect(facilityIds).to.deep.equal(['fac-a']);
     });
 
