@@ -1,3 +1,10 @@
+## [2.10.2](https://github.com/medic/cht-user-management/compare/v2.10.1...v2.10.2) (2026-06-23)
+
+
+### Bug Fixes
+
+* **#361:** improve performance of search operations ([2d59ad9](https://github.com/medic/cht-user-management/commit/2d59ad93e90fe1d4ab64bc82bd37af2fe9ee7eb2)), closes [#361](https://github.com/medic/cht-user-management/issues/361)
+
 ## [2.10.1](https://github.com/medic/cht-user-management/compare/v2.10.0...v2.10.1) (2026-06-19)
 
 
