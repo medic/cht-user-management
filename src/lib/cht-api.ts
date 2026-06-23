@@ -30,10 +30,17 @@ export type CouchDoc = {
   _id: string;
 };
 
+// A contact/place's denormalized parent lineage: the parent's id plus, recursively, its own parent.
+export type PlaceLineage = {
+  _id: string;
+  parent?: PlaceLineage;
+};
+
 export type UserInfo = {
   username: string;
   place?: CouchDoc[] | CouchDoc | string[] | string;
   roles?: string[];
+  contactId?: string;
 };
 
 export class ChtApi {
@@ -134,6 +141,39 @@ export class ChtApi {
     return this.axiosInstance.post(url, userInfo);
   }
 
+  // Fetches a single user by username
+  async getUserInfo(username: string): Promise<UserInfo | undefined> {
+    const url = `api/v2/users/${username}`;
+    console.log('axios.get', url);
+    const resp = await this.axiosInstance.get(url);
+    const doc = resp.data;
+    if (!doc) {
+      return undefined;
+    }
+    return {
+      username: doc.username,
+      place: doc.place,
+      roles: doc.roles,
+      contactId: extractContactId(doc.contact),
+    };
+  }
+
+  // Moves an existing contact (person) to live directly under the place 
+  async reparentContact(contactId: string, parentLineage: PlaceLineage): Promise<void> {
+    const contact = await this.getDoc(contactId);
+    if (contact.parent?._id === parentLineage._id) {
+      return;
+    }
+    contact.parent = parentLineage;
+    await this.setDoc(contactId, contact);
+  }
+
+  // Reads `placeId` and returns the minified lineage for a contact living directly under it:
+  async buildPlaceLineage(placeId: string): Promise<PlaceLineage> {
+    const place = await this.getDoc(placeId);
+    return place.parent ? { _id: place._id, parent: place.parent } : { _id: place._id };
+  }
+
   async countContactsUnderPlace(docId: string): Promise<number> {
     const url = `medic/_design/medic/_view/contacts_by_depth`;
     console.log('axios.get', url);
@@ -211,7 +251,8 @@ export class ChtApi {
     return resp.data?.map((doc: any): UserInfo => ({
       username: doc.username,
       place: doc.place,
-      roles: doc.roles
+      roles: doc.roles,
+      contactId: extractContactId(doc.contact),
     }));
   }
 
@@ -222,7 +263,8 @@ export class ChtApi {
     return resp.data?.map((doc: any): UserInfo => ({
       username: doc.username,
       place: doc.place,
-      roles: doc.roles
+      roles: doc.roles,
+      contactId: extractContactId(doc.contact),
     }))[0];
   }
 
@@ -256,4 +298,13 @@ export class ChtApi {
     const maxTimestamp = Math.max(timestamps);
     return DateTime.fromMillis(maxTimestamp);
   };
+}
+
+// A user's contact comes back from the CHT API either as an object ({ _id, ... }) or, in older
+// shapes, as a bare id string; normalize to the id.
+function extractContactId(contact: string | CouchDoc): string | undefined {
+  if (!contact) {
+    return undefined;
+  }
+  return typeof contact === 'string' ? contact : contact._id;
 }
