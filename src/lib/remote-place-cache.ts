@@ -36,6 +36,7 @@ export default class RemotePlaceCache {
   private static readonly CACHE_CHECK_PERIOD = 120;
   private static cache: NodeCache = new NodeCache({
     stdTTL: this.getCacheTTL(),
+    useClones: false,
     checkperiod: this.CACHE_CHECK_PERIOD
   });
 
