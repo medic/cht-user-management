@@ -1,3 +1,10 @@
+## [2.10.3](https://github.com/medic/cht-user-management/compare/v2.10.2...v2.10.3) (2026-06-23)
+
+
+### Bug Fixes
+
+* **#358:** clean search input [#359](https://github.com/medic/cht-user-management/issues/359) ([3e4a23f](https://github.com/medic/cht-user-management/commit/3e4a23fb95239a79ae7403ddb74811f9d2e73a6f)), closes [#358](https://github.com/medic/cht-user-management/issues/358)
+
 ## [2.10.2](https://github.com/medic/cht-user-management/compare/v2.10.1...v2.10.2) (2026-06-23)
 
 
