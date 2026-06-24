@@ -8,8 +8,8 @@ export type ExternalSourceAuth = {
   type: 'token' | 'basic';
   token_endpoint?: string;
   token?: string;
-  client_id: string;
-  client_secret: string;
+  client_id_key: string;
+  client_secret_key: string;
   expiresAt: number;
   expiration: number;
   refreshingToken: Promise<string> | null;
@@ -25,8 +25,8 @@ export default class ExternalSourceAuthManager {
         url: source.url,
         type: source.auth.type === 'token' ? 'token' : 'basic',
         token_endpoint: source.auth.token_endpoint,
-        client_id: source.auth.client_id,
-        client_secret: source.auth.client_secret,
+        client_id_key: source.auth.client_id_key,
+        client_secret_key: source.auth.client_secret_key,
         expiresAt: 0,
         expiration: source.auth.expiration || 0,
         refreshingToken: null
@@ -83,8 +83,8 @@ export default class ExternalSourceAuthManager {
     const tokenUrl = this.externalSourceAuth[externalSourceId].token_endpoint || '';
     const url = ExternalSourceService.buildUrl(baseUrl, tokenUrl);
     const payLoad = {
-      [this.externalSourceAuth[externalSourceId].client_id || 'client_id']: clientId,
-      [this.externalSourceAuth[externalSourceId].client_secret || 'client_secret']: clientSecret,
+      [this.externalSourceAuth[externalSourceId].client_id_key || 'client_id']: clientId,
+      [this.externalSourceAuth[externalSourceId].client_secret_key || 'client_secret']: clientSecret,
     };
 
     console.log('axios.post: token for external source ', externalSourceId, url);

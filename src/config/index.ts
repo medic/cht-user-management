@@ -84,8 +84,8 @@ export type ExternalSource = {
     type: string;
     token_endpoint?: string;
     expiration?: number;
-    client_id: string;
-    client_secret: string;
+    client_id_key: string;
+    client_secret_key: string;
   };
   resultKey: string;
   other_filters?: { [filter: string]: string };
@@ -267,7 +267,7 @@ export class Config {
     return config.idpOrigins ?? [];
   }
 
-  public static getDomains() : AuthenticationInfo[] {
+  public static getDomains(): AuthenticationInfo[] {
     const domains = [...config.domains];
 
     if (NODE_ENV !== 'production') {
@@ -337,6 +337,10 @@ export class Config {
       }
       if (source.auth.type === 'token' && (!source.auth.token_endpoint)) {
         throw Error(`token_endpoint is required for auth type "token" for external source "${source.id}"`);
+      }
+
+      if (source.auth.type === 'token' && !source.auth.expiration) {
+        throw Error(`expiration is required for auth type "token" for external source "${source.id}"`);
       }
 
       if (!externalSourcesFieldCounts[source.id] || externalSourcesFieldCounts[source.id] < 1) {

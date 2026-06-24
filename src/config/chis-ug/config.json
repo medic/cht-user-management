@@ -26,8 +26,8 @@
         "type": "token",
         "token_endpoint": "/auth/token",
         "expiration": 90,
-        "client_id": "email",
-        "client_secret": "password"
+        "client_id_key": "email",
+        "client_secret_key": "password"
       },
       "api_endpoint": "chw",
       "resultKey": "chws",

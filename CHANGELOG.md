@@ -1,3 +1,24 @@
+## [2.10.3](https://github.com/medic/cht-user-management/compare/v2.10.2...v2.10.3) (2026-06-23)
+
+
+### Bug Fixes
+
+* **#358:** clean search input [#359](https://github.com/medic/cht-user-management/issues/359) ([3e4a23f](https://github.com/medic/cht-user-management/commit/3e4a23fb95239a79ae7403ddb74811f9d2e73a6f)), closes [#358](https://github.com/medic/cht-user-management/issues/358)
+
+## [2.10.2](https://github.com/medic/cht-user-management/compare/v2.10.1...v2.10.2) (2026-06-23)
+
+
+### Bug Fixes
+
+* **#361:** improve performance of search operations ([2d59ad9](https://github.com/medic/cht-user-management/commit/2d59ad93e90fe1d4ab64bc82bd37af2fe9ee7eb2)), closes [#361](https://github.com/medic/cht-user-management/issues/361)
+
+## [2.10.1](https://github.com/medic/cht-user-management/compare/v2.10.0...v2.10.1) (2026-06-19)
+
+
+### Bug Fixes
+
+* **#349:** additional idpOrigins for CHW-R ([38a63c5](https://github.com/medic/cht-user-management/commit/38a63c58300460bc1b92a9f6cb7e970310acc967)), closes [#349](https://github.com/medic/cht-user-management/issues/349)
+
 # [2.10.0](https://github.com/medic/cht-user-management/compare/v2.9.2...v2.10.0) (2026-06-18)
 
 

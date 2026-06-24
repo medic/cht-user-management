@@ -21,10 +21,10 @@
         <label class="box">
           <div class="is-vcentered is-mobile">
             {% for field in result.propertyValues %}
-              <input name="{{ field.propertyType }}_{{ field.propertyName }}" value="{{ field.value }}" hidden>
+              <input name="{{ field.propertyType }}_{{ field.propertyName }}" value="{{ field.value | escape }}" hidden>
               <div class="column">
                 <div>
-                  <strong>{{ field.friendlyName }}:</strong> {{ field.value }}
+                  <strong>{{ field.friendlyName }}:</strong> {{ field.value | escape }}
                 </div>
               </div>
             {% endfor %}
