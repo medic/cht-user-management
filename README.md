@@ -46,7 +46,7 @@ To use the User Management Tool with your CHT project, you'll need to create a n
 `external_sources[].auth.mapping.client_id_key` | string | The client_id key of the external source. This is used to map with what API expects as key for the client_id eg if the API expects `username` then this should be set to `username`.
 `external_sources[].auth.mapping.client_secret` | string | The client_secret key of the external source. This is used to map with what API expects as key for the client_secret eg if the API expects `password` then this should be set to `password`.
 `resultsKey` | string | The path in the external source response which contains the array of users. Also accepts dot notation (eg. `results.users`) and bracket notation (eg. `results[0].users`).
-`other_filters` | Object | Additional filters to apply to the external source query. eg `{ "user_role": "CHA", "limit": "10" }`
+`other_filters` | Object | Additional filters to apply to the external source query. eg `{ "user_role": "CHA", "limit": "10" }`. Note that these don't show up as search input fields.
 `contact_types` | Array | One element for each type of user which can be created by the system
 `contact_types.name` | string | The name of the contact_type as it [appears in the app's base_settings.json](https://docs.communityhealthtoolkit.org/apps/reference/app-settings/hierarchy/)
 `contact_types.friendly` | string | Friendly name of the contact type
@@ -78,7 +78,7 @@ unique | 'all' or 'parent' | Dismissable warnings are flagged if a place already
 external_mapping | Object | Defines how the property should be mapped to an external source. Each key represents an external source id. See [Configuration](#Configuration).
 external_mapping[external_source_id].name | string | The name of the property as it appears in the external source response.
 external_mapping[external_source_id].path | string (optional) | The path of the property in the external source response data. Defaults to the `external_mapping[external_source_id].name`. Accepts dot notation (eg. `results.users`) and bracket notation (eg. `results[0].users`)
-external_mapping[external_source_id].is_filter | boolean | Whether this property should be used as a filter while querying the external source. Default is false.
+external_mapping[external_source_id].is_filter | boolean | Whether this property should be used as a filter while querying the external source. If true this will show up as a search input field. Defaults to false.
 
 #### ConfigPropertyType
 The `ConfigPropertyType` defines a property's validation rules and auto-formatting rules. The optional `parameter` information alters the behavior of the `ConfigPropertyType`.
