@@ -1,24 +1,26 @@
 import { ChtApi, CouchDoc, UserInfo } from '../lib/cht-api';
-import { Graveyard, GRAVEYARD_LINEAGE, GRAVEYARD_PLACE_ID } from '../lib/graveyard';
+
+// An unconfigured role: CHT does not validate role names against app-settings, and a role that maps
+// to no configured permissions effectively revokes all access. Unlike deleting/disabling the user,
+// this keeps their account, password and SSO (oidc) link intact for later reassignment.
+const DISABLED_ROLE = 'disabled';
 
 export type UnassignedFacilityResult = {
   username: string;
   remaining: string[];
-  // true when the user was left with no facilities and buried in the graveyard rather than
-  // written with an empty list (which CHT rejects)
-  buried?: boolean;
+  // true when the user was left with no facilities and was instead disabled (role set to
+  // `disabled`) rather than written with an empty list (which CHT rejects).
+  disabled?: boolean;
   error?: string;
 };
 
 export type SetUserFacilitiesResult = {
   username: string;
   facilityIds: string[];
-  // true when the target user was previously buried in the graveyard and was exhumed.
-  exhumed?: boolean;
   unassigned: UnassignedFacilityResult[];
 };
 
-type DisplacedUser = { username: string; placeIds: string[]; contactId?: string };
+type DisplacedUser = { username: string; placeIds: string[] };
 
 // Sets a CHT user's facilities to exactly `facilityIds` (keyed on username)
 export class SetUserFacilities {
@@ -31,17 +33,13 @@ export class SetUserFacilities {
     // (once assigned) isn't caught in the unassignment sweep.
     const displaced = await this.getOtherUsersAt(facilityIds, username, chtApi);
 
-    // If the target user is currently buried in the graveyard, exhume their contact back out to a
-    // real facility before reassigning
-    const exhumed = await this.exhumeUser(username, facilityIds, chtApi);
-
     // Assign the requested facilities to the target user. This replaces their facility list.
     await chtApi.updateUser({ username, place: facilityIds });
 
     // Strip the reassigned facilities from every other user that held them.
     const unassigned = await this.stripFacilitiesFrom(displaced, facilityIds, chtApi);
 
-    return { username, facilityIds, unassigned, ...(exhumed ? { exhumed: true } : {}) };
+    return { username, facilityIds, unassigned };
   }
 
   // Removes `facilityIds` from every user *other than* excludeUsername
@@ -54,29 +52,10 @@ export class SetUserFacilities {
     return this.stripFacilitiesFrom(displaced, facilityIds, chtApi);
   }
 
-  // If the target user is currently buried in the graveyard, moves their primary contact out to
-  // the first newly-assigned facility (so it no longer lives in the graveyard). Returns true if
-  // the user was buried. A no-op (returns false) for users that aren't buried or don't exist.
-  private static async exhumeUser(
-    username: string,
-    facilityIds: string[],
-    chtApi: ChtApi,
-  ): Promise<boolean> {
-    const target = await chtApi.getUserInfo(username);
-    if (!target || !Graveyard.isBuried(normalizePlaceIds(target.place))) {
-      return false;
-    }
-
-    if (target.contactId) {
-      const lineage = await chtApi.buildPlaceLineage(facilityIds[0]);
-      await chtApi.reparentContact(target.contactId, lineage);
-    }
-    return true;
-  }
-
   // Replaces each displaced user's facility list with whatever remains after removing facilityIds.
-  // Each user is attempted independently: one user's update failing is recorded as an `error` on
-  // that entry and does not prevent the others from being attempted.
+  // A user left with nothing is disabled instead of written with an empty list. Each user is
+  // attempted independently: one user's update failing is recorded as an `error` on that entry and
+  // does not prevent the others from being attempted.
   private static async stripFacilitiesFrom(
     displaced: DisplacedUser[],
     facilityIds: string[],
@@ -88,8 +67,8 @@ export class SetUserFacilities {
       const remaining = user.placeIds.filter(id => !reassigned.has(id));
       try {
         if (remaining.length === 0) {
-          await this.buryUser(user, chtApi);
-          unassigned.push({ username: user.username, remaining, buried: true });
+          await this.disableUser(user, chtApi);
+          unassigned.push({ username: user.username, remaining, disabled: true });
         } else {
           await chtApi.updateUser({ username: user.username, place: remaining });
           unassigned.push({ username: user.username, remaining });
@@ -103,14 +82,15 @@ export class SetUserFacilities {
     return unassigned;
   }
 
-  // Buries a displaced user who would otherwise be left with no facilities: moves their primary
-  // contact into the graveyard (so it no longer sits under a facility now owned by someone else)
-  private static async buryUser(user: DisplacedUser, chtApi: ChtApi): Promise<void> {
-    await Graveyard.ensureExists(chtApi);
-    if (user.contactId) {
-      await chtApi.reparentContact(user.contactId, GRAVEYARD_LINEAGE);
-    }
-    await chtApi.updateUser({ username: user.username, place: [GRAVEYARD_PLACE_ID] });
+  // Disables a displaced user who would otherwise be left with no facilities: strips all permissions
+  // by assigning the unconfigured `disabled` role, and reduces their facility list to a single
+  // facility (CHT requires a stored user to have at least one).
+  private static async disableUser(user: DisplacedUser, chtApi: ChtApi): Promise<void> {
+    await chtApi.updateUser({
+      username: user.username,
+      roles: [DISABLED_ROLE],
+      place: [user.placeIds[0]],
+    });
   }
 
   private static async getOtherUsersAt(
@@ -130,7 +110,6 @@ export class SetUserFacilities {
         byUsername.set(user.username, {
           username: user.username,
           placeIds: normalizePlaceIds(user.place),
-          contactId: user.contactId,
         });
       }
     }

@@ -3,39 +3,18 @@ import sinon from 'sinon';
 
 import { ChtApi, UserInfo } from '../../src/lib/cht-api';
 import { SetUserFacilities } from '../../src/services/set-user-facilities';
-import { GRAVEYARD_LINEAGE, GRAVEYARD_PLACE_ID } from '../../src/lib/graveyard';
+
+const DISABLED_ROLE = 'disabled';
 
 type FakeChtApi = ChtApi & {
   getUsersAtPlace: sinon.SinonStub;
-  getUserInfo: sinon.SinonStub;
   updateUser: sinon.SinonStub;
-  reparentContact: sinon.SinonStub;
-  buildPlaceLineage: sinon.SinonStub;
-  getDoc: sinon.SinonStub;
-  setDoc: sinon.SinonStub;
 };
 
-function fakeChtApi(opts: {
-  usersByFacility?: Record<string, UserInfo[]>;
-  target?: UserInfo;
-  graveyardExists?: boolean;
-} = {}): FakeChtApi {
-  const { usersByFacility = {}, target = undefined, graveyardExists = true } = opts;
+function fakeChtApi(usersByFacility: Record<string, UserInfo[]>): FakeChtApi {
   return {
     getUsersAtPlace: sinon.stub().callsFake(async (placeId: string) => usersByFacility[placeId] ?? []),
-    getUserInfo: sinon.stub().callsFake(async () => target),
     updateUser: sinon.stub().resolves(),
-    reparentContact: sinon.stub().resolves(),
-    buildPlaceLineage: sinon.stub().callsFake(async (id: string) => ({ _id: id })),
-    getDoc: sinon.stub().callsFake(async (id: string) => {
-      if (id === GRAVEYARD_PLACE_ID && !graveyardExists) {
-        const err: any = new Error('not found');
-        err.response = { status: 404 };
-        throw err;
-      }
-      return { _id: id };
-    }),
-    setDoc: sinon.stub().resolves(),
   } as unknown as FakeChtApi;
 }
 
@@ -43,54 +22,57 @@ describe('SetUserFacilities', () => {
   afterEach(() => sinon.restore());
 
   it('assigns the requested facilities to the target user (replacing their list)', async () => {
-    const chtApi = fakeChtApi({ usersByFacility: { 'fac-a': [], 'fac-b': [] } });
+    const chtApi = fakeChtApi({ 'fac-a': [], 'fac-b': [] });
 
     const result = await SetUserFacilities.setFacilities('target', ['fac-a', 'fac-b'], chtApi);
 
     expect(chtApi.updateUser.calledOnceWithExactly({ username: 'target', place: ['fac-a', 'fac-b'] })).to.be.true;
-    expect(chtApi.reparentContact.called).to.be.false;
     expect(result).to.deep.equal({ username: 'target', facilityIds: ['fac-a', 'fac-b'], unassigned: [] });
   });
 
   it('removes the reassigned facility from another user that held it', async () => {
     const chtApi = fakeChtApi({
-      usersByFacility: { 'fac-a': [{ username: 'other', place: [{ _id: 'fac-a' }, { _id: 'fac-z' }] }] },
+      'fac-a': [{ username: 'other', place: [{ _id: 'fac-a' }, { _id: 'fac-z' }] }],
     });
 
     const result = await SetUserFacilities.setFacilities('target', ['fac-a'], chtApi);
 
-    // target assigned, then 'other' rewritten without fac-a but keeping fac-z
     expect(chtApi.updateUser.firstCall.args[0]).to.deep.equal({ username: 'target', place: ['fac-a'] });
     expect(chtApi.updateUser.secondCall.args[0]).to.deep.equal({ username: 'other', place: ['fac-z'] });
     expect(result.unassigned).to.deep.equal([{ username: 'other', remaining: ['fac-z'] }]);
   });
 
-  it('buries a displaced user left with no facilities in the graveyard (does not write an empty list)', async () => {
+  it('disables a displaced user left with no facilities (role disabled, reduced to one facility)', async () => {
     const chtApi = fakeChtApi({
-      usersByFacility: { 'fac-a': [{ username: 'other', place: ['fac-a'] }] },
+      'fac-a': [{ username: 'other', place: ['fac-a'] }],
     });
 
     const result = await SetUserFacilities.setFacilities('target', ['fac-a'], chtApi);
 
-    expect(chtApi.updateUser.secondCall.args[0]).to.deep.equal({ username: 'other', place: [GRAVEYARD_PLACE_ID] });
-    expect(result.unassigned).to.deep.equal([{ username: 'other', remaining: [], buried: true }]);
+    // No empty list is ever written; the user is disabled and kept on a single facility.
+    expect(chtApi.updateUser.secondCall.args[0]).to.deep.equal({
+      username: 'other',
+      roles: [DISABLED_ROLE],
+      place: ['fac-a'],
+    });
+    expect(result.unassigned).to.deep.equal([{ username: 'other', remaining: [], disabled: true }]);
   });
 
-  it("moves a buried displaced user's contact into the graveyard", async () => {
-    const chtApi = fakeChtApi({
-      usersByFacility: { 'fac-a': [{ username: 'other', place: ['fac-a'], contactId: 'contact-other' }] },
-    });
+  it('reduces a disabled user to a single facility (their first) when several are reassigned', async () => {
+    const shared: UserInfo = { username: 'other', place: ['fac-a', 'fac-b'] };
+    const chtApi = fakeChtApi({ 'fac-a': [shared], 'fac-b': [shared] });
 
-    const result = await SetUserFacilities.setFacilities('target', ['fac-a'], chtApi);
+    const result = await SetUserFacilities.setFacilities('target', ['fac-a', 'fac-b'], chtApi);
 
-    expect(chtApi.reparentContact.calledOnceWithExactly('contact-other', GRAVEYARD_LINEAGE)).to.be.true;
-    expect(chtApi.updateUser.secondCall.args[0]).to.deep.equal({ username: 'other', place: [GRAVEYARD_PLACE_ID] });
-    expect(result.unassigned).to.deep.equal([{ username: 'other', remaining: [], buried: true }]);
+    const otherWrites = chtApi.updateUser.getCalls().filter(c => c.args[0].username === 'other');
+    expect(otherWrites).to.have.length(1);
+    expect(otherWrites[0].args[0]).to.deep.equal({ username: 'other', roles: [DISABLED_ROLE], place: ['fac-a'] });
+    expect(result.unassigned).to.deep.equal([{ username: 'other', remaining: [], disabled: true }]);
   });
 
   it('does not unassign the target user even if it already held the facility', async () => {
     const chtApi = fakeChtApi({
-      usersByFacility: { 'fac-a': [{ username: 'target', place: ['fac-a'] }] },
+      'fac-a': [{ username: 'target', place: ['fac-a'] }],
     });
 
     const result = await SetUserFacilities.setFacilities('target', ['fac-a'], chtApi);
@@ -99,35 +81,9 @@ describe('SetUserFacilities', () => {
     expect(result.unassigned).to.deep.equal([]);
   });
 
-  it('exhumes the target user, moving their contact out of the graveyard to the first facility', async () => {
-    const chtApi = fakeChtApi({
-      usersByFacility: { 'fac-n': [] },
-      target: { username: 'target', place: [GRAVEYARD_PLACE_ID], contactId: 'contact-target' },
-    });
-
-    const result = await SetUserFacilities.setFacilities('target', ['fac-n', 'fac-m'], chtApi);
-
-    expect(chtApi.buildPlaceLineage.calledOnceWithExactly('fac-n')).to.be.true;
-    expect(chtApi.reparentContact.calledOnceWithExactly('contact-target', { _id: 'fac-n' })).to.be.true;
-    expect(chtApi.updateUser.calledWithExactly({ username: 'target', place: ['fac-n', 'fac-m'] })).to.be.true;
-    expect(result.exhumed).to.equal(true);
-  });
-
-  it('does not exhume a target that is not in the graveyard', async () => {
-    const chtApi = fakeChtApi({
-      usersByFacility: { 'fac-n': [] },
-      target: { username: 'target', place: ['fac-old'], contactId: 'contact-target' },
-    });
-
-    const result = await SetUserFacilities.setFacilities('target', ['fac-n'], chtApi);
-
-    expect(chtApi.reparentContact.called).to.be.false;
-    expect(result).to.deep.equal({ username: 'target', facilityIds: ['fac-n'], unassigned: [] });
-  });
-
-  it('rewrites a shared user once when they held several reassigned facilities', async () => {
+  it('rewrites a shared user once when they held several reassigned facilities but keep some', async () => {
     const shared: UserInfo = { username: 'other', place: ['fac-a', 'fac-b', 'fac-keep'] };
-    const chtApi = fakeChtApi({ usersByFacility: { 'fac-a': [shared], 'fac-b': [shared] } });
+    const chtApi = fakeChtApi({ 'fac-a': [shared], 'fac-b': [shared] });
 
     const result = await SetUserFacilities.setFacilities('target', ['fac-a', 'fac-b'], chtApi);
 
@@ -140,21 +96,19 @@ describe('SetUserFacilities', () => {
   it('normalizes the various place shapes returned by the CHT API', async () => {
     // string-array place, single-string place, and CouchDoc-array place
     const chtApi = fakeChtApi({
-      usersByFacility: {
-        'fac-a': [
-          { username: 'str-arr', place: ['fac-a', 'fac-x'] },
-          { username: 'str', place: 'fac-a' as any },
-          { username: 'doc-arr', place: [{ _id: 'fac-a' }, { _id: 'fac-y' }] },
-        ],
-      },
+      'fac-a': [
+        { username: 'str-arr', place: ['fac-a', 'fac-x'] },
+        { username: 'str', place: 'fac-a' as any },
+        { username: 'doc-arr', place: [{ _id: 'fac-a' }, { _id: 'fac-y' }] },
+      ],
     });
 
     const result = await SetUserFacilities.setFacilities('target', ['fac-a'], chtApi);
 
-    // 'str' is left with nothing and is buried; the others keep their remaining facility.
+    // 'str' is left with nothing and is disabled; the others keep their remaining facility.
     expect(result.unassigned).to.deep.equal([
       { username: 'str-arr', remaining: ['fac-x'] },
-      { username: 'str', remaining: [], buried: true },
+      { username: 'str', remaining: [], disabled: true },
       { username: 'doc-arr', remaining: ['fac-y'] },
     ]);
   });
@@ -162,20 +116,18 @@ describe('SetUserFacilities', () => {
   describe('unassignFacilitiesFromOthers', () => {
     it('strips the facilities from other users without assigning them to anyone', async () => {
       const chtApi = fakeChtApi({
-        usersByFacility: { 'fac-a': [{ username: 'other', place: [{ _id: 'fac-a' }, { _id: 'fac-z' }] }] },
+        'fac-a': [{ username: 'other', place: [{ _id: 'fac-a' }, { _id: 'fac-z' }] }],
       });
 
       const unassigned = await SetUserFacilities.unassignFacilitiesFromOthers(['fac-a'], 'target', chtApi);
 
-      // Only the displaced user is rewritten — no assignment write for the target, no exhume lookup.
       expect(chtApi.updateUser.calledOnceWithExactly({ username: 'other', place: ['fac-z'] })).to.be.true;
-      expect(chtApi.getUserInfo.called).to.be.false;
       expect(unassigned).to.deep.equal([{ username: 'other', remaining: ['fac-z'] }]);
     });
 
     it('does not touch the excluded (target) user even if it holds the facility', async () => {
       const chtApi = fakeChtApi({
-        usersByFacility: { 'fac-a': [{ username: 'target', place: ['fac-a'] }] },
+        'fac-a': [{ username: 'target', place: ['fac-a'] }],
       });
 
       const unassigned = await SetUserFacilities.unassignFacilitiesFromOthers(['fac-a'], 'target', chtApi);
@@ -184,32 +136,32 @@ describe('SetUserFacilities', () => {
       expect(unassigned).to.deep.equal([]);
     });
 
-    it('buries a displaced user with no remaining facilities', async () => {
+    it('disables a displaced user with no remaining facilities', async () => {
       const chtApi = fakeChtApi({
-        usersByFacility: { 'fac-a': [{ username: 'other', place: ['fac-a'], contactId: 'c-other' }] },
+        'fac-a': [{ username: 'other', place: ['fac-a'] }],
       });
 
       const unassigned = await SetUserFacilities.unassignFacilitiesFromOthers(['fac-a'], 'target', chtApi);
 
-      expect(chtApi.reparentContact.calledOnceWithExactly('c-other', GRAVEYARD_LINEAGE)).to.be.true;
-      expect(chtApi.updateUser.calledOnceWithExactly({ username: 'other', place: [GRAVEYARD_PLACE_ID] })).to.be.true;
-      expect(unassigned).to.deep.equal([{ username: 'other', remaining: [], buried: true }]);
+      expect(chtApi.updateUser.calledOnceWithExactly({
+        username: 'other',
+        roles: [DISABLED_ROLE],
+        place: ['fac-a'],
+      })).to.be.true;
+      expect(unassigned).to.deep.equal([{ username: 'other', remaining: [], disabled: true }]);
     });
 
     it('still attempts the other users when one update fails, recording the error', async () => {
       const chtApi = fakeChtApi({
-        usersByFacility: {
-          'fac-a': [
-            { username: 'bad', place: ['fac-a'] },
-            { username: 'good', place: [{ _id: 'fac-a' }, { _id: 'fac-keep' }] },
-          ],
-        },
+        'fac-a': [
+          { username: 'bad', place: ['fac-a'] },
+          { username: 'good', place: [{ _id: 'fac-a' }, { _id: 'fac-keep' }] },
+        ],
       });
       chtApi.updateUser.withArgs(sinon.match({ username: 'bad' })).rejects(new Error('boom'));
 
       const unassigned = await SetUserFacilities.unassignFacilitiesFromOthers(['fac-a'], 'target', chtApi);
 
-      // 'good' is still stripped despite 'bad' failing.
       expect(chtApi.updateUser.calledWithExactly({ username: 'good', place: ['fac-keep'] })).to.be.true;
       expect(unassigned).to.deep.equal([
         { username: 'bad', remaining: [], error: 'boom' },
