@@ -1,11 +1,12 @@
 import Chai from 'chai';
 import rewire from 'rewire';
 import sinon from 'sinon';
+import path from 'path';
 
 import { AuthenticationInfo } from '../../src/config';
 import { RemotePlace } from '../../src/lib/remote-place-cache';
 import { AuthError } from '../../src/lib/authentication-error';
-const ChtSession = rewire('../../src/lib/cht-session');
+const ChtSession = rewire(path.join(__dirname, '../../src/lib/cht-session'));
 import { REQUIRED_PERMISSIONS } from '../../src/services/user-permissions';
 
 import chaiAsPromised from 'chai-as-promised';
