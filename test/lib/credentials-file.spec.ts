@@ -5,7 +5,7 @@ import { ChtDoc, mockChtApi, mockChtSession, mockValidContactType } from '../moc
 import { expect } from 'chai';
 
 describe('lib/credentials-file.ts', () => {
-  afterEach(() => {
+  beforeEach(() => {
     SessionCache.getForSession(mockChtSession()).removeAll();
   });
 
