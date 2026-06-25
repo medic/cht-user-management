@@ -128,13 +128,19 @@ export default async function addPlace(fastify: FastifyInstance) {
 
   // you want to create a place? replace a contact? you'll have to go through me first
   fastify.post('/place', async (req, resp) => {
-    const { op, type: placeType } = req.query as any;
+    const { op, type: placeType, external_source: externalSource } = req.query as any;
 
     const contactType = Config.getContactType(placeType);
     const sessionCache: SessionCache = req.sessionCache;
     const chtApi = new ChtApi(req.chtSession);
     if (op === 'new' || op === 'replace') {
-      await PlaceFactory.createOne(req.body, contactType, sessionCache, chtApi);
+      const place = await PlaceFactory.createOne(req.body, contactType, sessionCache, chtApi);
+      if (externalSource === 'true') {
+        return resp.view('src/liquid/components/notification_banner.liquid', {
+          message: `${place.name} Added`
+        });
+      }
+
       resp.header('HX-Redirect', `/`);
       return;
     }
