@@ -2,7 +2,11 @@
   {% if error %}
     {% render 'components/notification_banner.liquid', message: {{ error }}, type: 'error' %}
   {% elsif results.length > 0 %}
-    {% capture message %}<strong>Found {{ results.length }} result(s). Select one to add</strong>{% endcapture %}
+    {% capture message %}
+      <strong>
+        Found {{ results.length }} matching result(s). Click "Add" on each record you want to import.
+      </strong>
+    {% endcapture %}
     {% render 'components/notification_banner.liquid', message: message, type: 'success' %}
   {% endif %}
   {% for result in results %}
