@@ -1,17 +1,17 @@
 import { expect } from 'chai';
 
-import { PlaceUploadState } from '../../src/services/place';
+import Place, { PlaceUploadState } from '../../src/services/place';
 import DirectiveModel from '../../src/services/directive-model';
 import SessionCache from '../../src/services/session-cache';
 
-const oneOfEachTypePlace = [
+const oneOfEachTypePlace = ([
   { id: 'fail', state: PlaceUploadState.FAILURE },
   { id: 'in-progress', state: PlaceUploadState.IN_PROGRESS },
   { id: 'staged', state: PlaceUploadState.STAGED, warnings: ['warn'] },
   { id: 'scheduled', state: PlaceUploadState.SCHEDULED },
   { id: 'success', state: PlaceUploadState.SUCCESS },
   { id: 'validation-error', state: PlaceUploadState.STAGED, hasValidationErrors: true },
-];
+] as unknown as Place[]);
 
 describe('services/directive-model.ts', () => {
   it('one place with each state', () => {

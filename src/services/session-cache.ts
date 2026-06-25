@@ -10,7 +10,7 @@ export default class SessionCache {
   private static caches: Map<string, SessionCache> = new Map();
   private places: { [key: string]: Place } = {};
 
-  private constructor() {}
+  constructor() {}
 
   public static getForSession = (session: ChtSession): SessionCache => {
     const lookup = session.sessionToken;

@@ -6,10 +6,11 @@ import { ChtDoc, mockChtApi, mockChtSession, mockValidContactType } from '../moc
 import SessionCache from '../../src/services/session-cache';
 import { Config } from '../../src/config';
 import RemotePlaceResolver from '../../src/lib/remote-place-resolver';
+import { ChtApi } from '../../src/lib/cht-api';
 
 describe('lib/search.ts', () => {
   beforeEach(() => {
-    RemotePlaceCache.clear({});
+    RemotePlaceCache.clear({} as ChtApi);
   });
 
   const parentPlace: ChtDoc = {

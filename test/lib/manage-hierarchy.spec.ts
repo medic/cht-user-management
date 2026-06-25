@@ -4,6 +4,7 @@ import { DateTime } from 'luxon';
 import sinon from 'sinon';
 
 import Auth from '../../src/lib/authentication';
+import { ChtApi } from '../../src/lib/cht-api';
 import { Config } from '../../src/config';
 import { JobParams } from '../../src/lib/queues';
 import ManageHierarchyLib from '../../src/lib/manage-hierarchy';
@@ -29,7 +30,7 @@ describe('lib/manage-hierarchy.ts', () => {
 
   beforeEach(() => {
     sinon.stub(Auth, 'encodeTokenForWorker').returns('encoded-token');
-    RemotePlaceCache.clear({});
+    RemotePlaceCache.clear({} as ChtApi);
   });
 
   afterEach(() => {
@@ -146,7 +147,7 @@ describe('lib/manage-hierarchy.ts', () => {
   });
 
   describe('getWarningInfo', () => {
-    let clock;
+    let clock: sinon.SinonFakeTimers;
 
     // Mocking the system clock to set the current date to June 15, 2024 (quite middle).
     // This ensures consistent test behavior for relative date calculations.

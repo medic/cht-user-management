@@ -7,6 +7,8 @@ import RemotePlaceCache from '../src/lib/remote-place-cache';
 import { Config } from '../src/config';
 import PlaceFactory from '../src/services/place-factory';
 import { UploadManager } from '../src/services/upload-manager';
+import { UploadLogger } from '../src/services/upload-log';
+import { ChtApi } from '../src/lib/cht-api';
 import Place from '../src/services/place';
 
 const subcounty: ChtDoc = {
@@ -36,7 +38,7 @@ It is quite difficult to resolve. Not all fetched information has a correspondin
 */
 describe('warnings', () => {
   beforeEach(() => {
-    RemotePlaceCache.clear({});
+    RemotePlaceCache.clear({} as unknown as ChtApi);
   });
 
   it('no warnings', async () => {
@@ -308,7 +310,7 @@ describe('warnings', () => {
     expect(first.validationErrors).to.be.empty;
     expect(first.warnings).to.be.empty;
 
-    const uploadManager = new UploadManager();
+    const uploadManager = new UploadManager(undefined as unknown as UploadLogger);
     await uploadManager.doUpload([first], chtApi, false);
     expect(first.isCreated).to.be.true;
 
