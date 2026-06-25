@@ -1,12 +1,17 @@
 import SessionCache from '../../src/services/session-cache';
 import getCredentialsFiles from '../../src/lib/credentials-file';
 import PlaceFactory from '../../src/services/place-factory';
-import { ChtDoc, mockChtApi, mockValidContactType } from '../mocks';
+import { ChtDoc, mockChtApi, mockChtSession, mockValidContactType } from '../mocks';
 import { expect } from 'chai';
 
 describe('lib/credentials-file.ts', () => {
+  afterEach(() => {
+    SessionCache.getForSession(mockChtSession()).removeAll();
+  });
+
   it('one csv file per contact type', async () => {
-    const sessionCache = new SessionCache();
+    const session = mockChtSession();
+    const sessionCache = SessionCache.getForSession(session);
     const subcounty: ChtDoc = {
       _id: 'parent-id',
       name: 'parent-name',
@@ -41,7 +46,8 @@ describe('lib/credentials-file.ts', () => {
   });
 
   it('contact without phone number', async () => {
-    const sessionCache = new SessionCache();
+    const session = mockChtSession();
+    const sessionCache = SessionCache.getForSession(session);
     const subcounty: ChtDoc = {
       _id: 'parent-id',
       name: 'parent-name',

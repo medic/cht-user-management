@@ -24,6 +24,10 @@ describe('services/place-factory.ts', () => {
     RemotePlaceCache.clear({} as unknown as ChtApi);
   });
 
+  afterEach(() => {
+    SessionCache.getForSession(mockChtSession()).removeAll();
+  });
+
   it('name conflict at local yields invalid', async () => {
     const { parentContactType, sessionCache, fakeFormData, chtApi } = mockScenario();
     const parent1 = mockParentPlace(parentContactType, fakeFormData.hierarchy_PARENT);
@@ -551,7 +555,8 @@ function mockScenario() {
     _id: 'parent-id',
     name: 'parent-name',
   };
-  const sessionCache = new SessionCache();
+  const session = mockChtSession();
+  const sessionCache = SessionCache.getForSession(session);
   const chtApi = {
     chtSession: mockChtSession(),
     getPlacesWithType: sinon.stub()

@@ -13,6 +13,10 @@ describe('lib/search.ts', () => {
     RemotePlaceCache.clear({} as ChtApi);
   });
 
+  afterEach(() => {
+    SessionCache.getForSession(mockChtSession()).removeAll();
+  });
+
   const parentPlace: ChtDoc = {
     _id: 'parent-id',
     name: 'parent',
@@ -26,7 +30,8 @@ describe('lib/search.ts', () => {
   };
 
   it('simple search', async () => {
-    const sessionCache = new SessionCache();
+    const session = mockChtSession();
+    const sessionCache = SessionCache.getForSession(session);
     const contactType = mockValidContactType('string', undefined);
     const formData = {
       hierarchy_replacement: 'me',
@@ -38,7 +43,8 @@ describe('lib/search.ts', () => {
   });
 
   it('data prefix', async () => {
-    const sessionCache = new SessionCache();
+    const session = mockChtSession();
+    const sessionCache = SessionCache.getForSession(session);
     const contactType = mockValidContactType('string', undefined);
     const formData = {
       prefix_replacement: 'me',
@@ -51,7 +57,8 @@ describe('lib/search.ts', () => {
   });
 
   it('search constrained by parent', async () => {
-    const sessionCache = new SessionCache();
+    const session = mockChtSession();
+    const sessionCache = SessionCache.getForSession(session);
     const ambiguity: ChtDoc = {
       _id: 'ambiguous',
       name: 'me ambiguous',
@@ -70,7 +77,8 @@ describe('lib/search.ts', () => {
   });
 
   it('ignores accents', async () => {
-    const sessionCache = new SessionCache();
+    const session = mockChtSession();
+    const sessionCache = SessionCache.getForSession(session);
     const contactType = mockValidContactType('string', undefined);
     const formData = {
       hierarchy_replacement: 'plÀce',
@@ -83,7 +91,8 @@ describe('lib/search.ts', () => {
   });
 
   it('search unsuccessful when result is not child of user facility', async () => {
-    const sessionCache = new SessionCache();
+    const session = mockChtSession();
+    const sessionCache = SessionCache.getForSession(session);
     const contactType = mockValidContactType('string', undefined);
     const formData = {
       hierarchy_replacement: 'me',

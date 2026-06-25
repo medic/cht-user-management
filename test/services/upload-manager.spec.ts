@@ -19,6 +19,10 @@ describe('services/upload-manager.ts', () => {
     RemotePlaceCache.clear({} as unknown as ChtApi);
   });
 
+  afterEach(() => {
+    SessionCache.getForSession(mockChtSession()).removeAll();
+  });
+
   it('mock data is properly sent to chtApi - standard', async () => {
     const { fakeFormData, contactType, chtApi, sessionCache, subcounty, uploadLogger } = await createMocks();
     const place = await PlaceFactory.createOne(fakeFormData, contactType, sessionCache, chtApi);
@@ -425,7 +429,8 @@ async function createMocks() {
     _id: 'parent-id',
     name: 'parent-name',
   };
-  const sessionCache = new SessionCache();
+  const session = mockChtSession();
+  const sessionCache = SessionCache.getForSession(session);
   const chtApi: any = {
     chtSession: mockChtSession(),
     getPlacesWithType: sinon.stub()

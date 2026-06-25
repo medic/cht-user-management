@@ -34,6 +34,10 @@ describe('lib/manage-hierarchy.ts', () => {
   });
 
   afterEach(() => {
+    SessionCache.getForSession(mockChtSession()).removeAll();
+  });
+
+  afterEach(() => {
     sinon.restore();
   });
 
@@ -46,7 +50,8 @@ describe('lib/manage-hierarchy.ts', () => {
         destination_SUBCOUNTY: 'to sub',
       };
       const contactType = Config.getContactType('c_community_health_unit');
-      const sessionCache = new SessionCache();
+      const session = mockChtSession();
+      const sessionCache = SessionCache.getForSession(session);
       
       const jobParams = await ManageHierarchyLib.getJobDetails(formData, contactType, sessionCache, chtApiWithDocs());
       expect(jobParams).to.have.property('jobName').that.equals('move_[From Sub.C-H-U]_to_[To Sub]');
@@ -66,7 +71,8 @@ describe('lib/manage-hierarchy.ts', () => {
         destination_SUBCOUNTY: 'to sub',
       };
       const contactType = Config.getContactType('c_community_health_unit');
-      const sessionCache = new SessionCache();
+      const session = mockChtSession();
+      const sessionCache = SessionCache.getForSession(session);
 
       const actual = ManageHierarchyLib.getJobDetails(formData, contactType, sessionCache, mockChtApi([], chuDocs));
       await expect(actual).to.eventually.be.rejectedWith('search string is empty');
@@ -80,7 +86,8 @@ describe('lib/manage-hierarchy.ts', () => {
         destination_SUBCOUNTY: 'from sub',
       };
       const contactType = Config.getContactType('c_community_health_unit');
-      const sessionCache = new SessionCache();
+      const session = mockChtSession();
+      const sessionCache = SessionCache.getForSession(session);
 
       const actual = ManageHierarchyLib.getJobDetails(formData, contactType, sessionCache, chtApiWithDocs());
       await expect(actual).to.eventually.be.rejectedWith('Place "c-h-u" already has "From Sub" as parent');
@@ -94,7 +101,8 @@ describe('lib/manage-hierarchy.ts', () => {
         destination_SUBCOUNTY: 'invalid sub',
       };
       const contactType = Config.getContactType('c_community_health_unit');
-      const sessionCache = new SessionCache();
+      const session = mockChtSession();
+      const sessionCache = SessionCache.getForSession(session);
 
       const actual = ManageHierarchyLib.getJobDetails(formData, contactType, sessionCache, chtApiWithDocs());
       await expect(actual).to.eventually.be.rejectedWith('Cannot find \'b_sub_county\' matching \'invalid sub\'');
@@ -111,7 +119,8 @@ describe('lib/manage-hierarchy.ts', () => {
         destination_replacement: 'destination',
       };
       const contactType = Config.getContactType('c_community_health_unit');
-      const sessionCache = new SessionCache();
+      const session = mockChtSession();
+      const sessionCache = SessionCache.getForSession(session);
       
       const jobParams = await ManageHierarchyLib.getJobDetails(formData, contactType, sessionCache, chtApiWithDocs());
       expect(jobParams).to.have.property('jobName').that.equals('merge_[From Sub.C-H-U]_to_[To Sub.Destination]');
@@ -133,7 +142,8 @@ describe('lib/manage-hierarchy.ts', () => {
         source_SUBCOUNTY: 'from sub'
       };
       const contactType = Config.getContactType('c_community_health_unit');
-      const sessionCache = new SessionCache();
+      const session = mockChtSession();
+      const sessionCache = SessionCache.getForSession(session);
       
       const jobParams = await ManageHierarchyLib.getJobDetails(formData, contactType, sessionCache, chtApiWithDocs());
       expect(jobParams).to.have.property('jobName').that.equals('delete_[From Sub.C-H-U]');
