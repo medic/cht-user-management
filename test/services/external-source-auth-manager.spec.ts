@@ -87,7 +87,7 @@ describe('services/external-source-auth-manager.ts', () => {
 
       await manager.getAuth(SOURCE_ID);
       // a millisecond before expiration
-      clock.tick(TOKEN_EXPIRATION * (60_000 - 1));
+      clock.tick((TOKEN_EXPIRATION * 60_000) - 1);
       await manager.getAuth(SOURCE_ID);
       expect(post.calledOnce).to.be.true;
     });
