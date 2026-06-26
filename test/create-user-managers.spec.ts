@@ -1,7 +1,7 @@
 import Chai from 'chai';
+import path from 'path';
 import rewire from 'rewire';
 import sinon from 'sinon';
-import path from 'path';
 
 import { mockChtSession } from './mocks';
 const createUserManagers = rewire(path.join(__dirname, '../scripts/create-user-managers/create-user-managers'));

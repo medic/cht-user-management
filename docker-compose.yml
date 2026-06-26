@@ -7,6 +7,8 @@ services:
 
   cht-user-management:
     image: ${CHT_USER_MANAGEMENT_IMAGE:-public.ecr.aws/medic/cht-user-management:latest}
+    env_file:
+      - .env
     environment:
       - NODE_ENV=${NODE_ENV:-production}
       - EXTERNAL_PORT=${EXTERNAL_PORT:-3500}
@@ -37,6 +39,7 @@ services:
       - REDIS_HOST=${REDIS_HOST:-redis}
       - REDIS_PORT=${REDIS_PORT:-6379}
       - WORKER_PRIVATE_KEY=${WORKER_PRIVATE_KEY}
+      - CONFIG_NAME=${CONFIG_NAME}
     depends_on:
       - redis
 

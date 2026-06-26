@@ -1,0 +1,102 @@
+<div>
+  {% if error %}
+    {% render 'components/notification_banner.liquid', message: {{ error }}, type: 'error' %}
+  {% elsif results.length > 0 %}
+    {% capture message %}
+      <strong>
+        Found {{ results.length }} matching result(s). Click "Add" on each result you want to import.
+      </strong>
+    {% endcapture %}
+    {% render 'components/notification_banner.liquid', message: message, type: 'success' %}
+  {% endif %}
+  {% for result in results %}
+    <form
+      hx-post="/place?op=new&type={{ contactType.name }}&external_source=true"
+      hx-target="this"
+      hx-swap="outerHTML"
+      hx-encoding="application/x-www-form-urlencoded"
+      autocomplete="off"
+    >
+      <section class="section p-2">
+        <label class="box">
+          <div class="is-vcentered is-mobile">
+            {% for field in result.propertyValues %}
+              <input name="{{ field.propertyType }}_{{ field.propertyName }}" value="{{ field.value | escape }}" hidden>
+              <div class="column">
+                <div>
+                  <strong>{{ field.friendlyName }}:</strong> {{ field.value | escape }}
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+          <div class="field is-grouped is-grouped-right">
+            <div class="control">
+              <button class="button is-link" type="submit">Add</button>
+            </div>
+          </div>
+        </label>
+      </section>
+    </form>
+  {% endfor %}
+
+  <div class="field is-grouped is-grouped-right p-2">
+    <div class="control">
+      <a
+        href="/add-from-external-source?source_id={{source.id}}&type={{ contactType.name }}"
+        id="cancel_btn"
+        class="button"
+        >Back</a
+      >
+    </div>
+    <div class="control">
+      <a href="/" id="done_btn" class="button is-link">Done</a>
+    </div>
+  </div>
+</div>
+
+<script>
+  //disable back/done buttons while request is in flight
+  (function () {
+    let inProgress = 0;
+
+    function setNavDisabled(disabled) {
+      ['cancel_btn', 'done_btn'].forEach(function (id) {
+        const link = document.getElementById(id);
+        if (!link) {
+          return;
+        }
+        if (disabled) {
+          link.setAttribute('disabled', 'true');
+          link.setAttribute('aria-disabled', 'true');
+          link.style.pointerEvents = 'none';
+          return;
+        }
+        link.removeAttribute('disabled');
+        link.removeAttribute('aria-disabled');
+        link.style.pointerEvents = '';
+      });
+    }
+
+    document.querySelectorAll('form').forEach(function (form) {
+      form.addEventListener('submit', function () {
+        const clickedButton = form.querySelector('button[type="submit"]');
+        if (clickedButton) {
+          clickedButton.disabled = true;
+          clickedButton.textContent = 'Adding...';
+        }
+      });
+
+      form.addEventListener('htmx:beforeRequest', function () {
+        inProgress++;
+        setNavDisabled(true);
+      });
+
+      form.addEventListener('htmx:afterRequest', function () {
+        inProgress = Math.max(0, inProgress - 1);
+        if (inProgress === 0) {
+          setNavDisabled(false);
+        }
+      });
+    });
+  })();
+</script>
