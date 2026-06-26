@@ -74,8 +74,9 @@
   },
   "scripts": {
     "cp-package-json": "cp package.json ./src",
-    "test": "npx ts-mocha test/{,**}/*.spec.ts --exclude test/integration/{,**}/*.spec.ts",
-    "build": "npm run cp-package-json && npx tsc",
+    "test": "npm run test-types && npx ts-mocha test/{,**}/*.spec.ts --exclude test/integration/{,**}/*.spec.ts",
+    "test-types": "npx tsc --noEmit",
+    "build": "npm run cp-package-json && npx tsc -p tsconfig.build.json",
     "lint": "npx eslint --color --cache .",
     "start": "node dist/index.js",
     "dev": "tsc-watch --onSuccess \"node dist/index.js\"",

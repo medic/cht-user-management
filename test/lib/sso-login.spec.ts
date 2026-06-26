@@ -74,8 +74,8 @@ describe('lib/sso-login.ts', () => {
       expect(stub.firstCall.args[0].url).to.eq('http://cht.example.com/medic/login/oidc/authorize');
       // Bearer header goes only to the IdP host — not to CHT hops (initial, callback, /admin).
       stub.getCalls().forEach(call => {
-        const onIdp = new URL(call.args[0].url).host === 'idp.example.com';
-        const auth = call.args[0].headers.Authorization;
+        const onIdp = new URL(call.args[0].url as string).host === 'idp.example.com';
+        const auth = (call.args[0].headers as any)?.Authorization;
         if (onIdp) {
           expect(auth).to.eq(`Bearer ${ACCESS_TOKEN}`);
         } else {
@@ -94,9 +94,9 @@ describe('lib/sso-login.ts', () => {
       // The dance "succeeds" (mocked) but we just want to verify no header leaked.
       await ssoLogin(mockAuthInfo, ACCESS_TOKEN, IDP_ORIGINS).catch(() => undefined);
 
-      const attackerCall = stub.getCalls().find(c => new URL(c.args[0].url).host === 'idp.example.com.attacker.com');
+      const attackerCall = stub.getCalls().find(c => new URL(c.args[0].url as string).host === 'idp.example.com.attacker.com');
       expect(attackerCall, 'attacker host was visited').to.exist;
-      expect(attackerCall!.args[0].headers.Authorization).to.be.undefined;
+      expect((attackerCall!.args[0].headers as any)?.Authorization).to.be.undefined;
     });
 
     it('throws when idpOrigins allowlist is empty', async () => {
@@ -114,8 +114,8 @@ describe('lib/sso-login.ts', () => {
 
       await ssoLogin(mockAuthInfo, ACCESS_TOKEN, ['http://idp.example.com', 'http://other-idp.example.com']);
 
-      const idpCall = stub.getCalls().find(c => new URL(c.args[0].url).host === 'other-idp.example.com');
-      expect(idpCall!.args[0].headers.Authorization).to.eq(`Bearer ${ACCESS_TOKEN}`);
+      const idpCall = stub.getCalls().find(c => new URL(c.args[0].url as string).host === 'other-idp.example.com');
+      expect((idpCall!.args[0].headers as any)?.Authorization).to.eq(`Bearer ${ACCESS_TOKEN}`);
     });
 
     it('replays cookies on subsequent requests to the same host', async () => {
@@ -127,7 +127,7 @@ describe('lib/sso-login.ts', () => {
       await ssoLogin(mockAuthInfo, ACCESS_TOKEN, IDP_ORIGINS);
 
       // Second hop must include the cookie set on the first.
-      const secondHopHeaders = stub.getCall(1).args[0].headers;
+      const secondHopHeaders = stub.getCall(1).args[0].headers as any;
       expect(secondHopHeaders.Cookie).to.include('_extra=foo');
     });
 

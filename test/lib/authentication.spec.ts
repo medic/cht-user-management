@@ -31,14 +31,14 @@ describe('lib/authentication/authentication.ts', () => {
 
   it('invalid session cannot be decoded for cookie', () => {
     const session = mockChtSession();
-    delete session.username;
+    delete (session as any).username;
     const encoded = Auth.encodeTokenForCookie(session);
     expect(() => Auth.createCookieSession(encoded)).to.throw('invalid CHT session information');
   });
 
   it('invalid session cannot be decoded for workers', () => {
     const session = mockChtSession();
-    delete session.username;
+    delete (session as any).username;
     const encoded = Auth.encodeTokenForWorker(session);
     expect(() => Auth.createWorkerSession(encoded)).to.throw('invalid CHT session information');
   });

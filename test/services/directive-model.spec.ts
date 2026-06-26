@@ -1,21 +1,27 @@
 import { expect } from 'chai';
 
-import { PlaceUploadState } from '../../src/services/place';
+import Place, { PlaceUploadState } from '../../src/services/place';
 import DirectiveModel from '../../src/services/directive-model';
 import SessionCache from '../../src/services/session-cache';
+import { mockChtSession } from '../mocks';
 
-const oneOfEachTypePlace = [
+const oneOfEachTypePlace = ([
   { id: 'fail', state: PlaceUploadState.FAILURE },
   { id: 'in-progress', state: PlaceUploadState.IN_PROGRESS },
   { id: 'staged', state: PlaceUploadState.STAGED, warnings: ['warn'] },
   { id: 'scheduled', state: PlaceUploadState.SCHEDULED },
   { id: 'success', state: PlaceUploadState.SUCCESS },
   { id: 'validation-error', state: PlaceUploadState.STAGED, hasValidationErrors: true },
-];
+] as unknown as Place[]);
 
 describe('services/directive-model.ts', () => {
+  afterEach(() => {
+    SessionCache.getForSession(mockChtSession()).removeAll();
+  });
+
   it('one place with each state', () => {
-    const sessionCache = new SessionCache();
+    const session = mockChtSession();
+    const sessionCache = SessionCache.getForSession(session);
     sessionCache.savePlaces(...oneOfEachTypePlace);
 
     const progressModel = new DirectiveModel(sessionCache);
@@ -35,7 +41,8 @@ describe('services/directive-model.ts', () => {
   });
 
   it('success filter yields hidden count', () => {
-    const sessionCache = new SessionCache();
+    const session = mockChtSession();
+    const sessionCache = SessionCache.getForSession(session);
     sessionCache.savePlaces(...oneOfEachTypePlace);
 
     const progressModel = new DirectiveModel(sessionCache, 'success');
@@ -46,7 +53,8 @@ describe('services/directive-model.ts', () => {
   });
 
   it('empty session', () => {
-    const sessionCache = new SessionCache();
+    const session = mockChtSession();
+    const sessionCache = SessionCache.getForSession(session);
     const progressModel = new DirectiveModel(sessionCache);
     expect(progressModel).to.deep.eq({
       failureCount: 0,
@@ -61,6 +69,6 @@ describe('services/directive-model.ts', () => {
       filter: undefined,
       hiddenCount: 0,
     });
-  }); 
+  });
 });
 

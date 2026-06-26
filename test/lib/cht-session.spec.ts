@@ -6,6 +6,7 @@ import path from 'path';
 import { AuthenticationInfo } from '../../src/config';
 import { RemotePlace } from '../../src/lib/remote-place-cache';
 import { AuthError } from '../../src/lib/authentication-error';
+import { UnvalidatedPropertyValue } from '../../src/property-value';
 const ChtSession = rewire(path.join(__dirname, '../../src/lib/cht-session'));
 import { REQUIRED_PERMISSIONS } from '../../src/services/user-permissions';
 
@@ -46,7 +47,7 @@ const mockSettingsResponse = {
   }
 };
 
-let mockAxios;
+let mockAxios: any;
 
 describe('lib/cht-session.ts', () => {
   beforeEach(() => {
@@ -143,9 +144,11 @@ describe('lib/cht-session.ts', () => {
         const session = await ChtSession.default.create(mockAuthInfo, 'user', 'pwd');
         const place: RemotePlace = {
           id: '123',
-          name: 'place', 
+          name: new UnvalidatedPropertyValue('place'),
           lineage: ['parent-id', 'grandparent-id'],
           type: 'remote',
+          placeType: 'remote',
+          uniquePlaceValues: {},
         };
         const actual = session.isPlaceAuthorized(place);
         expect(actual).to.eq(scenario.isExpected);

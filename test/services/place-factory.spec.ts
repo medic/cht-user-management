@@ -8,6 +8,8 @@ import { ChtDoc, expectInvalidProperties, mockChtSession, mockParentPlace, mockP
 import { Config, ContactType } from '../../src/config';
 import Place from '../../src/services/place';
 import PlaceFactory from '../../src/services/place-factory';
+import { ChtApi } from '../../src/lib/cht-api';
+import ChtSession from '../../src/lib/cht-session';
 import RemotePlaceCache from '../../src/lib/remote-place-cache';
 import RemotePlaceResolver from '../../src/lib/remote-place-resolver';
 import SessionCache from '../../src/services/session-cache';
@@ -19,7 +21,8 @@ const { expect } = Chai;
 
 describe('services/place-factory.ts', () => {
   beforeEach(() => {
-    RemotePlaceCache.clear({});
+    RemotePlaceCache.clear({} as unknown as ChtApi);
+    SessionCache.getForSession(mockChtSession()).removeAll();
   });
 
   it('name conflict at local yields invalid', async () => {
@@ -531,12 +534,12 @@ it('create multiple places with single contact', async () => {
 });
 
 export function mockGroupedFormData(contactType: ContactType, placeCount: number) {
-  const genPlaceFormData = (contactType, uniqfix) => {
-    const data = {};
-    contactType.place_properties.forEach(p => data[`place_${p.property_name}`] = p.property_name + uniqfix);
+  const genPlaceFormData = (contactType: ContactType, uniqfix: string) => {
+    const data: Record<string, any> = {};
+    contactType.place_properties.forEach((p: any) => data[`place_${p.property_name}`] = p.property_name + uniqfix);
     return data;
   };
-  const formData = {};
+  const formData: Record<string, any> = {};
   for (let i = 0; i < placeCount; i++) {
     formData[`list_${i}`] = Buffer.from(JSON.stringify(genPlaceFormData(contactType, `${i}`))).toString('base64');
   }
@@ -549,7 +552,8 @@ function mockScenario() {
     _id: 'parent-id',
     name: 'parent-name',
   };
-  const sessionCache = new SessionCache();
+  const session = mockChtSession();
+  const sessionCache = SessionCache.getForSession(session);
   const chtApi = {
     chtSession: mockChtSession(),
     getPlacesWithType: sinon.stub()
@@ -558,6 +562,11 @@ function mockScenario() {
       .onThirdCall().resolves([]),
     createPlace: sinon.stub().resolves({ placeId: 'created-place-id', contactId: 'created-contact-id' }),
     createUser: sinon.stub().resolves(),
+  } as unknown as ChtApi & {
+    chtSession: ChtSession;
+    getPlacesWithType: sinon.SinonStub;
+    createPlace: sinon.SinonStub;
+    createUser: sinon.SinonStub;
   };
   const fakeFormData: any = {
     place_name: 'place',
