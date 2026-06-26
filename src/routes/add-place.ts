@@ -4,6 +4,7 @@ import { Config } from '../config';
 import { ChtApi } from '../lib/cht-api';
 import PlaceFactory from '../services/place-factory';
 import SessionCache from '../services/session-cache';
+import ExternalSource from '../services/external-source';
 import RemotePlaceResolver from '../lib/remote-place-resolver';
 import { UploadManager } from '../services/upload-manager';
 import RemotePlaceCache from '../lib/remote-place-cache';
@@ -14,6 +15,7 @@ export default async function addPlace(fastify: FastifyInstance) {
   fastify.get('/add-place', async (req, resp) => {
     const queryParams: any = req.query;
 
+    const externalSources = Config.getSanitizedExternalSources();
     const contactTypes = Config.contactTypes();
     const contactType = queryParams.type
       ? Config.getContactType(queryParams.type)
@@ -38,10 +40,77 @@ export default async function addPlace(fastify: FastifyInstance) {
       contactType,
       contactTypes,
       userRoleProperty: Config.getUserRoleConfig(contactType),
+      MATOMO_HOST: process.env.MATOMO_HOST,
+      externalSources,
+    };
+
+    return resp.view('src/liquid/app/view.liquid', tmplData);
+  });
+
+  fastify.get('/add-from-external-source', async (req, resp) => {
+    const queryParams: any = req.query;
+    const { source_id: sourceId, type } = queryParams;
+
+    const externalSources = Config.getExternalSources();
+    const source = externalSources.find((source) => source.id === sourceId);
+    if (!source) {
+      throw new Error(`external source ${sourceId} not found`);
+    }
+
+    const contactType = Config.getContactType(type);
+    const tmplData = {
+      view: 'add_from_external_source',
+      op: 'add_from_external_source',
+      logo: Config.getLogoBase64(),
+      session: req.chtSession,
+      contactType,
+      hierarchy: Config.getHierarchyWithReplacement(contactType, 'desc'),
+      contactTypes: Config.contactTypes(),
+      source,
       MATOMO_HOST: process.env.MATOMO_HOST
     };
 
     return resp.view('src/liquid/app/view.liquid', tmplData);
+  });
+
+  fastify.get('/search-external-source', async (req, resp) => {
+    const queryParams: any = req.query;
+    const { source_id: sourceId, type, ...searchParams } = queryParams;
+    const externalSources = Config.getSanitizedExternalSources();
+    const source = externalSources.find((source) => source.id === sourceId);
+    const contactType = Config.getContactType(type);
+
+    const renderError = (error: string) => {
+      return resp.view('src/liquid/place/search_external_source.liquid', {
+        contactType,
+        hierarchy: Config.getHierarchyWithReplacement(contactType, 'desc'),
+        source: source,
+        error,
+        data: searchParams,
+      });
+    };
+
+    if (!source) {
+      return renderError(`Unkown external source ${sourceId}`);
+    }
+
+    try {
+      const externalSourceConfig = Config.getExternalSourceConfigById(sourceId, type);
+      const auth = await fastify.externalSourceAuthManager.getAuth(source.id);
+
+      const results = await ExternalSource.search(externalSourceConfig, searchParams, auth);
+      if (results.length === 0) {
+        return renderError('No results found');
+      }
+      return resp.view('src/liquid/place/select_external_source_result.liquid', {
+        contactType,
+        source,
+        results,
+      });
+    } catch (error) {
+      req.log.error(error);
+      return renderError(ExternalSource.toExternalSourceMessage(error, source.friendly_name));
+    }
   });
 
   fastify.post('/place/dob', async (req, resp) => {
@@ -59,13 +128,19 @@ export default async function addPlace(fastify: FastifyInstance) {
 
   // you want to create a place? replace a contact? you'll have to go through me first
   fastify.post('/place', async (req, resp) => {
-    const { op, type: placeType } = req.query as any;
+    const { op, type: placeType, external_source: externalSource } = req.query as any;
 
     const contactType = Config.getContactType(placeType);
     const sessionCache: SessionCache = req.sessionCache;
     const chtApi = new ChtApi(req.chtSession);
     if (op === 'new' || op === 'replace') {
-      await PlaceFactory.createOne(req.body, contactType, sessionCache, chtApi);
+      const place = await PlaceFactory.createOne(req.body, contactType, sessionCache, chtApi);
+      if (externalSource === 'true') {
+        return resp.view('src/liquid/components/notification_banner.liquid', {
+          message: `${place.name} Added`
+        });
+      }
+
       resp.header('HX-Redirect', `/`);
       return;
     }
@@ -140,6 +215,7 @@ export default async function addPlace(fastify: FastifyInstance) {
       data,
       errors: transformedErrors,
       userRoleProperty: Config.getUserRoleConfig(place.type),
+      externalSources: Config.getExternalSources(),
       MATOMO_HOST: process.env.MATOMO_HOST
     };
 
