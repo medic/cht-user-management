@@ -1,17 +1,17 @@
 <div>
-  <section class="section p-2">
-    {% if error %}
-      <div class="notification is-danger is-light">{{ error }}</div>
-    {% endif %}
-    {% if results.length > 0 %}
-      <div class="notification is-success is-light">
-        <strong>Found {{ results.length }} result(s). Select one to add</strong>
-      </div>
-    {% endif %}
-  </section>
+  {% if error %}
+    {% render 'components/notification_banner.liquid', message: {{ error }}, type: 'error' %}
+  {% elsif results.length > 0 %}
+    {% capture message %}
+      <strong>
+        Found {{ results.length }} matching result(s). Click "Add" on each result you want to import.
+      </strong>
+    {% endcapture %}
+    {% render 'components/notification_banner.liquid', message: message, type: 'success' %}
+  {% endif %}
   {% for result in results %}
     <form
-      hx-post="/place?op=new&type={{ contactType.name }}"
+      hx-post="/place?op=new&type={{ contactType.name }}&external_source=true"
       hx-target="this"
       hx-swap="outerHTML"
       hx-encoding="application/x-www-form-urlencoded"
@@ -40,32 +40,63 @@
   {% endfor %}
 
   <div class="field is-grouped is-grouped-right p-2">
-    <a
-      href="/add-from-external-source?source_id={{source.id}}&type={{ contactType.name }}"
-      id="cancel_btn"
-      class="button"
-      >Cancel</a
-    >
+    <div class="control">
+      <a
+        href="/add-from-external-source?source_id={{source.id}}&type={{ contactType.name }}"
+        id="cancel_btn"
+        class="button"
+        >Back</a
+      >
+    </div>
+    <div class="control">
+      <a href="/" id="done_btn" class="button is-link">Done</a>
+    </div>
   </div>
 </div>
 
 <script>
-  document.querySelectorAll('form').forEach(function (form) {
-    form.addEventListener('submit', function () {
-      const cancelButton = document.getElementById('cancel_btn');
-      cancelButton.setAttribute('disabled', 'true');
-      cancelButton.addEventListener('click', function (event) {
-        event.preventDefault();
+  //disable back/done buttons while request is in flight
+  (function () {
+    let inProgress = 0;
+
+    function setNavDisabled(disabled) {
+      ['cancel_btn', 'done_btn'].forEach(function (id) {
+        const link = document.getElementById(id);
+        if (!link) {
+          return;
+        }
+        if (disabled) {
+          link.setAttribute('disabled', 'true');
+          link.setAttribute('aria-disabled', 'true');
+          link.style.pointerEvents = 'none';
+          return;
+        }
+        link.removeAttribute('disabled');
+        link.removeAttribute('aria-disabled');
+        link.style.pointerEvents = '';
+      });
+    }
+
+    document.querySelectorAll('form').forEach(function (form) {
+      form.addEventListener('submit', function () {
+        const clickedButton = form.querySelector('button[type="submit"]');
+        if (clickedButton) {
+          clickedButton.disabled = true;
+          clickedButton.textContent = 'Adding...';
+        }
       });
 
-      document.querySelectorAll('button[type="submit"]').forEach(function (submitButton) {
-        submitButton.disabled = true;
+      form.addEventListener('htmx:beforeRequest', function () {
+        inProgress++;
+        setNavDisabled(true);
       });
 
-      const clickedButton = form.querySelector('button[type="submit"]');
-      if (clickedButton) {
-        clickedButton.textContent = 'Adding...';
-      }
+      form.addEventListener('htmx:afterRequest', function () {
+        inProgress = Math.max(0, inProgress - 1);
+        if (inProgress === 0) {
+          setNavDisabled(false);
+        }
+      });
     });
-  });
+  })();
 </script>

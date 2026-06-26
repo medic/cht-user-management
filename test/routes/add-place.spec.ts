@@ -5,6 +5,7 @@ import sinon from 'sinon';
 import addPlace from '../../src/routes/add-place';
 import { Config } from '../../src/config';
 import ExternalSource from '../../src/services/external-source';
+import PlaceFactory from '../../src/services/place-factory';
 import { mockChtSession, mockValidContactType } from '../mocks';
 
 const EXTERNAL_SOURCE = {
@@ -26,8 +27,7 @@ describe('routes/add-place.ts external source routes', () => {
 
   beforeEach(async () => {
     fastify = Fastify();
-
-    // capture rendered views instead of running the liquid engine
+    
     viewSpy = sinon.spy();
     fastify.decorateReply('view', function (this: any, page: string, data: any) {
       viewSpy(page, data);
@@ -152,6 +152,38 @@ describe('routes/add-place.ts external source routes', () => {
       expect(resp.statusCode).to.equal(200);
       expect(viewSpy.firstCall.args[0]).to.equal('src/liquid/place/search_external_source.liquid');
       expect(dataOf().error).to.contain('Something went wrong while connecting to Source A');
+    });
+  });
+
+  describe('POST /place', () => {
+    let createOneStub: sinon.SinonStub;
+
+    beforeEach(() => {
+      createOneStub = sinon.stub(PlaceFactory, 'createOne').resolves({ name: 'Clinic A' } as any);
+    });
+
+    it('renders a confirmation banner when adding from an external source', async () => {
+      const resp = await fastify.inject({
+        method: 'POST',
+        url: '/place?op=new&type=contacttype-name&external_source=true',
+      });
+
+      expect(resp.statusCode).to.equal(200);
+      expect(viewSpy.firstCall.args[0]).to.equal('src/liquid/components/notification_banner.liquid');
+      expect(dataOf().message).to.equal('Clinic A Added');
+      expect(resp.headers['hx-redirect']).to.be.undefined;
+      expect(createOneStub.calledOnce).to.be.true;
+    });
+
+    it('redirects to home when adding a place outside an external source', async () => {
+      const resp = await fastify.inject({
+        method: 'POST',
+        url: '/place?op=new&type=contacttype-name',
+      });
+
+      expect(resp.statusCode).to.equal(200);
+      expect(resp.headers['hx-redirect']).to.equal('/');
+      expect(createOneStub.calledOnce).to.be.true;
     });
   });
 });

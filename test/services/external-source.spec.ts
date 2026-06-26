@@ -14,7 +14,7 @@ const mockConfig = (overrides: Partial<ExternalSourceConfig> = {}): ExternalSour
   friendly_name: 'Source A',
   url: 'https://example.com',
   api_endpoint: '/api/search',
-  auth: { type: 'token', token_endpoint: '/token', client_id: 'client_id', client_secret: 'client_secret' },
+  auth: { type: 'token', token_endpoint: '/token', client_id_key: 'client_id', client_secret_key: 'client_secret' },
   resultKey: 'results',
   other_filters: { active: 'true' },
   mapping: [

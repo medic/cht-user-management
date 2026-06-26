@@ -24,8 +24,8 @@ const mockSource = (overrides: Partial<ExternalSource> = {}): ExternalSource => 
     type: 'token',
     token_endpoint: '/oauth/token',
     expiration: TOKEN_EXPIRATION,
-    client_id: 'client_id',
-    client_secret: 'client_secret',
+    client_id_key: 'client_id',
+    client_secret_key: 'client_secret',
     ...overrides.auth,
   },
   ...overrides,
@@ -40,7 +40,7 @@ describe('services/external-source-auth-manager.ts', () => {
   describe('basic auth', () => {
     it('returns a Basic header using the raw secret', async () => {
       process.env[SECRET_KEY] = 'raw-secret';
-      const basicSource = mockSource({ auth: { type: 'basic', client_id: 'client_id', client_secret: 'client_secret' } });
+      const basicSource = mockSource({ auth: { type: 'basic', client_id_key: 'client_id', client_secret_key: 'client_secret' } });
       const manager = new ExternalSourceAuthManager([basicSource]);
       const post = sinon.stub(axios, 'post');
 
@@ -87,7 +87,7 @@ describe('services/external-source-auth-manager.ts', () => {
 
       await manager.getAuth(SOURCE_ID);
       // a millisecond before expiration
-      clock.tick(TOKEN_EXPIRATION * (60_000 - 1));
+      clock.tick((TOKEN_EXPIRATION * 60_000) - 1);
       await manager.getAuth(SOURCE_ID);
       expect(post.calledOnce).to.be.true;
     });
