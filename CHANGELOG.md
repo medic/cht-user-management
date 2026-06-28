@@ -1,3 +1,10 @@
+# [2.11.0](https://github.com/medic/cht-user-management/compare/v2.10.3...v2.11.0) (2026-06-26)
+
+
+### Features
+
+* **#341:** integration with external system as source ([#347](https://github.com/medic/cht-user-management/issues/347)) ([a55a112](https://github.com/medic/cht-user-management/commit/a55a112bc0005aff9190bf2be14d0391402ec48c)), closes [#341](https://github.com/medic/cht-user-management/issues/341)
+
 ## [2.10.3](https://github.com/medic/cht-user-management/compare/v2.10.2...v2.10.3) (2026-06-23)
 
 

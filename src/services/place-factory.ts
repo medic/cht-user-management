@@ -23,7 +23,7 @@ export default class PlaceFactory {
     sessionCache: SessionCache,
     chtApi: ChtApi,
     hierarchyPrefix: string = 'hierarchy_'
-  ) : Promise<Place> => {
+  ): Promise<Place> => {
     const place = new Place(contactType);
     place.setPropertiesFromFormData(formData, hierarchyPrefix);
     await PlaceFactory.finalizePlaces([place], sessionCache, chtApi, contactType);
@@ -46,7 +46,7 @@ export default class PlaceFactory {
     });
     let existingContact: Contact | undefined;
     if (contact) {
-      const p = sessionCache.getPlaces({type: contactType.name}).find(p => p.contact.id === contact);
+      const p = sessionCache.getPlaces({ type: contactType.name }).find(p => p.contact.id === contact);
       existingContact = p?.contact;
       formData = p?.asFormData('hierarchy_');
     }
@@ -63,7 +63,7 @@ export default class PlaceFactory {
           place.contact = places[0].contact;
         }
       }
-      place.hasSharedUser = true;  
+      place.hasSharedUser = true;
       places.push(place);
     });
     await PlaceFactory.finalizePlaces(places, sessionCache, chtApi, contactType);
@@ -73,7 +73,7 @@ export default class PlaceFactory {
   public static reassign = async (newContactId: string, placeId: string, api: ChtApi) => {
     const user = await api.getUser(newContactId) as UserInfo & { place: CouchDoc[] };
     if (!user) {
-      throw new Error('We did not find a user from the link provided. ' + 
+      throw new Error('We did not find a user from the link provided. ' +
         'Please make sure the link is correct and the contact can login to the instance');
     }
     const updatedPlaces = [...user.place.map(d => d._id), placeId];
@@ -81,11 +81,11 @@ export default class PlaceFactory {
     const place = await api.getDoc(placeId);
     if (place.contact) {
       const contactId = place.contact._id ?? place.contact;
-      const prevUser = await api.getUser(contactId) as UserInfo & {place: CouchDoc[]};
-      const prevUserPlaces = prevUser.place.map(p => p._id).filter(id => id !== placeId); 
+      const prevUser = await api.getUser(contactId) as UserInfo & { place: CouchDoc[] };
+      const prevUserPlaces = prevUser.place.map(p => p._id).filter(id => id !== placeId);
       if (prevUserPlaces.length > 0) {
-        await api.updateUser({ 
-          username: prevUser.username, 
+        await api.updateUser({
+          username: prevUser.username,
           place: prevUserPlaces
         });
       } else {
@@ -122,7 +122,7 @@ export default class PlaceFactory {
     await WarningSystem.setWarnings(contactType, chtApi, sessionCache);
   }
 
-  private static async loadPlacesFromCsv(csvBuffer: Buffer, contactType: ContactType) : Promise<Place[]> {
+  private static async loadPlacesFromCsv(csvBuffer: Buffer, contactType: ContactType): Promise<Place[]> {
     const csvColumns: string[] = [];
     const places: Place[] = [];
     const parser = parse(csvBuffer, { delimiter: ',', trim: true, skip_empty_lines: true });
