@@ -8,7 +8,9 @@ import { minify } from 'html-minifier';
 import { PlaceUploadState } from '../services/place';
 
 export default async function events(fastify: FastifyInstance) {
-  fastify.get('/events/connection', async (req, resp) => {
+  // compress: false — this is a long-lived SSE (text/event-stream) response; compressing it buffers
+  // events (breaking real-time delivery)
+  fastify.get('/events/connection', { compress: false }, async (req, resp) => {
     const uploadManager: UploadManager = fastify.uploadManager;
     const sessionCache: SessionCache = req.sessionCache;
 
@@ -61,11 +63,11 @@ export default async function events(fastify: FastifyInstance) {
       await updateDirective();
     };
 
-    uploadManager.on('refresh_table_row', placeChangeListener);
-    uploadManager.on('refresh_grouped', async () => {
+    const groupedChangeListener = async () => {
       resp.sse({ event: `update-group`, data: `update` });
-    });
-    uploadManager.on('refresh_place', async (args) => {
+    };
+
+    const placeStateListener = async (args: { id: string; state: PlaceUploadState; err?: string }) => {
       const { id, state, err } = args;
       let statusText;
       if (state === PlaceUploadState.FAILURE) {
@@ -74,10 +76,17 @@ export default async function events(fastify: FastifyInstance) {
         statusText = `<span class="tag is-size-7 is-success is-capitalized">${state}</span>`;
       }
       resp.sse({ event: `update-${id}`, data: statusText });
-    });
+    };
 
+    uploadManager.on('refresh_table_row', placeChangeListener);
+    uploadManager.on('refresh_grouped', groupedChangeListener);
+    uploadManager.on('refresh_place', placeStateListener);
+
+    // Remove *every* listener
     req.socket.on('close', () => {
       uploadManager.removeListener('refresh_table_row', placeChangeListener);
+      uploadManager.removeListener('refresh_grouped', groupedChangeListener);
+      uploadManager.removeListener('refresh_place', placeStateListener);
     });
   });
 }
