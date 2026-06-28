@@ -1,3 +1,10 @@
+## [2.11.1](https://github.com/medic/cht-user-management/compare/v2.11.0...v2.11.1) (2026-06-28)
+
+
+### Bug Fixes
+
+* **#365:** cleanup event-based memory leak ([b5271b5](https://github.com/medic/cht-user-management/commit/b5271b54c3859ba9d170ecad0d94e32fbd777a4f)), closes [#365](https://github.com/medic/cht-user-management/issues/365)
+
 # [2.11.0](https://github.com/medic/cht-user-management/compare/v2.10.3...v2.11.0) (2026-06-26)
 
 
