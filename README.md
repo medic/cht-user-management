@@ -43,8 +43,8 @@ To use the User Management Tool with your CHT project, you'll need to create a n
 `external_sources[].auth.type` | string | The type of authentication to use. Supports `token` | `basic`.
 `external_sources[].auth.token_endpoint` | string | The token endpoint for the external source used to get an access token. Required for auth type token. Expects a response from the token endpoint with a `token` or `access_token` field.
 `external_sources[].auth.expiration` | number | The number of minutes before the token expires. Required for auth type token.
-`external_sources[].auth.mapping.client_id_key` | string | The client_id key of the external source. This is used to map with what API expects as key for the client_id eg if the API expects `username` then this should be set to `username`.
-`external_sources[].auth.mapping.client_secret` | string | The client_secret key of the external source. This is used to map with what API expects as key for the client_secret eg if the API expects `password` then this should be set to `password`.
+`external_sources[].auth.client_id_key` | string | The client_id key of the external source. This is used to map with what API expects as key for the client_id eg if the API expects `username` then this should be set to `username`.
+`external_sources[].auth.client_secret` | string | The client_secret key of the external source. This is used to map with what API expects as key for the client_secret eg if the API expects `password` then this should be set to `password`.
 `external_sources[].resultsKey` | string | The path in the external source response which contains the array of users. Also accepts dot notation (eg. `results.users`) and bracket notation (eg. `results[0].users`).
 `external_sources[].other_filters` | Object | Additional filters to apply to the external source query. eg `{ "user_role": "CHA", "limit": "10" }`. Note that these don't show up as search input fields.
 `contact_types` | Array | One element for each type of user which can be created by the system
