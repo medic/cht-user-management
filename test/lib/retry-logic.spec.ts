@@ -96,7 +96,7 @@ describe('lib/retry-logic', () => {
           await expect(execute).to.eventually.eq(output);
           expect(testFunction.callCount).to.eq(expectRetry ? 2 : 1);
         } else {
-          await expect(execute).to.eventually.be.rejectedWith(scenario.axiosError);
+          await expect(execute).to.eventually.be.rejectedWith(scenario.axiosError as any);
         }
       });
     }
@@ -120,15 +120,15 @@ describe('lib/retry-logic', () => {
           type: mockSimpleContactType('string', 'bar'),
           contact: { properties: {} },
         };
-        const userPayload = new UserPayload(place as Place, 'place_id', 'contact_id');
-    
-        const execute = RetryLogic.createUserWithRetries(userPayload as UserPayload, chtApi as ChtApi);
+        const userPayload = new UserPayload(place as unknown as Place, 'place_id', 'contact_id');
+
+        const execute = RetryLogic.createUserWithRetries(userPayload as UserPayload, chtApi as unknown as ChtApi);
         const expectRetry = ['upload-manager', 'axios'].includes(scenario.retry);
         if (expectRetry) {
           await expect(execute).to.eventually.be.rejectedWith('could not create user');
           expect(chtApi.createUser.callCount).to.eq(4);
         } else {
-          await expect(execute).to.eventually.be.rejectedWith(scenario.axiosError);
+          await expect(execute).to.eventually.be.rejectedWith(scenario.axiosError as any);
           expect(chtApi.createUser.callCount).to.eq(1);
         }
       });

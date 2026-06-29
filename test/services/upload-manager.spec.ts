@@ -12,10 +12,15 @@ import RemotePlaceResolver from '../../src/lib/remote-place-resolver';
 import { UploadManagerRetryScenario } from '../lib/retry-logic.spec';
 import { mockGroupedFormData } from './place-factory.spec';
 import { UploadLoggerImpl, UploadLoggerStore } from '../../src/services/upload-log';
+import { ChtApi } from '../../src/lib/cht-api';
 
 describe('services/upload-manager.ts', () => {
   beforeEach(() => {
-    RemotePlaceCache.clear({});
+    RemotePlaceCache.clear({} as unknown as ChtApi);
+  });
+
+  afterEach(() => {
+    SessionCache.getForSession(mockChtSession()).removeAll();
   });
 
   it('mock data is properly sent to chtApi - standard', async () => {
@@ -408,7 +413,7 @@ it('mock group data is properly sent to chtApi - standard', async () => {
 });
 
 class fakestore implements UploadLoggerStore {
-  items = {};
+  items: Record<string, any> = {};
   async save(user: string, batch: number, record: string[]): Promise<void> {
     this.items[user] = record;
   }
@@ -424,8 +429,9 @@ async function createMocks() {
     _id: 'parent-id',
     name: 'parent-name',
   };
-  const sessionCache = new SessionCache();
-  const chtApi = {
+  const session = mockChtSession();
+  const sessionCache = SessionCache.getForSession(session);
+  const chtApi: any = {
     chtSession: mockChtSession(),
     getPlacesWithType: sinon.stub()
       .onFirstCall().resolves([])
