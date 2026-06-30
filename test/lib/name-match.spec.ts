@@ -36,6 +36,5 @@ describe('lib/name-match.ts', () => {
 
 const areaType = Config.getContactType('d_community_health_volunteer_area');
 const placeNameProperty = Config.getHierarchyWithReplacement(areaType)[0];
-const asMatchedInKenya = (echisName: string) =>
-  new RemotePlacePropertyValue(echisName, placeNameProperty).formatted;
+const asMatchedInKenya = (echisName: string) => new RemotePlacePropertyValue(echisName, placeNameProperty).formatted;
 
