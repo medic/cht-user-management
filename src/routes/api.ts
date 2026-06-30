@@ -3,7 +3,7 @@ import _ from 'lodash';
 import { ChtApi } from '../lib/cht-api';
 import { Config } from '../config';
 import { FastifyInstance, FastifyRequest } from 'fastify';
-import Fuse from 'fuse.js';
+import { rankNameMatches } from '../lib/name-match';
 import Place, { PlaceUploadState } from '../services/place';
 import PlaceFactory from '../services/place-factory';
 import ManageHierarchyLib from '../lib/manage-hierarchy';
@@ -14,8 +14,6 @@ import WarningSystem from '../warnings';
 import { DisableUsers } from '../lib/disable-users';
 import { SetUserFacilities } from '../services/set-user-facilities';
 import { OidcUserPayload } from '../services/oidc-user-payload';
-
-const DEFAULT_THRESHOLD = 0.6;
 
 type SearchResult = {
   place_id: string;
@@ -103,7 +101,7 @@ export default async function api(fastify: FastifyInstance) {
       RemotePlaceCache.clear(chtApi);
     }
 
-    const resolution = await resolvePlacesFromHierarchy(formBody, getThreshold(req.query), chtApi, req.sessionCache);
+    const resolution = await resolvePlacesFromHierarchy(formBody, chtApi, req.sessionCache);
     if ('error' in resolution) {
       return resolution;
     }
@@ -116,7 +114,7 @@ export default async function api(fastify: FastifyInstance) {
     ensureJsonObjectBody(formBody);
 
     const chtApi = new ChtApi(req.chtSession);
-    const resolution = await resolvePlacesFromHierarchy(formBody, getThreshold(req.query), chtApi, req.sessionCache);
+    const resolution = await resolvePlacesFromHierarchy(formBody, chtApi, req.sessionCache);
     if ('error' in resolution) {
       return resolution;
     }
@@ -250,22 +248,15 @@ function validateSetUserFacilities(username: unknown, facilityIds: unknown): str
   return null;
 }
 
-function getThreshold(query: unknown): number {
-  const threshold = (query as any)?.threshold;
-  return threshold !== undefined ? parseFloat(threshold) : DEFAULT_THRESHOLD;
-}
-
 function shouldClearCache(query: any): boolean {
   const raw = query?.clear_cache;
   return raw === '1' || raw === 1 || raw === 'true' || raw === true;
 }
 
-// Resolves the parent hierarchy from form data and fuzzy-matches the base-level place by name,
-// returning the candidate places ranked best-first. Shared by /search and /deactivate-users so
-// both resolve a facility identically.
+// Resolves the parent hierarchy from form data and matches the base-level place by name,
+// returning the matching places ranked best-first.
 async function resolvePlacesFromHierarchy(
   formBody: any,
-  threshold: number,
   chtApi: ChtApi,
   sessionCache: SessionCache,
 ): Promise<HierarchyResolutionError | { hits: SearchResult[] }> {
@@ -287,20 +278,13 @@ async function resolvePlacesFromHierarchy(
   const placesHavingParent = (await RemotePlaceCache.getRemotePlaces(chtApi, contactType, baseHierarchyLevel))
     .filter(remotePlace => remotePlace.lineage[0] === parentId);
 
-  const fuse = new Fuse(placesHavingParent, {
-    keys: ['name.formatted'],
-    includeScore: true,
-    threshold,
-  });
-
-  const hits: SearchResult[] = fuse
-    .search(formBody[baseHierarchyLevel.property_name] ?? '')
+  const searchString: string = formBody[baseHierarchyLevel.property_name] ?? '';
+  const hits: SearchResult[] = rankNameMatches(searchString, placesHavingParent, remotePlace => remotePlace.name.formatted)
     .map(({ item, score }) => ({
       name: item.name.original,
       place_id: item.id,
-      score: score ?? 1,
-    }))
-    .sort((a, b) => a.score - b.score);
+      score,
+    }));
 
   return { hits };
 }
