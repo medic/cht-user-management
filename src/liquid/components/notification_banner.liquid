@@ -1,0 +1,23 @@
+{% comment %}
+  Parameters:
+    message - (required) the text to display. If blank/undefined, nothing renders.
+    type    - (optional) one of 'error', 'warning', 'success', or 'info'. Defaults to 'info'.
+  Usage:
+    {% render 'components/notification_banner.liquid', message: 'Saved!', type: 'success' %}
+{% endcomment %}
+{% assign messageType = type | default: 'info' %}
+{% case messageType %}
+  {% when 'error' %}
+    {% assign notificationClass = 'is-danger' %}
+  {% when 'warning' %}
+    {% assign notificationClass = 'is-warning' %}
+  {% when 'success' %}
+    {% assign notificationClass = 'is-success' %}
+  {% else %}
+    {% assign notificationClass = 'is-info' %}
+{% endcase %}
+{% if message %}
+  <section class="section p-2">
+    <div class="notification {{ notificationClass }} is-light">{{ message }}</div>
+  </section>
+{% endif %}

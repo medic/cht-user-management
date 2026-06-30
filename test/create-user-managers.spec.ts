@@ -1,9 +1,10 @@
 import Chai from 'chai';
+import path from 'path';
 import rewire from 'rewire';
 import sinon from 'sinon';
 
 import { mockChtSession } from './mocks';
-const createUserManagers = rewire('../scripts/create-user-managers/create-user-managers');
+const createUserManagers = rewire(path.join(__dirname, '../scripts/create-user-managers/create-user-managers'));
 
 import chaiAsPromised from 'chai-as-promised';
 import RemotePlaceCache from '../src/lib/remote-place-cache';

@@ -1,3 +1,45 @@
+## [2.12.1](https://github.com/medic/cht-user-management/compare/v2.12.0...v2.12.1) (2026-06-30)
+
+
+### Bug Fixes
+
+* **#364:** refine fuzzy name matching ([#371](https://github.com/medic/cht-user-management/issues/371)) ([9a5abff](https://github.com/medic/cht-user-management/commit/9a5abffdda8d51d04e865eeab38a88d507d519c5)), closes [#364](https://github.com/medic/cht-user-management/issues/364)
+
+# [2.12.0](https://github.com/medic/cht-user-management/compare/v2.11.1...v2.12.0) (2026-06-29)
+
+
+### Features
+
+* **#341:** add documentation for external source integration ([#348](https://github.com/medic/cht-user-management/issues/348)) ([10a0317](https://github.com/medic/cht-user-management/commit/10a0317151b88536a7ae37c90de454fe56ab22c6)), closes [#341](https://github.com/medic/cht-user-management/issues/341)
+
+## [2.11.1](https://github.com/medic/cht-user-management/compare/v2.11.0...v2.11.1) (2026-06-28)
+
+
+### Bug Fixes
+
+* **#365:** cleanup event-based memory leak ([b5271b5](https://github.com/medic/cht-user-management/commit/b5271b54c3859ba9d170ecad0d94e32fbd777a4f)), closes [#365](https://github.com/medic/cht-user-management/issues/365)
+
+# [2.11.0](https://github.com/medic/cht-user-management/compare/v2.10.3...v2.11.0) (2026-06-26)
+
+
+### Features
+
+* **#341:** integration with external system as source ([#347](https://github.com/medic/cht-user-management/issues/347)) ([a55a112](https://github.com/medic/cht-user-management/commit/a55a112bc0005aff9190bf2be14d0391402ec48c)), closes [#341](https://github.com/medic/cht-user-management/issues/341)
+
+## [2.10.3](https://github.com/medic/cht-user-management/compare/v2.10.2...v2.10.3) (2026-06-23)
+
+
+### Bug Fixes
+
+* **#358:** clean search input [#359](https://github.com/medic/cht-user-management/issues/359) ([3e4a23f](https://github.com/medic/cht-user-management/commit/3e4a23fb95239a79ae7403ddb74811f9d2e73a6f)), closes [#358](https://github.com/medic/cht-user-management/issues/358)
+
+## [2.10.2](https://github.com/medic/cht-user-management/compare/v2.10.1...v2.10.2) (2026-06-23)
+
+
+### Bug Fixes
+
+* **#361:** improve performance of search operations ([2d59ad9](https://github.com/medic/cht-user-management/commit/2d59ad93e90fe1d4ab64bc82bd37af2fe9ee7eb2)), closes [#361](https://github.com/medic/cht-user-management/issues/361)
+
 ## [2.10.1](https://github.com/medic/cht-user-management/compare/v2.10.0...v2.10.1) (2026-06-19)
 
 

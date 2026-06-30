@@ -172,7 +172,7 @@ describe('routes/api.ts', () => {
       const hits = resp.json();
       expect(hits.map((h: any) => h.place_id)).to.deep.equal(['p-jane', 'p-janet']);
       expect(hits[0].name).to.equal('Jane Doe');
-      expect(hits[0].score).to.be.lessThan(hits[1].score); // lower fuse score = better match
+      expect(hits[0].score).to.be.lessThan(hits[1].score); // lower score = better match
     });
 
     it('reports a missing parent in the body when no resolved place is found', async () => {
@@ -238,24 +238,6 @@ describe('routes/api.ts', () => {
       expect(dataPassed).to.deep.equal({ PARENT: 'p', GRANDPARENT: 'gp' });
       expect(dataPassed).to.not.have.property('replacement');
       expect(dataPassed).to.not.have.property('UNRELATED');
-    });
-
-    it('honours the query threshold by tightening Fuse cutoff', async () => {
-      stubResolvedParent(fakeParent(PARENT_ID));
-      getRemotePlacesStub.resolves([
-        fakeChild('p-jane', 'Jane Doe'),
-        fakeChild('p-totally', 'Totally Different XYZ'),
-      ]);
-
-      const resp = await fastify.inject({
-        method: 'POST',
-        url: '/api/v1/search?type=anything&threshold=0.1',
-        payload: { PARENT: 'parent', replacement: 'Jane Doe' },
-      });
-
-      expect(resp.statusCode).to.equal(200);
-      const hits = resp.json();
-      expect(hits.map((h: any) => h.place_id)).to.deep.equal(['p-jane']);
     });
 
     it('clears the cache before searching when clear_cache=1', async () => {

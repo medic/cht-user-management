@@ -2,7 +2,7 @@
   display: none;
 }
 
-.htmx-request .req-indicator {
+.htmx-request > .req-indicator {
   display: inline;
 }
 
