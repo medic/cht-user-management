@@ -1,3 +1,10 @@
+## [2.12.1](https://github.com/medic/cht-user-management/compare/v2.12.0...v2.12.1) (2026-06-30)
+
+
+### Bug Fixes
+
+* **#364:** refine fuzzy name matching ([#371](https://github.com/medic/cht-user-management/issues/371)) ([9a5abff](https://github.com/medic/cht-user-management/commit/9a5abffdda8d51d04e865eeab38a88d507d519c5)), closes [#364](https://github.com/medic/cht-user-management/issues/364)
+
 # [2.12.0](https://github.com/medic/cht-user-management/compare/v2.11.1...v2.12.0) (2026-06-29)
 
 
