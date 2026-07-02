@@ -34,6 +34,19 @@ To use the User Management Tool with your CHT project, you'll need to create a n
 `domains.friendly` | string | Friendly name for the instance (eg. "Migori")
 `domains.domain` | string | Hostname for the instance (eg. "migori-echis.health.go.ke")
 `domains.useHttp` | boolean | Whether to make an insecure connection (http) to the hostname (defaults to false)
+`external_sources[]` | Array | External sources which can be used to create new users
+`external_sources[].id` | string | The id of the external source
+`external_sources[].friendly_name` | string | The friendly name of the external source
+`external_sources[].url` | string | The url of the external source.
+`external_sources[].api_endpoint` | string | The API endpoint of the external source used to query for users.
+`external_sources[].auth` | Object | Authentication details for the external source
+`external_sources[].auth.type` | string | The type of authentication to use. Supports `token` | `basic`.
+`external_sources[].auth.token_endpoint` | string | The token endpoint for the external source used to get an access token. Required for auth type token. Expects a response from the token endpoint with a `token` or `access_token` field.
+`external_sources[].auth.expiration` | number | The number of minutes before the token expires. Required for auth type token.
+`external_sources[].auth.mapping.client_id_key` | string | The client_id key of the external source. This is used to map with what API expects as key for the client_id eg if the API expects `username` then this should be set to `username`.
+`external_sources[].auth.mapping.client_secret` | string | The client_secret key of the external source. This is used to map with what API expects as key for the client_secret eg if the API expects `password` then this should be set to `password`.
+`resultsKey` | string | The path in the external source response which contains the array of users. Also accepts dot notation (eg. `results.users`) and bracket notation (eg. `results[0].users`).
+`other_filters` | Object | Additional filters to apply to the external source query. eg `{ "user_role": "CHA", "limit": "10" }`. Note that these don't show up as search input fields.
 `contact_types` | Array | One element for each type of user which can be created by the system
 `contact_types.name` | string | The name of the contact_type as it [appears in the app's base_settings.json](https://docs.communityhealthtoolkit.org/apps/reference/app-settings/hierarchy/)
 `contact_types.friendly` | string | Friendly name of the contact type
@@ -62,6 +75,10 @@ type | ConfigPropertyType | Defines the validation rules, and auto-formatting ru
 parameter | any | See [ConfigPropertyType](#ConfigPropertyType).
 required | boolean | True if the object should not exist without this information.
 unique | 'all' or 'parent' | Dismissable warnings are flagged if a place already exists with this attribute's value. Values can be `all` (warns if any place has the same value) or `parent` (warns if a place with the same parent has the same value). This can only be defined on a `place_properties` or `contact_properties`.
+external_mapping | Object | Defines how the property should be mapped to an external source. Each key represents an external source id. See [Configuration](#Configuration).
+external_mapping[external_source_id].name | string | The name of the property as it appears in the external source response.
+external_mapping[external_source_id].path | string (optional) | The path of the property in the external source response data. Defaults to the `external_mapping[external_source_id].name`. Accepts dot notation (eg. `results.users`) and bracket notation (eg. `results[0].users`)
+external_mapping[external_source_id].is_filter | boolean | Whether this property should be used as a filter while querying the external source. If true this will show up as a search input field. Defaults to false.
 
 #### ConfigPropertyType
 The `ConfigPropertyType` defines a property's validation rules and auto-formatting rules. The optional `parameter` information alters the behavior of the `ConfigPropertyType`.
@@ -187,6 +204,7 @@ Variable | Description | Sample
 `PORT` | For localhost development environment | `3500`
 `COOKIE_PRIVATE_KEY` | A string used to two-way encryption of main app cookies. Production values need to be a secret. Suggest `uuidgen` to generate | `589a7f23-5bb2-4b77-ac78-f202b9b6d5e3`
 `WORKER_PRIVATE_KEY` | A string used to two-way encryption sensitive data passed to workers. Recommend to be different from `COOKIE_PRIVATE_KEY`. Production values need to be a secret. Suggest `uuidgen` to generate | `2b57pd5e-f272-og90-8u97-89a7589a7f23`
+`{EXTERNAL_SOURCE_ID}_SECRET` | Base64 encoded secret for external source auth | `bmFtZTpwYXNz` (ie. `name:pass`)
 `INTERFACE` | Interface to bind to. Leave as '0.0.0.0' for prod, suggest '127.0.0.1' for development | `127.0.0.1`
 `CHT_DEV_URL_PORT` | CHT instance when in `NODE_ENV===dev`. Needs URL and port | `192-168-1-26.local-ip.medicmobile.org:10463`
 `CHT_DEV_HTTP` |  'true' for http  'false' for https | `false`
