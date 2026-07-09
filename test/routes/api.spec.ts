@@ -415,7 +415,7 @@ describe('routes/api.ts', () => {
       const resp = await fastify.inject({
         method: 'POST',
         url: '/api/v1/set-user-facilities',
-        payload: { username: 'jdoe', facility_ids: ['fac-a', 'fac-b'] },
+        payload: { username: 'jdoe', facility_ids: ['fac-a', 'fac-b'], roles: ['community_health_assistant'] },
       });
 
       expect(resp.statusCode).to.equal(200);
@@ -424,9 +424,10 @@ describe('routes/api.ts', () => {
         facilityIds: ['fac-a', 'fac-b'],
         unassigned: [{ username: 'other', remaining: ['fac-z'] }],
       });
-      const [username, facilityIds] = setUserFacilitiesStub.firstCall.args;
+      const [username, facilityIds, , roles] = setUserFacilitiesStub.firstCall.args;
       expect(username).to.equal('jdoe');
       expect(facilityIds).to.deep.equal(['fac-a', 'fac-b']);
+      expect(roles).to.deep.equal(['community_health_assistant']);
     });
 
     it('derives the username from oidc_username the same way user creation does', async () => {
@@ -439,7 +440,7 @@ describe('routes/api.ts', () => {
       const resp = await fastify.inject({
         method: 'POST',
         url: '/api/v1/set-user-facilities',
-        payload: { oidc_username: 'demo@email.com', facility_ids: ['fac-a'] },
+        payload: { oidc_username: 'demo@email.com', facility_ids: ['fac-a'], roles: ['community_health_assistant'] },
       });
 
       expect(resp.statusCode).to.equal(200);
@@ -476,13 +477,25 @@ describe('routes/api.ts', () => {
       expect(setUserFacilitiesStub.called).to.be.false;
     });
 
+    it('rejects a missing role without calling the service', async () => {
+      const resp = await fastify.inject({
+        method: 'POST',
+        url: '/api/v1/set-user-facilities',
+        payload: { username: 'jdoe', facility_ids: ['fac-a'] },
+      });
+
+      expect(resp.statusCode).to.equal(200);
+      expect(resp.json()).to.deep.equal({ success: false, errors: 'role is required' });
+      expect(setUserFacilitiesStub.called).to.be.false;
+    });
+
     it('returns the error envelope when the service throws', async () => {
       setUserFacilitiesStub.rejects(new Error('Not Found'));
 
       const resp = await fastify.inject({
         method: 'POST',
         url: '/api/v1/set-user-facilities',
-        payload: { username: 'ghost', facility_ids: ['fac-a'] },
+        payload: { username: 'ghost', facility_ids: ['fac-a'], roles: ['community_health_assistant'] },
       });
 
       expect(resp.statusCode).to.equal(200);

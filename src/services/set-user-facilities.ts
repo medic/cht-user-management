@@ -28,13 +28,18 @@ export class SetUserFacilities {
     username: string,
     facilityIds: string[],
     chtApi: ChtApi,
+    roles?: string[],
   ): Promise<SetUserFacilitiesResult> {
     // Capture who currently holds these facilities *before* reassigning, so the target user
     // (once assigned) isn't caught in the unassignment sweep.
     const displaced = await this.getOtherUsersAt(facilityIds, username, chtApi);
 
     // Assign the requested facilities to the target user. This replaces their facility list.
-    await chtApi.updateUser({ username, place: facilityIds });
+    const update: UserInfo = { username, place: facilityIds };
+    if (roles?.length && facilityIds.length > 0) {
+      update.roles = roles;
+    }
+    await chtApi.updateUser(update);
 
     // Strip the reassigned facilities from every other user that held them.
     const unassigned = await this.stripFacilitiesFrom(displaced, facilityIds, chtApi);

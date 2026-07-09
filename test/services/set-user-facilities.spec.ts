@@ -30,6 +30,27 @@ describe('SetUserFacilities', () => {
     expect(result).to.deep.equal({ username: 'target', facilityIds: ['fac-a', 'fac-b'], unassigned: [] });
   });
 
+  it('re-applies the role to re-enable a previously disabled target when facilities are assigned', async () => {
+    const chtApi = fakeChtApi({ 'fac-a': [] });
+
+    await SetUserFacilities.setFacilities('target', ['fac-a'], chtApi, ['community_health_assistant']);
+
+    // The role is written alongside the facility, restoring access for a disabled user.
+    expect(chtApi.updateUser.firstCall.args[0]).to.deep.equal({
+      username: 'target',
+      place: ['fac-a'],
+      roles: ['community_health_assistant'],
+    });
+  });
+
+  it('does not set roles when an empty roles list is supplied', async () => {
+    const chtApi = fakeChtApi({ 'fac-a': [] });
+
+    await SetUserFacilities.setFacilities('target', ['fac-a'], chtApi, []);
+
+    expect(chtApi.updateUser.firstCall.args[0]).to.deep.equal({ username: 'target', place: ['fac-a'] });
+  });
+
   it('removes the reassigned facility from another user that held it', async () => {
     const chtApi = fakeChtApi({
       'fac-a': [{ username: 'other', place: [{ _id: 'fac-a' }, { _id: 'fac-z' }] }],

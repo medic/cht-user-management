@@ -98,7 +98,7 @@ export default async function api(fastify: FastifyInstance) {
         ...(unassigned ? { unassigned } : {}),
       };
     } catch (e: any) {
-      return { error: e.response?.data?.error?.message ?? e.toString() };
+      return { error: e.response?.data?.error?.message ?? e.message ?? e.toString() };
     }
   });
 
@@ -164,14 +164,15 @@ export default async function api(fastify: FastifyInstance) {
 
     const { username, oidc_username: oidcUsername, facility_ids: facilityIds } = formBody;
     const resolvedUsername = oidcUsername ? sanitizeOidcUsername(oidcUsername) : username;
-    const validationError = validateSetUserFacilities(resolvedUsername, facilityIds);
+    const roles = normalizeRoles(formBody);
+    const validationError = validateSetUserFacilities(resolvedUsername, facilityIds, roles);
     if (validationError) {
       return { success: false, errors: validationError };
     }
 
     const chtApi = new ChtApi(req.chtSession);
     try {
-      return await SetUserFacilities.setFacilities(resolvedUsername, facilityIds, chtApi);
+      return await SetUserFacilities.setFacilities(resolvedUsername, facilityIds, chtApi, roles);
     } catch (e: any) {
       return { error: e.response?.data?.error?.message ?? e.toString() };
     }
@@ -256,6 +257,20 @@ function validateCreateUser(
   return null;
 }
 
+// A 404 from a place operation means the facility id does not exist in this CHT
+// instance. Turn axios's opaque "Request failed with status code 404" into a clear,
+// specific error naming the offending place.
+async function assertFacilityFound<T>(facilityId: string, op: () => Promise<T>): Promise<T> {
+  try {
+    return await op();
+  } catch (e: any) {
+    if (e?.response?.status === 404) {
+      throw new Error(`Facility place "${facilityId}" was not found in this eCHIS instance`);
+    }
+    throw e;
+  }
+}
+
 // Always creates a fresh person from the supplied contact details and makes it the primary contact of
 // every facility passed
 async function createPrimaryContactForFacilities(
@@ -264,22 +279,28 @@ async function createPrimaryContactForFacilities(
   chtApi: ChtApi,
 ): Promise<string> {
   const [firstFacilityId] = facilityIds;
-  const contactId = await chtApi.createPersonUnderPlace(firstFacilityId, contact);
+  const contactId = await assertFacilityFound(firstFacilityId, () =>
+    chtApi.createPersonUnderPlace(firstFacilityId, contact),
+  );
 
   for (const facilityId of facilityIds) {
-    await chtApi.updatePlace(facilityId, contactId);
+    await assertFacilityFound(facilityId, () => chtApi.updatePlace(facilityId, contactId));
   }
 
   return contactId;
 }
 
-function validateSetUserFacilities(username: unknown, facilityIds: unknown): string | null {
+function validateSetUserFacilities(username: unknown, facilityIds: unknown, roles: string[]): string | null {
   if (typeof username !== 'string' || !username.trim()) {
     return 'username is required';
   }
 
   if (!isNonEmptyStringArray(facilityIds)) {
     return 'facility_ids must be a non-empty array of place ids';
+  }
+
+  if (!roles.length) {
+    return 'role is required';
   }
 
   return null;
