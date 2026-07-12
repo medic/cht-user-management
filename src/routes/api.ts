@@ -279,9 +279,7 @@ async function createPrimaryContactForFacilities(
   chtApi: ChtApi,
 ): Promise<string> {
   const [firstFacilityId] = facilityIds;
-  const contactId = await assertFacilityFound(firstFacilityId, () =>
-    chtApi.createPersonUnderPlace(firstFacilityId, contact),
-  );
+  const contactId = await assertFacilityFound(firstFacilityId, () => chtApi.createPersonUnderPlace(firstFacilityId, contact));
 
   for (const facilityId of facilityIds) {
     await assertFacilityFound(facilityId, () => chtApi.updatePlace(facilityId, contactId));
