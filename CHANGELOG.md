@@ -1,3 +1,10 @@
+## [2.12.2](https://github.com/medic/cht-user-management/compare/v2.12.1...v2.12.2) (2026-07-02)
+
+
+### Bug Fixes
+
+* navbar spacing issue ([#370](https://github.com/medic/cht-user-management/issues/370)) ([1e62704](https://github.com/medic/cht-user-management/commit/1e62704467dee3ea035ea5308c5f75b3cf948dcc))
+
 ## [2.12.1](https://github.com/medic/cht-user-management/compare/v2.12.0...v2.12.1) (2026-06-30)
 
 
