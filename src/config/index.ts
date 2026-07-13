@@ -125,6 +125,10 @@ export class Config {
     return contactMatch;
   }
 
+  public static contactTypes(): ContactType[] {
+    return config.contact_types;
+  }
+
   public static getParentProperty(contactType: ContactType): HierarchyConstraint {
     const parentMatch = contactType.hierarchy.find(c => c.level === 1);
     if (!parentMatch) {
@@ -262,10 +266,6 @@ export class Config {
       ...contactType.hierarchy
     ]
       .some(prop => prop.external_mapping?.[sourceId]?.is_filter);
-  }
-
-  public static contactTypes(): ContactType[] {
-    return config.contact_types;
   }
 
   // get all external source parameters from configuration
