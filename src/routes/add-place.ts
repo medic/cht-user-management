@@ -51,7 +51,7 @@ export default async function addPlace(fastify: FastifyInstance) {
     const queryParams: any = req.query;
     const { source_id: sourceId, type } = queryParams;
 
-   const [source] = Config.getExternalSources(sourceId);
+    const [source] = Config.getExternalSources(sourceId);
 
     const contactType = Config.getContactType(type);
     const tmplData = {
@@ -87,6 +87,10 @@ export default async function addPlace(fastify: FastifyInstance) {
 
     if (!source) {
       return renderError(`Unkown external source ${sourceId}`);
+    }
+    
+    if (Object.keys(searchParams).length === 0) {
+      return renderError('No search parameters provided');
     }
 
     try {
