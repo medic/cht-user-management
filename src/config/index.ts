@@ -117,16 +117,16 @@ const { config } = partnerConfig;
 export class Config {
   private constructor() { }
 
+  public static contactTypes(): ContactType[] {
+    return config.contact_types;
+  }
+  
   public static getContactType(name: string): ContactType {
     const contactMatch = config.contact_types.find(c => c.name === name);
     if (!contactMatch) {
       throw new Error(`unrecognized contact type: "${name}"`);
     }
     return contactMatch;
-  }
-
-  public static contactTypes(): ContactType[] {
-    return config.contact_types;
   }
 
   public static getParentProperty(contactType: ContactType): HierarchyConstraint {
