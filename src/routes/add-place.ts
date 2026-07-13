@@ -15,11 +15,11 @@ export default async function addPlace(fastify: FastifyInstance) {
   fastify.get('/add-place', async (req, resp) => {
     const queryParams: any = req.query;
 
-    const externalSources = Config.getSanitizedExternalSources();
     const contactTypes = Config.contactTypes();
     const contactType = queryParams.type
       ? Config.getContactType(queryParams.type)
       : contactTypes[contactTypes.length - 1];
+    const externalSources = Config.getSanitizedExternalSources(contactType.name);
 
     const op = queryParams.op || 'new';
     if (
@@ -51,11 +51,7 @@ export default async function addPlace(fastify: FastifyInstance) {
     const queryParams: any = req.query;
     const { source_id: sourceId, type } = queryParams;
 
-    const externalSources = Config.getExternalSources();
-    const source = externalSources.find((source) => source.id === sourceId);
-    if (!source) {
-      throw new Error(`external source ${sourceId} not found`);
-    }
+   const [source] = Config.getExternalSources(sourceId);
 
     const contactType = Config.getContactType(type);
     const tmplData = {
@@ -76,9 +72,8 @@ export default async function addPlace(fastify: FastifyInstance) {
   fastify.get('/search-external-source', async (req, resp) => {
     const queryParams: any = req.query;
     const { source_id: sourceId, type, ...searchParams } = queryParams;
-    const externalSources = Config.getSanitizedExternalSources();
-    const source = externalSources.find((source) => source.id === sourceId);
     const contactType = Config.getContactType(type);
+    const [source] = Config.getSanitizedExternalSources(contactType.name, sourceId);
 
     const renderError = (error: string) => {
       return resp.view('src/liquid/place/search_external_source.liquid', {
