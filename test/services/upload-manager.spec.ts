@@ -16,7 +16,7 @@ import { ChtApi } from '../../src/lib/cht-api';
 
 describe('services/upload-manager.ts', () => {
   beforeEach(() => {
-    RemotePlaceCache.clear({} as unknown as ChtApi);
+    RemotePlaceCache.clear({} as ChtApi);
   });
 
   afterEach(() => {

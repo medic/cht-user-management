@@ -21,7 +21,7 @@ const { expect } = Chai;
 
 describe('services/place-factory.ts', () => {
   beforeEach(() => {
-    RemotePlaceCache.clear({} as unknown as ChtApi);
+    RemotePlaceCache.clear({} as ChtApi);
     SessionCache.getForSession(mockChtSession()).removeAll();
   });
 

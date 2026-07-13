@@ -38,7 +38,7 @@ It is quite difficult to resolve. Not all fetched information has a correspondin
 */
 describe('warnings', () => {
   beforeEach(() => {
-    RemotePlaceCache.clear({} as unknown as ChtApi);
+    RemotePlaceCache.clear({} as ChtApi);
   });
 
   afterEach(() => {

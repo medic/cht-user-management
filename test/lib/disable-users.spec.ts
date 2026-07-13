@@ -6,11 +6,13 @@ import { ChtApi } from '../../src/lib/cht-api';
 
 const PLACE_ID = 'abc';
 
-const mockChtApi = (usersAtPlace: any) => ({
-  getUsersAtPlace: Sinon.stub().resolves(usersAtPlace),
-  disableUser: Sinon.stub().resolves(),
-  updateUser: Sinon.stub().resolves(),
-});
+const mockChtApi = (usersAtPlace: any) => {
+  const cht = Sinon.createStubInstance(ChtApi);
+  cht.getUsersAtPlace.resolves(usersAtPlace);
+  cht.disableUser.resolves();
+  cht.updateUser.resolves();
+  return cht;
+};
 
 describe('lib/disable-users.ts', () => {
   it('disable a user with single facility (4.7)', async () => {
@@ -18,7 +20,7 @@ describe('lib/disable-users.ts', () => {
       username: 'user',
       place: { _id: PLACE_ID }
     }]);
-    const actual = await DisableUsers.disableUsersAt([PLACE_ID], cht as unknown as ChtApi);
+    const actual = await DisableUsers.disableUsersAt([PLACE_ID], cht);
     expect(cht.disableUser.callCount).to.eq(1);
     expect(cht.disableUser.args[0]).to.deep.eq(['user']);
     expect(cht.updateUser.called).to.be.false;
@@ -30,7 +32,7 @@ describe('lib/disable-users.ts', () => {
       username: 'user',
       place: [{ _id: PLACE_ID }]
     }]);
-    const actual = await DisableUsers.disableUsersAt([PLACE_ID], cht as unknown as ChtApi);
+    const actual = await DisableUsers.disableUsersAt([PLACE_ID], cht);
     expect(cht.disableUser.callCount).to.eq(1);
     expect(cht.updateUser.called).to.be.false;
     expect(actual).to.deep.eq(['user']);
@@ -41,7 +43,7 @@ describe('lib/disable-users.ts', () => {
       username: 'user',
       place: [{ _id: PLACE_ID }]
     }]);
-    const actual = await DisableUsers.deactivateUsersAt([PLACE_ID], cht as unknown as ChtApi);
+    const actual = await DisableUsers.deactivateUsersAt([PLACE_ID], cht);
     expect(cht.disableUser.called).to.be.false;
     expect(cht.updateUser.callCount).to.eq(1);
     expect(cht.updateUser.args[0]).to.deep.eq([{
@@ -56,7 +58,7 @@ describe('lib/disable-users.ts', () => {
       username: 'user',
       place: [{ _id: PLACE_ID }, { _id: 'efg' }]
     }]);
-    const actual = await DisableUsers.disableUsersAt([PLACE_ID], cht as unknown as ChtApi);
+    const actual = await DisableUsers.disableUsersAt([PLACE_ID], cht);
     expect(cht.disableUser.called).to.be.false;
     expect(cht.updateUser.called).to.be.true;
     expect(cht.updateUser.args[0]).to.deep.eq([{
@@ -71,7 +73,7 @@ describe('lib/disable-users.ts', () => {
       username: 'user',
       place: [{ _id: PLACE_ID }, { _id: 'efg' }]
     }]);
-    const actual = await DisableUsers.deactivateUsersAt([PLACE_ID], cht as unknown as ChtApi);
+    const actual = await DisableUsers.deactivateUsersAt([PLACE_ID], cht);
     expect(cht.disableUser.called).to.be.false;
     expect(cht.updateUser.called).to.be.true;
     expect(cht.updateUser.args[0]).to.deep.eq([{
@@ -93,7 +95,7 @@ describe('lib/disable-users.ts', () => {
       },
     ]);
     
-    const actual = await DisableUsers.disableUsersAt([PLACE_ID], cht as unknown as ChtApi);
+    const actual = await DisableUsers.disableUsersAt([PLACE_ID], cht);
     expect(cht.disableUser.callCount).to.eq(2);
     expect(cht.disableUser.args).to.deep.eq([['user'], ['other']]);
     expect(cht.updateUser.called).to.be.false;
@@ -105,7 +107,7 @@ describe('lib/disable-users.ts', () => {
       username: 'user',
       place: [null, { _id: PLACE_ID }, null, { _id: 'efg' }]
     }]);
-    await DisableUsers.disableUsersAt([PLACE_ID], cht as unknown as ChtApi);
+    await DisableUsers.disableUsersAt([PLACE_ID], cht);
     expect(cht.disableUser.called).to.be.false;
     expect(cht.updateUser.callCount).to.eq(1);
   });

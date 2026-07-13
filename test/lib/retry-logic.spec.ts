@@ -8,6 +8,7 @@ import { mockSimpleContactType } from '../mocks';
 
 import chaiAsPromised from 'chai-as-promised';
 import Place from '../../src/services/place';
+import Sinon from 'sinon';
 Chai.use(chaiAsPromised);
 
 const { expect } = Chai;
@@ -112,9 +113,8 @@ describe('lib/retry-logic', () => {
   describe('createUserWithRetries', () => {
     for (const scenario of RetryScenarios) {
       it(scenario.desc, async() => {
-        const chtApi = {
-          createUser: sinon.stub().throws(scenario.axiosError),
-        };
+        const chtApi = Sinon.createStubInstance(ChtApi);
+        chtApi.createUser.rejects(scenario.axiosError);
         const place = {
           generateUsername: sinon.stub().returns('username'),
           type: mockSimpleContactType('string', 'bar'),
@@ -122,7 +122,7 @@ describe('lib/retry-logic', () => {
         };
         const userPayload = new UserPayload(place as unknown as Place, 'place_id', 'contact_id');
 
-        const execute = RetryLogic.createUserWithRetries(userPayload as UserPayload, chtApi as unknown as ChtApi);
+        const execute = RetryLogic.createUserWithRetries(userPayload as UserPayload, chtApi);
         const expectRetry = ['upload-manager', 'axios'].includes(scenario.retry);
         if (expectRetry) {
           await expect(execute).to.eventually.be.rejectedWith('could not create user');
