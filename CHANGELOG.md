@@ -1,3 +1,10 @@
+## [2.12.3](https://github.com/medic/cht-user-management/compare/v2.12.2...v2.12.3) (2026-07-13)
+
+
+### Bug Fixes
+
+* **#372:** add chwregistry prod url for chis-ke ([#374](https://github.com/medic/cht-user-management/issues/374)) ([eebfc8c](https://github.com/medic/cht-user-management/commit/eebfc8c36b38178fb9eeca07186caf352c18a11f)), closes [#372](https://github.com/medic/cht-user-management/issues/372)
+
 ## [2.12.2](https://github.com/medic/cht-user-management/compare/v2.12.1...v2.12.2) (2026-07-02)
 
 
