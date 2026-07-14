@@ -17,6 +17,7 @@ describe('lib/name-match.ts', () => {
     { search: 'MARGARET CHEMOIWO JEPSERGON', echis: 'MARGARET JEPSERGON Area',        match: true },
     { search: 'Benjamin Kiarie Muiruri',     echis: "Benjamin Kiarie's Community Health Volunteer Area", match: true },
     { search: "James Ng'ang'a Kamau",        echis: "James Ng'ang'a's Community Health Volunteer Area",  match: true },
+    { search: "James Ng'sang Kamau",         echis: "James Ng'sang's Community Health Volunteer Area",   match: true },
     { search: 'John Otieno',                 echis: 'John Omondi',                    match: false },
     { search: 'John',                        echis: 'John Otieno',                    match: false },
   ];
