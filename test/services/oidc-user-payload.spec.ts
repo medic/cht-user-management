@@ -5,7 +5,7 @@ import { OidcUserPayload } from '../../src/services/oidc-user-payload';
 describe('OidcUserPayload', () => {
   it('derives a CHT-safe username and carries facilities and contact', () => {
     const payload = new OidcUserPayload('Demo.User@email.com', ['chw'], ['fac-a', 'fac-b'], 'contact-1');
-    expect(payload.username).to.equal('demouseremailcom');
+    expect(payload.username).to.equal('demo_dot_user_at_email_dot_com');
     expect(payload.oidc_username).to.equal('Demo.User@email.com');
     expect(payload.roles).to.deep.equal(['chw']);
     expect(payload.place).to.deep.equal(['fac-a', 'fac-b']);
@@ -24,6 +24,6 @@ describe('OidcUserPayload', () => {
   });
 
   it('throws when nothing usable can be derived for the username', () => {
-    expect(() => new OidcUserPayload('@@@', ['chw'], ['fac-a'], 'contact-1')).to.throw('username cannot be empty');
+    expect(() => new OidcUserPayload('###', ['chw'], ['fac-a'], 'contact-1')).to.throw('username cannot be empty');
   });
 });

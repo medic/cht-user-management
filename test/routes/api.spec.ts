@@ -64,7 +64,10 @@ describe('routes/api.ts', () => {
   let scheduleJobStub: sinon.SinonStub;
   let disableUsersStub: sinon.SinonStub;
   let setUserFacilitiesStub: sinon.SinonStub;
+  let unassignFacilitiesStub: sinon.SinonStub;
   let createUserStub: sinon.SinonStub;
+  let createPersonStub: sinon.SinonStub;
+  let updatePlaceStub: sinon.SinonStub;
 
   /**
    * Configure PlaceFactory.createOne to return a Place stub whose
@@ -138,7 +141,11 @@ describe('routes/api.ts', () => {
     setUserFacilitiesStub = sinon.stub(SetUserFacilities, 'setFacilities').resolves({
       username: 'target', facilityIds: ['fac-a'], unassigned: [],
     });
+    unassignFacilitiesStub = sinon.stub(SetUserFacilities, 'unassignFacilitiesFromOthers').resolves([]);
     createUserStub = sinon.stub(ChtApi.prototype, 'createUser').resolves();
+    sinon.stub(ChtApi.prototype, 'getDoc').resolves({ _id: 'fac-a', contact: { _id: 'primary-contact-1' } });
+    createPersonStub = sinon.stub(ChtApi.prototype, 'createPersonUnderPlace').resolves('new-contact-1');
+    updatePlaceStub = sinon.stub(ChtApi.prototype, 'updatePlace').resolves({} as any);
   });
 
   afterEach(async () => {
@@ -408,7 +415,7 @@ describe('routes/api.ts', () => {
       const resp = await fastify.inject({
         method: 'POST',
         url: '/api/v1/set-user-facilities',
-        payload: { username: 'jdoe', facility_ids: ['fac-a', 'fac-b'] },
+        payload: { username: 'jdoe', facility_ids: ['fac-a', 'fac-b'], roles: ['community_health_assistant'] },
       });
 
       expect(resp.statusCode).to.equal(200);
@@ -417,9 +424,30 @@ describe('routes/api.ts', () => {
         facilityIds: ['fac-a', 'fac-b'],
         unassigned: [{ username: 'other', remaining: ['fac-z'] }],
       });
-      const [username, facilityIds] = setUserFacilitiesStub.firstCall.args;
+      const [username, facilityIds, , roles] = setUserFacilitiesStub.firstCall.args;
       expect(username).to.equal('jdoe');
       expect(facilityIds).to.deep.equal(['fac-a', 'fac-b']);
+      expect(roles).to.deep.equal(['community_health_assistant']);
+    });
+
+    it('derives the username from oidc_username the same way user creation does', async () => {
+      setUserFacilitiesStub.resolves({
+        username: 'demo_at_email_dot_com',
+        facilityIds: ['fac-a'],
+        unassigned: [],
+      });
+
+      const resp = await fastify.inject({
+        method: 'POST',
+        url: '/api/v1/set-user-facilities',
+        payload: { oidc_username: 'demo@email.com', facility_ids: ['fac-a'], roles: ['community_health_assistant'] },
+      });
+
+      expect(resp.statusCode).to.equal(200);
+      const [username, facilityIds] = setUserFacilitiesStub.firstCall.args;
+      // Must match OidcUserPayload's sanitizeOidcUsername (_at_/_dot_), not a stripped form.
+      expect(username).to.equal('demo_at_email_dot_com');
+      expect(facilityIds).to.deep.equal(['fac-a']);
     });
 
     it('rejects a missing username without calling the service', async () => {
@@ -449,13 +477,25 @@ describe('routes/api.ts', () => {
       expect(setUserFacilitiesStub.called).to.be.false;
     });
 
+    it('rejects a missing role without calling the service', async () => {
+      const resp = await fastify.inject({
+        method: 'POST',
+        url: '/api/v1/set-user-facilities',
+        payload: { username: 'jdoe', facility_ids: ['fac-a'] },
+      });
+
+      expect(resp.statusCode).to.equal(200);
+      expect(resp.json()).to.deep.equal({ success: false, errors: 'role is required' });
+      expect(setUserFacilitiesStub.called).to.be.false;
+    });
+
     it('returns the error envelope when the service throws', async () => {
       setUserFacilitiesStub.rejects(new Error('Not Found'));
 
       const resp = await fastify.inject({
         method: 'POST',
         url: '/api/v1/set-user-facilities',
-        payload: { username: 'ghost', facility_ids: ['fac-a'] },
+        payload: { username: 'ghost', facility_ids: ['fac-a'], roles: ['community_health_assistant'] },
       });
 
       expect(resp.statusCode).to.equal(200);
@@ -475,7 +515,7 @@ describe('routes/api.ts', () => {
     });
   });
 
-  describe('POST /api/v1/create', () => {
+  describe('POST /api/v1/create-user-and-place', () => {
     it('uploads the place and returns place_id, contact_id and warnings', async () => {
       stubCreatedPlace({
         parent: fakeParent(PARENT_ID),
@@ -486,7 +526,7 @@ describe('routes/api.ts', () => {
 
       const resp = await fastify.inject({
         method: 'POST',
-        url: '/api/v1/create?type=anything',
+        url: '/api/v1/create-user-and-place?type=anything',
         payload: { PARENT: 'parent', name: 'Jane Doe', phone: '0712345678' },
       });
 
@@ -511,7 +551,7 @@ describe('routes/api.ts', () => {
 
       const resp = await fastify.inject({
         method: 'POST',
-        url: '/api/v1/create?type=anything',
+        url: '/api/v1/create-user-and-place?type=anything',
         payload: { PARENT: 'wrong', name: 'Jane' },
       });
 
@@ -530,7 +570,7 @@ describe('routes/api.ts', () => {
 
       const resp = await fastify.inject({
         method: 'POST',
-        url: '/api/v1/create?type=anything',
+        url: '/api/v1/create-user-and-place?type=anything',
         payload: { PARENT: 'ambiguous', name: 'Jane' },
       });
 
@@ -549,7 +589,7 @@ describe('routes/api.ts', () => {
 
       const resp = await fastify.inject({
         method: 'POST',
-        url: '/api/v1/create?type=anything',
+        url: '/api/v1/create-user-and-place?type=anything',
         payload: { PARENT: 'parent' },
       });
 
@@ -568,7 +608,7 @@ describe('routes/api.ts', () => {
 
       const resp = await fastify.inject({
         method: 'POST',
-        url: '/api/v1/create?type=anything',
+        url: '/api/v1/create-user-and-place?type=anything',
         payload: { PARENT: 'parent', name: 'Jane', phone: '0712345678' },
       });
 
@@ -587,7 +627,7 @@ describe('routes/api.ts', () => {
 
       const resp = await fastify.inject({
         method: 'POST',
-        url: '/api/v1/create?type=bogus',
+        url: '/api/v1/create-user-and-place?type=bogus',
         payload: { name: 'Jane' },
       });
 
@@ -599,7 +639,7 @@ describe('routes/api.ts', () => {
     it('rejects a non-object body (array)', async () => {
       const resp = await fastify.inject({
         method: 'POST',
-        url: '/api/v1/create?type=anything',
+        url: '/api/v1/create-user-and-place?type=anything',
         payload: [{ name: 'Jane' }],
       });
 
@@ -612,7 +652,7 @@ describe('routes/api.ts', () => {
     it('rejects a null body', async () => {
       const resp = await fastify.inject({
         method: 'POST',
-        url: '/api/v1/create?type=anything',
+        url: '/api/v1/create-user-and-place?type=anything',
         headers: { 'Content-Type': 'application/json' },
         payload: 'null',
       });
@@ -623,89 +663,100 @@ describe('routes/api.ts', () => {
     });
   });
 
-  describe('POST /api/v1/create-user-and-place (alias of /create)', () => {
-    it('behaves like /api/v1/create', async () => {
-      stubCreatedPlace({ parent: fakeParent(PARENT_ID), id: 'p-1', contactId: 'c-1' });
-
-      const resp = await fastify.inject({
-        method: 'POST',
-        url: '/api/v1/create-user-and-place?type=anything',
-        payload: { PARENT: 'parent', name: 'Jane Doe', phone: '0712345678' },
-      });
-
-      expect(resp.statusCode).to.equal(200);
-      expect(resp.json()).to.deep.equal({
-        place_id: 'p-1',
-        contact_id: 'c-1',
-        username: 'user-1',
-        password: 'pw-1',
-        warnings: [],
-      });
-      expect(uploadStub.calledOnce).to.be.true;
-    });
-  });
-
   describe('POST /api/v1/create-user', () => {
-    it('creates an offline multi-place OIDC user with a derived username', async () => {
+    const validContact = { type: 'person', name: 'Jane CHA', phone: '+254700000000' };
+
+    it('creates a fresh contact, makes it primary on every facility, and creates the user', async () => {
       const resp = await fastify.inject({
         method: 'POST',
         url: '/api/v1/create-user',
         payload: {
-          oidc_username: 'demo@email.com', role: 'chw', facility_ids: ['fac-a', 'fac-b'], contact_id: 'contact-1',
+          oidc_username: 'demo@email.com', role: 'chw', facility_ids: ['fac-a', 'fac-b'], contact: validContact,
         },
       });
 
       expect(resp.statusCode).to.equal(200);
-      expect(resp.json()).to.deep.equal({ success: true, username: 'demoemailcom' });
-      expect(createUserStub.calledOnce).to.be.true;
+      expect(resp.json()).to.deep.equal({ success: true, username: 'demo_at_email_dot_com' });
+
+      // A new person is created inside the first facility from the supplied details (verbatim).
+      expect(createPersonStub.calledOnceWith('fac-a', validContact)).to.be.true;
+      // Every facility is updated to use the new contact as its primary contact.
+      expect(updatePlaceStub.callCount).to.equal(2);
+      expect(updatePlaceStub.getCall(0).args).to.deep.equal(['fac-a', 'new-contact-1']);
+      expect(updatePlaceStub.getCall(1).args).to.deep.equal(['fac-b', 'new-contact-1']);
+      // The user is attached to the new contact across all facilities.
       expect({ ...createUserStub.firstCall.args[0] }).to.deep.equal({
-        username: 'demoemailcom',
+        username: 'demo_at_email_dot_com',
         oidc_username: 'demo@email.com',
         roles: ['chw'],
         place: ['fac-a', 'fac-b'],
-        contact: 'contact-1',
+        contact: 'new-contact-1',
       });
+      // Without the opt-in flag, other users keep their facilities.
+      expect(unassignFacilitiesStub.called).to.be.false;
+    });
+
+    it('strips the facilities from other users when exclusiveFacilities=true', async () => {
+      unassignFacilitiesStub.resolves([{ username: 'other', remaining: [] }]);
+
+      const resp = await fastify.inject({
+        method: 'POST',
+        url: '/api/v1/create-user?exclusiveFacilities=true',
+        payload: {
+          oidc_username: 'demo@email.com', role: 'chw', facility_ids: ['fac-a', 'fac-b'], contact: validContact,
+        },
+      });
+
+      expect(resp.statusCode).to.equal(200);
+      expect(resp.json()).to.deep.equal({
+        success: true,
+        username: 'demo_at_email_dot_com',
+        unassigned: [{ username: 'other', remaining: [] }],
+      });
+      expect(unassignFacilitiesStub.calledOnceWithExactly(['fac-a', 'fac-b'], 'demo_at_email_dot_com', sinon.match.any)).to.be.true;
     });
 
     it('accepts a roles array', async () => {
       await fastify.inject({
         method: 'POST',
         url: '/api/v1/create-user',
-        payload: { oidc_username: 'demo@email.com', roles: ['chw', 'supervisor'], facility_ids: ['fac-a'], contact_id: 'contact-1' },
+        payload: { oidc_username: 'demo@email.com', roles: ['chw', 'supervisor'], facility_ids: ['fac-a'], contact: validContact },
       });
 
       expect(createUserStub.firstCall.args[0].roles).to.deep.equal(['chw', 'supervisor']);
     });
 
-    it('rejects a missing oidc_username without calling createUser', async () => {
+    it('rejects a missing oidc_username without creating anything', async () => {
       const resp = await fastify.inject({
         method: 'POST',
         url: '/api/v1/create-user',
-        payload: { role: 'chw', facility_ids: ['fac-a'] },
+        payload: { role: 'chw', facility_ids: ['fac-a'], contact: validContact },
       });
 
       expect(resp.statusCode).to.equal(200);
       expect(resp.json()).to.deep.equal({ success: false, errors: 'oidc_username is required' });
+      expect(createPersonStub.called).to.be.false;
       expect(createUserStub.called).to.be.false;
     });
 
-    it('rejects a missing role without calling createUser', async () => {
+    it('rejects a missing role without creating anything', async () => {
       const resp = await fastify.inject({
         method: 'POST',
         url: '/api/v1/create-user',
-        payload: { oidc_username: 'demo@email.com', facility_ids: ['fac-a'] },
+        payload: { oidc_username: 'demo@email.com', facility_ids: ['fac-a'], contact: validContact },
       });
 
       expect(resp.statusCode).to.equal(200);
       expect(resp.json()).to.deep.equal({ success: false, errors: 'role is required' });
+      expect(createPersonStub.called).to.be.false;
       expect(createUserStub.called).to.be.false;
     });
 
-    it('rejects empty facility_ids without calling createUser', async () => {
+    it('rejects empty facility_ids without creating anything', async () => {
       const resp = await fastify.inject({
         method: 'POST',
         url: '/api/v1/create-user',
-        payload: { oidc_username: 'demo@email.com', role: 'chw', facility_ids: [], contact_id: 'contact-1' },
+        payload: { oidc_username: 'demo@email.com', role: 'chw', facility_ids: [], contact: validContact },
       });
 
       expect(resp.statusCode).to.equal(200);
@@ -713,10 +764,11 @@ describe('routes/api.ts', () => {
         success: false,
         errors: 'facility_ids must be a non-empty array of place ids',
       });
+      expect(createPersonStub.called).to.be.false;
       expect(createUserStub.called).to.be.false;
     });
 
-    it('rejects a missing contact_id without calling createUser', async () => {
+    it('rejects a missing contact without creating anything', async () => {
       const resp = await fastify.inject({
         method: 'POST',
         url: '/api/v1/create-user',
@@ -724,19 +776,34 @@ describe('routes/api.ts', () => {
       });
 
       expect(resp.statusCode).to.equal(200);
-      expect(resp.json()).to.deep.equal({ success: false, errors: 'contact_id is required' });
+      expect(resp.json()).to.deep.equal({ success: false, errors: 'contact is required and must include a name' });
+      expect(createPersonStub.called).to.be.false;
       expect(createUserStub.called).to.be.false;
     });
 
-    it('rejects a non-string contact_id without calling createUser', async () => {
+    it('rejects a contact without a name', async () => {
       const resp = await fastify.inject({
         method: 'POST',
         url: '/api/v1/create-user',
-        payload: { oidc_username: 'demo@email.com', role: 'chw', facility_ids: ['fac-a'], contact_id: 42 },
+        payload: { oidc_username: 'demo@email.com', role: 'chw', facility_ids: ['fac-a'], contact: { phone: '123' } },
       });
 
       expect(resp.statusCode).to.equal(200);
-      expect(resp.json()).to.deep.equal({ success: false, errors: 'contact_id is required' });
+      expect(resp.json()).to.deep.equal({ success: false, errors: 'contact is required and must include a name' });
+      expect(createPersonStub.called).to.be.false;
+    });
+
+    it('returns the error envelope when contact creation fails', async () => {
+      createPersonStub.rejects({ response: { data: { error: { message: 'no such place' } } } });
+
+      const resp = await fastify.inject({
+        method: 'POST',
+        url: '/api/v1/create-user',
+        payload: { oidc_username: 'demo@email.com', role: 'chw', facility_ids: ['fac-a'], contact: validContact },
+      });
+
+      expect(resp.statusCode).to.equal(200);
+      expect(resp.json()).to.deep.equal({ error: 'no such place' });
       expect(createUserStub.called).to.be.false;
     });
 
@@ -746,7 +813,7 @@ describe('routes/api.ts', () => {
       const resp = await fastify.inject({
         method: 'POST',
         url: '/api/v1/create-user',
-        payload: { oidc_username: 'dupe@email.com', role: 'chw', facility_ids: ['fac-a'], contact_id: 'contact-1' },
+        payload: { oidc_username: 'dupe@email.com', role: 'chw', facility_ids: ['fac-a'], contact: validContact },
       });
 
       expect(resp.statusCode).to.equal(200);

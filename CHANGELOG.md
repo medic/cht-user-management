@@ -1,3 +1,17 @@
+## [2.12.5](https://github.com/medic/cht-user-management/compare/v2.12.4...v2.12.5) (2026-07-15)
+
+
+### Bug Fixes
+
+* **#355:** design adjustments to API endpoints during CHA creation in CHW-R ([#360](https://github.com/medic/cht-user-management/issues/360)) ([7cdae65](https://github.com/medic/cht-user-management/commit/7cdae65ef65b02c6d97f0fab0853886ebd212baf)), closes [#355](https://github.com/medic/cht-user-management/issues/355) [#343](https://github.com/medic/cht-user-management/issues/343) [#355](https://github.com/medic/cht-user-management/issues/355)
+
+## [2.12.4](https://github.com/medic/cht-user-management/compare/v2.12.3...v2.12.4) (2026-07-14)
+
+
+### Bug Fixes
+
+* **#375:** update echis area name stripping ([#377](https://github.com/medic/cht-user-management/issues/377)) ([6b1d4f7](https://github.com/medic/cht-user-management/commit/6b1d4f786cd624f69412d70a62b4b9f69f0f6980)), closes [#375](https://github.com/medic/cht-user-management/issues/375)
+
 ## [2.12.3](https://github.com/medic/cht-user-management/compare/v2.12.2...v2.12.3) (2026-07-13)
 
 
