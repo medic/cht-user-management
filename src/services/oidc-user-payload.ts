@@ -1,4 +1,4 @@
-import { sanitizeUsername } from './username';
+import { sanitizeOidcUsername } from './username';
 
 // The minimum payload to create an offline, multi-place OIDC (SSO) user in CHT. Such a user
 // authenticates via the identity provider, so no password/token_login is set (CHT forbids
@@ -19,7 +19,6 @@ export class OidcUserPayload {
     this.roles = roles;
     this.place = facilityIds;
     this.contact = contactId;
-    // username is derived from oidc_username using the same rule as place-based usernames
-    this.username = sanitizeUsername(oidcUsername);
+    this.username = sanitizeOidcUsername(oidcUsername);
   }
 }
