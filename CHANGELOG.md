@@ -1,3 +1,10 @@
+## [2.12.5](https://github.com/medic/cht-user-management/compare/v2.12.4...v2.12.5) (2026-07-15)
+
+
+### Bug Fixes
+
+* **#355:** design adjustments to API endpoints during CHA creation in CHW-R ([#360](https://github.com/medic/cht-user-management/issues/360)) ([7cdae65](https://github.com/medic/cht-user-management/commit/7cdae65ef65b02c6d97f0fab0853886ebd212baf)), closes [#355](https://github.com/medic/cht-user-management/issues/355) [#343](https://github.com/medic/cht-user-management/issues/343) [#355](https://github.com/medic/cht-user-management/issues/355)
+
 ## [2.12.4](https://github.com/medic/cht-user-management/compare/v2.12.3...v2.12.4) (2026-07-14)
 
 
