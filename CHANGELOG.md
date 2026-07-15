@@ -1,3 +1,10 @@
+## [2.12.4](https://github.com/medic/cht-user-management/compare/v2.12.3...v2.12.4) (2026-07-14)
+
+
+### Bug Fixes
+
+* **#375:** update echis area name stripping ([#377](https://github.com/medic/cht-user-management/issues/377)) ([6b1d4f7](https://github.com/medic/cht-user-management/commit/6b1d4f786cd624f69412d70a62b4b9f69f0f6980)), closes [#375](https://github.com/medic/cht-user-management/issues/375)
+
 ## [2.12.3](https://github.com/medic/cht-user-management/compare/v2.12.2...v2.12.3) (2026-07-13)
 
 

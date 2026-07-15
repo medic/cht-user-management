@@ -362,6 +362,7 @@
         "property_name": "replacement",
         "type": "name",
         "parameter": [
+          "['’]s\\s.*$",
           "\\sArea"
         ],
         "required": true
