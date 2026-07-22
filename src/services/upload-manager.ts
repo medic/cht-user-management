@@ -33,8 +33,11 @@ export class UploadManager extends EventEmitter {
   };
 
   doUpload = async (places: Place[], chtApi: ChtApi, ignoreWarnings: boolean = false) => {
+    const inFlightStates = [PlaceUploadState.SCHEDULED, PlaceUploadState.IN_PROGRESS];
     const validPlaces = places.filter(p => {
-      return !p.hasValidationErrors && (ignoreWarnings || !p.warnings.length);
+      return !p.hasValidationErrors
+        && (ignoreWarnings || !p.warnings.length)
+        && !inFlightStates.includes(p.state);
     });
     const placesNeedingUpload = validPlaces.filter(p => !p.isCreated);
     this.eventedPlaceStateChange(placesNeedingUpload, PlaceUploadState.SCHEDULED);

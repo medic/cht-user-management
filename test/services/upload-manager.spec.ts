@@ -364,6 +364,32 @@ describe('services/upload-manager.ts', () => {
     expect(place.isCreated).to.be.true;
   });
 
+  it('doUpload is idempotent while an upload is in flight', async () => {
+    const { fakeFormData, contactType, sessionCache, chtApi, uploadLogger } = await createMocks();
+    const place = await PlaceFactory.createOne(fakeFormData, contactType, sessionCache, chtApi);
+
+    let resolveCreatePlace: (result: any) => void = () => {};
+    // freeze createPlace so we can call doUpload thrice before it resolves
+    chtApi.createPlace = sinon.stub().returns(new Promise(resolve => {
+      resolveCreatePlace = resolve;
+    }));
+
+    const uploadManager = new UploadManager(uploadLogger);
+
+    // mock 3 in-flight concurrent calls for the same place, 
+    // only one should actually call createPlace
+    const firstUpload = uploadManager.doUpload([place], chtApi);
+    const secondUpload = uploadManager.doUpload([place], chtApi);
+    const thirdUpload = uploadManager.doUpload([place], chtApi);
+
+    resolveCreatePlace({ placeId: 'created-place-id', contactId: 'created-contact-id' });
+    await Promise.all([firstUpload, secondUpload, thirdUpload]);
+
+    expect(chtApi.createPlace.calledOnce).to.be.true;
+    expect(chtApi.createUser.calledOnce).to.be.true;
+    expect(place.isCreated).to.be.true;
+  });
+
   it('#173 - replacement when place has no primary contact', async () => {
     const { subcounty, sessionCache, contactType, fakeFormData, chtApi, uploadLogger } = await createMocks();
     const toReplace: ChtDoc = {
