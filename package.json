@@ -17,7 +17,7 @@
     "@types/jsonwebtoken": "^9.0.5",
     "@types/lodash": "^4.14.201",
     "@types/luxon": "^3.4.2",
-    "@types/node": "^20.8.8",
+    "@types/node": "^20.19.43",
     "@types/semver": "^7.5.8",
     "@types/uuid": "^9.0.6",
     "axios": "^1.5.1",
@@ -40,7 +40,7 @@
     "node-cache": "^5.1.2",
     "pino-pretty": "^10.2.3",
     "ts-node": "^10.9.2",
-    "typescript": "^5.2.2",
+    "typescript": "^5.9.3",
     "uuid": "^9.0.1"
   },
   "devDependencies": {
@@ -73,8 +73,8 @@
   },
   "scripts": {
     "cp-package-json": "cp package.json ./src",
-    "test": "npm run test-types && npx ts-mocha test/{,**}/*.spec.ts --exclude test/integration/{,**}/*.spec.ts",
-    "test-types": "npx tsc --noEmit",
+    "test": "npm run typecheck && npx ts-mocha test/{,**}/*.spec.ts --exclude test/integration/{,**}/*.spec.ts",
+    "typecheck": "npx tsc --noEmit",
     "build": "npm run cp-package-json && npx tsc -p tsconfig.build.json",
     "lint": "npx eslint --color --cache .",
     "start": "node dist/index.js",
