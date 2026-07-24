@@ -1,3 +1,10 @@
+## [2.12.6](https://github.com/medic/cht-user-management/compare/v2.12.5...v2.12.6) (2026-07-22)
+
+
+### Bug Fixes
+
+* **#382:** make doUpload trigger cht request once for same place ([7761a9f](https://github.com/medic/cht-user-management/commit/7761a9f14d2b21709f09d0bbe00cc7c4222b5703)), closes [#382](https://github.com/medic/cht-user-management/issues/382)
+
 ## [2.12.5](https://github.com/medic/cht-user-management/compare/v2.12.4...v2.12.5) (2026-07-15)
 
 
