@@ -2,14 +2,17 @@ import { expect } from 'chai';
 import Sinon from 'sinon';
 
 import { DisableUsers } from '../../src/lib/disable-users';
+import { ChtApi } from '../../src/lib/cht-api';
 
 const PLACE_ID = 'abc';
 
-const mockChtApi = (usersAtPlace) => ({
-  getUsersAtPlace: Sinon.stub().resolves(usersAtPlace),
-  disableUser: Sinon.stub().resolves(),
-  updateUser: Sinon.stub().resolves(),
-});
+const mockChtApi = (usersAtPlace: any) => {
+  const cht = Sinon.createStubInstance(ChtApi);
+  cht.getUsersAtPlace.resolves(usersAtPlace);
+  cht.disableUser.resolves();
+  cht.updateUser.resolves();
+  return cht;
+};
 
 describe('lib/disable-users.ts', () => {
   it('disable a user with single facility (4.7)', async () => {

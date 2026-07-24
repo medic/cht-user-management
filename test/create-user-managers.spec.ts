@@ -8,6 +8,7 @@ const createUserManagers = rewire(path.join(__dirname, '../scripts/create-user-m
 
 import chaiAsPromised from 'chai-as-promised';
 import RemotePlaceCache from '../src/lib/remote-place-cache';
+import { ChtApi } from '../src/lib/cht-api';
 Chai.use(chaiAsPromised);
 
 const { expect } = Chai;
@@ -17,10 +18,10 @@ const StandardArgv = [
   '--hostname', 'localhost:5988', '--adminUsername', 'medic', '--adminPassword', 'password'
 ];
 
-let fakeGetPlacesWithType;
+let fakeGetPlacesWithType: sinon.SinonStub;
 describe('scripts/create-user-managers.ts', () => {
   beforeEach(() => {
-    RemotePlaceCache.clear();
+    RemotePlaceCache.clear(undefined as unknown as ChtApi);
     const session = mockChtSession('abc');
     const mockSession = {
       create: sinon.stub().resolves(session),
