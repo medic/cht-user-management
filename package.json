@@ -1,6 +1,6 @@
 {
   "name": "cht-user-management",
-  "version": "2.12.6",
+  "version": "2.12.7",
   "main": "dist/index.js",
   "dependencies": {
     "@bull-board/api": "^5.17.0",
@@ -23,7 +23,7 @@
     "axios": "^1.5.1",
     "axios-retry": "^4.0.0",
     "bullmq": "^5.41.9",
-    "cht-conf": "^6.1.0",
+    "cht-conf": "^6.5.1",
     "csv": "^6.3.5",
     "dotenv": "^16.3.1",
     "fastify": "^4.27.0",
