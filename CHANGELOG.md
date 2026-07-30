@@ -1,3 +1,10 @@
+## [2.12.7](https://github.com/medic/cht-user-management/compare/v2.12.6...v2.12.7) (2026-07-30)
+
+
+### Bug Fixes
+
+* **#385:** fix for uri-too-long via bump to cht-conf@latest ([#386](https://github.com/medic/cht-user-management/issues/386)) ([ee15f4d](https://github.com/medic/cht-user-management/commit/ee15f4df07af5e60f29d9d886ea43e0a85313d44))
+
 ## [2.12.6](https://github.com/medic/cht-user-management/compare/v2.12.5...v2.12.6) (2026-07-22)
 
 
