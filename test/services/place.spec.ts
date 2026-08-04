@@ -3,6 +3,7 @@ import { expect } from 'chai';
 import Place from '../../src/services/place';
 import { mockSimpleContactType, mockValidContactType } from '../mocks';
 import { UnvalidatedPropertyValue, ContactPropertyValue } from '../../src/property-value';
+import { RemotePlace } from '../../src/lib/remote-place-cache';
 
 describe('services/place.ts', () => {
   it('setPropertiesFromFormData', () => {
@@ -54,13 +55,13 @@ describe('services/place.ts', () => {
       name: new UnvalidatedPropertyValue('replaced'),
       lineage: ['parent-id'],
       type: 'remote',
-    };
+    } as unknown as RemotePlace;
     place.resolvedHierarchy[1] = {
       id: 'parent-id',
       name: new UnvalidatedPropertyValue('parent'),
       lineage: [],
       type: 'remote',
-    };
+    } as unknown as RemotePlace;
     const actual = place.asRemotePlace();
 
     expect(actual).to.deep.nested.include({
@@ -79,14 +80,14 @@ describe('services/place.ts', () => {
       name: new UnvalidatedPropertyValue('replaced'),
       lineage: ['parent-id', 'grandparent-id', 'greatgrandparent-id'],
       type: 'remote',
-    };
+    } as unknown as RemotePlace;
 
     place.resolvedHierarchy[3] = {
       id: 'greatgrandparent-id',
       name: new UnvalidatedPropertyValue('greatgrandparent'),
       lineage: [],
       type: 'remote',
-    };
+    } as unknown as RemotePlace;
     const actual = place.asRemotePlace();
 
     expect(actual).to.deep.nested.include({

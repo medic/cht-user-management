@@ -1,13 +1,14 @@
 import { expect } from 'chai';
 
 import { ChtDoc, mockChtApi, mockPlace, mockSimpleContactType } from '../mocks';
+import { ChtApi } from '../../src/lib/cht-api';
 import { HierarchyConstraint } from '../../src/config';
 import RemotePlaceCache from '../../src/lib/remote-place-cache';
 import sinon from 'sinon';
 
 describe('lib/remote-place-cache.ts', () => {
   beforeEach(() => {
-    RemotePlaceCache.clear({});
+    RemotePlaceCache.clear({} as ChtApi);
   });
 
   const doc: ChtDoc = {
@@ -117,9 +118,9 @@ describe('lib/remote-place-cache.ts', () => {
   });
 
   it('unique key properties', async () => {
-    const chtApi = mockChtApi([{_id: 'id', name: 1 }]);
+    const chtApi = mockChtApi([{_id: 'id', name: 1 } as unknown as ChtDoc]);
     const contactType = mockSimpleContactType('string', undefined);
-    contactType.place_properties.find(p => p.property_name === 'name').unique = 'all';
+    contactType.place_properties.find(p => p.property_name === 'name')!.unique = 'all';
     const contactTypeAsHierarchyLevel: HierarchyConstraint = {
       contact_type: contactType.name,
       property_name: 'level',
@@ -163,7 +164,7 @@ describe('lib/remote-place-cache.ts', () => {
     
     // Add a delay to the getPlacesWithType method to simulate a slow response
     const originalGetPlacesWithType = chtApi.getPlacesWithType;
-    chtApi.getPlacesWithType = sinon.stub().callsFake(async function(...args) {
+    chtApi.getPlacesWithType = sinon.stub().callsFake(async function(this: any, ...args: any[]) {
       await new Promise(resolve => setTimeout(resolve, 50));
       return originalGetPlacesWithType.apply(this, args);
     });

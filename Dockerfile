@@ -14,7 +14,7 @@ RUN apk add git
 RUN npm ci --omit=dev
 
 COPY src ./src
-COPY tsconfig.json ./
+COPY tsconfig.json tsconfig.build.json ./
 RUN npm run build
 
 CMD npm start

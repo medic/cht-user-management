@@ -62,10 +62,10 @@ describe('integration/manage-hierarchy',  function () {
   const sessionCache = SessionCache.getForSession(session);
   const chtApi = () => mockChtApi(
     [
-      { id: 'from-sub', name: 'From Sub', lineage: [], type: 'remote' },
-      { id: 'to-sub', name: 'To Sub', lineage: [], type: 'remote' }
+      { _id: 'from-sub', name: 'From Sub', lineage: [], type: 'remote' },
+      { _id: 'to-sub', name: 'To Sub', lineage: [], type: 'remote' }
     ],
-    [{ id: 'chu-id', name: 'c-h-u', lineage: ['from-sub'], type: 'remote' }],
+    [{ _id: 'chu-id', name: 'c-h-u', lineage: ['from-sub'], type: 'remote' }],
   );
 
   it('should process a move contact job', async () => {
@@ -76,7 +76,7 @@ describe('integration/manage-hierarchy',  function () {
     encodeTokenStub.returns('encoded-token');
     decodeTokenStub.returns(session);
 
-    await MoveLib.scheduleJob(
+    await (MoveLib as any).scheduleJob(
       formData, contactType, sessionCache, chtApi(), moveContactQueue
     );
 
@@ -107,7 +107,7 @@ describe('integration/manage-hierarchy',  function () {
     encodeTokenStub.returns('encoded-token');
     decodeTokenStub.throws(new Error('Missing WORKER_PRIVATE_KEY'));
 
-    await MoveLib.scheduleJob(
+    await (MoveLib as any).scheduleJob(
       formData, contactType, sessionCache, chtApi(), moveContactQueue
     );
 
