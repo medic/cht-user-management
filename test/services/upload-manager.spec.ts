@@ -203,6 +203,35 @@ describe('services/upload-manager.ts', () => {
     expect(place.isCreated).to.be.true;
   });
 
+  it('replacement when the outgoing contact has no user', async () => {
+    const { subcounty, sessionCache, contactType, fakeFormData, chtApi, uploadLogger } = await createMocks();
+    chtApi.getUser.resolves(undefined); // the outgoing contact has no user associated with it
+
+    fakeFormData.hierarchy_replacement = 'to-replace';
+    fakeFormData.place_name = ''; // optional due to replacement
+
+    const toReplace: ChtDoc = {
+      _id: 'id-replace',
+      name: 'to-replace',
+      parent: { _id: subcounty._id },
+    };
+
+    chtApi.getPlacesWithType
+      .onFirstCall().resolves([])
+      .onSecondCall().resolves([subcounty])
+      .onThirdCall().resolves([toReplace]);
+
+    const place = await PlaceFactory.createOne(fakeFormData, contactType, sessionCache, chtApi);
+    expect(place.validationErrors).to.be.empty;
+
+    const uploadManager = new UploadManager(uploadLogger);
+    await uploadManager.doUpload([place], chtApi);
+
+    expect(place.uploadError).to.be.undefined;
+    expect(place.isCreated).to.be.true;
+    expect(chtApi.deleteDoc.calledOnceWith('prev_contact_id')).to.be.true;
+  });
+
   it('place with validation error is not uploaded', async () => {
     const { sessionCache, contactType, fakeFormData, chtApi, uploadLogger } = await createMocks();
     delete fakeFormData.place_name;
