@@ -215,7 +215,7 @@ export class ChtApi {
     }));
   }
 
-  async getUser(contactId: string): Promise<UserInfo> {
+  async getUser(contactId: string): Promise<UserInfo | undefined> {
     const url = `api/v2/users?contact_id=${contactId}`;
     console.log('axios.get', url);
     const resp = await this.axiosInstance.get(url);

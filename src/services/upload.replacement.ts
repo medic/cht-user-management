@@ -32,7 +32,7 @@ export class UploadReplacementWithDeletion implements Uploader {
     const previousPrimaryContact = await this.updatePlace(payload, contactId);
     if (previousPrimaryContact) {
       const user = await this.chtApi.getUser(previousPrimaryContact);
-      if (Array.isArray(user.place) && user.place.length > 1) {
+      if (Array.isArray(user?.place) && user.place.length > 1) {
         const places = (user.place as CouchDoc[]).map(p => p._id);
         for (let i = 0; i < places.length; i++) {
           await this.updatePlace(places[i], contactId);
