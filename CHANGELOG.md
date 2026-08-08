@@ -1,3 +1,10 @@
+## [2.12.8](https://github.com/medic/cht-user-management/compare/v2.12.7...v2.12.8) (2026-08-08)
+
+
+### Bug Fixes
+
+* **#389:** crash during retry when there are no users associated with place ([#390](https://github.com/medic/cht-user-management/issues/390)) ([909a039](https://github.com/medic/cht-user-management/commit/909a0397ef3ecb703e9ef3789f945879d75aa98f)), closes [#389](https://github.com/medic/cht-user-management/issues/389)
+
 ## [2.12.7](https://github.com/medic/cht-user-management/compare/v2.12.6...v2.12.7) (2026-07-30)
 
 
