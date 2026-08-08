@@ -44,7 +44,7 @@ export default class ValidatorName implements IValidator {
 
     const isRomanNumeral = /^[ivx]+$/i;
     const hasForwardSlash = /\//g;
-    const hasApostrophe = /\s*'\s*/g;
+    const spaceBeforeApostrophe = /\s+'/g;
     const hasParentheses = /\(([^)]+)\)/g;
     const hasExtraSpaces = /\s+/g;
 
@@ -57,7 +57,7 @@ export default class ValidatorName implements IValidator {
 
     return value.toLowerCase()
       .replace(hasForwardSlash, ' / ')
-      .replace(hasApostrophe, '\'')
+      .replace(spaceBeforeApostrophe, '\'')
       .replace(hasParentheses, match => `(${titleCase(match.slice(1, -1))})`)
       .split(' ')
       .filter(Boolean)
