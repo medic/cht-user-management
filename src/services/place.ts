@@ -31,9 +31,9 @@ export enum PlaceUploadState {
   IN_PROGRESS = 'in_progress',
 }
 
-const PLACE_PREFIX = 'place_';
-const CONTACT_PREFIX = 'contact_';
-const USER_PREFIX = 'user_';
+export const PLACE_PREFIX = 'place_';
+export const CONTACT_PREFIX = 'contact_';
+export const USER_PREFIX = 'user_';
 
 
 export default class Place {

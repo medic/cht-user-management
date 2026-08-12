@@ -13,6 +13,7 @@ import RemotePlaceResolver from '../lib/remote-place-resolver';
 import WarningSystem from '../warnings';
 import { DisableUsers } from '../lib/disable-users';
 import { SetUserFacilities } from '../services/set-user-facilities';
+import { UpdatePlaceDetails } from '../services/update-place-details';
 import { OidcUserPayload } from '../services/oidc-user-payload';
 import { sanitizeOidcUsername } from '../services/username';
 
@@ -97,6 +98,36 @@ export default async function api(fastify: FastifyInstance) {
         username: payload.username,
         ...(unassigned ? { unassigned } : {}),
       };
+    } catch (e: any) {
+      return { error: e.response?.data?.error?.message ?? e.message ?? e.toString() };
+    }
+  });
+
+  // Corrects the place and contact details of a place which already exists on the instance.
+  // Properties are named as they are in the create payload (eg. `contact_name`, `place_name`).
+  // The place and its type are named on the query string, keeping the body entirely properties -
+  // `place_id` and `type` in the body would collide with the `place_` property prefix.
+  fastify.post('/api/v1/update-place', async (req) => {
+    const formBody: any = req.body;
+    ensureJsonObjectBody(formBody);
+
+    const { place_id: placeId, type } = req.query as any;
+    if (typeof placeId !== 'string' || !placeId.trim()) {
+      return { success: false, errors: 'place_id query parameter is required' };
+    }
+
+    if (typeof type !== 'string' || !type.trim()) {
+      return { success: false, errors: 'type query parameter is required' };
+    }
+
+    if ('place_id' in formBody) {
+      return { success: false, errors: 'place_id belongs on the query string, not in the body' };
+    }
+
+    const contactType = Config.getContactType(type);
+    const chtApi = new ChtApi(req.chtSession);
+    try {
+      return await UpdatePlaceDetails.update(placeId, contactType, formBody, chtApi);
     } catch (e: any) {
       return { error: e.response?.data?.error?.message ?? e.message ?? e.toString() };
     }

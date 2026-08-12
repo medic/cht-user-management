@@ -12,6 +12,7 @@ import WarningSystem from '../../src/warnings';
 import ManageHierarchyLib from '../../src/lib/manage-hierarchy';
 import { DisableUsers } from '../../src/lib/disable-users';
 import { SetUserFacilities } from '../../src/services/set-user-facilities';
+import { UpdatePlaceDetails } from '../../src/services/update-place-details';
 import { ChtApi } from '../../src/lib/cht-api';
 import { UnvalidatedPropertyValue } from '../../src/property-value';
 import { mockChtSession, mockValidContactType } from '../mocks';
@@ -68,6 +69,7 @@ describe('routes/api.ts', () => {
   let createUserStub: sinon.SinonStub;
   let createPersonStub: sinon.SinonStub;
   let updatePlaceStub: sinon.SinonStub;
+  let updatePlaceDetailsStub: sinon.SinonStub;
 
   /**
    * Configure PlaceFactory.createOne to return a Place stub whose
@@ -146,11 +148,150 @@ describe('routes/api.ts', () => {
     sinon.stub(ChtApi.prototype, 'getDoc').resolves({ _id: 'fac-a', contact: { _id: 'primary-contact-1' } });
     createPersonStub = sinon.stub(ChtApi.prototype, 'createPersonUnderPlace').resolves('new-contact-1');
     updatePlaceStub = sinon.stub(ChtApi.prototype, 'updatePlace').resolves({} as any);
+    updatePlaceDetailsStub = sinon.stub(UpdatePlaceDetails, 'update').resolves({
+      success: true, place_id: 'place-1', contact_id: 'contact-1', place: {}, contact: {},
+    });
   });
 
   afterEach(async () => {
     sinon.restore();
     await fastify.close();
+  });
+
+  describe('POST /api/v1/update-place', () => {
+    it('passes the payload to the service and returns its result', async () => {
+      updatePlaceDetailsStub.resolves({
+        success: true,
+        place_id: 'chp-area-1',
+        contact_id: 'chp-contact-1',
+        place: { name: 'Janet Doe Area' },
+        contact: { name: 'Janet Doe' },
+      });
+
+      const resp = await fastify.inject({
+        method: 'POST',
+        url: '/api/v1/update-place?place_id=chp-area-1&type=anything',
+        payload: { contact_name: 'Janet Doe' },
+      });
+
+      expect(resp.statusCode).to.equal(200);
+      expect(resp.json()).to.deep.equal({
+        success: true,
+        place_id: 'chp-area-1',
+        contact_id: 'chp-contact-1',
+        place: { name: 'Janet Doe Area' },
+        contact: { name: 'Janet Doe' },
+      });
+      // the place and its type are named on the query string, leaving the body entirely properties
+      const [placeId, contactType, formData] = updatePlaceDetailsStub.firstCall.args;
+      expect(placeId).to.equal('chp-area-1');
+      expect(contactType).to.equal((Config.getContactType as sinon.SinonStub).firstCall.returnValue);
+      expect((Config.getContactType as sinon.SinonStub).calledOnceWith('anything')).to.be.true;
+      expect(formData).to.deep.equal({ contact_name: 'Janet Doe' });
+    });
+
+    it('rejects a missing type query parameter without calling the service', async () => {
+      const resp = await fastify.inject({
+        method: 'POST',
+        url: '/api/v1/update-place?place_id=chp-area-1',
+        payload: { contact_name: 'Janet Doe' },
+      });
+
+      expect(resp.statusCode).to.equal(200);
+      expect(resp.json()).to.deep.equal({ success: false, errors: 'type query parameter is required' });
+      expect(updatePlaceDetailsStub.called).to.be.false;
+    });
+
+    it('returns 500 when type is unknown', async () => {
+      (Config.getContactType as sinon.SinonStub).restore();
+      sinon.stub(Config, 'getContactType').throws(new Error('unrecognized contact type: "bogus"'));
+
+      const resp = await fastify.inject({
+        method: 'POST',
+        url: '/api/v1/update-place?place_id=chp-area-1&type=bogus',
+        payload: { contact_name: 'Janet Doe' },
+      });
+
+      expect(resp.statusCode).to.equal(500);
+      expect(resp.json().message).to.contain('unrecognized contact type');
+      expect(updatePlaceDetailsStub.called).to.be.false;
+    });
+
+    it('returns the validation errors reported by the service', async () => {
+      updatePlaceDetailsStub.resolves({
+        success: false,
+        errors: { contact_phone: 'Not a valid KE phone number' },
+      });
+
+      const resp = await fastify.inject({
+        method: 'POST',
+        url: '/api/v1/update-place?place_id=chp-area-1&type=anything',
+        payload: { contact_phone: '12' },
+      });
+
+      expect(resp.statusCode).to.equal(200);
+      expect(resp.json()).to.deep.equal({
+        success: false,
+        errors: { contact_phone: 'Not a valid KE phone number' },
+      });
+    });
+
+    it('rejects a missing place_id query parameter without calling the service', async () => {
+      const resp = await fastify.inject({
+        method: 'POST',
+        url: '/api/v1/update-place?type=anything',
+        payload: { contact_name: 'Janet Doe' },
+      });
+
+      expect(resp.statusCode).to.equal(200);
+      expect(resp.json()).to.deep.equal({
+        success: false,
+        errors: 'place_id query parameter is required',
+      });
+      expect(updatePlaceDetailsStub.called).to.be.false;
+    });
+
+    // place_id in the body would be read as the place property `id`; say so rather than
+    // failing later with a confusing "unknown properties" error
+    it('rejects place_id in the body without calling the service', async () => {
+      const resp = await fastify.inject({
+        method: 'POST',
+        url: '/api/v1/update-place?place_id=chp-area-1&type=anything',
+        payload: { place_id: 'chp-area-1', contact_name: 'Janet Doe' },
+      });
+
+      expect(resp.statusCode).to.equal(200);
+      expect(resp.json()).to.deep.equal({
+        success: false,
+        errors: 'place_id belongs on the query string, not in the body',
+      });
+      expect(updatePlaceDetailsStub.called).to.be.false;
+    });
+
+    it('returns the error envelope when the service throws', async () => {
+      updatePlaceDetailsStub.rejects(new Error('place "ghost" was not found on this instance'));
+
+      const resp = await fastify.inject({
+        method: 'POST',
+        url: '/api/v1/update-place?place_id=ghost&type=anything',
+        payload: { contact_name: 'Janet Doe' },
+      });
+
+      expect(resp.statusCode).to.equal(200);
+      expect(resp.json()).to.deep.equal({ error: 'place "ghost" was not found on this instance' });
+    });
+
+    it('rejects a non-object body (array)', async () => {
+      const resp = await fastify.inject({
+        method: 'POST',
+        url: '/api/v1/update-place?place_id=chp-area-1&type=anything',
+        payload: ['not', 'an', 'object'],
+      });
+
+      expect(resp.statusCode).to.equal(500);
+      expect(resp.json().message).to.contain('body expected as application/json');
+      expect(updatePlaceDetailsStub.called).to.be.false;
+    });
   });
 
   describe('POST /api/v1/search', () => {
