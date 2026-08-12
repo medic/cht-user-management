@@ -11,6 +11,7 @@ export type ConfigSystem = {
   logoBase64: string;
   // Trusted IdP origins for SSO
   idpOrigins?: string[];
+  attribute_for_external_ownership?: string;
 };
 
 export type PartnerConfig = {
@@ -263,6 +264,10 @@ export class Config {
     ];
   }
 
+  public static getExternalIdentityOwnershipAttribute(): string | undefined {
+    return config.attribute_for_external_ownership;
+  }
+
   public static getIdpOrigins(): string[] {
     return config.idpOrigins ?? [];
   }
@@ -328,6 +333,19 @@ export class Config {
       const generatedHierarchyProperties = allHierarchyProperties.filter(hierarchy => hierarchy.type === 'generated');
       if (generatedHierarchyProperties.length) {
         throw Error('Hierarchy properties cannot be of type "generated"');
+      }
+    }
+
+    // the attribute is written by the API, so a place_property of the same name would fight it
+    const ownershipAttribute = config.attribute_for_external_ownership;
+    if (ownershipAttribute) {
+      const collision = config.contact_types.find(
+        contactType => contactType.place_properties.some(prop => prop.property_name === ownershipAttribute)
+      );
+      if (collision) {
+        throw Error(
+          `attribute_for_external_ownership "${ownershipAttribute}" is also a place_property of "${collision.name}"`
+        );
       }
     }
 

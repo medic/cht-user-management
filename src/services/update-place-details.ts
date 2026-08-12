@@ -4,14 +4,16 @@ import { ChtApi } from '../lib/cht-api';
 import { ContactProperty, ContactType } from '../config';
 import Place, { CONTACT_PREFIX, FormattedPropertyCollection, PLACE_PREFIX, USER_PREFIX } from './place';
 import RemotePlaceCache from '../lib/remote-place-cache';
+import ExternalIdentity from './external-identity';
 // can't use package.json because of rootDir in ts
 import { version as appVersion } from '../package.json';
 
 const HIERARCHY_PREFIX = 'hierarchy_';
 
-// the properties which were written, and the value each was set to
+// the properties which were written, and the value each was set to. `null` means the attribute was
+// removed from the doc
 export type PropertyChanges = {
-  [property_name: string]: string;
+  [property_name: string]: string | boolean | null;
 };
 
 export type UpdatePlaceDetailsResult = {
@@ -64,6 +66,7 @@ export class UpdatePlaceDetails {
       { doc: placeDoc, values: place.properties, properties: contactType.place_properties },
     ];
     const [contactChanges, placeChanges] = editables.map(editable => this.diff(editable));
+    Object.assign(placeChanges, this.externalIdentityChange(placeDoc, place));
 
     let contactWritten = false;
     try {
@@ -146,6 +149,7 @@ export class UpdatePlaceDetails {
 
     const place = new Place(contactType);
     place.setPropertiesFromFormData({
+      ...ExternalIdentity.pickFrom(formData),
       ...seed(placeDoc, contactType.place_properties, PLACE_PREFIX),
       ...seed(contactDoc, contactType.contact_properties, CONTACT_PREFIX),
     }, HIERARCHY_PREFIX);
@@ -166,6 +170,22 @@ export class UpdatePlaceDetails {
   }
 
   /**
+   * The change to who owns the place, which unlike a create is also able to release it: `null`
+   * removes the attribute. A place whose claim was never mentioned is left as it is, so an
+   * unrelated edit never changes ownership.
+   */
+  private static externalIdentityChange(placeDoc: any, place: Place): PropertyChanges {
+    const claim = place.externalIdentity;
+    const attributeName = ExternalIdentity.attributeName();
+    if (claim === undefined || !attributeName) {
+      return {};
+    }
+
+    const current = placeDoc[attributeName] ?? null;
+    return claim === current ? {} : { [attributeName]: claim };
+  }
+
+  /**
    * The fields to write: every property whose validated value differs from what is on the doc
    */
   private static diff({ doc, values, properties }: EditableDoc): PropertyChanges {
@@ -182,7 +202,13 @@ export class UpdatePlaceDetails {
   }
 
   private static async writeDocWithAttribution(doc: any, changes: PropertyChanges, chtApi: ChtApi): Promise<void> {
-    Object.assign(doc, changes);
+    for (const [propertyName, value] of Object.entries(changes)) {
+      if (value === null) {
+        delete doc[propertyName];
+      } else {
+        doc[propertyName] = value;
+      }
+    }
 
     doc.user_attribution ||= {};
     doc.user_attribution.edits ||= [];

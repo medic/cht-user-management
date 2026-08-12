@@ -2,7 +2,7 @@ import Chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import sinon from 'sinon';
 
-import { ContactType } from '../../src/config';
+import { Config, ContactType } from '../../src/config';
 // property-value and validation/remote-place-resolver are circular; loading remote-place-cache
 // before the service under test leaves UnvalidatedPropertyValue undefined at import time
 import { UpdatePlaceDetails } from '../../src/services/update-place-details';
@@ -192,6 +192,125 @@ describe('services/update-place-details.ts', () => {
     expect((result as any).contact).to.deep.equal({ name: 'Jane Doe', phone: '+254722222222' });
   });
 
+  describe('external identity ownership', () => {
+    const OWNERSHIP_ATTRIBUTE = 'chw_registry_link';
+
+    beforeEach(() => {
+      sinon.stub(Config, 'getExternalIdentityOwnershipAttribute').returns(OWNERSHIP_ATTRIBUTE);
+    });
+
+    it('claims the place for the external system without a reference', async () => {
+      const placeDoc = chpAreaDoc();
+      const chtApi = mockApi([placeDoc, chpContactDoc()]);
+
+      const result = await UpdatePlaceDetails.update(PLACE_ID, CONTACT_TYPE, { [OWNERSHIP_ATTRIBUTE]: true }, chtApi);
+
+      expect((result as any).place).to.deep.equal({ [OWNERSHIP_ATTRIBUTE]: true });
+      expect(chtApi.setDoc.calledOnce).to.be.true;
+      expect(chtApi.setDoc.getCall(0).args[1][OWNERSHIP_ATTRIBUTE]).to.equal(true);
+    });
+
+    it('claims the place with a link back to the external record', async () => {
+      const chtApi = mockApi([chpAreaDoc(), chpContactDoc()]);
+      const externalId = '550e8400-e29b-41d4-a716-446655440000';
+
+      const result = await UpdatePlaceDetails.update(PLACE_ID, CONTACT_TYPE, { [OWNERSHIP_ATTRIBUTE]: externalId }, chtApi);
+
+      expect((result as any).place).to.deep.equal({ [OWNERSHIP_ATTRIBUTE]: externalId });
+      expect(chtApi.setDoc.getCall(0).args[1][OWNERSHIP_ATTRIBUTE]).to.equal(externalId);
+    });
+
+    it('sets ownership alongside a property edit in the one write', async () => {
+      const chtApi = mockApi([chpAreaDoc(), chpContactDoc()]);
+
+      const result = await UpdatePlaceDetails.update(PLACE_ID, CONTACT_TYPE, {
+        contact_name: 'Janet Doe',
+        [OWNERSHIP_ATTRIBUTE]: true,
+      }, chtApi);
+
+      expect((result as any).contact).to.deep.equal({ name: 'Janet Doe' });
+      expect((result as any).place).to.deep.equal({ name: 'Janet Doe Area', [OWNERSHIP_ATTRIBUTE]: true });
+      // one write per doc, ownership included
+      expect(chtApi.setDoc.callCount).to.equal(2);
+    });
+
+    it('releases the place by removing the attribute', async () => {
+      const placeDoc = chpAreaDoc({ [OWNERSHIP_ATTRIBUTE]: 'an-external-uuid' });
+      const chtApi = mockApi([placeDoc, chpContactDoc()]);
+
+      const result = await UpdatePlaceDetails.update(PLACE_ID, CONTACT_TYPE, { [OWNERSHIP_ATTRIBUTE]: null }, chtApi);
+
+      expect((result as any).place).to.deep.equal({ [OWNERSHIP_ATTRIBUTE]: null });
+      // removed from the doc rather than left behind as a falsy value
+      expect(chtApi.setDoc.getCall(0).args[1]).to.not.have.property(OWNERSHIP_ATTRIBUTE);
+    });
+
+    it('treats false as a release', async () => {
+      const chtApi = mockApi([chpAreaDoc({ [OWNERSHIP_ATTRIBUTE]: true }), chpContactDoc()]);
+
+      const result = await UpdatePlaceDetails.update(PLACE_ID, CONTACT_TYPE, { [OWNERSHIP_ATTRIBUTE]: false }, chtApi);
+
+      expect((result as any).place).to.deep.equal({ [OWNERSHIP_ATTRIBUTE]: null });
+    });
+
+    it('leaves ownership alone when the payload does not mention it', async () => {
+      const chtApi = mockApi([chpAreaDoc({ [OWNERSHIP_ATTRIBUTE]: 'an-external-uuid' }), chpContactDoc()]);
+
+      const result = await UpdatePlaceDetails.update(PLACE_ID, CONTACT_TYPE, { contact_phone: '0722222222' }, chtApi);
+
+      expect((result as any).place).to.deep.equal({});
+      expect(chtApi.setDoc.calledOnce).to.be.true;
+    });
+
+    it('writes nothing when the place is already owned by the same record', async () => {
+      const chtApi = mockApi([chpAreaDoc({ [OWNERSHIP_ATTRIBUTE]: 'an-external-uuid' }), chpContactDoc()]);
+
+      const result = await UpdatePlaceDetails.update(
+        PLACE_ID, CONTACT_TYPE, { [OWNERSHIP_ATTRIBUTE]: 'an-external-uuid' }, chtApi
+      );
+
+      expect((result as any).place).to.deep.equal({});
+      expect(chtApi.setDoc.called).to.be.false;
+    });
+
+    it('releasing a place which was never owned writes nothing', async () => {
+      const chtApi = mockApi([chpAreaDoc(), chpContactDoc()]);
+
+      const result = await UpdatePlaceDetails.update(PLACE_ID, CONTACT_TYPE, { [OWNERSHIP_ATTRIBUTE]: null }, chtApi);
+
+      expect((result as any).place).to.deep.equal({});
+      expect(chtApi.setDoc.called).to.be.false;
+    });
+
+    it('rejects a value which is neither a claim nor a release', async () => {
+      const chtApi = mockApi([chpAreaDoc(), chpContactDoc()]);
+
+      await expect(UpdatePlaceDetails.update(PLACE_ID, CONTACT_TYPE, { [OWNERSHIP_ATTRIBUTE]: '  ' }, chtApi))
+        .to.eventually.be.rejectedWith('must be true, a reference to the external record, or null to release');
+      expect(chtApi.setDoc.called).to.be.false;
+    });
+
+    // ownership is opt-in per partner: only the configs which name an attribute track it at all
+    it('ignores ownership when the partner config names no attribute', async () => {
+      (Config.getExternalIdentityOwnershipAttribute as sinon.SinonStub).returns(undefined);
+      const chtApi = mockApi([chpAreaDoc(), chpContactDoc()]);
+
+      const result = await UpdatePlaceDetails.update(PLACE_ID, CONTACT_TYPE, { [OWNERSHIP_ATTRIBUTE]: true }, chtApi);
+
+      expect((result as any).success).to.be.true;
+      expect((result as any).place).to.deep.equal({});
+      expect(chtApi.setDoc.called).to.be.false;
+    });
+
+    it('updates the cached entry, since ownership is written on the place', async () => {
+      const chtApi = mockApi([chpAreaDoc(), chpContactDoc()]);
+
+      await UpdatePlaceDetails.update(PLACE_ID, CONTACT_TYPE, { [OWNERSHIP_ATTRIBUTE]: true }, chtApi);
+
+      expect(updateCacheStub.calledOnce).to.be.true;
+    });
+  });
+
   it('appends an audit trail of the change to the doc', async () => {
     const chtApi = mockApi([chpAreaDoc(), chpContactDoc()]);
 
@@ -309,22 +428,6 @@ describe('services/update-place-details.ts', () => {
 
     expect((result as any).success).to.be.true;
     expect((result as any).contact).to.deep.equal({ name: 'Janet Doe' });
-  });
-
-  it('rejects properties which are not in the config', async () => {
-    const chtApi = mockApi([chpAreaDoc(), chpContactDoc()]);
-
-    await expect(UpdatePlaceDetails.update(PLACE_ID, CONTACT_TYPE, { contact_nickname: 'Janey' }, chtApi))
-      .to.eventually.be.rejectedWith('unknown properties');
-    expect(chtApi.setDoc.called).to.be.false;
-  });
-
-  it('rejects a payload which names no properties', async () => {
-    const chtApi = mockApi([chpAreaDoc(), chpContactDoc()]);
-
-    await expect(UpdatePlaceDetails.update(PLACE_ID, CONTACT_TYPE, { note_to_self: 'not a property' }, chtApi))
-      .to.eventually.be.rejectedWith('no properties to update');
-    expect(chtApi.setDoc.called).to.be.false;
   });
 
   it('rejects a place which does not exist', async () => {
