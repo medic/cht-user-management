@@ -217,9 +217,7 @@
     "https://chwregistry-uat.echis.go.ke",
     
     "https://chpregistry-staging.echis.go.ke",
-    "https://chw-registry-dev.test.co.ke",
-    "https://192-168-2-38.local-ip.medicmobile.org:3000",
-    "https://10-0-0-217.local-ip.medicmobile.org:3000"
+    "https://chw-registry-dev.test.co.ke"
   ],
   "attribute_for_external_ownership": "chw_registry_link",
   "contact_types": [
