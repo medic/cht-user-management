@@ -164,8 +164,8 @@ describe('routes/api.ts', () => {
         success: true,
         place_id: 'chp-area-1',
         contact_id: 'chp-contact-1',
-        place: { name: 'Janet Doe Area' },
-        contact: { name: 'Janet Doe' },
+        place: { name: { previous: 'Jane Doe Area', current: 'Janet Doe Area' } },
+        contact: { name: { previous: 'Jane Doe', current: 'Janet Doe' } },
       });
 
       const resp = await fastify.inject({
@@ -179,8 +179,8 @@ describe('routes/api.ts', () => {
         success: true,
         place_id: 'chp-area-1',
         contact_id: 'chp-contact-1',
-        place: { name: 'Janet Doe Area' },
-        contact: { name: 'Janet Doe' },
+        place: { name: { previous: 'Jane Doe Area', current: 'Janet Doe Area' } },
+        contact: { name: { previous: 'Jane Doe', current: 'Janet Doe' } },
       });
       // the place and its type are named on the query string, leaving the body entirely properties
       const [placeId, contactType, formData] = updatePlaceDetailsStub.firstCall.args;

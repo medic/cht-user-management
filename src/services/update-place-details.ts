@@ -10,10 +10,20 @@ import { version as appVersion } from '../package.json';
 
 const HIERARCHY_PREFIX = 'hierarchy_';
 
-// the properties which were written, and the value each was set to. `null` means the attribute was
-// removed from the doc
+// the value a property held on the doc, which is not guaranteed to be a string (eg. a numeric code)
+export type PropertyValue = string | number | boolean | null;
+
+// what happened to one property: the value it held before the edit and the value it was set to. A
+// `current` of `null` removes the attribute from the doc, and a `previous` of `null` means it was
+// not on the doc to begin with
+export type PropertyChange = {
+  previous: PropertyValue;
+  current: string | boolean | null;
+};
+
+// the properties which were written, keyed by property name
 export type PropertyChanges = {
-  [property_name: string]: string | boolean | null;
+  [property_name: string]: PropertyChange;
 };
 
 export type UpdatePlaceDetailsResult = {
@@ -181,8 +191,8 @@ export class UpdatePlaceDetails {
       return {};
     }
 
-    const current = placeDoc[attributeName] ?? null;
-    return claim === current ? {} : { [attributeName]: claim };
+    const previous = placeDoc[attributeName] ?? null;
+    return claim === previous ? {} : { [attributeName]: { previous, current: claim } };
   }
 
   /**
@@ -194,7 +204,7 @@ export class UpdatePlaceDetails {
       const propertyName = property.property_name;
       const validated = values[propertyName]?.formatted ?? '';
       if (validated !== asString(doc[propertyName])) {
-        changes[propertyName] = validated;
+        changes[propertyName] = { previous: asPropertyValue(doc[propertyName]), current: validated };
       }
     }
 
@@ -202,11 +212,11 @@ export class UpdatePlaceDetails {
   }
 
   private static async writeDocWithAttribution(doc: any, changes: PropertyChanges, chtApi: ChtApi): Promise<void> {
-    for (const [propertyName, value] of Object.entries(changes)) {
-      if (value === null) {
+    for (const [propertyName, { current }] of Object.entries(changes)) {
+      if (current === null) {
         delete doc[propertyName];
       } else {
-        doc[propertyName] = value;
+        doc[propertyName] = current;
       }
     }
 
@@ -221,6 +231,15 @@ export class UpdatePlaceDetails {
 
     await chtApi.setDoc(doc._id, doc);
   }
+}
+
+// the value as it is on the doc, kept as it is so the audit trail reports what was really there
+function asPropertyValue(value: unknown): PropertyValue {
+  if (value === undefined || value === null) {
+    return null;
+  }
+
+  return typeof value === 'object' ? asString(value) : value as PropertyValue;
 }
 
 // doc values are not guaranteed to be strings (eg. a numeric code) but property values are

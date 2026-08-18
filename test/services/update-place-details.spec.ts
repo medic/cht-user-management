@@ -76,6 +76,11 @@ function chpContactDoc(overrides: any = {}) {
   };
 }
 
+// every reported change carries the value which was replaced alongside the value written
+function change(previous: any, current: any) {
+  return { previous, current };
+}
+
 function mockApi(docs: any[]) {
   const byId = new Map(docs.map(doc => [doc._id, doc]));
   return {
@@ -117,9 +122,12 @@ describe('services/update-place-details.ts', () => {
       place_id: PLACE_ID,
       contact_id: CONTACT_ID,
     });
-    expect((result as any).contact).to.deep.equal({ name: 'Janet Doe', phone: '+254722222222' });
+    expect((result as any).contact).to.deep.equal({
+      name: change('Jane Doe', 'Janet Doe'),
+      phone: change('+254712345678', '+254722222222'),
+    });
     // the generated place name follows the contact rename without being asked for
-    expect((result as any).place).to.deep.equal({ name: 'Janet Doe Area' });
+    expect((result as any).place).to.deep.equal({ name: change('Jane Doe Area', 'Janet Doe Area') });
 
     expect(chtApi.setDoc.callCount).to.equal(2);
     // the contact is written before the place so the place never points at a stale contact
@@ -189,7 +197,10 @@ describe('services/update-place-details.ts', () => {
 
     const result = await UpdatePlaceDetails.update(PLACE_ID, CONTACT_TYPE, { contact_phone: '0722222222' }, chtApi);
 
-    expect((result as any).contact).to.deep.equal({ name: 'Jane Doe', phone: '+254722222222' });
+    expect((result as any).contact).to.deep.equal({
+      name: change('jane doe', 'Jane Doe'),
+      phone: change('+254712345678', '+254722222222'),
+    });
   });
 
   describe('external identity ownership', () => {
@@ -205,7 +216,7 @@ describe('services/update-place-details.ts', () => {
 
       const result = await UpdatePlaceDetails.update(PLACE_ID, CONTACT_TYPE, { [OWNERSHIP_ATTRIBUTE]: true }, chtApi);
 
-      expect((result as any).place).to.deep.equal({ [OWNERSHIP_ATTRIBUTE]: true });
+      expect((result as any).place).to.deep.equal({ [OWNERSHIP_ATTRIBUTE]: change(null, true) });
       expect(chtApi.setDoc.calledOnce).to.be.true;
       expect(chtApi.setDoc.getCall(0).args[1][OWNERSHIP_ATTRIBUTE]).to.equal(true);
     });
@@ -216,7 +227,7 @@ describe('services/update-place-details.ts', () => {
 
       const result = await UpdatePlaceDetails.update(PLACE_ID, CONTACT_TYPE, { [OWNERSHIP_ATTRIBUTE]: externalId }, chtApi);
 
-      expect((result as any).place).to.deep.equal({ [OWNERSHIP_ATTRIBUTE]: externalId });
+      expect((result as any).place).to.deep.equal({ [OWNERSHIP_ATTRIBUTE]: change(null, externalId) });
       expect(chtApi.setDoc.getCall(0).args[1][OWNERSHIP_ATTRIBUTE]).to.equal(externalId);
     });
 
@@ -228,8 +239,11 @@ describe('services/update-place-details.ts', () => {
         [OWNERSHIP_ATTRIBUTE]: true,
       }, chtApi);
 
-      expect((result as any).contact).to.deep.equal({ name: 'Janet Doe' });
-      expect((result as any).place).to.deep.equal({ name: 'Janet Doe Area', [OWNERSHIP_ATTRIBUTE]: true });
+      expect((result as any).contact).to.deep.equal({ name: change('Jane Doe', 'Janet Doe') });
+      expect((result as any).place).to.deep.equal({
+        name: change('Jane Doe Area', 'Janet Doe Area'),
+        [OWNERSHIP_ATTRIBUTE]: change(null, true),
+      });
       // one write per doc, ownership included
       expect(chtApi.setDoc.callCount).to.equal(2);
     });
@@ -240,7 +254,7 @@ describe('services/update-place-details.ts', () => {
 
       const result = await UpdatePlaceDetails.update(PLACE_ID, CONTACT_TYPE, { [OWNERSHIP_ATTRIBUTE]: null }, chtApi);
 
-      expect((result as any).place).to.deep.equal({ [OWNERSHIP_ATTRIBUTE]: null });
+      expect((result as any).place).to.deep.equal({ [OWNERSHIP_ATTRIBUTE]: change('an-external-uuid', null) });
       // removed from the doc rather than left behind as a falsy value
       expect(chtApi.setDoc.getCall(0).args[1]).to.not.have.property(OWNERSHIP_ATTRIBUTE);
     });
@@ -250,7 +264,7 @@ describe('services/update-place-details.ts', () => {
 
       const result = await UpdatePlaceDetails.update(PLACE_ID, CONTACT_TYPE, { [OWNERSHIP_ATTRIBUTE]: false }, chtApi);
 
-      expect((result as any).place).to.deep.equal({ [OWNERSHIP_ATTRIBUTE]: null });
+      expect((result as any).place).to.deep.equal({ [OWNERSHIP_ATTRIBUTE]: change(true, null) });
     });
 
     it('leaves ownership alone when the payload does not mention it', async () => {
@@ -320,7 +334,7 @@ describe('services/update-place-details.ts', () => {
     expect(edit.username).to.equal('username');
     expect(edit.tool).to.match(/^cht-user-management-/);
     expect(edit.edited_time).to.be.a('number');
-    expect(edit.changes).to.deep.equal({ phone: '+254722222222' });
+    expect(edit.changes).to.deep.equal({ phone: change('+254712345678', '+254722222222') });
   });
 
   it('rejects an invalid value without writing anything', async () => {
@@ -350,7 +364,7 @@ describe('services/update-place-details.ts', () => {
 
     const result = await UpdatePlaceDetails.update(PLACE_ID, CONTACT_TYPE, { contact_notes: '' }, chtApi);
 
-    expect((result as any).contact).to.deep.equal({ notes: '' });
+    expect((result as any).contact).to.deep.equal({ notes: change('stale note', '') });
     expect(chtApi.setDoc.getCall(0).args[1].notes).to.equal('');
   });
 
@@ -427,7 +441,7 @@ describe('services/update-place-details.ts', () => {
     const result = await UpdatePlaceDetails.update(PLACE_ID, CONTACT_TYPE, { contact_name: 'Janet Doe' }, chtApi);
 
     expect((result as any).success).to.be.true;
-    expect((result as any).contact).to.deep.equal({ name: 'Janet Doe' });
+    expect((result as any).contact).to.deep.equal({ name: change('Jane Doe', 'Janet Doe') });
   });
 
   it('rejects a place which does not exist', async () => {
