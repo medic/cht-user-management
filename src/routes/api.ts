@@ -12,7 +12,7 @@ import RemotePlaceCache from '../lib/remote-place-cache';
 import RemotePlaceResolver from '../lib/remote-place-resolver';
 import WarningSystem from '../warnings';
 import { DisableUsers } from '../lib/disable-users';
-import { SetUserFacilities } from '../services/set-user-facilities';
+import { SetUserFacilities, UserNotFoundError } from '../services/set-user-facilities';
 import { UpdatePlaceDetails } from '../services/update-place-details';
 import { OidcUserPayload } from '../services/oidc-user-payload';
 import { sanitizeOidcUsername } from '../services/username';
@@ -205,6 +205,11 @@ export default async function api(fastify: FastifyInstance) {
     try {
       return await SetUserFacilities.setFacilities(resolvedUsername, facilityIds, chtApi, roles);
     } catch (e: any) {
+      // Flagged separately: the caller's remedy is to create the user, not to retry
+      if (e instanceof UserNotFoundError) {
+        return { success: false, error: e.message, userNotFound: true };
+      }
+
       return { error: e.response?.data?.error?.message ?? e.toString() };
     }
   });

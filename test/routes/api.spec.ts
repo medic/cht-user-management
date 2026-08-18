@@ -11,7 +11,7 @@ import Place, { PlaceUploadState } from '../../src/services/place';
 import WarningSystem from '../../src/warnings';
 import ManageHierarchyLib from '../../src/lib/manage-hierarchy';
 import { DisableUsers } from '../../src/lib/disable-users';
-import { SetUserFacilities } from '../../src/services/set-user-facilities';
+import { SetUserFacilities, UserNotFoundError } from '../../src/services/set-user-facilities';
 import { UpdatePlaceDetails } from '../../src/services/update-place-details';
 import { ChtApi } from '../../src/lib/cht-api';
 import { UnvalidatedPropertyValue } from '../../src/property-value';
@@ -641,6 +641,27 @@ describe('routes/api.ts', () => {
 
       expect(resp.statusCode).to.equal(200);
       expect(resp.json()).to.deep.equal({ error: 'Error: Not Found' });
+    });
+
+    it('flags a missing user so the caller can create them instead of retrying', async () => {
+      setUserFacilitiesStub.rejects(new UserNotFoundError('registryf4973080'));
+
+      const resp = await fastify.inject({
+        method: 'POST',
+        url: '/api/v1/set-user-facilities',
+        payload: {
+          oidc_username: 'registry-f4973080',
+          facility_ids: ['fac-a'],
+          roles: ['community_health_assistant'],
+        },
+      });
+
+      expect(resp.statusCode).to.equal(200);
+      expect(resp.json()).to.deep.equal({
+        success: false,
+        error: 'User "registryf4973080" was not found in this eCHIS instance',
+        userNotFound: true,
+      });
     });
 
     it('rejects a non-object body (array)', async () => {
