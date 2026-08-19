@@ -68,6 +68,14 @@ export class ChtApi {
     return resp.data.id;
   }
 
+  // Creates a person (contact) in an existing place
+  async createPersonUnderPlace(placeId: string, attributes: Record<string, unknown>): Promise<string> {
+    const url = `api/v1/people`;
+    console.log('axios.post', url);
+    const resp = await this.axiosInstance.post(url, { ...attributes, place: placeId });
+    return resp.data.id;
+  }
+
   async updatePlace(payload: PlacePayload | string, contactId: string): Promise<any> {
     let doc: any;
     let placeId = '';
@@ -207,7 +215,7 @@ export class ChtApi {
     }));
   }
 
-  async getUser(contactId: string): Promise<UserInfo> {
+  async getUser(contactId: string): Promise<UserInfo | undefined> {
     const url = `api/v2/users?contact_id=${contactId}`;
     console.log('axios.get', url);
     const resp = await this.axiosInstance.get(url);

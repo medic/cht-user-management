@@ -14,6 +14,7 @@ import WarningSystem from '../warnings';
 import { DisableUsers } from '../lib/disable-users';
 import { SetUserFacilities } from '../services/set-user-facilities';
 import { OidcUserPayload } from '../services/oidc-user-payload';
+import { sanitizeOidcUsername } from '../services/username';
 
 type SearchResult = {
   place_id: string;
@@ -66,8 +67,7 @@ export default async function api(fastify: FastifyInstance) {
       warnings: place.warnings,
     };
   };
-  // /create-user-and-place is the descriptive name; /create is kept as an alias for compatibility.
-  fastify.post('/api/v1/create', createUserAndPlace);
+  
   fastify.post('/api/v1/create-user-and-place', createUserAndPlace);
 
   fastify.post('/api/v1/create-user', async (req) => {
@@ -75,19 +75,30 @@ export default async function api(fastify: FastifyInstance) {
     ensureJsonObjectBody(formBody);
 
     const roles = normalizeRoles(formBody);
-    const { oidc_username: oidcUsername, facility_ids: facilityIds, contact_id: contactId } = formBody;
-    const validationError = validateCreateUser(oidcUsername, roles, facilityIds, contactId);
+    const { oidc_username: oidcUsername, facility_ids: facilityIds, contact } = formBody;
+    const validationError = validateCreateUser(oidcUsername, roles, facilityIds, contact);
     if (validationError) {
       return { success: false, errors: validationError };
     }
 
     const chtApi = new ChtApi(req.chtSession);
     try {
+      const contactId = await createPrimaryContactForFacilities(contact, facilityIds, chtApi);
       const payload = new OidcUserPayload(oidcUsername, roles, facilityIds, contactId);
       await chtApi.createUser(payload);
-      return { success: true, username: payload.username };
+
+      // Opt-in via ?exclusiveFacilities=true: makes facilities exclusive
+      const unassigned = isQueryFlagSet(req.query, 'exclusiveFacilities')
+        ? await SetUserFacilities.unassignFacilitiesFromOthers(facilityIds, payload.username, chtApi)
+        : undefined;
+
+      return {
+        success: true,
+        username: payload.username,
+        ...(unassigned ? { unassigned } : {}),
+      };
     } catch (e: any) {
-      return { error: e.response?.data?.error?.message ?? e.toString() };
+      return { error: e.response?.data?.error?.message ?? e.message ?? e.toString() };
     }
   });
 
@@ -97,7 +108,7 @@ export default async function api(fastify: FastifyInstance) {
 
     const chtApi = new ChtApi(req.chtSession);
     
-    if (shouldClearCache(req.query)) {
+    if (isQueryFlagSet(req.query, 'clear_cache')) {
       RemotePlaceCache.clear(chtApi);
     }
 
@@ -135,27 +146,33 @@ export default async function api(fastify: FastifyInstance) {
       };
     }
 
-    const disabled = await DisableUsers.disableUsersAt([facility.place_id], chtApi);
-    return {
-      place_id: facility.place_id,
-      place_name: facility.name,
-      disabled,
-    };
+    try {
+      const disabled = await DisableUsers.disableUsersAt([facility.place_id], chtApi);
+      return {
+        place_id: facility.place_id,
+        place_name: facility.name,
+        disabled,
+      };
+    } catch (e: any) {
+      return { error: e.response?.data?.error?.message ?? e.toString() };
+    }
   });
 
   fastify.post('/api/v1/set-user-facilities', async (req) => {
     const formBody: any = req.body;
     ensureJsonObjectBody(formBody);
 
-    const { username, facility_ids: facilityIds } = formBody;
-    const validationError = validateSetUserFacilities(username, facilityIds);
+    const { username, oidc_username: oidcUsername, facility_ids: facilityIds } = formBody;
+    const resolvedUsername = oidcUsername ? sanitizeOidcUsername(oidcUsername) : username;
+    const roles = normalizeRoles(formBody);
+    const validationError = validateSetUserFacilities(resolvedUsername, facilityIds, roles);
     if (validationError) {
       return { success: false, errors: validationError };
     }
 
     const chtApi = new ChtApi(req.chtSession);
     try {
-      return await SetUserFacilities.setFacilities(username, facilityIds, chtApi);
+      return await SetUserFacilities.setFacilities(resolvedUsername, facilityIds, chtApi, roles);
     } catch (e: any) {
       return { error: e.response?.data?.error?.message ?? e.toString() };
     }
@@ -215,7 +232,7 @@ function validateCreateUser(
   oidcUsername: unknown,
   roles: string[],
   facilityIds: unknown,
-  contactId: unknown,
+  contact: any,
 ): string | null {
   if (typeof oidcUsername !== 'string' || !oidcUsername.trim()) {
     return 'oidc_username is required';
@@ -229,14 +246,49 @@ function validateCreateUser(
     return 'facility_ids must be a non-empty array of place ids';
   }
 
-  if (typeof contactId !== 'string' || !contactId.trim()) {
-    return 'contact_id is required';
+  const isValidContact = !!contact &&
+    typeof contact === 'object' &&
+    typeof contact.name === 'string' &&
+    contact.name.trim();
+  if (!isValidContact) {
+    return 'contact is required and must include a name';
   }
 
   return null;
 }
 
-function validateSetUserFacilities(username: unknown, facilityIds: unknown): string | null {
+// A 404 from a place operation means the facility id does not exist in this CHT
+// instance. Turn axios's opaque "Request failed with status code 404" into a clear,
+// specific error naming the offending place.
+async function assertFacilityFound<T>(facilityId: string, op: () => Promise<T>): Promise<T> {
+  try {
+    return await op();
+  } catch (e: any) {
+    if (e?.response?.status === 404) {
+      throw new Error(`Facility place "${facilityId}" was not found in this eCHIS instance`);
+    }
+    throw e;
+  }
+}
+
+// Always creates a fresh person from the supplied contact details and makes it the primary contact of
+// every facility passed
+async function createPrimaryContactForFacilities(
+  contact: Record<string, unknown>,
+  facilityIds: string[],
+  chtApi: ChtApi,
+): Promise<string> {
+  const [firstFacilityId] = facilityIds;
+  const contactId = await assertFacilityFound(firstFacilityId, () => chtApi.createPersonUnderPlace(firstFacilityId, contact));
+
+  for (const facilityId of facilityIds) {
+    await assertFacilityFound(facilityId, () => chtApi.updatePlace(facilityId, contactId));
+  }
+
+  return contactId;
+}
+
+function validateSetUserFacilities(username: unknown, facilityIds: unknown, roles: string[]): string | null {
   if (typeof username !== 'string' || !username.trim()) {
     return 'username is required';
   }
@@ -245,11 +297,15 @@ function validateSetUserFacilities(username: unknown, facilityIds: unknown): str
     return 'facility_ids must be a non-empty array of place ids';
   }
 
+  if (!roles.length) {
+    return 'role is required';
+  }
+
   return null;
 }
 
-function shouldClearCache(query: any): boolean {
-  const raw = query?.clear_cache;
+function isQueryFlagSet(query: any, name: string): boolean {
+  const raw = query?.[name];
   return raw === '1' || raw === 1 || raw === 'true' || raw === true;
 }
 

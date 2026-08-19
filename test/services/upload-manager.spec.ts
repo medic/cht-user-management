@@ -12,10 +12,15 @@ import RemotePlaceResolver from '../../src/lib/remote-place-resolver';
 import { UploadManagerRetryScenario } from '../lib/retry-logic.spec';
 import { mockGroupedFormData } from './place-factory.spec';
 import { UploadLoggerImpl, UploadLoggerStore } from '../../src/services/upload-log';
+import { ChtApi } from '../../src/lib/cht-api';
 
 describe('services/upload-manager.ts', () => {
   beforeEach(() => {
-    RemotePlaceCache.clear({});
+    RemotePlaceCache.clear({} as ChtApi);
+  });
+
+  afterEach(() => {
+    SessionCache.getForSession(mockChtSession()).removeAll();
   });
 
   it('mock data is properly sent to chtApi - standard', async () => {
@@ -198,6 +203,35 @@ describe('services/upload-manager.ts', () => {
     expect(place.isCreated).to.be.true;
   });
 
+  it('replacement when the outgoing contact has no user', async () => {
+    const { subcounty, sessionCache, contactType, fakeFormData, chtApi, uploadLogger } = await createMocks();
+    chtApi.getUser.resolves(undefined); // the outgoing contact has no user associated with it
+
+    fakeFormData.hierarchy_replacement = 'to-replace';
+    fakeFormData.place_name = ''; // optional due to replacement
+
+    const toReplace: ChtDoc = {
+      _id: 'id-replace',
+      name: 'to-replace',
+      parent: { _id: subcounty._id },
+    };
+
+    chtApi.getPlacesWithType
+      .onFirstCall().resolves([])
+      .onSecondCall().resolves([subcounty])
+      .onThirdCall().resolves([toReplace]);
+
+    const place = await PlaceFactory.createOne(fakeFormData, contactType, sessionCache, chtApi);
+    expect(place.validationErrors).to.be.empty;
+
+    const uploadManager = new UploadManager(uploadLogger);
+    await uploadManager.doUpload([place], chtApi);
+
+    expect(place.uploadError).to.be.undefined;
+    expect(place.isCreated).to.be.true;
+    expect(chtApi.deleteDoc.calledOnceWith('prev_contact_id')).to.be.true;
+  });
+
   it('place with validation error is not uploaded', async () => {
     const { sessionCache, contactType, fakeFormData, chtApi, uploadLogger } = await createMocks();
     delete fakeFormData.place_name;
@@ -364,6 +398,32 @@ describe('services/upload-manager.ts', () => {
     expect(place.isCreated).to.be.true;
   });
 
+  it('doUpload is idempotent while an upload is in flight', async () => {
+    const { fakeFormData, contactType, sessionCache, chtApi, uploadLogger } = await createMocks();
+    const place = await PlaceFactory.createOne(fakeFormData, contactType, sessionCache, chtApi);
+
+    let resolveCreatePlace: (result: any) => void = () => {};
+    // freeze createPlace so we can call doUpload thrice before it resolves
+    chtApi.createPlace = sinon.stub().returns(new Promise(resolve => {
+      resolveCreatePlace = resolve;
+    }));
+
+    const uploadManager = new UploadManager(uploadLogger);
+
+    // mock 3 in-flight concurrent calls for the same place, 
+    // only one should actually call createPlace
+    const firstUpload = uploadManager.doUpload([place], chtApi);
+    const secondUpload = uploadManager.doUpload([place], chtApi);
+    const thirdUpload = uploadManager.doUpload([place], chtApi);
+
+    resolveCreatePlace({ placeId: 'created-place-id', contactId: 'created-contact-id' });
+    await Promise.all([firstUpload, secondUpload, thirdUpload]);
+
+    expect(chtApi.createPlace.calledOnce).to.be.true;
+    expect(chtApi.createUser.calledOnce).to.be.true;
+    expect(place.isCreated).to.be.true;
+  });
+
   it('#173 - replacement when place has no primary contact', async () => {
     const { subcounty, sessionCache, contactType, fakeFormData, chtApi, uploadLogger } = await createMocks();
     const toReplace: ChtDoc = {
@@ -408,7 +468,7 @@ it('mock group data is properly sent to chtApi - standard', async () => {
 });
 
 class fakestore implements UploadLoggerStore {
-  items = {};
+  items: Record<string, any> = {};
   async save(user: string, batch: number, record: string[]): Promise<void> {
     this.items[user] = record;
   }
@@ -424,8 +484,9 @@ async function createMocks() {
     _id: 'parent-id',
     name: 'parent-name',
   };
-  const sessionCache = new SessionCache();
-  const chtApi = {
+  const session = mockChtSession();
+  const sessionCache = SessionCache.getForSession(session);
+  const chtApi: any = {
     chtSession: mockChtSession(),
     getPlacesWithType: sinon.stub()
       .onFirstCall().resolves([])

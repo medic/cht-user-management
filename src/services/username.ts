@@ -14,3 +14,13 @@ export function sanitizeUsername(source: string | undefined): string {
 
   return username;
 }
+
+// Derives a CHT-safe username from an oidc_username (typically an email address)
+// "demo@email.com" -> "demo_at_email_dot_com"
+export function sanitizeOidcUsername(oidcUsername: string | undefined): string {
+  return sanitizeUsername(
+    oidcUsername
+      ?.replace(/@/g, '_at_')
+      ?.replace(/\./g, '_dot_')
+  );
+}

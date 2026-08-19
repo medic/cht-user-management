@@ -1,3 +1,31 @@
+## [2.12.8](https://github.com/medic/cht-user-management/compare/v2.12.7...v2.12.8) (2026-08-08)
+
+
+### Bug Fixes
+
+* **#389:** crash during retry when there are no users associated with place ([#390](https://github.com/medic/cht-user-management/issues/390)) ([909a039](https://github.com/medic/cht-user-management/commit/909a0397ef3ecb703e9ef3789f945879d75aa98f)), closes [#389](https://github.com/medic/cht-user-management/issues/389)
+
+## [2.12.7](https://github.com/medic/cht-user-management/compare/v2.12.6...v2.12.7) (2026-07-30)
+
+
+### Bug Fixes
+
+* **#385:** fix for uri-too-long via bump to cht-conf@latest ([#386](https://github.com/medic/cht-user-management/issues/386)) ([ee15f4d](https://github.com/medic/cht-user-management/commit/ee15f4df07af5e60f29d9d886ea43e0a85313d44))
+
+## [2.12.6](https://github.com/medic/cht-user-management/compare/v2.12.5...v2.12.6) (2026-07-22)
+
+
+### Bug Fixes
+
+* **#382:** make doUpload trigger cht request once for same place ([7761a9f](https://github.com/medic/cht-user-management/commit/7761a9f14d2b21709f09d0bbe00cc7c4222b5703)), closes [#382](https://github.com/medic/cht-user-management/issues/382)
+
+## [2.12.5](https://github.com/medic/cht-user-management/compare/v2.12.4...v2.12.5) (2026-07-15)
+
+
+### Bug Fixes
+
+* **#355:** design adjustments to API endpoints during CHA creation in CHW-R ([#360](https://github.com/medic/cht-user-management/issues/360)) ([7cdae65](https://github.com/medic/cht-user-management/commit/7cdae65ef65b02c6d97f0fab0853886ebd212baf)), closes [#355](https://github.com/medic/cht-user-management/issues/355) [#343](https://github.com/medic/cht-user-management/issues/343) [#355](https://github.com/medic/cht-user-management/issues/355)
+
 ## [2.12.4](https://github.com/medic/cht-user-management/compare/v2.12.3...v2.12.4) (2026-07-14)
 
 

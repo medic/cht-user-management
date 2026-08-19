@@ -18,8 +18,14 @@ describe('lib/name-match.ts', () => {
     { search: 'Benjamin Kiarie Muiruri',     echis: "Benjamin Kiarie's Community Health Volunteer Area", match: true },
     { search: "James Ng'ang'a Kamau",        echis: "James Ng'ang'a's Community Health Volunteer Area",  match: true },
     { search: "James Ng'sang Kamau",         echis: "James Ng'sang's Community Health Volunteer Area",   match: true },
+    { search: "James Ng'sang Kamau",         echis: "James Ng 'sang's Community Health Volunteer Area",   match: true },
+    { search: 'NANCY LUGUNGO SAMBIANI',      echis: 'Nancy Sambiani Community Health Volunteer Area',    match: true },
+    { search: 'HELLEN NAOMI NANJALA SIMIYU', echis: 'HELLEN SIMIYU NAOMI NANJALA',    match: true },
+    { search: `EUNICE OCHIENG' ANYANGO`,     echis: `Eunice Ochieng' Anyango Area`,   match: true },
+    
     { search: 'John Otieno',                 echis: 'John Omondi',                    match: false },
     { search: 'John',                        echis: 'John Otieno',                    match: false },
+    { search: `CAROLINE ANYANGO OCHIENG'`,   echis: `Caroline Achieng' Omondi`,       match: false },
   ];
 
   for (const { search, echis, match } of cases) {

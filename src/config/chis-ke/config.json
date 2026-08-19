@@ -363,6 +363,9 @@
         "type": "name",
         "parameter": [
           "['’]s\\s.*$",
+          "\\sCommunity",
+          "\\sHealth",
+          "\\sVolunteer",
           "\\sArea"
         ],
         "required": true
