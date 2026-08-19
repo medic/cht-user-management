@@ -83,7 +83,6 @@ describe('config', () => {
 });
 
 describe('config external sources', () => {
-  // the Config class reads from the singleton loaded via CONFIG_NAME (CHIS-KE by default in tests)
   const loadedConfig = getConfigByKey(process.env.CONFIG_NAME).config;
 
   const SOURCE_A: ExternalSource = {

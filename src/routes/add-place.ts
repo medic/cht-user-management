@@ -107,7 +107,6 @@ export default async function addPlace(fastify: FastifyInstance) {
         results,
       });
     } catch (error) {
-      req.log.error(error);
       return renderError(ExternalSource.toExternalSourceMessage(error, source.friendly_name));
     }
   });
