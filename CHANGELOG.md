@@ -1,3 +1,10 @@
+## [2.12.9](https://github.com/medic/cht-user-management/compare/v2.12.8...v2.12.9) (2026-08-20)
+
+
+### Bug Fixes
+
+* **#376:** don't return external sources if contact type has no external source mapping ([#378](https://github.com/medic/cht-user-management/issues/378)) ([86d4674](https://github.com/medic/cht-user-management/commit/86d4674166d78dfdf2391a1f6358515ce5813c46)), closes [#376](https://github.com/medic/cht-user-management/issues/376)
+
 ## [2.12.8](https://github.com/medic/cht-user-management/compare/v2.12.7...v2.12.8) (2026-08-08)
 
 
