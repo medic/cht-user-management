@@ -22,6 +22,13 @@ export type SetUserFacilitiesResult = {
 
 type DisplacedUser = { username: string; placeIds: string[] };
 
+export class UserNotFoundError extends Error {
+  public constructor(public readonly username: string) {
+    super(`User "${username}" was not found in this eCHIS instance`);
+    this.name = 'UserNotFoundError';
+  }
+}
+
 // Sets a CHT user's facilities to exactly `facilityIds` (keyed on username)
 export class SetUserFacilities {
   public static async setFacilities(
@@ -39,7 +46,15 @@ export class SetUserFacilities {
     if (roles?.length && facilityIds.length > 0) {
       update.roles = roles;
     }
-    await chtApi.updateUser(update);
+
+    try {
+      await chtApi.updateUser(update);
+    } catch (e: any) {
+      if (e?.response?.status === 404) {
+        throw new UserNotFoundError(username);
+      }
+      throw e;
+    }
 
     // Strip the reassigned facilities from every other user that held them.
     const unassigned = await this.stripFacilitiesFrom(displaced, facilityIds, chtApi);

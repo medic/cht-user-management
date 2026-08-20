@@ -81,6 +81,37 @@ export default class RemotePlaceCache {
     this.cache.set(cacheKey, places);
   }
 
+  /**
+   * Replaces the cached entry for a single place, leaving the rest of the cached list intact
+   */
+  public static updateFromDoc(chtApi: ChtApi, contactType: ContactType, doc: any): void {
+    const { domain } = chtApi.chtSession.authInfo;
+    const cacheKey = this.getCacheKey(domain, contactType.name);
+
+    // Only patch an already-populated list, as `add` does. If this type isn't cached, leave it
+    // absent so the next fetch loads the full set from CHT
+    const places = this.cache.get<RemotePlace[]>(cacheKey);
+    if (!places) {
+      return;
+    }
+
+    // places of the contact type being edited are cached under its own level of the hierarchy
+    const hierarchyLevel = Config.getHierarchyWithReplacement(contactType).find(level => level.level === 0);
+    if (!hierarchyLevel) {
+      return;
+    }
+
+    const uniqueKeyProperties = Config.getUniqueProperties(contactType.name);
+    const remotePlace = this.convertContactToRemotePlace(doc, uniqueKeyProperties, hierarchyLevel);
+    const existingIndex = places.findIndex(place => place.id === remotePlace.id);
+    if (existingIndex >= 0) {
+      places[existingIndex] = remotePlace;
+    } else {
+      places.push(remotePlace);
+    }
+    this.cache.set(cacheKey, places);
+  }
+
   public static clear(chtApi: ChtApi, contactTypeName?: string): void {
     const domain = chtApi?.chtSession?.authInfo?.domain;
     if (!domain) {

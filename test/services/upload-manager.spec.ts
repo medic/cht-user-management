@@ -53,6 +53,47 @@ describe('services/upload-manager.ts', () => {
     expect(place.isCreated).to.be.true;
   });
 
+  describe('external identity ownership', () => {
+    const OWNERSHIP_ATTRIBUTE = 'chw_registry_link';
+
+    beforeEach(() => {
+      sinon.stub(Config, 'getExternalIdentityOwnershipAttribute').returns(OWNERSHIP_ATTRIBUTE);
+    });
+
+    afterEach(() => sinon.restore());
+
+    it('a new place is created owned by the external system', async () => {
+      const { fakeFormData, contactType, chtApi, sessionCache, uploadLogger } = await createMocks();
+
+      const place = await PlaceFactory.createOne(
+        { ...fakeFormData, [OWNERSHIP_ATTRIBUTE]: 'guid' },
+        contactType,
+        sessionCache,
+        chtApi
+      );
+
+      const uploadManager = new UploadManager(uploadLogger);
+      await uploadManager.doUpload([place], chtApi);
+
+      expect(chtApi.createPlace.calledOnce).to.be.true;
+      const placePayload = chtApi.createPlace.args[0][0];
+      expect(placePayload[OWNERSHIP_ATTRIBUTE]).to.eq('guid');
+      expect(placePayload.contact).to.not.have.property(OWNERSHIP_ATTRIBUTE);
+      expect(place.isCreated).to.be.true;
+    });
+
+    it('a new place created without a claim carries no ownership attribute', async () => {
+      const { fakeFormData, contactType, chtApi, sessionCache, uploadLogger } = await createMocks();
+
+      const place = await PlaceFactory.createOne(fakeFormData, contactType, sessionCache, chtApi);
+
+      const uploadManager = new UploadManager(uploadLogger);
+      await uploadManager.doUpload([place], chtApi);
+
+      expect(chtApi.createPlace.args[0][0]).to.not.have.property(OWNERSHIP_ATTRIBUTE);
+    });
+  });
+
   it('mock data is properly sent to chtApi - sessionCache cache', async () => {
     const { fakeFormData, contactType, sessionCache, chtApi, subcounty, uploadLogger, } = await createMocks();
 

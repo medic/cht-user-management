@@ -2,7 +2,7 @@ import { expect } from 'chai';
 import sinon from 'sinon';
 
 import { ChtApi, UserInfo } from '../../src/lib/cht-api';
-import { SetUserFacilities } from '../../src/services/set-user-facilities';
+import { SetUserFacilities, UserNotFoundError } from '../../src/services/set-user-facilities';
 
 const DISABLED_ROLE = 'disabled';
 
@@ -132,6 +132,49 @@ describe('SetUserFacilities', () => {
       { username: 'str', remaining: [], disabled: true },
       { username: 'doc-arr', remaining: ['fac-y'] },
     ]);
+  });
+
+  describe('when the target user does not exist in CHT', () => {
+    const notFound = () => Object.assign(new Error('Request failed with status code 404'), {
+      response: { status: 404 },
+    });
+
+    it('raises UserNotFoundError naming the user rather than the opaque axios error', async () => {
+      const chtApi = fakeChtApi({ 'fac-a': [] });
+      chtApi.updateUser.withArgs(sinon.match({ username: 'target' })).rejects(notFound());
+
+      const actual = await SetUserFacilities.setFacilities('target', ['fac-a'], chtApi).catch(e => e);
+
+      expect(actual).to.be.instanceOf(UserNotFoundError);
+      expect(actual.username).to.eq('target');
+      expect(actual.message).to.include('target');
+      expect(actual.message).to.include('not found');
+    });
+
+    it('does not strip facilities from the displaced users when the target update fails', async () => {
+      const chtApi = fakeChtApi({
+        'fac-a': [{ username: 'other', place: ['fac-a', 'fac-z'] }],
+      });
+      chtApi.updateUser.withArgs(sinon.match({ username: 'target' })).rejects(notFound());
+
+      await SetUserFacilities.setFacilities('target', ['fac-a'], chtApi).catch(() => undefined);
+
+      // 'other' keeps the facility — nothing should be taken away for a user that cannot receive it
+      expect(chtApi.updateUser.calledWith(sinon.match({ username: 'other' }))).to.be.false;
+    });
+
+    it('passes through any other failure untranslated', async () => {
+      const chtApi = fakeChtApi({ 'fac-a': [] });
+      const serverError = Object.assign(new Error('Request failed with status code 500'), {
+        response: { status: 500 },
+      });
+      chtApi.updateUser.withArgs(sinon.match({ username: 'target' })).rejects(serverError);
+
+      const actual = await SetUserFacilities.setFacilities('target', ['fac-a'], chtApi).catch(e => e);
+
+      expect(actual).to.not.be.instanceOf(UserNotFoundError);
+      expect(actual.message).to.include('500');
+    });
   });
 
   describe('unassignFacilitiesFromOthers', () => {

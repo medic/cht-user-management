@@ -97,6 +97,39 @@ describe('lib/remote-place-cache.ts', () => {
     expect(places[0]).to.deep.nested.include(docAsRemotePlace);
   });
 
+  it('updateFromDoc patches the one entry, leaving the rest of the list cached', async () => {
+    const contactType = mockSimpleContactType('string', undefined);
+    const chpDoc: ChtDoc = { _id: 'chp-1', name: 'Jane Doe Area', parent: { _id: doc._id } };
+    const chtApi = mockChtApi([doc], [chpDoc]);
+
+    await RemotePlaceCache.getRemotePlaces(chtApi, contactType);
+    expect(chtApi.getPlacesWithType.callCount).to.eq(2);
+
+    RemotePlaceCache.updateFromDoc(chtApi, contactType, { ...chpDoc, name: 'Janet Doe Area' });
+
+    const places = await RemotePlaceCache.getRemotePlaces(chtApi, contactType);
+    const updated = places.find(place => place.id === 'chp-1');
+    expect(updated).to.deep.nested.include({ 'name.original': 'Janet Doe Area', type: 'remote' });
+    // rebuilt from the doc, so it keeps its lineage and stays a plain remote place
+    expect(updated?.lineage).to.deep.eq([doc._id]);
+    expect(updated?.stagedPlace).to.be.undefined;
+    // the parent is still cached, and nothing was refetched
+    expect(places).to.have.property('length', 2);
+    expect(chtApi.getPlacesWithType.callCount).to.eq(2);
+  });
+
+  it('updateFromDoc is a no-op when the place type has not been cached yet', async () => {
+    const contactType = mockSimpleContactType('string', undefined);
+    const chpDoc: ChtDoc = { _id: 'chp-1', name: 'Jane Doe Area' };
+    const chtApi = mockChtApi([doc], [chpDoc]);
+
+    // never populated the cache for this type, so it must not seed a partial list
+    RemotePlaceCache.updateFromDoc(chtApi, contactType, { ...chpDoc, name: 'Janet Doe Area' });
+
+    const places = await RemotePlaceCache.getRemotePlaces(chtApi, contactType);
+    expect(places.find(place => place.id === 'chp-1')).to.deep.nested.include({ 'name.original': 'Jane Doe Area' });
+  });
+
   it('clear', async () => {
     const contactType = mockSimpleContactType('string', undefined);
     const place = mockPlace(contactType, 'prop');

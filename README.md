@@ -62,6 +62,7 @@ To use the User Management Tool with your CHT project, you'll need to create a n
 `contact_types.deactivate_users_on_replace` | boolean | Controls what should happen to the defunct contact and user documents when a user is replaced. When `false`, the contact and user account will be deleted. When `true`, the contact will be unaltered and the user account will be assigned the role `deactivated`. This allows for account restoration.
 `contact_types.hint` | string | Provide a brief hint or description to clarify the expected input for the property.
 `contact_types.can_assign_multiple` | boolean | Requires CHT >=4.9.0. Enable support for assigning a single user to multiple places
+`attribute_for_external_ownership` | string | Optional. Names an attribute written on a place to mark it as owned by an external system.
 `logoBase64` | Image in base64 | Logo image for your project
 
 #### ConfigProperty

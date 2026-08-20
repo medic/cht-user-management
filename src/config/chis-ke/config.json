@@ -219,6 +219,7 @@
     "https://chpregistry-staging.echis.go.ke",
     "https://chw-registry-dev.test.co.ke"
   ],
+  "attribute_for_external_ownership": "chw_registry_link",
   "contact_types": [
     {
       "name": "c_community_health_unit",

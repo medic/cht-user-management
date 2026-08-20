@@ -3,6 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { Config, ContactProperty, ContactType } from '../config';
 import Contact from './contact';
+import ExternalIdentity, { ExternalIdentityClaim } from './external-identity';
 import { ContactPropertyValue, HierarchyPropertyValue, IPropertyValue, RemotePlacePropertyValue } from '../property-value';
 import { PlacePayload } from '../lib/cht-api';
 // can't use package.json because of rootDir in ts
@@ -31,9 +32,9 @@ export enum PlaceUploadState {
   IN_PROGRESS = 'in_progress',
 }
 
-const PLACE_PREFIX = 'place_';
-const CONTACT_PREFIX = 'contact_';
-const USER_PREFIX = 'user_';
+export const PLACE_PREFIX = 'place_';
+export const CONTACT_PREFIX = 'contact_';
+export const USER_PREFIX = 'user_';
 
 
 export default class Place {
@@ -41,6 +42,8 @@ export default class Place {
   public readonly type: ContactType;
   public contact : Contact;
   public hasSharedUser: boolean = false;
+  // Set when an external system claims (or releases) this place. See ExternalIdentity
+  public externalIdentity?: ExternalIdentityClaim;
   public readonly creationDetails : UserCreationDetails = {};
   public readonly resolvedHierarchy: (RemotePlace | undefined)[];
 
@@ -99,6 +102,11 @@ export default class Place {
       ...this.contact.properties,
       ...getPropertySetWithPrefix(this.type.contact_properties, CONTACT_PREFIX),
     };
+
+    const externalIdentity = ExternalIdentity.fromFormData(formData);
+    if (externalIdentity !== undefined) {
+      this.externalIdentity = externalIdentity;
+    }
 
     if (Config.hasMultipleRoles(this.type)) {
       const userRoleConfig = Config.getUserRoleConfig(this.type);
@@ -169,6 +177,7 @@ export default class Place {
 
     return {
       ...filteredProperties(this.properties),
+      ...ExternalIdentity.asPlaceAttribute(this.externalIdentity),
       ...contactAttributes(this.type.name),
       _id: this.isReplacement ? this.resolvedHierarchy[0]?.id : this.id,
       parent: this.resolvedHierarchy[1]?.id,
