@@ -1,3 +1,10 @@
+# [2.13.0](https://github.com/medic/cht-user-management/compare/v2.12.9...v2.13.0) (2026-08-20)
+
+
+### Features
+
+* **#391:** make attribute_for_external_ownership settable when creating or replacing ([#393](https://github.com/medic/cht-user-management/issues/393)) ([59ce3aa](https://github.com/medic/cht-user-management/commit/59ce3aa4cb6ce3ef04199f65079b08cc544cc304)), closes [#391](https://github.com/medic/cht-user-management/issues/391) [#392](https://github.com/medic/cht-user-management/issues/392)
+
 ## [2.12.9](https://github.com/medic/cht-user-management/compare/v2.12.8...v2.12.9) (2026-08-20)
 
 
