@@ -117,64 +117,16 @@ const { config } = partnerConfig;
 export class Config {
   private constructor() { }
 
-  public static getExternalSources(id?: string): ExternalSource[] {
-    if (id) {
-      const source = config.external_sources?.find(s => s.id === id);
-      if (!source) {
-        throw new Error(`external source with id "${id}" not found`);
-      }
-      return [source];
-    }
-    return config.external_sources || [];
-  }
-
-  public static getSanitizedExternalSources(): SanitizedExternalSource[] {
-    const result = config.external_sources?.map(s => ({ id: s.id, friendly_name: s.friendly_name })) || [];
-    return result;
-  }
-
   public static contactTypes(): ContactType[] {
     return config.contact_types;
   }
-
+  
   public static getContactType(name: string): ContactType {
     const contactMatch = config.contact_types.find(c => c.name === name);
     if (!contactMatch) {
       throw new Error(`unrecognized contact type: "${name}"`);
     }
     return contactMatch;
-  }
-
-  // get all external source parameters from configuration
-  public static getExternalSourceConfigById(sourceId: string, contactTypeName: string): ExternalSourceConfig {
-    const source = Config.getExternalSources(sourceId)[0];
-    const contactType: ContactType | undefined = config.contact_types.find(ct => ct.name === contactTypeName);
-    if (!contactType) {
-      throw new Error(`unrecognized contact type: "${contactTypeName}"`);
-    }
-    const getMappedProperties = (
-      properties: ContactProperty[] | HierarchyConstraint[],
-      type: 'place' | 'contact' | 'hierarchy'
-    ): ExternalSourceConfig['mapping'] => {
-      return properties.filter(prop => !!prop.external_mapping)
-        .map(prop => ({
-          propertyName: prop.property_name,
-          friendlyName: prop.friendly_name,
-          propertyType: type,
-          externalSourceField: prop.external_mapping?.[sourceId]?.name || '',
-          path: prop.external_mapping?.[sourceId]?.path,
-          isFilter: prop.external_mapping?.[sourceId]?.is_filter || false,
-        }));
-    };
-
-    return {
-      ...source,
-      mapping: [
-        ...getMappedProperties(contactType.contact_properties, 'contact'),
-        ...getMappedProperties(contactType.hierarchy, 'hierarchy'),
-        ...getMappedProperties(contactType.place_properties, 'place'),
-      ]
-    };
   }
 
   public static getParentProperty(contactType: ContactType): HierarchyConstraint {
@@ -285,6 +237,67 @@ export class Config {
     const contactMatch = config.contact_types.find(c => c.name === contactTypeName);
     const uniqueProperties = contactMatch?.place_properties.filter(prop => prop.unique);
     return uniqueProperties || [];
+  }
+
+  public static getExternalSources(id?: string): ExternalSource[] {
+    if (id) {
+      const source = config.external_sources?.find(s => s.id === id);
+      if (!source) {
+        throw new Error(`external source ${id} not found`);
+      }
+      return [source];
+    }
+    return config.external_sources || [];
+  }
+
+  public static getSanitizedExternalSources(contactTypeName: string, sourceId?: string): SanitizedExternalSource[] {
+    const contactType = Config.getContactType(contactTypeName);
+
+    const result = config.external_sources
+      ?.filter(source => Config.hasExternalSourceFilter(source.id, contactType) && (!sourceId || source.id === sourceId))
+      .map(s => ({ id: s.id, friendly_name: s.friendly_name })) || [];
+    return result;
+  }
+
+  private static hasExternalSourceFilter(sourceId: string, contactType: ContactType): boolean {
+    return [
+      ...contactType.contact_properties,
+      ...contactType.place_properties,
+      ...contactType.hierarchy
+    ]
+      .some(prop => prop.external_mapping?.[sourceId]?.is_filter);
+  }
+
+  // get all external source parameters from configuration
+  public static getExternalSourceConfigById(sourceId: string, contactTypeName: string): ExternalSourceConfig {
+    const source = Config.getExternalSources(sourceId)[0];
+    const contactType: ContactType | undefined = config.contact_types.find(ct => ct.name === contactTypeName);
+    if (!contactType) {
+      throw new Error(`unrecognized contact type: "${contactTypeName}"`);
+    }
+    const getMappedProperties = (
+      properties: ContactProperty[] | HierarchyConstraint[],
+      type: 'place' | 'contact' | 'hierarchy'
+    ): ExternalSourceConfig['mapping'] => {
+      return properties.filter(prop => !!prop.external_mapping)
+        .map(prop => ({
+          propertyName: prop.property_name,
+          friendlyName: prop.friendly_name,
+          propertyType: type,
+          externalSourceField: prop.external_mapping?.[sourceId]?.name || '',
+          path: prop.external_mapping?.[sourceId]?.path,
+          isFilter: prop.external_mapping?.[sourceId]?.is_filter || false,
+        }));
+    };
+
+    return {
+      ...source,
+      mapping: [
+        ...getMappedProperties(contactType.contact_properties, 'contact'),
+        ...getMappedProperties(contactType.hierarchy, 'hierarchy'),
+        ...getMappedProperties(contactType.place_properties, 'place'),
+      ]
+    };
   }
 
   // TODO: Joi? Chai?

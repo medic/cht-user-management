@@ -75,7 +75,6 @@ describe('routes/add-place.ts external source routes', () => {
     });
 
     it('returns 500 when the source is unknown', async () => {
-      sinon.stub(Config, 'getExternalSources').returns([EXTERNAL_SOURCE] as any);
 
       const resp = await fastify.inject({
         method: 'GET',
@@ -115,6 +114,8 @@ describe('routes/add-place.ts external source routes', () => {
     });
 
     it('renders the search form with an error when the source is unknown', async () => {
+      (Config.getSanitizedExternalSources as sinon.SinonStub).restore();
+
       const resp = await fastify.inject({
         method: 'GET',
         url: '/search-external-source?source_id=missing&type=contacttype-name',
