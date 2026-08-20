@@ -95,7 +95,7 @@ describe('config external sources', () => {
   };
   const SOURCE_B: ExternalSource = { ...SOURCE_A, id: 'source-b', friendly_name: 'Source B' };
 
-  // builds a contact type whose `sex` place_property carries the given external_mapping
+  // builds a contact type whose second place_property carries the given external_mapping
   const contactTypeWithMapping = (external_mapping?: any): ContactType => {
     const contactType = mockSimpleContactType('string');
     contactType.place_properties[1].external_mapping = external_mapping;
