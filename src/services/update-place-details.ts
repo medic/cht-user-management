@@ -54,7 +54,12 @@ export class UpdatePlaceDetails {
     chtApi: ChtApi
   ): Promise<UpdatePlaceDetailsResult> {
     this.assertNoGeneratedLineage(contactType);
-    
+
+    const unrecognized = this.unrecognizedProperties(contactType, formData);
+    if (unrecognized) {
+      return { success: false, errors: unrecognized };
+    }
+
     const placeDoc = await this.fetchPlaceDoc(placeId, chtApi);
     this.assertContactType(placeDoc, contactType);
 
@@ -145,6 +150,25 @@ export class UpdatePlaceDetails {
         `the hierarchy, which is not resolved here`
       );
     }
+  }
+
+  /**
+   * Every key in the payload must name a property this endpoint can write.
+   */
+  private static unrecognizedProperties(contactType: ContactType, formData: any): { [key: string]: string } | undefined {
+    const ownershipAttribute = ExternalIdentity.attributeName();
+    const knownKeys = [
+      ...contactType.place_properties.map(property => PLACE_PREFIX + property.property_name),
+      ...contactType.contact_properties.map(property => CONTACT_PREFIX + property.property_name),
+      ...(ownershipAttribute ? [ownershipAttribute] : []),
+    ];
+
+    const unknownKeys = Object.keys(formData ?? {}).filter(key => !knownKeys.includes(key));
+    if (!unknownKeys.length) {
+      return undefined;
+    }
+
+    return _.fromPairs(unknownKeys.map(key => [key, `is not a property of "${contactType.name}"`]));
   }
 
   /**

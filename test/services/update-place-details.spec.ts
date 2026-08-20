@@ -304,15 +304,16 @@ describe('services/update-place-details.ts', () => {
       expect(chtApi.setDoc.called).to.be.false;
     });
 
-    // ownership is opt-in per partner: only the configs which name an attribute track it at all
-    it('ignores ownership when the partner config names no attribute', async () => {
+    // ownership is opt-in per partner: on a config which names no attribute the caller is asking
+    // for something this deployment cannot do, so it is an error rather than a silent no-op
+    it('rejects ownership when the partner config names no attribute', async () => {
       (Config.getExternalIdentityOwnershipAttribute as sinon.SinonStub).returns(undefined);
       const chtApi = mockApi([chpAreaDoc(), chpContactDoc()]);
 
       const result = await UpdatePlaceDetails.update(PLACE_ID, CONTACT_TYPE, { [OWNERSHIP_ATTRIBUTE]: true }, chtApi);
 
-      expect((result as any).success).to.be.true;
-      expect((result as any).place).to.deep.equal({});
+      expect((result as any).success).to.be.false;
+      expect((result as any).errors).to.have.all.keys(OWNERSHIP_ATTRIBUTE);
       expect(chtApi.setDoc.called).to.be.false;
     });
 
@@ -442,6 +443,89 @@ describe('services/update-place-details.ts', () => {
 
     expect((result as any).success).to.be.true;
     expect((result as any).contact).to.deep.equal({ name: change('Jane Doe', 'Janet Doe') });
+  });
+
+  describe('unrecognized properties', () => {
+    it('rejects a misspelled property rather than dropping it', async () => {
+      const chtApi = mockApi([chpAreaDoc(), chpContactDoc()]);
+
+      const result = await UpdatePlaceDetails.update(PLACE_ID, CONTACT_TYPE, { contact_naem: 'Janet Doe' }, chtApi);
+
+      expect(result).to.deep.equal({
+        success: false,
+        errors: {
+          contact_naem: 'is not a property of "d_community_health_volunteer_area"',
+        },
+      });
+      // refused from the config alone, before anything is read
+      expect(chtApi.getDoc.called).to.be.false;
+      expect(chtApi.setDoc.called).to.be.false;
+    });
+
+    it('reports every unrecognized key, not just the first', async () => {
+      const chtApi = mockApi([chpAreaDoc(), chpContactDoc()]);
+
+      const result = await UpdatePlaceDetails.update(PLACE_ID, CONTACT_TYPE, {
+        contact_naem: 'Janet Doe',
+        contact_phne: '0722222222',
+      }, chtApi);
+
+      expect((result as any).errors).to.have.all.keys('contact_naem', 'contact_phne');
+    });
+
+    // a property named without its prefix reads as a different property, so it must not be honoured
+    it('rejects a property missing its prefix', async () => {
+      const chtApi = mockApi([chpAreaDoc(), chpContactDoc()]);
+
+      const result = await UpdatePlaceDetails.update(PLACE_ID, CONTACT_TYPE, { name: 'Janet Doe' }, chtApi);
+
+      expect((result as any).success).to.be.false;
+      expect(chtApi.setDoc.called).to.be.false;
+    });
+
+    // this endpoint edits neither the hierarchy nor the user, so being asked to is an error
+    it('rejects hierarchy and user properties', async () => {
+      const chtApi = mockApi([chpAreaDoc(), chpContactDoc()]);
+
+      const result = await UpdatePlaceDetails.update(PLACE_ID, CONTACT_TYPE, {
+        hierarchy_CHU: 'Some Other CHU',
+        user_role: 'community_health_volunteer',
+      }, chtApi);
+
+      expect((result as any).errors).to.have.all.keys('hierarchy_CHU', 'user_role');
+      expect(chtApi.setDoc.called).to.be.false;
+    });
+
+    it('accepts every configured place and contact property', async () => {
+      const chtApi = mockApi([chpAreaDoc(), chpContactDoc()]);
+
+      const result = await UpdatePlaceDetails.update(PLACE_ID, CONTACT_TYPE, {
+        place_name: 'Janet Doe Area',
+        contact_name: 'Janet Doe',
+        contact_phone: '0722222222',
+        contact_notes: 'a note',
+      }, chtApi);
+
+      expect((result as any).success).to.be.true;
+    });
+
+    it('accepts the ownership attribute the partner config names', async () => {
+      sinon.stub(Config, 'getExternalIdentityOwnershipAttribute').returns('chw_registry_link');
+      const chtApi = mockApi([chpAreaDoc(), chpContactDoc()]);
+
+      const result = await UpdatePlaceDetails.update(PLACE_ID, CONTACT_TYPE, { chw_registry_link: true }, chtApi);
+
+      expect((result as any).success).to.be.true;
+    });
+
+    it('accepts an empty payload, which asks for no edit', async () => {
+      const chtApi = mockApi([chpAreaDoc(), chpContactDoc()]);
+
+      const result = await UpdatePlaceDetails.update(PLACE_ID, CONTACT_TYPE, {}, chtApi);
+
+      expect((result as any).success).to.be.true;
+      expect(chtApi.setDoc.called).to.be.false;
+    });
   });
 
   it('rejects a place which does not exist', async () => {
