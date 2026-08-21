@@ -115,7 +115,7 @@ describe('worker/cht-conf-worker', () => {
 
     it('defaults the heap given to cht-conf', () => {
       const actual = (ChtConfWorker as any).buildCommandEnv();
-      expect(actual.NODE_OPTIONS).to.eq('--max-old-space-size=2048');
+      expect(actual.NODE_OPTIONS).to.eq('--max-old-space-size=1024');
     });
 
     it('heap size is configurable', () => {
@@ -127,7 +127,7 @@ describe('worker/cht-conf-worker', () => {
     it('preserves existing NODE_OPTIONS', () => {
       process.env.NODE_OPTIONS = '--enable-source-maps';
       const actual = (ChtConfWorker as any).buildCommandEnv();
-      expect(actual.NODE_OPTIONS).to.eq('--enable-source-maps --max-old-space-size=2048');
+      expect(actual.NODE_OPTIONS).to.eq('--enable-source-maps --max-old-space-size=1024');
     });
   });
 });
