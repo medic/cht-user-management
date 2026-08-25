@@ -1,3 +1,10 @@
+# [2.14.0](https://github.com/medic/cht-user-management/compare/v2.13.0...v2.14.0) (2026-08-25)
+
+
+### Features
+
+* **#394:** environment variables provide control of worker thread's cht-conf heap size ([#395](https://github.com/medic/cht-user-management/issues/395)) ([5171fc0](https://github.com/medic/cht-user-management/commit/5171fc040eaa1bb0e3eec316f3c704f512fd1bee)), closes [#394](https://github.com/medic/cht-user-management/issues/394)
+
 # [2.13.0](https://github.com/medic/cht-user-management/compare/v2.12.9...v2.13.0) (2026-08-20)
 
 
