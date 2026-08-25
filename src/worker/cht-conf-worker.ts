@@ -26,6 +26,7 @@ export class ChtConfWorker {
   private static readonly MAX_TIMEOUT_IN_MILLIS = 4 * 60 * 60 * 1000; // 4 hours
   private static readonly MAX_CONCURRENCY = 1;              // Limit concurrency to 1 job at a time
   private static readonly MAX_SENTINEL_BACKLOG = 7000;      // ensure we don't take down the server
+  private static readonly DEFAULT_MAX_OLD_SPACE_MB = 1024;  // heap available to the cht-conf child process
   static worker: Worker;
 
   public static processQueue(queueName: string, connection: ConnectionOptions) {
@@ -172,6 +173,17 @@ export class ChtConfWorker {
     }
   }
 
+  /*
+  cht-conf large batches can exhaust the child process' heap
+  */
+  private static buildCommandEnv(): typeof env {
+    const heapSizeInMb = parseInt(env.CHT_CONF_MAX_OLD_SPACE_MB || '') || this.DEFAULT_MAX_OLD_SPACE_MB;
+    const nodeOptions = [env.NODE_OPTIONS, `--max-old-space-size=${heapSizeInMb}`]
+      .filter(Boolean)
+      .join(' ');
+    return { ...env, NODE_OPTIONS: nodeOptions };
+  }
+
   private static logCommand(command: string, args: string[]): void {
     const maskedArgs = args.map(arg => arg.startsWith('--session-token=') ? '--session-token=********' : arg);
     console.log('Executing command:', `${command} ${maskedArgs.join(' ')}`);
@@ -179,7 +191,7 @@ export class ChtConfWorker {
 
   private static async executeCommand(command: string, args: string[], job: Job): Promise<void> {
     return new Promise((resolve, reject) => {
-      const chtProcess = spawn(command, args);
+      const chtProcess = spawn(command, args, { env: this.buildCommandEnv() });
       let lastOutput = '';
 
       const timeout = setTimeout(() => {
@@ -197,12 +209,15 @@ export class ChtConfWorker {
         this.logWithTimestamp(job, `cht-conf error: ${error.toString()}`);
       });
 
-      chtProcess.on('close', code => {
+      chtProcess.on('close', (code, signal) => {
         clearTimeout(timeout);
         if (code === 0) {
           resolve();
+          return;
         }
-        reject(new Error(`CHT command exited with code ${code}. Last output: ${lastOutput}`));
+        reject(new Error(
+          `CHT command exited with code ${code}${signal ? ` (signal ${signal})` : ''}. Last output: ${lastOutput}`
+        ));
       });
 
       chtProcess.on('error', error => {
