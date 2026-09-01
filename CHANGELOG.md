@@ -1,3 +1,10 @@
+## [2.14.1](https://github.com/medic/cht-user-management/compare/v2.14.0...v2.14.1) (2026-09-01)
+
+
+### Bug Fixes
+
+* **#396:** update cht-conf version ([8e30f6f](https://github.com/medic/cht-user-management/commit/8e30f6fe0adf25f4e413e699dbe9b301fafd4c7a)), closes [#396](https://github.com/medic/cht-user-management/issues/396)
+
 # [2.14.0](https://github.com/medic/cht-user-management/compare/v2.13.0...v2.14.0) (2026-08-25)
 
 
