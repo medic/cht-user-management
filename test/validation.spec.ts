@@ -18,6 +18,7 @@ type Scenario = {
 const EMAIL_REGEX = '^[a-zA-Z0-9._+-]+@[a-zA-Z0-9.-]+.[a-zA-Z]{2,}$';
 const GENDER_OPTIONS = { male: 'Male', female: 'Female' };
 const CANDIES_OPTIONS = { chocolate: 'Chocolate', strawberry: 'Strawberry' };
+const CHU_NAME_PARAMETER = ['\\sCommunity Health Unit', '\\sCommunity Unit', '\\sUnit'];
 
 const scenarios: Scenario[] = [
   { type: 'string', prop: undefined, isValid: false, error: 'Required', formatted: '' },
@@ -57,6 +58,7 @@ const scenarios: Scenario[] = [
   { type: 'name', prop: 'गण्डकी', isValid: true, formatted: 'गण्डकी' },
   { type: 'name', prop: 'लुम्बिनी', isValid: true, formatted: 'लुम्बिनी' },
   { type: 'name', prop: 'Sam\'s CHU', propertyParameter: ['CHU', 'Comm Unit'], isValid: true, formatted: 'Sam\'s' },
+  { type: 'name', prop: 'A Community  Unit', isValid: true, formatted: 'A', propertyParameter: CHU_NAME_PARAMETER },
   { type: 'name', prop: 'Jonathan M.Barasa', isValid: true, formatted: 'Jonathan M Barasa' },
   { type: 'name', prop: 'Robert xiv', isValid: true, formatted: 'Robert XIV' },
   { type: 'name', prop: ' ', isValid: true, formatted: '' },
