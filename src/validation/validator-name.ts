@@ -15,7 +15,9 @@ export default class ValidatorName implements IValidator {
   format(input : string, property : ContactProperty) : string {
     input = input.replace(/\./g, ' ');
     input = input.replace(/\//g, ' / ');
-    let toFormat = input;
+
+    // Collapse whitespace before the `parameter` patterns are removed (#398)
+    let toFormat = input.replace(/\s+/g, ' ');
     if (property.parameter) {
       if (!Array.isArray(property.parameter)) {
         throw Error(`property with type "name": parameter should be an array`);
