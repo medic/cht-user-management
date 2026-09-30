@@ -5,7 +5,7 @@ import { credentialsFor } from '$lib/server/places/credentials';
 
 // The caller's credentials record, newest first, optionally only for some places
 export const GET = apiHandler(async ({ url, locals }) => {
-	const { session, uploadLog } = operationContext(locals);
-	const placeIds = url.searchParams.get('placeIds')?.split(',').filter(Boolean);
-	return json({ credentials: await credentialsFor(uploadLog, session, placeIds) });
+  const { session, uploadLog } = operationContext(locals);
+  const placeIds = url.searchParams.get('placeIds')?.split(',').filter(Boolean);
+  return json({ credentials: await credentialsFor(uploadLog, session, placeIds) });
 });

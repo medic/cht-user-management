@@ -3,11 +3,11 @@
 import type { Authenticated } from '$lib/server/auth/session';
 
 declare global {
-	namespace App {
-		interface Locals {
-			auth?: Authenticated;
-		}
-	}
+  namespace App {
+    interface Locals {
+      auth?: Authenticated;
+    }
+  }
 }
 
 export {};

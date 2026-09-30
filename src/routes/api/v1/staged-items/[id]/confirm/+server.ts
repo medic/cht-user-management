@@ -4,6 +4,6 @@ import { apiHandler, parseWith, readJson, requireParam, stagedDeps } from '$lib/
 import { confirmItem, confirmItemBody } from '$lib/server/staged/service';
 
 export const POST = apiHandler(async ({ params, request, locals }) => {
-	const body = parseWith(confirmItemBody, await readJson(request));
-	return json(await confirmItem(stagedDeps(locals), requireParam(params.id), body));
+  const body = parseWith(confirmItemBody, await readJson(request));
+  return json(await confirmItem(stagedDeps(locals), requireParam(params.id), body));
 });

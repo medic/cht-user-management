@@ -4,9 +4,7 @@
       "name": "c50-health_center",
       "friendly": "VHT Area",
       "contact_type": "person",
-      "user_role": [
-        "vht"
-      ],
+      "user_role": ["vht"],
       "username_from_place": false,
       "deactivate_users_on_replace": true,
       "hierarchy": [
@@ -74,20 +72,14 @@
           "friendly_name": "County",
           "property_name": "county",
           "type": "name",
-          "parameter": [
-            "\\scounty\\s"
-          ],
+          "parameter": ["\\scounty\\s"],
           "required": false
         },
         {
           "friendly_name": "Sub County",
           "property_name": "sub_county",
           "type": "name",
-          "parameter": [
-            "\\ssub\\s",
-            "\\sSubcounty",
-            "\\scounty\\s"
-          ],
+          "parameter": ["\\ssub\\s", "\\sSubcounty", "\\scounty\\s"],
           "required": true,
           "external_mapping": {
             "chwr": {

@@ -12,8 +12,8 @@ let maxLoaded = DEFAULT_MAX_PLACES_LOADED;
 
 // set from MAX_PLACES_LOADED at startup
 export function setMaxPlacesLoaded(max: number): void {
-	maxLoaded = max;
-	sizes.clear();
+  maxLoaded = max;
+  sizes.clear();
 }
 
 type Cached<T> = Map<string, { at: number; value: Promise<T> }>;
@@ -22,70 +22,70 @@ const sizes: Cached<boolean> = new Map();
 
 // the value loaded in the last few minutes, or a fresh load; a failed load isn't kept
 function cached<T>(cache: Cached<T>, key: string, load: () => Promise<T>): Promise<T> {
-	const entry = cache.get(key);
-	if (entry && Date.now() - entry.at < TTL_MS) {
-		return entry.value;
-	}
-	const value = load();
-	cache.set(key, { at: Date.now(), value });
-	value.catch(() => cache.delete(key));
-	return value;
+  const entry = cache.get(key);
+  if (entry && Date.now() - entry.at < TTL_MS) {
+    return entry.value;
+  }
+  const value = load();
+  cache.set(key, { at: Date.now(), value });
+  value.catch(() => cache.delete(key));
+  return value;
 }
 
 // More places of the type than the server reads whole. Counted as CHT lists them, up to one past the limit
 export function isLarge(cht: Cht, type: string): Promise<boolean> {
-	return cached(sizes, `${cht.domain}:${type}`, async () => (await cht.countPlacesOfType(type, maxLoaded + 1)) > maxLoaded);
+  return cached(sizes, `${cht.domain}:${type}`, async () => (await cht.countPlacesOfType(type, maxLoaded + 1)) > maxLoaded);
 }
 
 // Every place of the type, or null for a large type
 export async function allPlaces(cht: Cht, type: string): Promise<CouchDoc[] | null> {
-	if (await isLarge(cht, type)) {
-		return null;
-	}
-	return cached(lists, `${cht.domain}:${type}`, () => cht.placesOfType(type));
+  if (await isLarge(cht, type)) {
+    return null;
+  }
+  return cached(lists, `${cht.domain}:${type}`, () => cht.placesOfType(type));
 }
 
 // Places of the type `depth` levels below the ancestor: 1 for its children, 2 for theirs, …
 export async function placesUnder(cht: Cht, ancestorId: string, type: string, depth = 1): Promise<CouchDoc[]> {
-	const all = await allPlaces(cht, type);
-	if (all) {
-		return all.filter((doc) => lineageIds(doc)[depth - 1] === ancestorId);
-	}
-	return (await cht.docsAtDepth(ancestorId, [depth])).filter((doc) => docType(doc) === type && lineageIds(doc)[depth - 1] === ancestorId);
+  const all = await allPlaces(cht, type);
+  if (all) {
+    return all.filter((doc) => lineageIds(doc)[depth - 1] === ancestorId);
+  }
+  return (await cht.docsAtDepth(ancestorId, [depth])).filter((doc) => docType(doc) === type && lineageIds(doc)[depth - 1] === ancestorId);
 }
 
 // For a search or lookup that can't be narrowed to a parent
 export function tooManyPlaces(what: string): ApiError {
-	return new ApiError(422, 'PARENT_REQUIRED', `There are too many ${what} to look through them all. Choose the place above first.`);
+  return new ApiError(422, 'PARENT_REQUIRED', `There are too many ${what} to look through them all. Choose the place above first.`);
 }
 
 // One run's lookups, such as a CSV file's rows: each parent's places are read once for the run
 export type PlaceLookup = {
-	all(type: string): Promise<CouchDoc[] | null>;
-	under(ancestorId: string, type: string, depth?: number): Promise<CouchDoc[]>;
+  all(type: string): Promise<CouchDoc[] | null>;
+  under(ancestorId: string, type: string, depth?: number): Promise<CouchDoc[]>;
 };
 
 export function placeLookup(cht: Cht): PlaceLookup {
-	const seen = new Map<string, Promise<CouchDoc[]>>();
-	return {
-		all: (type) => allPlaces(cht, type),
-		under: (ancestorId, type, depth = 1) => {
-			const key = `${ancestorId}:${type}:${depth}`;
-			if (!seen.has(key)) seen.set(key, placesUnder(cht, ancestorId, type, depth));
-			return seen.get(key)!;
-		}
-	};
+  const seen = new Map<string, Promise<CouchDoc[]>>();
+  return {
+    all: (type) => allPlaces(cht, type),
+    under: (ancestorId, type, depth = 1) => {
+      const key = `${ancestorId}:${type}:${depth}`;
+      if (!seen.has(key)) seen.set(key, placesUnder(cht, ancestorId, type, depth));
+      return seen.get(key)!;
+    }
+  };
 }
 
 // A place this server just wrote, added to its type's list rather than waiting for the next read
 export function rememberPlace(cht: Cht, type: string, doc: CouchDoc): void {
-	const entry = lists.get(`${cht.domain}:${type}`);
-	if (entry) {
-		entry.value = entry.value.then((docs) => [...docs.filter((d) => d._id !== doc._id), doc]);
-	}
+  const entry = lists.get(`${cht.domain}:${type}`);
+  if (entry) {
+    entry.value = entry.value.then((docs) => [...docs.filter((d) => d._id !== doc._id), doc]);
+  }
 }
 
 export function clearPlaceCache(): void {
-	lists.clear();
-	sizes.clear();
+  lists.clear();
+  sizes.clear();
 }

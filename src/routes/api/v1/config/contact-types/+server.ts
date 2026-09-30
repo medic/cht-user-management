@@ -5,6 +5,6 @@ import { apiHandler, requireAuth } from '$lib/server/http';
 
 // hooks are the server's business: the browser gets every other setting
 export const GET = apiHandler(async ({ locals }) => {
-	requireAuth(locals);
-	return json({ configVersion: configVersion(), contactTypes: deployment().config.contact_types.map(({ hooks: _, ...type }) => type) });
+  requireAuth(locals);
+  return json({ configVersion: configVersion(), contactTypes: deployment().config.contact_types.map(({ hooks: _, ...type }) => type) });
 });

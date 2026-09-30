@@ -9,28 +9,28 @@
 
 /** @type {(draft: Record<string, any>, context: { cht: any; contactType: any; isReplacement: boolean }) => Promise<void>} */
 export async function mutate(draft, { cht, contactType, isReplacement }) {
-	if (isReplacement || !draft.parent) {
-		return;
-	}
+  if (isReplacement || !draft.parent) {
+    return;
+  }
 
-	const parentType = contactType.hierarchy.find((level) => level.level === 1)?.contact_type;
-	const docs = await cht.docsAtDepth(draft.parent, [0, 1]);
-	const chu = docs.find((doc) => doc.contact_type === parentType);
-	const sibling = docs.find((doc) => doc.contact_type === contactType.name);
-	if (!chu && !sibling) {
-		throw new Error('CHU does not exist');
-	}
+  const parentType = contactType.hierarchy.find((level) => level.level === 1)?.contact_type;
+  const docs = await cht.docsAtDepth(draft.parent, [0, 1]);
+  const chu = docs.find((doc) => doc.contact_type === parentType);
+  const sibling = docs.find((doc) => doc.contact_type === contactType.name);
+  if (!chu && !sibling) {
+    throw new Error('CHU does not exist');
+  }
 
-	const scrapeInto = (target, chpKey, chuKey = chpKey) => {
-		const value = chu?.[chuKey] || sibling?.[chpKey];
-		if (!value) {
-			throw new Error(`eCHIS-KE logic cant find existing data for ${chpKey}`);
-		}
-		target[chpKey] = value;
-	};
+  const scrapeInto = (target, chpKey, chuKey = chpKey) => {
+    const value = chu?.[chuKey] || sibling?.[chpKey];
+    if (!value) {
+      throw new Error(`eCHIS-KE logic cant find existing data for ${chpKey}`);
+    }
+    target[chpKey] = value;
+  };
 
-	scrapeInto(draft, 'link_facility_code');
-	scrapeInto(draft, 'link_facility_name');
-	scrapeInto(draft, 'chu_name', 'name');
-	scrapeInto(draft, 'chu_code', 'code');
+  scrapeInto(draft, 'link_facility_code');
+  scrapeInto(draft, 'link_facility_name');
+  scrapeInto(draft, 'chu_name', 'name');
+  scrapeInto(draft, 'chu_code', 'code');
 }

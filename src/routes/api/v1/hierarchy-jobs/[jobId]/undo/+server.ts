@@ -11,8 +11,8 @@ export const GET = apiHandler(async ({ params, locals }) => json(await undoPrevi
 // Schedules the undo: a restore job, run like any other. recreateLogins: new logins for the accounts
 // the delete disabled
 export const POST = apiHandler(async ({ params, request, locals }) => {
-	const deps = jobDeps(locals);
-	const { recreateLogins } = parseWith(undoBody, await readJson(request));
-	const { status, job } = await undoJob(deps, parseWith(jobId, params.jobId), { recreateLogins });
-	return json(await view(deps.store, job), { status });
+  const deps = jobDeps(locals);
+  const { recreateLogins } = parseWith(undoBody, await readJson(request));
+  const { status, job } = await undoJob(deps, parseWith(jobId, params.jobId), { recreateLogins });
+  return json(await view(deps.store, job), { status });
 });

@@ -1,19 +1,19 @@
 {
- "instances": [
-  {
-   "id": "moh-togo-dev",
-   "name": "MoH Togo DEV",
-   "host": "moh-togo.dev.medicmobile.org"
-  },
-  {
-   "id": "moh-togo-uat",
-   "name": "MoH Togo UAT",
-   "host": "moh-togo-uat.dev.medicmobile.org"
-  },
-  {
-   "id": "moh-togo-prod",
-   "name": "MoH Togo PROD",
-   "host": "moh-togo.app.medicmobile.org"
-  }
- ]
+  "instances": [
+    {
+      "id": "moh-togo-dev",
+      "name": "MoH Togo DEV",
+      "host": "moh-togo.dev.medicmobile.org"
+    },
+    {
+      "id": "moh-togo-uat",
+      "name": "MoH Togo UAT",
+      "host": "moh-togo-uat.dev.medicmobile.org"
+    },
+    {
+      "id": "moh-togo-prod",
+      "name": "MoH Togo PROD",
+      "host": "moh-togo.app.medicmobile.org"
+    }
+  ]
 }

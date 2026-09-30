@@ -9,6 +9,6 @@ const listQuery = z.object({ status: z.enum(JOB_STATUSES).optional(), kind: z.en
 
 // The caller's hierarchy jobs, newest first
 export const GET = apiHandler(async ({ url, locals }) => {
-	const filter = parseWith(listQuery, Object.fromEntries(url.searchParams));
-	return json({ jobs: await listJobs(jobDeps(locals), filter) });
+  const filter = parseWith(listQuery, Object.fromEntries(url.searchParams));
+  return json({ jobs: await listJobs(jobDeps(locals), filter) });
 });

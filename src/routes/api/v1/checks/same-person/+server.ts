@@ -5,4 +5,6 @@ import { findSamePerson, samePersonQuery } from '$lib/server/staged/service';
 
 // The read-only check the create form runs once the person's fields are valid: is this a person
 // already in the staged list? (APP.md → One person, many places)
-export const POST = apiHandler(async ({ request, locals }) => json(await findSamePerson(stagedDeps(locals), parseWith(samePersonQuery, await readJson(request)))));
+export const POST = apiHandler(async ({ request, locals }) =>
+  json(await findSamePerson(stagedDeps(locals), parseWith(samePersonQuery, await readJson(request))))
+);

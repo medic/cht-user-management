@@ -5,8 +5,8 @@
 
 /** @type {(draft: Record<string, any>) => Promise<void>} */
 export async function mutate(draft) {
-	// during replacement the name is optional
-	if (draft.name) {
-		draft.name += ' Community Health Unit';
-	}
+  // during replacement the name is optional
+  if (draft.name) {
+    draft.name += ' Community Health Unit';
+  }
 }

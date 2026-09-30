@@ -17,7 +17,7 @@ services:
       PORT: 3000
       NODE_ENV: ${NODE_ENV:-production}
     ports:
-      - "${PORT:-3000}:3000"
+      - '${PORT:-3000}:3000'
     volumes:
       # archives of deleted and merged docs, which undo needs
       - app-data:/app/data
@@ -29,11 +29,11 @@ services:
     image: redis:7-alpine
     restart: unless-stopped
     # staged lists, sessions, credentials and jobs live here: keep them on disk
-    command: ["redis-server", "--appendonly", "yes"]
+    command: ['redis-server', '--appendonly', 'yes']
     volumes:
       - redis-data:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ['CMD', 'redis-cli', 'ping']
       interval: 5s
       timeout: 3s
       retries: 10

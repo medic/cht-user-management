@@ -7,14 +7,14 @@ import { jobId } from '$lib/server/places/schemas';
 
 // Every doc a delete removed, as it was: one JSON doc per line, gzipped, while the archive is kept
 export const GET = apiHandler(async ({ params, locals }) => {
-	const deps = jobDeps(locals);
-	const job = await getJob(deps, parseWith(jobId, params.jobId));
-	const path = jobArchive(deps.settings, job);
-	return new Response(Readable.toWeb(createReadStream(path)) as ReadableStream, {
-		headers: {
-			'Content-Type': 'application/gzip',
-			'Content-Disposition': `attachment; filename="deleted-${job.id}.ndjson.gz"`,
-			'Cache-Control': 'no-store'
-		}
-	});
+  const deps = jobDeps(locals);
+  const job = await getJob(deps, parseWith(jobId, params.jobId));
+  const path = jobArchive(deps.settings, job);
+  return new Response(Readable.toWeb(createReadStream(path)) as ReadableStream, {
+    headers: {
+      'Content-Type': 'application/gzip',
+      'Content-Disposition': `attachment; filename="deleted-${job.id}.ndjson.gz"`,
+      'Cache-Control': 'no-store'
+    }
+  });
 });

@@ -1,19 +1,19 @@
 {
- "instances": [
-  {
-   "id": "moh-mali-chw-dev",
-   "name": "MoH Mali CHW DEV",
-   "host": "moh-mali-chw2.dev.medicmobile.org"
-  },
-  {
-   "id": "moh-mali-chw-uat",
-   "name": "MoH Mali CHW UAT",
-   "host": "moh-mali-chw3.dev.medicmobile.org"
-  },
-  {
-   "id": "moh-mali-chw-prod",
-   "name": "MoH Mali CHW PROD",
-   "host": "disc-mali.ml"
-  }
- ]
+  "instances": [
+    {
+      "id": "moh-mali-chw-dev",
+      "name": "MoH Mali CHW DEV",
+      "host": "moh-mali-chw2.dev.medicmobile.org"
+    },
+    {
+      "id": "moh-mali-chw-uat",
+      "name": "MoH Mali CHW UAT",
+      "host": "moh-mali-chw3.dev.medicmobile.org"
+    },
+    {
+      "id": "moh-mali-chw-prod",
+      "name": "MoH Mali CHW PROD",
+      "host": "disc-mali.ml"
+    }
+  ]
 }

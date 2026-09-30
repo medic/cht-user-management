@@ -6,6 +6,6 @@ import { batchRequest } from '$lib/server/places/schemas';
 import { getSettings } from '$lib/server/settings';
 
 export const POST = apiHandler(async ({ request, locals }) => {
-	const body = parseWith(batchRequest, await readJson(request));
-	return json(await runBatch(operationContext(locals), body, getSettings().batchMaxItems), { status: 207 });
+  const body = parseWith(batchRequest, await readJson(request));
+  return json(await runBatch(operationContext(locals), body, getSettings().batchMaxItems), { status: 207 });
 });

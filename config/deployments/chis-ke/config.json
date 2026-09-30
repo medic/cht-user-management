@@ -5,9 +5,7 @@
       "friendly": "Community Health Unit",
       "contact_type": "person",
       "contact_friendly": "Community Health Assistant",
-      "user_role": [
-        "community_health_assistant"
-      ],
+      "user_role": ["community_health_assistant"],
       "username_from_place": false,
       "deactivate_users_on_replace": false,
       "can_assign_multiple": true,
@@ -25,30 +23,16 @@
         "friendly_name": "Affected CHU",
         "property_name": "replacement",
         "type": "name",
-        "parameter": [
-          "\\sCommunity Health Unit",
-          "\\sCommunity Unit",
-          "\\sUnit",
-          "\\sCU",
-          "\\sCHU"
-        ],
+        "parameter": ["\\sCommunity Health Unit", "\\sCommunity Unit", "\\sUnit", "\\sCU", "\\sCHU"],
         "required": true
       },
-      "hooks": [
-        "hooks/unit-name.mjs"
-      ],
+      "hooks": ["hooks/unit-name.mjs"],
       "place_properties": [
         {
           "friendly_name": "CHU Name",
           "property_name": "name",
           "type": "name",
-          "parameter": [
-            "\\sCommunity Health Unit",
-            "\\sCommunity Unit",
-            "\\sUnit",
-            "\\sCU",
-            "\\sCHU"
-          ],
+          "parameter": ["\\sCommunity Health Unit", "\\sCommunity Unit", "\\sUnit", "\\sCU", "\\sCHU"],
           "required": true,
           "unique": "parent"
         },
@@ -81,10 +65,7 @@
           "friendly_name": "CHA Name",
           "property_name": "name",
           "type": "name",
-          "parameter": [
-            "\\(\\s*PHO\\s*\\)",
-            "\\(\\s*CHA\\s*\\)"
-          ],
+          "parameter": ["\\(\\s*PHO\\s*\\)", "\\(\\s*CHA\\s*\\)"],
           "required": true
         },
         {
@@ -110,9 +91,7 @@
       "name": "d_community_health_volunteer_area",
       "friendly": "Community Health Promoter",
       "contact_type": "person",
-      "user_role": [
-        "community_health_volunteer"
-      ],
+      "user_role": ["community_health_volunteer"],
       "username_from_place": false,
       "deactivate_users_on_replace": false,
       "hierarchy": [
@@ -128,13 +107,7 @@
           "friendly_name": "CHU",
           "property_name": "CHU",
           "contact_type": "c_community_health_unit",
-          "parameter": [
-            "\\sCommunity Health Unit",
-            "\\sCommunity Unit",
-            "\\sUnit",
-            "\\sCU",
-            "\\sCHU"
-          ],
+          "parameter": ["\\sCommunity Health Unit", "\\sCommunity Unit", "\\sUnit", "\\sCU", "\\sCHU"],
           "type": "name",
           "required": true,
           "level": 1
@@ -144,18 +117,10 @@
         "friendly_name": "Outgoing CHP",
         "property_name": "replacement",
         "type": "name",
-        "parameter": [
-          "['’]s\\s.*$",
-          "\\sCommunity",
-          "\\sHealth",
-          "\\sVolunteer",
-          "\\sArea"
-        ],
+        "parameter": ["['’]s\\s.*$", "\\sCommunity", "\\sHealth", "\\sVolunteer", "\\sArea"],
         "required": true
       },
-      "hooks": [
-        "hooks/copy-unit-facility.mjs"
-      ],
+      "hooks": ["hooks/copy-unit-facility.mjs"],
       "place_properties": [
         {
           "friendly_name": "CHP Area Name",
@@ -201,9 +166,7 @@
       "user_role": [],
       "username_from_place": false,
       "deactivate_users_on_replace": false,
-      "actions": [
-        "move"
-      ],
+      "actions": ["move"],
       "hierarchy": [
         {
           "friendly_name": "Sub County",
@@ -217,13 +180,7 @@
           "friendly_name": "CHU",
           "property_name": "CHU",
           "contact_type": "c_community_health_unit",
-          "parameter": [
-            "\\sCommunity Health Unit",
-            "\\sCommunity Unit",
-            "\\sUnit",
-            "\\sCU",
-            "\\sCHU"
-          ],
+          "parameter": ["\\sCommunity Health Unit", "\\sCommunity Unit", "\\sUnit", "\\sCU", "\\sCHU"],
           "type": "name",
           "required": false,
           "level": 2

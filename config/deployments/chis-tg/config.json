@@ -4,9 +4,7 @@
       "name": "cf60_sanitary",
       "friendly": "Sanitary Training",
       "contact_type": "cf62_sanitary",
-      "user_role": [
-        "sanitary"
-      ],
+      "user_role": ["sanitary"],
       "username_from_place": false,
       "deactivate_users_on_replace": false,
       "hierarchy": [
@@ -39,9 +37,7 @@
         "friendly_name": "Affected Sanitary Training",
         "property_name": "replacement",
         "type": "string",
-        "parameter": [
-          "\\(*Sanitary*\\)"
-        ],
+        "parameter": ["\\(*Sanitary*\\)"],
         "required": true
       },
       "place_properties": [
@@ -59,18 +55,14 @@
           "friendly_name": "Last Name",
           "property_name": "last_name",
           "type": "string",
-          "parameter": [
-            "\\(*Last*\\)"
-          ],
+          "parameter": ["\\(*Last*\\)"],
           "required": true
         },
         {
           "friendly_name": "First Name",
           "property_name": "first_name",
           "type": "string",
-          "parameter": [
-            "\\(*First*\\)"
-          ],
+          "parameter": ["\\(*First*\\)"],
           "required": true
         },
         {
@@ -101,9 +93,7 @@
           "friendly_name": "NGO/Provenance Structure",
           "property_name": "appartenance_ngo",
           "type": "string",
-          "parameter": [
-            "\\(STRUCTURE[ -]NAME\\)"
-          ],
+          "parameter": ["\\(STRUCTURE[ -]NAME\\)"],
           "required": true
         },
         {
@@ -129,9 +119,7 @@
       "name": "cg70_supervision",
       "friendly": "Supervision Area",
       "contact_type": "cg72_supervision",
-      "user_role": [
-        "supervisor"
-      ],
+      "user_role": ["supervisor"],
       "username_from_place": false,
       "deactivate_users_on_replace": false,
       "hierarchy": [
@@ -172,9 +160,7 @@
         "friendly_name": "Affected Supervision Area",
         "property_name": "replacement",
         "type": "string",
-        "parameter": [
-          "\\(*Supervision*\\)"
-        ],
+        "parameter": ["\\(*Supervision*\\)"],
         "required": true
       },
       "place_properties": [
@@ -192,18 +178,14 @@
           "friendly_name": "Last Name",
           "property_name": "last_name",
           "type": "string",
-          "parameter": [
-            "\\(*Last*\\)"
-          ],
+          "parameter": ["\\(*Last*\\)"],
           "required": true
         },
         {
           "friendly_name": "First Name",
           "property_name": "first_name",
           "type": "string",
-          "parameter": [
-            "\\(*First*\\)"
-          ],
+          "parameter": ["\\(*First*\\)"],
           "required": true
         },
         {
@@ -234,9 +216,7 @@
           "friendly_name": "NGO/Provenance Structure",
           "property_name": "appartenance_ngo",
           "type": "string",
-          "parameter": [
-            "\\(STRUCTURE[ -]NAME\\)"
-          ],
+          "parameter": ["\\(STRUCTURE[ -]NAME\\)"],
           "required": true
         },
         {
@@ -255,10 +235,7 @@
       "name": "ci90_chw_site",
       "friendly": "CHW Post",
       "contact_type": "ci92_chw_site",
-      "user_role": [
-        "chw",
-        "community_user"
-      ],
+      "user_role": ["chw", "community_user"],
       "username_from_place": false,
       "deactivate_users_on_replace": true,
       "hierarchy": [
@@ -299,9 +276,7 @@
         "friendly_name": "Affected CHW Post",
         "property_name": "replacement",
         "type": "string",
-        "parameter": [
-          "\\(*Post*\\)"
-        ],
+        "parameter": ["\\(*Post*\\)"],
         "required": true
       },
       "place_properties": [
@@ -309,9 +284,7 @@
           "friendly_name": "CHW Post Name",
           "property_name": "name",
           "type": "string",
-          "parameter": [
-            "\\(*Post*\\)"
-          ],
+          "parameter": ["\\(*Post*\\)"],
           "required": true
         }
       ],
@@ -320,18 +293,14 @@
           "friendly_name": "Last Name",
           "property_name": "last_name",
           "type": "string",
-          "parameter": [
-            "\\(*Last*\\)"
-          ],
+          "parameter": ["\\(*Last*\\)"],
           "required": true
         },
         {
           "friendly_name": "First Name",
           "property_name": "first_name",
           "type": "string",
-          "parameter": [
-            "\\(*First*\\)"
-          ],
+          "parameter": ["\\(*First*\\)"],
           "required": true
         },
         {

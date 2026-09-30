@@ -4,10 +4,7 @@
       "name": "c40_supervision_area",
       "friendly": "Supervision Area",
       "contact_type": "c42_supervision_area",
-      "user_role": [
-        "supervisor",
-        "dedicated_supervisor"
-      ],
+      "user_role": ["supervisor", "dedicated_supervisor"],
       "username_from_place": false,
       "deactivate_users_on_replace": false,
       "hierarchy": [
@@ -24,9 +21,7 @@
         "friendly_name": "Affected Supervision Area",
         "property_name": "replacement",
         "type": "string",
-        "parameter": [
-          "\\(*Supervision*\\)"
-        ],
+        "parameter": ["\\(*Supervision*\\)"],
         "required": true
       },
       "place_properties": [
@@ -44,9 +39,7 @@
           "friendly_name": "First Name",
           "property_name": "first_name",
           "type": "string",
-          "parameter": [
-            "\\(*First*\\)"
-          ],
+          "parameter": ["\\(*First*\\)"],
           "required": true,
           "hint": "Prénom du superviseur"
         },
@@ -54,9 +47,7 @@
           "friendly_name": "Last Name",
           "property_name": "last_name",
           "type": "string",
-          "parameter": [
-            "\\(*Last*\\)"
-          ],
+          "parameter": ["\\(*Last*\\)"],
           "required": true,
           "hint": "Nom du superviseur"
         },
@@ -109,10 +100,7 @@
       "name": "c70_chw_site",
       "friendly": "CHW Site",
       "contact_type": "c72_chw_site",
-      "user_role": [
-        "chw_min_5km",
-        "chw_max_5km"
-      ],
+      "user_role": ["chw_min_5km", "chw_max_5km"],
       "username_from_place": false,
       "deactivate_users_on_replace": false,
       "hierarchy": [
@@ -145,9 +133,7 @@
         "friendly_name": "Affected CHW Site",
         "property_name": "replacement",
         "type": "string",
-        "parameter": [
-          "\\(*Site*\\)"
-        ],
+        "parameter": ["\\(*Site*\\)"],
         "required": true
       },
       "place_properties": [
@@ -155,9 +141,7 @@
           "friendly_name": "CHW Site Name",
           "property_name": "name",
           "type": "string",
-          "parameter": [
-            "\\(*Site*\\)"
-          ],
+          "parameter": ["\\(*Site*\\)"],
           "required": true,
           "hint": "Nom du site de l'ASC",
           "unique": "parent"
@@ -168,9 +152,7 @@
           "friendly_name": "First Name",
           "property_name": "first_name",
           "type": "string",
-          "parameter": [
-            "\\(*First*\\)"
-          ],
+          "parameter": ["\\(*First*\\)"],
           "required": true,
           "hint": "Prénom de l'ASC"
         },
@@ -178,9 +160,7 @@
           "friendly_name": "Last Name",
           "property_name": "last_name",
           "type": "string",
-          "parameter": [
-            "\\(*Last*\\)"
-          ],
+          "parameter": ["\\(*Last*\\)"],
           "required": true,
           "hint": "Nom de l'ASC"
         },

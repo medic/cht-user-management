@@ -4,10 +4,7 @@
       "name": "c40_health_area",
       "friendly": "Health Area",
       "contact_type": "c42_health_area",
-      "user_role": [
-        "dtc",
-        "manager_stock"
-      ],
+      "user_role": ["dtc", "manager_stock"],
       "username_from_place": false,
       "deactivate_users_on_replace": false,
       "hierarchy": [
@@ -24,9 +21,7 @@
         "friendly_name": "Affected Health Area",
         "property_name": "replacement",
         "type": "string",
-        "parameter": [
-          "\\(*Area*\\)"
-        ],
+        "parameter": ["\\(*Area*\\)"],
         "required": true
       },
       "place_properties": [
@@ -34,9 +29,7 @@
           "friendly_name": "Health Area Name",
           "property_name": "name",
           "type": "string",
-          "parameter": [
-            "\\(*Area*\\)"
-          ],
+          "parameter": ["\\(*Area*\\)"],
           "required": true,
           "hint": "Name of the Health Area"
         }
@@ -46,9 +39,7 @@
           "friendly_name": "First name",
           "property_name": "first_name",
           "type": "string",
-          "parameter": [
-            "\\(*First*\\)"
-          ],
+          "parameter": ["\\(*First*\\)"],
           "required": true,
           "hint": "First name of the primary contact"
         },
@@ -56,9 +47,7 @@
           "friendly_name": "Last name",
           "property_name": "last_name",
           "type": "string",
-          "parameter": [
-            "\\(*Last*\\)"
-          ],
+          "parameter": ["\\(*Last*\\)"],
           "required": true,
           "hint": "Last name of the primary contact"
         },
@@ -92,9 +81,7 @@
           "friendly_name": "Membership Structure",
           "property_name": "membership_structure",
           "type": "string",
-          "parameter": [
-            "\\(STRUCTURE[ -]NAME\\)"
-          ],
+          "parameter": ["\\(STRUCTURE[ -]NAME\\)"],
           "required": true,
           "hint": "Membership Structure of the primary contact"
         },
@@ -114,10 +101,7 @@
       "name": "c50_supervision_area",
       "friendly": "Supervision Area",
       "contact_type": "c52_supervisor",
-      "user_role": [
-        "supervisor",
-        "oca_supervisor"
-      ],
+      "user_role": ["supervisor", "oca_supervisor"],
       "username_from_place": false,
       "deactivate_users_on_replace": false,
       "hierarchy": [
@@ -134,9 +118,7 @@
         "friendly_name": "Affected Supervision Area",
         "property_name": "replacement",
         "type": "string",
-        "parameter": [
-          "\\(*Area*\\)"
-        ],
+        "parameter": ["\\(*Area*\\)"],
         "required": true
       },
       "place_properties": [
@@ -144,9 +126,7 @@
           "friendly_name": "Supervision Area Name",
           "property_name": "name",
           "type": "string",
-          "parameter": [
-            "\\(*Area*\\)"
-          ],
+          "parameter": ["\\(*Area*\\)"],
           "required": true,
           "hint": "Name of the Supervision Area"
         }
@@ -156,9 +136,7 @@
           "friendly_name": "First name",
           "property_name": "first_name",
           "type": "string",
-          "parameter": [
-            "\\(*First*\\)"
-          ],
+          "parameter": ["\\(*First*\\)"],
           "required": true,
           "hint": "First name of the primary contact"
         },
@@ -166,9 +144,7 @@
           "friendly_name": "Last name",
           "property_name": "last_name",
           "type": "string",
-          "parameter": [
-            "\\(*Last*\\)"
-          ],
+          "parameter": ["\\(*Last*\\)"],
           "required": true,
           "hint": "Last name of the primary contact"
         },
@@ -214,9 +190,7 @@
       "name": "c60_chw_site",
       "friendly": "CHW Site",
       "contact_type": "c62_chw",
-      "user_role": [
-        "chw"
-      ],
+      "user_role": ["chw"],
       "username_from_place": false,
       "deactivate_users_on_replace": false,
       "hierarchy": [
@@ -233,9 +207,7 @@
         "friendly_name": "Affected CHW Site",
         "property_name": "replacement",
         "type": "string",
-        "parameter": [
-          "\\(*Site*\\)"
-        ],
+        "parameter": ["\\(*Site*\\)"],
         "required": true
       },
       "place_properties": [
@@ -243,9 +215,7 @@
           "friendly_name": "CHW Site Name",
           "property_name": "name",
           "type": "string",
-          "parameter": [
-            "\\(*Site*\\)"
-          ],
+          "parameter": ["\\(*Site*\\)"],
           "required": true,
           "hint": "Name of the CHW Site"
         }
@@ -255,9 +225,7 @@
           "friendly_name": "First name",
           "property_name": "first_name",
           "type": "string",
-          "parameter": [
-            "\\(*First*\\)"
-          ],
+          "parameter": ["\\(*First*\\)"],
           "required": true,
           "hint": "First name of the primary contact"
         },
@@ -265,9 +233,7 @@
           "friendly_name": "Last name",
           "property_name": "last_name",
           "type": "string",
-          "parameter": [
-            "\\(*Last*\\)"
-          ],
+          "parameter": ["\\(*Last*\\)"],
           "required": true,
           "hint": "Last name of the primary contact"
         },
@@ -345,12 +311,7 @@
       "name": "c70_village",
       "friendly": "Village",
       "contact_type": "c72_village",
-      "user_role": [
-        "oca",
-        "cvs",
-        "savings",
-        "wash_comity"
-      ],
+      "user_role": ["oca", "cvs", "savings", "wash_comity"],
       "username_from_place": false,
       "deactivate_users_on_replace": false,
       "hierarchy": [
@@ -367,9 +328,7 @@
         "friendly_name": "Affected Village",
         "property_name": "replacement",
         "type": "string",
-        "parameter": [
-          "\\(*Village*\\)"
-        ],
+        "parameter": ["\\(*Village*\\)"],
         "required": true
       },
       "place_properties": [
@@ -377,9 +336,7 @@
           "friendly_name": "Village Name",
           "property_name": "name",
           "type": "string",
-          "parameter": [
-            "\\(*Village*\\)"
-          ],
+          "parameter": ["\\(*Village*\\)"],
           "required": true,
           "hint": "Name of the Village"
         }
@@ -389,9 +346,7 @@
           "friendly_name": "First name",
           "property_name": "first_name",
           "type": "string",
-          "parameter": [
-            "\\(*First*\\)"
-          ],
+          "parameter": ["\\(*First*\\)"],
           "required": true,
           "hint": "First name of the primary contact"
         },
@@ -399,9 +354,7 @@
           "friendly_name": "Last name",
           "property_name": "last_name",
           "type": "string",
-          "parameter": [
-            "\\(*Last*\\)"
-          ],
+          "parameter": ["\\(*Last*\\)"],
           "required": true,
           "hint": "Last name of the primary contact"
         },

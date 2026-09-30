@@ -1,19 +1,19 @@
 {
- "instances": [
-  {
-   "id": "moh-civ-dev",
-   "name": "MoH CIV DEV",
-   "host": "moh-civ.dev.medicmobile.org"
-  },
-  {
-   "id": "moh-civ-uat",
-   "name": "MoH CIV UAT",
-   "host": "moh-civ-uat.dev.medicmobile.org"
-  },
-  {
-   "id": "moh-civ-prod",
-   "name": "MoH CIV PROD",
-   "host": "moh-civ.app.medicmobile.org"
-  }
- ]
+  "instances": [
+    {
+      "id": "moh-civ-dev",
+      "name": "MoH CIV DEV",
+      "host": "moh-civ.dev.medicmobile.org"
+    },
+    {
+      "id": "moh-civ-uat",
+      "name": "MoH CIV UAT",
+      "host": "moh-civ-uat.dev.medicmobile.org"
+    },
+    {
+      "id": "moh-civ-prod",
+      "name": "MoH CIV PROD",
+      "host": "moh-civ.app.medicmobile.org"
+    }
+  ]
 }
