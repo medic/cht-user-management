@@ -1,5 +1,3 @@
-import { Liquid } from 'liquidjs';
-
 import { hasMultipleRoles, type ContactProperty, type ContactType } from '../config-types';
 import { formatValue, validateValue } from './validators';
 
@@ -34,7 +32,27 @@ export type BuiltProperties = {
 	errors: ValidationErrors;
 };
 
-const engine = new Liquid({ strictVariables: false });
+// `generated` templates: each {{ place.x }}, {{ contact.x }} or {{ lineage.x }} is replaced by that
+// value, or by nothing when there's none. Nothing else is template syntax, and a value is never read
+// as a template itself
+const PLACEHOLDER = /\{\{\s*(place|contact|lineage)\.([A-Za-z0-9_-]+)\s*\}\}/g;
+
+// Why a template can't be used, eg. a filter or a tag; checked when the deployment is read
+export function templateProblem(template: unknown): string | undefined {
+	if (typeof template !== 'string') {
+		return 'expects a string template as "parameter"';
+	}
+	const rest = template.replace(PLACEHOLDER, '');
+	if (['{{', '}}', '{%', '%}'].some((mark) => rest.includes(mark))) {
+		return 'can only use {{ place.… }}, {{ contact.… }} and {{ lineage.… }}, without filters or tags';
+	}
+}
+
+export function renderTemplate(template: string, scope: { place: PropertyValues; contact: PropertyValues; lineage: Lineage }): string {
+	return template.replace(PLACEHOLDER, (_match, section: keyof typeof scope, name: string) =>
+		Object.hasOwn(scope[section], name) ? scope[section][name] : ''
+	);
+}
 
 export function buildProperties(options: BuildOptions): BuiltProperties {
 	const { contactType, mode } = options;
@@ -136,11 +154,12 @@ function generate(
 	errors: ValidationErrors
 ) {
 	for (const property of properties.filter((p) => p.type === 'generated')) {
-		if (typeof property.parameter !== 'string') {
-			throw new Error(`generated property "${property.property_name}" expects a string template as "parameter"`);
+		const problem = templateProblem(property.parameter);
+		if (problem) {
+			throw new Error(`generated property "${property.property_name}" ${problem}`);
 		}
 
-		const rendered = engine.parseAndRenderSync(property.parameter, scope).trim();
+		const rendered = renderTemplate(property.parameter as string, scope).trim();
 		if (!rendered && property.required) {
 			errors[`${section}.${property.property_name}`] = 'Is Required';
 		}

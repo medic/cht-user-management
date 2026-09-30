@@ -39,7 +39,6 @@
 		"ioredis": "^6.0.0",
 		"jose": "^6.2.12",
 		"libphonenumber-js": "^1.13.14",
-		"liquidjs": "^10.29.0",
 		"luxon": "^3.7.2",
 		"semver": "^7.8.5",
 		"zod": "^4.6.5"

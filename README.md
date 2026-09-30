@@ -73,13 +73,13 @@ The `ConfigPropertyType` defines a property's validation rules and auto-formatti
 | regex           | Must match the `regex` captured by `parameter`         | Same as `string`                                                                                               | A regex which must be matched to pass validation (eg. `"parameter": "^\\d{6}$"` will accept only 6 digit numbers) |
 | phone           | A valid phone number for the specified locality       | Auto formatting provided by [libphonenumber](https://github.com/google/libphonenumber)                          | Two letter country code specifying the locality of phone number (eg. `"parameter": "KE"`) |
 | dob             | An ISO date, `d/M/yyyy`, or an age in years; in the past | Stored as an ISO date                                                                                        | None |
-| generated       | None. No user inputs.                                  | Uses [LiquidJS](https://liquidjs.com) templates to generate data                                               | [Details](#the-generated-configpropertytype) |
+| generated       | None. No user inputs.                                  | Filled in from a template of other values                                                                   | [Details](#the-generated-configpropertytype) |
 | select_one      | Single choice from a list of options                   | None                                                                                                           | Dictionary where the keys are the option values and the values are the corresponding labels |
 | select_multiple | Multiple choice from a list of options                 | None                                                                                                           | Same as `select_one` |
 | none            | None                                                   | None                                                                                                           | None |
 
 #### The Generated ConfigPropertyType
-ContactProperties with `type: "generated"` use the [LiquidJS](https://liquidjs.com) template engine to populate a property with data. Here is an example of some configuration properties which use `"type": "generated"`:
+ContactProperties with `type: "generated"` are filled in from a template, whose `{{ … }}` placeholders are replaced by other values. Here is an example of some configuration properties which use `"type": "generated"`:
 
 ```json
 {
@@ -105,7 +105,7 @@ ContactProperties with `type: "generated"` use the [LiquidJS](https://liquidjs.c
 
 The user will be prompted to input the contact's name (CHP Name). The user is _not_ prompted to input the place's name (CHP Area Name) because the place's name will automatically be assigned a value.  In this example, if the user puts `john` as the contact's name, then the place will be named `John's Area`.
 
-The data that is passed to the template is consistent with the properties defined in your configuration.
+The placeholders are `{{ place.<property_name> }}`, `{{ contact.<property_name> }}` and `{{ lineage.<property_name> }}`, each replaced by that value, or by nothing when it has none. Filters and tags aren't supported, and the tool refuses to start if a template uses them.
 
 Variable | Value
 -- | --

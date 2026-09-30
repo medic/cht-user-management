@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import type { ContactProperty } from '../config-types';
+import { renderTemplate, templateProblem } from './index';
 import { formatValue, validateValue } from './validators';
 
 const property = (overrides: Partial<ContactProperty>): ContactProperty => ({
@@ -47,5 +48,25 @@ describe('ported validators', () => {
 		expect(formatValue(dob, '26/2/1985')).toBe('1985-02-26');
 		expect(validateValue(dob, '38', true)).toBeUndefined();
 		expect(validateValue(dob, '2999-01-01', true)).toMatch(/Not a valid Date of Birth/);
+	});
+});
+
+describe('generated templates', () => {
+	const scope = { place: { village: 'Kiboga' }, contact: { first_name: 'Jane', last_name: 'Doe' }, lineage: { followup_area: 'Zone 4' } };
+
+	it('replace each placeholder with its value, or nothing', () => {
+		expect(renderTemplate('{{ contact.last_name }} {{ contact.first_name }} ({{ lineage.followup_area }})', scope)).toBe('Doe Jane (Zone 4)');
+		expect(renderTemplate('{{place.village}}|{{  contact.first_name  }}|{{ contact.missing }}', scope)).toBe('Kiboga|Jane|');
+		// built-in properties aren't values, and a value is never read as a template
+		expect(renderTemplate('{{ contact.constructor }}', scope)).toBe('');
+		expect(renderTemplate('{{ contact.name }}', { ...scope, contact: { name: '{{ place.village }}' } })).toBe('{{ place.village }}');
+	});
+
+	it('are refused when they use anything but placeholders', () => {
+		expect(templateProblem('{{ contact.name }} Area')).toBeUndefined();
+		for (const template of ['{{ contact.name | upcase }}', '{% if contact.name %}x{% endif %}', '{{ name }}', '{{ contact.name }']) {
+			expect(templateProblem(template), template).toMatch(/can only use/);
+		}
+		expect(templateProblem(42)).toMatch(/string template/);
 	});
 });

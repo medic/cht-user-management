@@ -7,7 +7,7 @@ import { env } from '$env/dynamic/private';
 import { allowsAction, type Action, type ContactType, type HierarchyConstraint } from '../config-types';
 import type { Cht } from './cht/client';
 
-import { VALIDATION_VERSION } from '../validation';
+import { templateProblem, VALIDATION_VERSION } from '../validation';
 import { ApiError, ChtError } from './errors';
 
 // The shapes are shared with the browser, which validates with the same config
@@ -72,6 +72,12 @@ export function loadDeployment(dir: string): Deployment {
 		throw new Error(`${path} lists the contact type "${repeated}" twice`);
 	}
 	for (const type of types) {
+		for (const property of [...(type.place_properties ?? []), ...(type.contact_properties ?? [])]) {
+			const problem = property.type === 'generated' ? templateProblem(property.parameter) : undefined;
+			if (problem) {
+				throw new Error(`${path}: the generated property "${property.property_name}" of "${type.name}" ${problem}`);
+			}
+		}
 		const hooks: unknown = type.hooks;
 		if (hooks !== undefined && (!Array.isArray(hooks) || hooks.some((file) => typeof file !== 'string'))) {
 			throw new Error(`${path}: "hooks" of "${type.name}" must be a list of files`);

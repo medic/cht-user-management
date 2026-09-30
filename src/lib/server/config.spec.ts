@@ -57,6 +57,8 @@ describe('the deployment folder', () => {
 		expect(() => loadDeployment(folder({ 'config.json': '{"contact_types": []}' }))).toThrow(/needs a "contact_types" list/);
 		const twice = JSON.stringify({ contact_types: [{ name: 'c_unit' }, { name: 'c_unit' }] });
 		expect(() => loadDeployment(folder({ 'config.json': twice }))).toThrow(/lists the contact type "c_unit" twice/);
+		const filtered = JSON.stringify({ contact_types: [{ name: 'c_unit', place_properties: [{ property_name: 'name', type: 'generated', parameter: '{{ contact.name | upcase }}' }] }] });
+		expect(() => loadDeployment(folder({ 'config.json': filtered }))).toThrow(/the generated property "name" of "c_unit" can only use/);
 		env.DEPLOYMENT_DIR = undefined;
 		expect(() => getContactType('c_unit')).toThrow(/DEPLOYMENT_DIR is required/);
 	});
