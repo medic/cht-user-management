@@ -1,0 +1,732 @@
+{
+ "instances": [
+  {
+   "id": "migori",
+   "name": "Migori",
+   "host": "migori.echis.go.ke",
+   "idpOrigins": [
+    "https://chwregistry.echis.go.ke",
+    "https://chpregistry.echis.go.ke",
+    "https://chwregistry-training.echis.go.ke",
+    "https://chwregistry-dev.echis.go.ke",
+    "https://chwregistry-uat.echis.go.ke",
+    "https://chpregistry-staging.echis.go.ke",
+    "https://chw-registry-dev.test.co.ke"
+   ]
+  },
+  {
+   "id": "kisumu",
+   "name": "Kisumu",
+   "host": "kisumu.echis.go.ke",
+   "idpOrigins": [
+    "https://chwregistry.echis.go.ke",
+    "https://chpregistry.echis.go.ke",
+    "https://chwregistry-training.echis.go.ke",
+    "https://chwregistry-dev.echis.go.ke",
+    "https://chwregistry-uat.echis.go.ke",
+    "https://chpregistry-staging.echis.go.ke",
+    "https://chw-registry-dev.test.co.ke"
+   ]
+  },
+  {
+   "id": "nyeri",
+   "name": "Nyeri",
+   "host": "nyeri.echis.go.ke",
+   "idpOrigins": [
+    "https://chwregistry.echis.go.ke",
+    "https://chpregistry.echis.go.ke",
+    "https://chwregistry-training.echis.go.ke",
+    "https://chwregistry-dev.echis.go.ke",
+    "https://chwregistry-uat.echis.go.ke",
+    "https://chpregistry-staging.echis.go.ke",
+    "https://chw-registry-dev.test.co.ke"
+   ]
+  },
+  {
+   "id": "kilifi",
+   "name": "Kilifi",
+   "host": "kilifi.echis.go.ke",
+   "idpOrigins": [
+    "https://chwregistry.echis.go.ke",
+    "https://chpregistry.echis.go.ke",
+    "https://chwregistry-training.echis.go.ke",
+    "https://chwregistry-dev.echis.go.ke",
+    "https://chwregistry-uat.echis.go.ke",
+    "https://chpregistry-staging.echis.go.ke",
+    "https://chw-registry-dev.test.co.ke"
+   ]
+  },
+  {
+   "id": "machakos",
+   "name": "Machakos",
+   "host": "machakos.echis.go.ke",
+   "idpOrigins": [
+    "https://chwregistry.echis.go.ke",
+    "https://chpregistry.echis.go.ke",
+    "https://chwregistry-training.echis.go.ke",
+    "https://chwregistry-dev.echis.go.ke",
+    "https://chwregistry-uat.echis.go.ke",
+    "https://chpregistry-staging.echis.go.ke",
+    "https://chw-registry-dev.test.co.ke"
+   ]
+  },
+  {
+   "id": "garissa",
+   "name": "Garissa",
+   "host": "garissa.echis.go.ke",
+   "idpOrigins": [
+    "https://chwregistry.echis.go.ke",
+    "https://chpregistry.echis.go.ke",
+    "https://chwregistry-training.echis.go.ke",
+    "https://chwregistry-dev.echis.go.ke",
+    "https://chwregistry-uat.echis.go.ke",
+    "https://chpregistry-staging.echis.go.ke",
+    "https://chw-registry-dev.test.co.ke"
+   ]
+  },
+  {
+   "id": "nakuru",
+   "name": "Nakuru",
+   "host": "nakuru.echis.go.ke",
+   "idpOrigins": [
+    "https://chwregistry.echis.go.ke",
+    "https://chpregistry.echis.go.ke",
+    "https://chwregistry-training.echis.go.ke",
+    "https://chwregistry-dev.echis.go.ke",
+    "https://chwregistry-uat.echis.go.ke",
+    "https://chpregistry-staging.echis.go.ke",
+    "https://chw-registry-dev.test.co.ke"
+   ]
+  },
+  {
+   "id": "isiolo",
+   "name": "Isiolo",
+   "host": "isiolo.echis.go.ke",
+   "idpOrigins": [
+    "https://chwregistry.echis.go.ke",
+    "https://chpregistry.echis.go.ke",
+    "https://chwregistry-training.echis.go.ke",
+    "https://chwregistry-dev.echis.go.ke",
+    "https://chwregistry-uat.echis.go.ke",
+    "https://chpregistry-staging.echis.go.ke",
+    "https://chw-registry-dev.test.co.ke"
+   ]
+  },
+  {
+   "id": "nairobi",
+   "name": "Nairobi",
+   "host": "nairobi.echis.go.ke",
+   "idpOrigins": [
+    "https://chwregistry.echis.go.ke",
+    "https://chpregistry.echis.go.ke",
+    "https://chwregistry-training.echis.go.ke",
+    "https://chwregistry-dev.echis.go.ke",
+    "https://chwregistry-uat.echis.go.ke",
+    "https://chpregistry-staging.echis.go.ke",
+    "https://chw-registry-dev.test.co.ke"
+   ]
+  },
+  {
+   "id": "turkana",
+   "name": "Turkana",
+   "host": "turkana.echis.go.ke",
+   "idpOrigins": [
+    "https://chwregistry.echis.go.ke",
+    "https://chpregistry.echis.go.ke",
+    "https://chwregistry-training.echis.go.ke",
+    "https://chwregistry-dev.echis.go.ke",
+    "https://chwregistry-uat.echis.go.ke",
+    "https://chpregistry-staging.echis.go.ke",
+    "https://chw-registry-dev.test.co.ke"
+   ]
+  },
+  {
+   "id": "kakamega",
+   "name": "Kakamega",
+   "host": "kakamega.echis.go.ke",
+   "idpOrigins": [
+    "https://chwregistry.echis.go.ke",
+    "https://chpregistry.echis.go.ke",
+    "https://chwregistry-training.echis.go.ke",
+    "https://chwregistry-dev.echis.go.ke",
+    "https://chwregistry-uat.echis.go.ke",
+    "https://chpregistry-staging.echis.go.ke",
+    "https://chw-registry-dev.test.co.ke"
+   ]
+  },
+  {
+   "id": "vihiga",
+   "name": "Vihiga",
+   "host": "vihiga.echis.go.ke",
+   "idpOrigins": [
+    "https://chwregistry.echis.go.ke",
+    "https://chpregistry.echis.go.ke",
+    "https://chwregistry-training.echis.go.ke",
+    "https://chwregistry-dev.echis.go.ke",
+    "https://chwregistry-uat.echis.go.ke",
+    "https://chpregistry-staging.echis.go.ke",
+    "https://chw-registry-dev.test.co.ke"
+   ]
+  },
+  {
+   "id": "kitui",
+   "name": "Kitui",
+   "host": "kitui.echis.go.ke",
+   "idpOrigins": [
+    "https://chwregistry.echis.go.ke",
+    "https://chpregistry.echis.go.ke",
+    "https://chwregistry-training.echis.go.ke",
+    "https://chwregistry-dev.echis.go.ke",
+    "https://chwregistry-uat.echis.go.ke",
+    "https://chpregistry-staging.echis.go.ke",
+    "https://chw-registry-dev.test.co.ke"
+   ]
+  },
+  {
+   "id": "uasin-gishu",
+   "name": "Uasin Gishu",
+   "host": "uasingishu.echis.go.ke",
+   "idpOrigins": [
+    "https://chwregistry.echis.go.ke",
+    "https://chpregistry.echis.go.ke",
+    "https://chwregistry-training.echis.go.ke",
+    "https://chwregistry-dev.echis.go.ke",
+    "https://chwregistry-uat.echis.go.ke",
+    "https://chpregistry-staging.echis.go.ke",
+    "https://chw-registry-dev.test.co.ke"
+   ]
+  },
+  {
+   "id": "baringo",
+   "name": "Baringo",
+   "host": "baringo.echis.go.ke",
+   "idpOrigins": [
+    "https://chwregistry.echis.go.ke",
+    "https://chpregistry.echis.go.ke",
+    "https://chwregistry-training.echis.go.ke",
+    "https://chwregistry-dev.echis.go.ke",
+    "https://chwregistry-uat.echis.go.ke",
+    "https://chpregistry-staging.echis.go.ke",
+    "https://chw-registry-dev.test.co.ke"
+   ]
+  },
+  {
+   "id": "bomet",
+   "name": "Bomet",
+   "host": "bomet.echis.go.ke",
+   "idpOrigins": [
+    "https://chwregistry.echis.go.ke",
+    "https://chpregistry.echis.go.ke",
+    "https://chwregistry-training.echis.go.ke",
+    "https://chwregistry-dev.echis.go.ke",
+    "https://chwregistry-uat.echis.go.ke",
+    "https://chpregistry-staging.echis.go.ke",
+    "https://chw-registry-dev.test.co.ke"
+   ]
+  },
+  {
+   "id": "bungoma",
+   "name": "Bungoma",
+   "host": "bungoma.echis.go.ke",
+   "idpOrigins": [
+    "https://chwregistry.echis.go.ke",
+    "https://chpregistry.echis.go.ke",
+    "https://chwregistry-training.echis.go.ke",
+    "https://chwregistry-dev.echis.go.ke",
+    "https://chwregistry-uat.echis.go.ke",
+    "https://chpregistry-staging.echis.go.ke",
+    "https://chw-registry-dev.test.co.ke"
+   ]
+  },
+  {
+   "id": "busia",
+   "name": "Busia",
+   "host": "busia.echis.go.ke",
+   "idpOrigins": [
+    "https://chwregistry.echis.go.ke",
+    "https://chpregistry.echis.go.ke",
+    "https://chwregistry-training.echis.go.ke",
+    "https://chwregistry-dev.echis.go.ke",
+    "https://chwregistry-uat.echis.go.ke",
+    "https://chpregistry-staging.echis.go.ke",
+    "https://chw-registry-dev.test.co.ke"
+   ]
+  },
+  {
+   "id": "elgeyo-marakwet",
+   "name": "Elgeyo Marakwet",
+   "host": "elgeyomarakwet.echis.go.ke",
+   "idpOrigins": [
+    "https://chwregistry.echis.go.ke",
+    "https://chpregistry.echis.go.ke",
+    "https://chwregistry-training.echis.go.ke",
+    "https://chwregistry-dev.echis.go.ke",
+    "https://chwregistry-uat.echis.go.ke",
+    "https://chpregistry-staging.echis.go.ke",
+    "https://chw-registry-dev.test.co.ke"
+   ]
+  },
+  {
+   "id": "embu",
+   "name": "Embu",
+   "host": "embu.echis.go.ke",
+   "idpOrigins": [
+    "https://chwregistry.echis.go.ke",
+    "https://chpregistry.echis.go.ke",
+    "https://chwregistry-training.echis.go.ke",
+    "https://chwregistry-dev.echis.go.ke",
+    "https://chwregistry-uat.echis.go.ke",
+    "https://chpregistry-staging.echis.go.ke",
+    "https://chw-registry-dev.test.co.ke"
+   ]
+  },
+  {
+   "id": "homa-bay",
+   "name": "Homa Bay",
+   "host": "homabay.echis.go.ke",
+   "idpOrigins": [
+    "https://chwregistry.echis.go.ke",
+    "https://chpregistry.echis.go.ke",
+    "https://chwregistry-training.echis.go.ke",
+    "https://chwregistry-dev.echis.go.ke",
+    "https://chwregistry-uat.echis.go.ke",
+    "https://chpregistry-staging.echis.go.ke",
+    "https://chw-registry-dev.test.co.ke"
+   ]
+  },
+  {
+   "id": "kajiado",
+   "name": "Kajiado",
+   "host": "kajiado.echis.go.ke",
+   "idpOrigins": [
+    "https://chwregistry.echis.go.ke",
+    "https://chpregistry.echis.go.ke",
+    "https://chwregistry-training.echis.go.ke",
+    "https://chwregistry-dev.echis.go.ke",
+    "https://chwregistry-uat.echis.go.ke",
+    "https://chpregistry-staging.echis.go.ke",
+    "https://chw-registry-dev.test.co.ke"
+   ]
+  },
+  {
+   "id": "kericho",
+   "name": "Kericho",
+   "host": "kericho.echis.go.ke",
+   "idpOrigins": [
+    "https://chwregistry.echis.go.ke",
+    "https://chpregistry.echis.go.ke",
+    "https://chwregistry-training.echis.go.ke",
+    "https://chwregistry-dev.echis.go.ke",
+    "https://chwregistry-uat.echis.go.ke",
+    "https://chpregistry-staging.echis.go.ke",
+    "https://chw-registry-dev.test.co.ke"
+   ]
+  },
+  {
+   "id": "kiambu",
+   "name": "Kiambu",
+   "host": "kiambu.echis.go.ke",
+   "idpOrigins": [
+    "https://chwregistry.echis.go.ke",
+    "https://chpregistry.echis.go.ke",
+    "https://chwregistry-training.echis.go.ke",
+    "https://chwregistry-dev.echis.go.ke",
+    "https://chwregistry-uat.echis.go.ke",
+    "https://chpregistry-staging.echis.go.ke",
+    "https://chw-registry-dev.test.co.ke"
+   ]
+  },
+  {
+   "id": "kirinyaga",
+   "name": "Kirinyaga",
+   "host": "kirinyaga.echis.go.ke",
+   "idpOrigins": [
+    "https://chwregistry.echis.go.ke",
+    "https://chpregistry.echis.go.ke",
+    "https://chwregistry-training.echis.go.ke",
+    "https://chwregistry-dev.echis.go.ke",
+    "https://chwregistry-uat.echis.go.ke",
+    "https://chpregistry-staging.echis.go.ke",
+    "https://chw-registry-dev.test.co.ke"
+   ]
+  },
+  {
+   "id": "kisii",
+   "name": "Kisii",
+   "host": "kisii.echis.go.ke",
+   "idpOrigins": [
+    "https://chwregistry.echis.go.ke",
+    "https://chpregistry.echis.go.ke",
+    "https://chwregistry-training.echis.go.ke",
+    "https://chwregistry-dev.echis.go.ke",
+    "https://chwregistry-uat.echis.go.ke",
+    "https://chpregistry-staging.echis.go.ke",
+    "https://chw-registry-dev.test.co.ke"
+   ]
+  },
+  {
+   "id": "kwale",
+   "name": "Kwale",
+   "host": "kwale.echis.go.ke",
+   "idpOrigins": [
+    "https://chwregistry.echis.go.ke",
+    "https://chpregistry.echis.go.ke",
+    "https://chwregistry-training.echis.go.ke",
+    "https://chwregistry-dev.echis.go.ke",
+    "https://chwregistry-uat.echis.go.ke",
+    "https://chpregistry-staging.echis.go.ke",
+    "https://chw-registry-dev.test.co.ke"
+   ]
+  },
+  {
+   "id": "laikipia",
+   "name": "Laikipia",
+   "host": "laikipia.echis.go.ke",
+   "idpOrigins": [
+    "https://chwregistry.echis.go.ke",
+    "https://chpregistry.echis.go.ke",
+    "https://chwregistry-training.echis.go.ke",
+    "https://chwregistry-dev.echis.go.ke",
+    "https://chwregistry-uat.echis.go.ke",
+    "https://chpregistry-staging.echis.go.ke",
+    "https://chw-registry-dev.test.co.ke"
+   ]
+  },
+  {
+   "id": "lamu",
+   "name": "Lamu",
+   "host": "lamu.echis.go.ke",
+   "idpOrigins": [
+    "https://chwregistry.echis.go.ke",
+    "https://chpregistry.echis.go.ke",
+    "https://chwregistry-training.echis.go.ke",
+    "https://chwregistry-dev.echis.go.ke",
+    "https://chwregistry-uat.echis.go.ke",
+    "https://chpregistry-staging.echis.go.ke",
+    "https://chw-registry-dev.test.co.ke"
+   ]
+  },
+  {
+   "id": "makueni",
+   "name": "Makueni",
+   "host": "makueni.echis.go.ke",
+   "idpOrigins": [
+    "https://chwregistry.echis.go.ke",
+    "https://chpregistry.echis.go.ke",
+    "https://chwregistry-training.echis.go.ke",
+    "https://chwregistry-dev.echis.go.ke",
+    "https://chwregistry-uat.echis.go.ke",
+    "https://chpregistry-staging.echis.go.ke",
+    "https://chw-registry-dev.test.co.ke"
+   ]
+  },
+  {
+   "id": "mandera",
+   "name": "Mandera",
+   "host": "mandera.echis.go.ke",
+   "idpOrigins": [
+    "https://chwregistry.echis.go.ke",
+    "https://chpregistry.echis.go.ke",
+    "https://chwregistry-training.echis.go.ke",
+    "https://chwregistry-dev.echis.go.ke",
+    "https://chwregistry-uat.echis.go.ke",
+    "https://chpregistry-staging.echis.go.ke",
+    "https://chw-registry-dev.test.co.ke"
+   ]
+  },
+  {
+   "id": "marsabit",
+   "name": "Marsabit",
+   "host": "marsabit.echis.go.ke",
+   "idpOrigins": [
+    "https://chwregistry.echis.go.ke",
+    "https://chpregistry.echis.go.ke",
+    "https://chwregistry-training.echis.go.ke",
+    "https://chwregistry-dev.echis.go.ke",
+    "https://chwregistry-uat.echis.go.ke",
+    "https://chpregistry-staging.echis.go.ke",
+    "https://chw-registry-dev.test.co.ke"
+   ]
+  },
+  {
+   "id": "meru",
+   "name": "Meru",
+   "host": "meru.echis.go.ke",
+   "idpOrigins": [
+    "https://chwregistry.echis.go.ke",
+    "https://chpregistry.echis.go.ke",
+    "https://chwregistry-training.echis.go.ke",
+    "https://chwregistry-dev.echis.go.ke",
+    "https://chwregistry-uat.echis.go.ke",
+    "https://chpregistry-staging.echis.go.ke",
+    "https://chw-registry-dev.test.co.ke"
+   ]
+  },
+  {
+   "id": "mombasa",
+   "name": "Mombasa",
+   "host": "mombasa.echis.go.ke",
+   "idpOrigins": [
+    "https://chwregistry.echis.go.ke",
+    "https://chpregistry.echis.go.ke",
+    "https://chwregistry-training.echis.go.ke",
+    "https://chwregistry-dev.echis.go.ke",
+    "https://chwregistry-uat.echis.go.ke",
+    "https://chpregistry-staging.echis.go.ke",
+    "https://chw-registry-dev.test.co.ke"
+   ]
+  },
+  {
+   "id": "muranga",
+   "name": "Muranga",
+   "host": "muranga.echis.go.ke",
+   "idpOrigins": [
+    "https://chwregistry.echis.go.ke",
+    "https://chpregistry.echis.go.ke",
+    "https://chwregistry-training.echis.go.ke",
+    "https://chwregistry-dev.echis.go.ke",
+    "https://chwregistry-uat.echis.go.ke",
+    "https://chpregistry-staging.echis.go.ke",
+    "https://chw-registry-dev.test.co.ke"
+   ]
+  },
+  {
+   "id": "nandi",
+   "name": "Nandi",
+   "host": "nandi.echis.go.ke",
+   "idpOrigins": [
+    "https://chwregistry.echis.go.ke",
+    "https://chpregistry.echis.go.ke",
+    "https://chwregistry-training.echis.go.ke",
+    "https://chwregistry-dev.echis.go.ke",
+    "https://chwregistry-uat.echis.go.ke",
+    "https://chpregistry-staging.echis.go.ke",
+    "https://chw-registry-dev.test.co.ke"
+   ]
+  },
+  {
+   "id": "narok",
+   "name": "Narok",
+   "host": "narok.echis.go.ke",
+   "idpOrigins": [
+    "https://chwregistry.echis.go.ke",
+    "https://chpregistry.echis.go.ke",
+    "https://chwregistry-training.echis.go.ke",
+    "https://chwregistry-dev.echis.go.ke",
+    "https://chwregistry-uat.echis.go.ke",
+    "https://chpregistry-staging.echis.go.ke",
+    "https://chw-registry-dev.test.co.ke"
+   ]
+  },
+  {
+   "id": "nyamira",
+   "name": "Nyamira",
+   "host": "nyamira.echis.go.ke",
+   "idpOrigins": [
+    "https://chwregistry.echis.go.ke",
+    "https://chpregistry.echis.go.ke",
+    "https://chwregistry-training.echis.go.ke",
+    "https://chwregistry-dev.echis.go.ke",
+    "https://chwregistry-uat.echis.go.ke",
+    "https://chpregistry-staging.echis.go.ke",
+    "https://chw-registry-dev.test.co.ke"
+   ]
+  },
+  {
+   "id": "nyandarua",
+   "name": "Nyandarua",
+   "host": "nyandarua.echis.go.ke",
+   "idpOrigins": [
+    "https://chwregistry.echis.go.ke",
+    "https://chpregistry.echis.go.ke",
+    "https://chwregistry-training.echis.go.ke",
+    "https://chwregistry-dev.echis.go.ke",
+    "https://chwregistry-uat.echis.go.ke",
+    "https://chpregistry-staging.echis.go.ke",
+    "https://chw-registry-dev.test.co.ke"
+   ]
+  },
+  {
+   "id": "samburu",
+   "name": "Samburu",
+   "host": "samburu.echis.go.ke",
+   "idpOrigins": [
+    "https://chwregistry.echis.go.ke",
+    "https://chpregistry.echis.go.ke",
+    "https://chwregistry-training.echis.go.ke",
+    "https://chwregistry-dev.echis.go.ke",
+    "https://chwregistry-uat.echis.go.ke",
+    "https://chpregistry-staging.echis.go.ke",
+    "https://chw-registry-dev.test.co.ke"
+   ]
+  },
+  {
+   "id": "siaya",
+   "name": "Siaya",
+   "host": "siaya.echis.go.ke",
+   "idpOrigins": [
+    "https://chwregistry.echis.go.ke",
+    "https://chpregistry.echis.go.ke",
+    "https://chwregistry-training.echis.go.ke",
+    "https://chwregistry-dev.echis.go.ke",
+    "https://chwregistry-uat.echis.go.ke",
+    "https://chpregistry-staging.echis.go.ke",
+    "https://chw-registry-dev.test.co.ke"
+   ]
+  },
+  {
+   "id": "taita-taveta",
+   "name": "Taita Taveta",
+   "host": "taitataveta.echis.go.ke",
+   "idpOrigins": [
+    "https://chwregistry.echis.go.ke",
+    "https://chpregistry.echis.go.ke",
+    "https://chwregistry-training.echis.go.ke",
+    "https://chwregistry-dev.echis.go.ke",
+    "https://chwregistry-uat.echis.go.ke",
+    "https://chpregistry-staging.echis.go.ke",
+    "https://chw-registry-dev.test.co.ke"
+   ]
+  },
+  {
+   "id": "tana-river",
+   "name": "Tana River",
+   "host": "tanariver.echis.go.ke",
+   "idpOrigins": [
+    "https://chwregistry.echis.go.ke",
+    "https://chpregistry.echis.go.ke",
+    "https://chwregistry-training.echis.go.ke",
+    "https://chwregistry-dev.echis.go.ke",
+    "https://chwregistry-uat.echis.go.ke",
+    "https://chpregistry-staging.echis.go.ke",
+    "https://chw-registry-dev.test.co.ke"
+   ]
+  },
+  {
+   "id": "tharaka-nithi",
+   "name": "Tharaka Nithi",
+   "host": "tharakanithi.echis.go.ke",
+   "idpOrigins": [
+    "https://chwregistry.echis.go.ke",
+    "https://chpregistry.echis.go.ke",
+    "https://chwregistry-training.echis.go.ke",
+    "https://chwregistry-dev.echis.go.ke",
+    "https://chwregistry-uat.echis.go.ke",
+    "https://chpregistry-staging.echis.go.ke",
+    "https://chw-registry-dev.test.co.ke"
+   ]
+  },
+  {
+   "id": "trans-nzoia",
+   "name": "Trans Nzoia",
+   "host": "transnzoia.echis.go.ke",
+   "idpOrigins": [
+    "https://chwregistry.echis.go.ke",
+    "https://chpregistry.echis.go.ke",
+    "https://chwregistry-training.echis.go.ke",
+    "https://chwregistry-dev.echis.go.ke",
+    "https://chwregistry-uat.echis.go.ke",
+    "https://chpregistry-staging.echis.go.ke",
+    "https://chw-registry-dev.test.co.ke"
+   ]
+  },
+  {
+   "id": "wajir",
+   "name": "Wajir",
+   "host": "wajir.echis.go.ke",
+   "idpOrigins": [
+    "https://chwregistry.echis.go.ke",
+    "https://chpregistry.echis.go.ke",
+    "https://chwregistry-training.echis.go.ke",
+    "https://chwregistry-dev.echis.go.ke",
+    "https://chwregistry-uat.echis.go.ke",
+    "https://chpregistry-staging.echis.go.ke",
+    "https://chw-registry-dev.test.co.ke"
+   ]
+  },
+  {
+   "id": "west-pokot",
+   "name": "West Pokot",
+   "host": "westpokot.echis.go.ke",
+   "idpOrigins": [
+    "https://chwregistry.echis.go.ke",
+    "https://chpregistry.echis.go.ke",
+    "https://chwregistry-training.echis.go.ke",
+    "https://chwregistry-dev.echis.go.ke",
+    "https://chwregistry-uat.echis.go.ke",
+    "https://chpregistry-staging.echis.go.ke",
+    "https://chw-registry-dev.test.co.ke"
+   ]
+  },
+  {
+   "id": "staging",
+   "name": "Staging",
+   "host": "staging.echis.go.ke",
+   "idpOrigins": [
+    "https://chwregistry.echis.go.ke",
+    "https://chpregistry.echis.go.ke",
+    "https://chwregistry-training.echis.go.ke",
+    "https://chwregistry-dev.echis.go.ke",
+    "https://chwregistry-uat.echis.go.ke",
+    "https://chpregistry-staging.echis.go.ke",
+    "https://chw-registry-dev.test.co.ke"
+   ]
+  },
+  {
+   "id": "training-1",
+   "name": "Training 1",
+   "host": "training-1.echis.go.ke",
+   "idpOrigins": [
+    "https://chwregistry.echis.go.ke",
+    "https://chpregistry.echis.go.ke",
+    "https://chwregistry-training.echis.go.ke",
+    "https://chwregistry-dev.echis.go.ke",
+    "https://chwregistry-uat.echis.go.ke",
+    "https://chpregistry-staging.echis.go.ke",
+    "https://chw-registry-dev.test.co.ke"
+   ]
+  },
+  {
+   "id": "training-2",
+   "name": "Training 2",
+   "host": "training-2.echis.go.ke",
+   "idpOrigins": [
+    "https://chwregistry.echis.go.ke",
+    "https://chpregistry.echis.go.ke",
+    "https://chwregistry-training.echis.go.ke",
+    "https://chwregistry-dev.echis.go.ke",
+    "https://chwregistry-uat.echis.go.ke",
+    "https://chpregistry-staging.echis.go.ke",
+    "https://chw-registry-dev.test.co.ke"
+   ]
+  },
+  {
+   "id": "training-3",
+   "name": "Training 3",
+   "host": "training-3.echis.go.ke",
+   "idpOrigins": [
+    "https://chwregistry.echis.go.ke",
+    "https://chpregistry.echis.go.ke",
+    "https://chwregistry-training.echis.go.ke",
+    "https://chwregistry-dev.echis.go.ke",
+    "https://chwregistry-uat.echis.go.ke",
+    "https://chpregistry-staging.echis.go.ke",
+    "https://chw-registry-dev.test.co.ke"
+   ]
+  },
+  {
+   "id": "training-4",
+   "name": "Training 4",
+   "host": "training-4.echis.go.ke",
+   "idpOrigins": [
+    "https://chwregistry.echis.go.ke",
+    "https://chpregistry.echis.go.ke",
+    "https://chwregistry-training.echis.go.ke",
+    "https://chwregistry-dev.echis.go.ke",
+    "https://chwregistry-uat.echis.go.ke",
+    "https://chpregistry-staging.echis.go.ke",
+    "https://chw-registry-dev.test.co.ke"
+   ]
+  }
+ ]
+}

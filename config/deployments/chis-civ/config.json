@@ -1,0 +1,258 @@
+{
+  "contact_types": [
+    {
+      "name": "c40_supervision_area",
+      "friendly": "Supervision Area",
+      "contact_type": "c42_supervision_area",
+      "user_role": [
+        "supervisor",
+        "dedicated_supervisor"
+      ],
+      "username_from_place": false,
+      "deactivate_users_on_replace": false,
+      "hierarchy": [
+        {
+          "friendly_name": "District",
+          "property_name": "district",
+          "contact_type": "c30_district",
+          "type": "name",
+          "required": true,
+          "level": 1
+        }
+      ],
+      "replacement_property": {
+        "friendly_name": "Affected Supervision Area",
+        "property_name": "replacement",
+        "type": "string",
+        "parameter": [
+          "\\(*Supervision*\\)"
+        ],
+        "required": true
+      },
+      "place_properties": [
+        {
+          "friendly_name": "Supervision Area Name",
+          "property_name": "name",
+          "type": "generated",
+          "parameter": "Zone de supervision de: {{ contact.last_name }} {{ contact.first_name }}",
+          "required": false,
+          "unique": "parent"
+        }
+      ],
+      "contact_properties": [
+        {
+          "friendly_name": "First Name",
+          "property_name": "first_name",
+          "type": "string",
+          "parameter": [
+            "\\(*First*\\)"
+          ],
+          "required": true,
+          "hint": "Prénom du superviseur"
+        },
+        {
+          "friendly_name": "Last Name",
+          "property_name": "last_name",
+          "type": "string",
+          "parameter": [
+            "\\(*Last*\\)"
+          ],
+          "required": true,
+          "hint": "Nom du superviseur"
+        },
+        {
+          "friendly_name": "Full Name",
+          "property_name": "name",
+          "type": "generated",
+          "parameter": "{{ contact.last_name }} {{ contact.first_name }}",
+          "required": false
+        },
+        {
+          "friendly_name": "Function",
+          "property_name": "function",
+          "type": "string",
+          "required": false,
+          "hint": "Fonction du superviseur"
+        },
+        {
+          "friendly_name": "Gender",
+          "property_name": "sex",
+          "type": "select_one",
+          "parameter": {
+            "male": "Masculin",
+            "female": "Feminin"
+          },
+          "required": true,
+          "hint": "Sexe du superviseur"
+        },
+        {
+          "friendly_name": "Phone Number",
+          "property_name": "phone",
+          "type": "regex",
+          "parameter": "^\\d{10}$",
+          "required": true,
+          "hint": "N° Téléphone du superviseur"
+        },
+        {
+          "friendly_name": "Require password change",
+          "property_name": "require_password_change",
+          "type": "select_one",
+          "required": false,
+          "parameter": {
+            "yes": "Yes",
+            "no": "No"
+          }
+        }
+      ]
+    },
+    {
+      "name": "c70_chw_site",
+      "friendly": "CHW Site",
+      "contact_type": "c72_chw_site",
+      "user_role": [
+        "chw_min_5km",
+        "chw_max_5km"
+      ],
+      "username_from_place": false,
+      "deactivate_users_on_replace": false,
+      "hierarchy": [
+        {
+          "friendly_name": "Locality",
+          "property_name": "locality",
+          "contact_type": "c60_locality",
+          "type": "name",
+          "required": true,
+          "level": 1
+        },
+        {
+          "friendly_name": "Health Area",
+          "property_name": "health_area",
+          "contact_type": "c50_health_area",
+          "type": "name",
+          "required": true,
+          "level": 2
+        },
+        {
+          "friendly_name": "Supervision Area",
+          "property_name": "supervision_area",
+          "contact_type": "c40_supervision_area",
+          "type": "name",
+          "required": true,
+          "level": 3
+        }
+      ],
+      "replacement_property": {
+        "friendly_name": "Affected CHW Site",
+        "property_name": "replacement",
+        "type": "string",
+        "parameter": [
+          "\\(*Site*\\)"
+        ],
+        "required": true
+      },
+      "place_properties": [
+        {
+          "friendly_name": "CHW Site Name",
+          "property_name": "name",
+          "type": "string",
+          "parameter": [
+            "\\(*Site*\\)"
+          ],
+          "required": true,
+          "hint": "Nom du site de l'ASC",
+          "unique": "parent"
+        }
+      ],
+      "contact_properties": [
+        {
+          "friendly_name": "First Name",
+          "property_name": "first_name",
+          "type": "string",
+          "parameter": [
+            "\\(*First*\\)"
+          ],
+          "required": true,
+          "hint": "Prénom de l'ASC"
+        },
+        {
+          "friendly_name": "Last Name",
+          "property_name": "last_name",
+          "type": "string",
+          "parameter": [
+            "\\(*Last*\\)"
+          ],
+          "required": true,
+          "hint": "Nom de l'ASC"
+        },
+        {
+          "friendly_name": "Full Name",
+          "property_name": "name",
+          "type": "generated",
+          "parameter": "{{ contact.last_name }} {{ contact.first_name }}",
+          "required": false
+        },
+        {
+          "friendly_name": "ASC Type",
+          "property_name": "chw_type",
+          "type": "select_one",
+          "parameter": {
+            "min_5km": "ASC - 5km",
+            "max_5km": "ASC + 5km"
+          },
+          "required": true,
+          "hint": "Type d'ASC"
+        },
+        {
+          "friendly_name": "Gender",
+          "property_name": "sex",
+          "type": "select_one",
+          "parameter": {
+            "male": "Masculin",
+            "female": "Feminin"
+          },
+          "required": true,
+          "hint": "Sexe de l'ASC"
+        },
+        {
+          "friendly_name": "Age",
+          "property_name": "age",
+          "type": "regex",
+          "parameter": "^\\d{2}$",
+          "required": false,
+          "hint": "Âge de l'ASC"
+        },
+        {
+          "friendly_name": "Phone Number",
+          "property_name": "phone",
+          "type": "regex",
+          "parameter": "^\\d{10}$",
+          "required": true,
+          "hint": "N° Téléphone de l'ASC"
+        },
+        {
+          "friendly_name": "Education Level",
+          "property_name": "level_of_study",
+          "type": "select_one",
+          "parameter": {
+            "primary": "Primary",
+            "secondary": "Secondary",
+            "higher": "Higher",
+            "none": "None"
+          },
+          "required": false,
+          "hint": "Niveau d'étude de l'ASC"
+        },
+        {
+          "friendly_name": "Require password change",
+          "property_name": "require_password_change",
+          "type": "select_one",
+          "required": false,
+          "parameter": {
+            "yes": "Yes",
+            "no": "No"
+          }
+        }
+      ]
+    }
+  ]
+}

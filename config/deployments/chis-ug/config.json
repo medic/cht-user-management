@@ -1,0 +1,193 @@
+{
+  "contact_types": [
+    {
+      "name": "c50-health_center",
+      "friendly": "VHT Area",
+      "contact_type": "person",
+      "user_role": [
+        "vht"
+      ],
+      "username_from_place": false,
+      "deactivate_users_on_replace": true,
+      "hierarchy": [
+        {
+          "friendly_name": "Parish",
+          "property_name": "PARISH",
+          "contact_type": "c40-parish",
+          "type": "string",
+          "required": true,
+          "level": 1,
+          "external_mapping": {
+            "chwr": {
+              "name": "parish"
+            }
+          }
+        },
+        {
+          "friendly_name": "Health Facility",
+          "property_name": "HEALTHFACILITY",
+          "contact_type": "c30-district_hospital",
+          "required": true,
+          "type": "string",
+          "level": 2,
+          "external_mapping": {
+            "chwr": {
+              "name": "facility",
+              "path": "position.facility.name",
+              "is_filter": true
+            }
+          }
+        },
+        {
+          "friendly_name": "District",
+          "property_name": "DISTRICT",
+          "contact_type": "c20-district",
+          "required": true,
+          "type": "string",
+          "level": 3,
+          "external_mapping": {
+            "chwr": {
+              "name": "district",
+              "path": "district.name",
+              "is_filter": true
+            }
+          }
+        }
+      ],
+      "replacement_property": {
+        "friendly_name": "Outgoing VHT",
+        "property_name": "REPLACEMENT",
+        "type": "name",
+        "parameter": [],
+        "required": true
+      },
+      "place_properties": [
+        {
+          "friendly_name": "VHT Area Name",
+          "property_name": "name",
+          "type": "generated",
+          "parameter": "{{ contact.name }} Area ({{ place.village }})",
+          "required": true,
+          "unique": "parent"
+        },
+        {
+          "friendly_name": "County",
+          "property_name": "county",
+          "type": "name",
+          "parameter": [
+            "\\scounty\\s"
+          ],
+          "required": false
+        },
+        {
+          "friendly_name": "Sub County",
+          "property_name": "sub_county",
+          "type": "name",
+          "parameter": [
+            "\\ssub\\s",
+            "\\sSubcounty",
+            "\\scounty\\s"
+          ],
+          "required": true,
+          "external_mapping": {
+            "chwr": {
+              "name": "subcounty",
+              "path": "subcounty.name"
+            }
+          }
+        },
+        {
+          "friendly_name": "Village",
+          "property_name": "village",
+          "parameter": "^[a-zA-Z- ]+$",
+          "errorDescription": "Only letters accepted",
+          "type": "regex",
+          "required": true,
+          "external_mapping": {
+            "chwr": {
+              "name": "village",
+              "path": "villages[0]",
+              "is_filter": true
+            }
+          }
+        }
+      ],
+      "contact_properties": [
+        {
+          "friendly_name": "VHT Name",
+          "property_name": "name",
+          "type": "name",
+          "required": true,
+          "external_mapping": {
+            "chwr": {
+              "name": "fullName"
+            }
+          }
+        },
+        {
+          "friendly_name": "National ID",
+          "property_name": "national_id",
+          "type": "generated",
+          "parameter": "{{ contact.national_id }}",
+          "required": false,
+          "external_mapping": {
+            "chwr": {
+              "name": "nationalId"
+            }
+          }
+        },
+        {
+          "friendly_name": "CHWR ID",
+          "property_name": "chwr_id",
+          "type": "generated",
+          "parameter": "{{ contact.chwr_id }}",
+          "required": false,
+          "external_mapping": {
+            "chwr": {
+              "name": "id"
+            }
+          }
+        },
+        {
+          "friendly_name": "Phone Number",
+          "property_name": "phone",
+          "type": "phone",
+          "parameter": "UG",
+          "required": true,
+          "unique": "all",
+          "external_mapping": {
+            "chwr": {
+              "name": "phone"
+            }
+          }
+        },
+        {
+          "friendly_name": "Date of Birth",
+          "property_name": "date_of_birth",
+          "type": "dob",
+          "required": true,
+          "external_mapping": {
+            "chwr": {
+              "name": "birthDate"
+            }
+          }
+        },
+        {
+          "friendly_name": "Sex",
+          "property_name": "sex",
+          "type": "select_one",
+          "parameter": {
+            "male": "Male",
+            "female": "Female"
+          },
+          "required": true,
+          "external_mapping": {
+            "chwr": {
+              "name": "gender"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
