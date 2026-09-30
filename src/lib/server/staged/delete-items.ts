@@ -11,7 +11,7 @@ import { checkDelete, previewDelete } from '../hierarchy/delete';
 import type { JobStore } from '../hierarchy/jobs';
 import { lineageIds } from '../places/documents';
 import { isWithinFacilities } from '../places/directory';
-import { docId } from '../places/schemas';
+import { docId, newJobId } from '../places/schemas';
 import { placeLookup } from '../places/lookup';
 import { normalize } from '../places/unique';
 import { resolveHierarchy } from './csv';
@@ -24,7 +24,7 @@ import type { ListOwner, StagedItem } from './types';
 export const deleteItemRequest = z
 	.object({
 		// client-chosen: scheduling the same id again returns the job it already created
-		jobId: docId,
+		jobId: newJobId,
 		contactType: z.string().min(1),
 		placeId: docId,
 		// the place's name, typed to confirm; a CSV row waits for it in needs_confirmation

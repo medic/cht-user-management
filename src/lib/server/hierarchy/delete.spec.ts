@@ -106,22 +106,22 @@ describe('before scheduling', () => {
 	});
 
 	it('only schedules with the place’s name typed exactly', async () => {
-		const error = await expectApiError(scheduleJob(deps, 'job-1', deleteChu({ confirmName: 'kanyakwar' })), 'CONFIRMATION_REQUIRED');
+		const error = await expectApiError(scheduleJob(deps, '00000000-0000-4000-8000-000000000001', deleteChu({ confirmName: 'kanyakwar' })), 'CONFIRMATION_REQUIRED');
 		expect(error.details).toEqual({ expected: 'Kanyakwar' });
 	});
 
 	it('refuses to leave a place above pointing at a deleted person', async () => {
 		cht.docs.get('sub')!.contact = { _id: 'jane' };
-		await expectApiError(scheduleJob(deps, 'job-1', deleteChu()), 'PRIMARY_CONTACT_WOULD_BE_LOST');
+		await expectApiError(scheduleJob(deps, '00000000-0000-4000-8000-000000000001', deleteChu()), 'PRIMARY_CONTACT_WOULD_BE_LOST');
 	});
 
 	it('refuses a job overlapping another job’s branch, and returns the same job for the same id', async () => {
-		const first = await scheduleJob(deps, 'job-1', deleteChu());
+		const first = await scheduleJob(deps, '00000000-0000-4000-8000-000000000001', deleteChu());
 		expect(first).toMatchObject({ status: 202, job: { status: 'queued', branch: { placeId: 'chu', lineage: ['sub', 'county'] } } });
-		expect(await scheduleJob(deps, 'job-1', deleteChu())).toMatchObject({ status: 200, job: { id: 'job-1' } });
+		expect(await scheduleJob(deps, '00000000-0000-4000-8000-000000000001', deleteChu())).toMatchObject({ status: 200, job: { id: '00000000-0000-4000-8000-000000000001' } });
 
 		const area = { kind: 'delete' as const, contactType: AREA, placeId: 'area-1', confirmName: 'Mary Area' };
-		await expectApiError(scheduleJob(deps, 'job-2', area), 'OVERLAPPING_JOB');
+		await expectApiError(scheduleJob(deps, '00000000-0000-4000-8000-000000000002', area), 'OVERLAPPING_JOB');
 		// never shown to clients
 		expect(await view(store, first.job)).not.toHaveProperty('token');
 	});
@@ -130,11 +130,11 @@ describe('before scheduling', () => {
 describe('running a delete', () => {
 	it('keeps a copy, has cht-conf delete everything under the place, and records the outcome', async () => {
 		const chtConf = fakeChtConf(cht);
-		const { job } = await scheduleJob(deps, 'job-1', deleteChu());
+		const { job } = await scheduleJob(deps, '00000000-0000-4000-8000-000000000001', deleteChu());
 
 		await runner(chtConf).tick();
 
-		const done = (await store.get('test', 'job-1'))!;
+		const done = (await store.get('test', '00000000-0000-4000-8000-000000000001'))!;
 		expect(done).toMatchObject({
 			status: 'done',
 			phase: 'uploaded',
@@ -157,63 +157,63 @@ describe('running a delete', () => {
 		const archived: string[] = [];
 		for await (const doc of readArchive(archivePath(settings.archiveDir, done))) archived.push(doc._id);
 		expect(archived.sort()).toEqual(['area-1', 'area-2', 'chu', 'grace', 'jane', 'mary', 'report-1', 'report-2']);
-		expect((await store.log('test', 'job-1')).join('\n')).toMatch(/Kept a copy of 8 docs/);
+		expect((await store.log('test', '00000000-0000-4000-8000-000000000001')).join('\n')).toMatch(/Kept a copy of 8 docs/);
 	});
 
 	it('waits while Sentinel is busy, then runs once it’s due', async () => {
 		let now = new Date('2026-09-30T10:00:00Z');
-		await scheduleJob(deps, 'job-1', deleteChu());
+		await scheduleJob(deps, '00000000-0000-4000-8000-000000000001', deleteChu());
 		cht.sentinel = 9120;
 
 		await runner(fakeChtConf(cht), () => now).tick();
-		expect(await store.get('test', 'job-1')).toMatchObject({
+		expect(await store.get('test', '00000000-0000-4000-8000-000000000001')).toMatchObject({
 			status: 'postponed',
 			postponed: { reason: 'sentinel_backlog', backlog: 9120, nextCheckAt: '2026-09-30T10:15:00.000Z' }
 		});
 
 		cht.sentinel = 10;
 		await runner(fakeChtConf(cht), () => now).tick();
-		expect((await store.get('test', 'job-1'))?.status).toBe('postponed');
+		expect((await store.get('test', '00000000-0000-4000-8000-000000000001'))?.status).toBe('postponed');
 
 		now = new Date('2026-09-30T10:16:00Z');
 		await runner(fakeChtConf(cht), () => now).tick();
-		expect((await store.get('test', 'job-1'))?.status).toBe('done');
+		expect((await store.get('test', '00000000-0000-4000-8000-000000000001'))?.status).toBe('done');
 	});
 
 	it('asks for sign-in when the session it carries has expired, and runs again once resumed', async () => {
-		await scheduleJob(deps, 'job-1', deleteChu());
+		await scheduleJob(deps, '00000000-0000-4000-8000-000000000001', deleteChu());
 
 		await runner(fakeChtConf(cht), () => new Date(Date.now() + 2 * 86_400_000)).tick();
-		expect((await store.get('test', 'job-1'))?.status).toBe('needs_sign_in');
+		expect((await store.get('test', '00000000-0000-4000-8000-000000000001'))?.status).toBe('needs_sign_in');
 		expect(cht.docs.has('chu')).toBe(true);
 
-		expect(await resumeJob(deps, 'job-1')).toMatchObject({ status: 'queued' });
+		expect(await resumeJob(deps, '00000000-0000-4000-8000-000000000001')).toMatchObject({ status: 'queued' });
 		await runner().tick();
-		expect((await store.get('test', 'job-1'))?.status).toBe('done');
+		expect((await store.get('test', '00000000-0000-4000-8000-000000000001'))?.status).toBe('done');
 	});
 
 	it('fails with the end of the log, and a retry runs it again', async () => {
-		await scheduleJob(deps, 'job-1', deleteChu());
+		await scheduleJob(deps, '00000000-0000-4000-8000-000000000001', deleteChu());
 
 		await runner(fakeChtConf(cht, { fail: 'upload-docs' })).tick();
-		const failed = (await store.get('test', 'job-1'))!;
+		const failed = (await store.get('test', '00000000-0000-4000-8000-000000000001'))!;
 		expect(failed).toMatchObject({ status: 'failed', phase: 'archived', error: { message: 'cht-conf upload-docs exited with 1' } });
 		expect(failed.error?.logTail.join('\n')).toMatch(/something went wrong/);
 		expect(cht.docs.has('chu')).toBe(true);
 
-		await resumeJob(deps, 'job-1');
+		await resumeJob(deps, '00000000-0000-4000-8000-000000000001');
 		await runner().tick();
-		expect(await store.get('test', 'job-1')).toMatchObject({ status: 'done', attempts: 2, archive: { docs: 8 } });
+		expect(await store.get('test', '00000000-0000-4000-8000-000000000001')).toMatchObject({ status: 'done', attempts: 2, archive: { docs: 8 } });
 	});
 
 	it('finishes a job whose deletions were written before its server stopped', async () => {
-		const { job } = await scheduleJob(deps, 'job-1', deleteChu());
+		const { job } = await scheduleJob(deps, '00000000-0000-4000-8000-000000000001', deleteChu());
 		await store.save({ ...job, status: 'running', phase: 'uploaded' });
 		cht.docs.delete('chu');
 
 		await runner().tick();
 
-		expect((await store.get('test', 'job-1'))?.status).toBe('done');
+		expect((await store.get('test', '00000000-0000-4000-8000-000000000001'))?.status).toBe('done');
 	});
 });
 
@@ -234,7 +234,7 @@ describe('delete items in the staged list', () => {
 	});
 	const item = (overrides: Record<string, unknown> = {}) => ({
 		kind: 'delete' as const,
-		request: { jobId: 'job-1', contactType: CHU, placeId: 'chu', confirmName: 'Kanyakwar', ...overrides }
+		request: { jobId: '00000000-0000-4000-8000-000000000001', contactType: CHU, placeId: 'chu', confirmName: 'Kanyakwar', ...overrides }
 	});
 	async function waitFor(check: () => Promise<boolean>) {
 		for (let i = 0; i < 400 && !(await check()); i++) await new Promise((resolve) => setTimeout(resolve, 5));
@@ -249,9 +249,9 @@ describe('delete items in the staged list', () => {
 			claims: ['chu', 'sub', 'county'],
 			summary: { title: 'Kanyakwar', subtitle: 'Kisumu › Kisumu West', person: 'Deletes 3 places, 3 people and 2 reports; 2 accounts retired' }
 		});
-		await expectApiError(addItem(staged, item({ jobId: 'job-2', confirmName: 'Kanyakwa' })), 'CONFIRMATION_REQUIRED');
+		await expectApiError(addItem(staged, item({ jobId: '00000000-0000-4000-8000-000000000002', confirmName: 'Kanyakwa' })), 'CONFIRMATION_REQUIRED');
 		// a place under it, or above it, overlaps
-		await expectApiError(addItem(staged, item({ jobId: 'job-3', contactType: AREA, placeId: 'area-1', confirmName: 'Mary Area' })), 'DELETE_ALREADY_STAGED');
+		await expectApiError(addItem(staged, item({ jobId: '00000000-0000-4000-8000-000000000003', contactType: AREA, placeId: 'area-1', confirmName: 'Mary Area' })), 'DELETE_ALREADY_STAGED');
 	});
 
 	it('schedules the job on upload, and shows the job’s status on the item', async () => {
@@ -260,7 +260,7 @@ describe('delete items in the staged list', () => {
 		await startUpload(staged);
 		await waitFor(async () => (await staged.tracker.state(owner)).state === 'idle');
 		let listed = (await listItems(staged, listQuery.parse({}))).items[0];
-		expect(listed).toMatchObject({ status: 'created', result: { jobId: 'job-1' }, job: { id: 'job-1', status: 'queued', position: 1 } });
+		expect(listed).toMatchObject({ status: 'created', result: { jobId: '00000000-0000-4000-8000-000000000001' }, job: { id: '00000000-0000-4000-8000-000000000001', status: 'queued', position: 1 } });
 		expect(listed.job).not.toHaveProperty('token');
 		expect(cht.docs.has('chu')).toBe(true);
 
@@ -288,15 +288,15 @@ describe('delete items in the staged list', () => {
 
 describe('undoing a delete', () => {
 	async function deleted() {
-		await scheduleJob(deps, 'job-1', deleteChu());
+		await scheduleJob(deps, '00000000-0000-4000-8000-000000000001', deleteChu());
 		await runner().tick();
-		expect((await store.get('test', 'job-1'))?.status).toBe('done');
+		expect((await store.get('test', '00000000-0000-4000-8000-000000000001'))?.status).toBe('done');
 	}
 
 	it('shows what will come back, and whose accounts the delete affected', async () => {
 		await deleted();
 
-		expect(await undoPreview(deps, 'job-1')).toMatchObject({
+		expect(await undoPreview(deps, '00000000-0000-4000-8000-000000000001')).toMatchObject({
 			placeName: 'Kanyakwar',
 			counts: { contacts: 6, reports: 2 },
 			parent: { id: 'sub', name: 'Kisumu West' },
@@ -311,13 +311,13 @@ describe('undoing a delete', () => {
 		await deleted();
 		const before = { ...cht.users.get('jane')! };
 
-		const { status, job } = await undoJob(deps, 'job-1', { recreateLogins: false });
+		const { status, job } = await undoJob(deps, '00000000-0000-4000-8000-000000000001', { recreateLogins: false });
 		expect(status).toBe(202);
-		expect(job).toMatchObject({ id: 'job-1-undo', kind: 'restore', status: 'queued' });
-		expect(await undoJob(deps, 'job-1', { recreateLogins: false })).toMatchObject({ status: 200 });
+		expect(job).toMatchObject({ id: '00000000-0000-4000-8000-000000000001-undo', kind: 'restore', status: 'queued' });
+		expect(await undoJob(deps, '00000000-0000-4000-8000-000000000001', { recreateLogins: false })).toMatchObject({ status: 200 });
 		await runner().tick();
 
-		const restore = (await store.get('test', 'job-1-undo'))!;
+		const restore = (await store.get('test', '00000000-0000-4000-8000-000000000001-undo'))!;
 		expect(restore).toMatchObject({ status: 'done', result: { contacts: 6, reports: 2, accountsRestored: 1, loginsRecreated: [] } });
 		for (const id of ['chu', 'jane', 'area-1', 'mary', 'area-2', 'grace', 'report-1', 'report-2']) expect(cht.docs.has(id)).toBe(true);
 		expect(cht.docs.get('chu')).toMatchObject({ name: 'Kanyakwar', contact: { _id: 'jane' } });
@@ -325,7 +325,7 @@ describe('undoing a delete', () => {
 		expect(cht.users.get('grace')?.place.sort()).toEqual(['area-2', 'elsewhere']);
 		expect(cht.users.get('jane')).toMatchObject({ inactive: before.inactive });
 		expect(uploadLog.records).toHaveLength(0);
-		expect((await store.get('test', 'job-1'))?.undoneBy).toBe('job-1-undo');
+		expect((await store.get('test', '00000000-0000-4000-8000-000000000001'))?.undoneBy).toBe('00000000-0000-4000-8000-000000000001-undo');
 	});
 
 	it('recreates logins for disabled accounts when asked, with new passwords on record', async () => {
@@ -338,10 +338,10 @@ describe('undoing a delete', () => {
 		cht.users.delete('jane');
 		cht.users.delete('mary');
 
-		await undoJob(deps, 'job-1', { recreateLogins: true });
+		await undoJob(deps, '00000000-0000-4000-8000-000000000001', { recreateLogins: true });
 		await runner().tick();
 
-		expect((await store.get('test', 'job-1-undo'))?.result?.loginsRecreated).toEqual(
+		expect((await store.get('test', '00000000-0000-4000-8000-000000000001-undo'))?.result?.loginsRecreated).toEqual(
 			expect.arrayContaining([
 				{ username: 'jane', previousUsername: 'jane' },
 				{ username: 'mary', previousUsername: 'mary' }
@@ -354,10 +354,10 @@ describe('undoing a delete', () => {
 	it('refuses when the place above is gone, or the ids are in use again', async () => {
 		await deleted();
 		cht.seed({ _id: 'mary', type: 'person', name: 'Someone new' });
-		await expectApiError(undoJob(deps, 'job-1', { recreateLogins: false }), 'UNDO_CONFLICT');
+		await expectApiError(undoJob(deps, '00000000-0000-4000-8000-000000000001', { recreateLogins: false }), 'UNDO_CONFLICT');
 
 		cht.docs.delete('mary');
 		cht.docs.delete('sub');
-		await expectApiError(undoJob(deps, 'job-1', { recreateLogins: false }), 'PARENT_GONE');
+		await expectApiError(undoJob(deps, '00000000-0000-4000-8000-000000000001', { recreateLogins: false }), 'PARENT_GONE');
 	});
 });

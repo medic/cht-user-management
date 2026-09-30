@@ -94,25 +94,25 @@ describe('before scheduling', () => {
 	});
 
 	it('only merges different places of the type, never into one under it, with the source’s name typed', async () => {
-		await expectApiError(scheduleJob(deps, 'job-1', merge({ destinationId: 'kanyakwar' })), 'SAME_PLACE');
-		await expectApiError(scheduleJob(deps, 'job-1', merge({ destinationId: 'seme' })), 'PLACE_WRONG_TYPE');
-		await expectApiError(scheduleJob(deps, 'job-1', merge({ confirmName: 'kanyakwar' })), 'CONFIRMATION_REQUIRED');
+		await expectApiError(scheduleJob(deps, '00000000-0000-4000-8000-000000000001', merge({ destinationId: 'kanyakwar' })), 'SAME_PLACE');
+		await expectApiError(scheduleJob(deps, '00000000-0000-4000-8000-000000000001', merge({ destinationId: 'seme' })), 'PLACE_WRONG_TYPE');
+		await expectApiError(scheduleJob(deps, '00000000-0000-4000-8000-000000000001', merge({ confirmName: 'kanyakwar' })), 'CONFIRMATION_REQUIRED');
 	});
 
 	it('refuses to take a place above’s primary contact out from under it', async () => {
 		cht.docs.get('west')!.contact = { _id: 'mary' };
-		const error = await expectApiError(scheduleJob(deps, 'job-1', merge()), 'PRIMARY_CONTACT_WOULD_LEAVE');
+		const error = await expectApiError(scheduleJob(deps, '00000000-0000-4000-8000-000000000001', merge()), 'PRIMARY_CONTACT_WOULD_LEAVE');
 		expect(error.message).toMatch(/^Can't merge Kanyakwar/);
 	});
 });
 
 describe('running a merge', () => {
 	it('has cht-conf merge, keeps a copy first, and records the merge on the destination', async () => {
-		await scheduleJob(deps, 'job-1', merge());
+		await scheduleJob(deps, '00000000-0000-4000-8000-000000000001', merge());
 
 		await runner().tick();
 
-		const done = (await store.get('test', 'job-1'))!;
+		const done = (await store.get('test', '00000000-0000-4000-8000-000000000001'))!;
 		expect(done).toMatchObject({ status: 'done', result: { usersDisabled: 1, usersUpdated: 0 }, archive: { available: true } });
 		expect(cht.docs.has('kanyakwar') || cht.docs.has('jane')).toBe(false);
 		expect(cht.docs.get('area')?.parent).toEqual(lineage('kogony', 'seme', 'county'));
@@ -152,7 +152,7 @@ describe('merge items in the staged list', () => {
 	}
 	const item = (overrides: Record<string, unknown> = {}) => ({
 		kind: 'merge' as const,
-		request: { jobId: 'job-1', contactType: CHU, sourceId: 'kanyakwar', destinationId: 'kogony', confirmName: 'Kanyakwar', ...overrides }
+		request: { jobId: '00000000-0000-4000-8000-000000000001', contactType: CHU, sourceId: 'kanyakwar', destinationId: 'kogony', confirmName: 'Kanyakwar', ...overrides }
 	});
 
 	it('adds a confirmed merge from the form, and keeps a delete off its destination', async () => {
@@ -163,7 +163,7 @@ describe('merge items in the staged list', () => {
 			targets: ['kogony', 'seme', 'county'],
 			summary: { title: 'Kanyakwar', subtitle: 'Kisumu › Kisumu West', person: 'Merges into Kogony, with 1 place and 1 person' }
 		});
-		const deleteDestination = { kind: 'delete' as const, request: { jobId: 'job-2', contactType: CHU, placeId: 'kogony', confirmName: 'Kogony' } };
+		const deleteDestination = { kind: 'delete' as const, request: { jobId: '00000000-0000-4000-8000-000000000002', contactType: CHU, placeId: 'kogony', confirmName: 'Kogony' } };
 		await expectApiError(addItem(staged, deleteDestination), 'DELETE_ALREADY_STAGED');
 
 		await startUpload(staged);

@@ -5,7 +5,7 @@ import { ApiError, ChtError } from '../errors';
 import type { OperationContext } from '../places/context';
 import { clearPlaceCache } from '../places/lookup';
 import { FakeCht } from '../testing/fake-cht';
-import type { UploadLog, UploadLogRecord } from '../upload-log';
+import { MemoryUploadLog } from '../upload-log';
 import {
 	addItem,
 	clearFinished,
@@ -31,16 +31,6 @@ import { MemoryUploadTracker } from './upload-tracker';
 
 // Runs against Kenya's deployment (DEPLOYMENT_DIR in .env.test)
 const CHU = 'c_community_health_unit';
-
-class MemoryUploadLog implements UploadLog {
-	records: UploadLogRecord[] = [];
-	async log(_creator: string, record: Omit<UploadLogRecord, 'id'>) {
-		this.records.unshift({ id: String(this.records.length), ...record });
-	}
-	async list() {
-		return this.records;
-	}
-}
 
 const session: Session = {
 	instanceId: 'test',

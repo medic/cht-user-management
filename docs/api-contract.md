@@ -23,7 +23,8 @@ The API has two kinds of client:
 - **Auth**: send either the session cookie (browsers) or `Authorization: Bearer <token>`
   (machine clients). See [§2](#2-auth).
 - **Ids for new things are chosen by the client**: `placeId`, `contact.id`, `jobId`. UUIDs are
-  recommended. This is what makes writes idempotent: repeating a request with the same ids returns
+  recommended, and required for `jobId`, which names the job's folder and archive on the server:
+  anything else is `400 INVALID_REQUEST`. This is what makes writes idempotent: repeating a request with the same ids returns
   the same result, and finishes whatever an earlier attempt left undone. The first successful call
   returns `201` (or `202` for jobs); repeats return `200` with `"outcome": "already_applied"` (or
   the existing job).
@@ -48,6 +49,11 @@ The API has two kinds of client:
 ## 2. Auth
 
 Behaviour: [APP.md → Auth](APP.md#auth).
+
+### `GET /_healthz` (no auth)
+`200 { "status": "ok" }` while the server is up, for container and Kubernetes probes. Outside
+`/api/v1`, and never cached. A server whose settings or deployment folder are broken refuses to
+start, so it never answers this.
 
 ### `GET /config/instances` (no auth)
 The instances a user can sign in to, sorted by host. Hosts aren't exposed.

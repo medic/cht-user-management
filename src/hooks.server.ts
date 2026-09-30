@@ -25,8 +25,46 @@ if (import.meta.env.DEV) {
 
 const PUBLIC_PATHS = new Set(['/api/v1/config/instances', '/api/v1/config/logo', '/api/v1/auth/login', '/api/v1/auth/sso']);
 
+// Every response gets the security headers; API responses also stay out of caches, since some carry
+// passwords. Pages also get a Content-Security-Policy, from the csp option in vite.config.ts
+const SECURITY_HEADERS: Record<string, string> = {
+	'X-Content-Type-Options': 'nosniff',
+	'X-Frame-Options': 'DENY',
+	'Referrer-Policy': 'same-origin',
+	'Cross-Origin-Opener-Policy': 'same-origin',
+	'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), payment=(), usb=()'
+};
+
 export const handle: Handle = async ({ event, resolve }) => {
-	const { pathname } = event.url;
+	let response = await authenticated({ event, resolve });
+	const headers: Record<string, string> = { ...SECURITY_HEADERS };
+	// browsers only heed it over https, so it's harmless behind plain http
+	if (import.meta.env.PROD) headers['Strict-Transport-Security'] = 'max-age=31536000';
+	if (routedPath(event.url.pathname).startsWith('/api/') && !response.headers.has('Cache-Control')) {
+		headers['Cache-Control'] = 'no-store';
+	}
+	try {
+		for (const [name, value] of Object.entries(headers)) response.headers.set(name, value);
+	} catch {
+		// a response with fixed headers, eg. a redirect: copied so they can be added
+		response = new Response(response.body, response);
+		for (const [name, value] of Object.entries(headers)) response.headers.set(name, value);
+	}
+	return response;
+};
+
+// The path as SvelteKit routes it, decoded: "/%61pi/…" reaches the same handler as "/api/…". One that
+// can't be decoded is treated as an API path, so it has to be signed in for
+function routedPath(pathname: string): string {
+	try {
+		return decodeURI(pathname);
+	} catch {
+		return '/api/';
+	}
+}
+
+const authenticated = async ({ event, resolve }: Parameters<Handle>[0]): Promise<Response> => {
+	const pathname = routedPath(event.url.pathname);
 	if (!pathname.startsWith('/api/') || PUBLIC_PATHS.has(pathname)) {
 		return resolve(event);
 	}

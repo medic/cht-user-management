@@ -3,6 +3,7 @@ import { mkdir, readdir, readFile, rm } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { createInterface } from 'node:readline';
 import { createGunzip, createGzip } from 'node:zlib';
+import { within } from '../paths';
 import { z } from 'zod';
 
 import { assertAuthorized, type Session } from '../auth/session';
@@ -162,7 +163,7 @@ export async function runDelete(run: DeleteRun): Promise<HierarchyJob> {
 	const { job, cht } = run;
 	const placeId = job.request.placeId as string;
 	const started = Date.now();
-	const workDir = join(run.workDir, job.id);
+	const workDir = within(run.workDir, job.id);
 	const docs = join(workDir, 'json_docs');
 	const chtConf = (action: 'delete-contacts' | 'upload-docs', args: string[]) =>
 		run.runChtConf({ action, args, workDir, instanceUrl: run.instanceUrl, sessionToken: authSessionValue(run.sessionCookie), onLine: run.log });
@@ -238,7 +239,7 @@ export async function runDelete(run: DeleteRun): Promise<HierarchyJob> {
 }
 
 export function archivePath(archiveDir: string, job: Pick<HierarchyJob, 'instanceId' | 'id'>): string {
-	return join(archiveDir, job.instanceId, `${job.id}.ndjson.gz`);
+	return within(archiveDir, job.instanceId, `${job.id}.ndjson.gz`);
 }
 
 // Every staged doc, in full, as one JSON doc per line, gzipped. A re-run adds only docs not already

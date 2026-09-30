@@ -1,10 +1,10 @@
-import { findCredentials, type UploadLog, type UploadLogRecord } from '../upload-log';
+import { findCredentials, type CredentialsOwner, type UploadLog, type UploadLogRecord } from '../upload-log';
 
 // Logging happens after CHT accepted the user; failing the request here would hide the password
 // from the one response that carries it
-export async function recordCredentials(uploadLog: UploadLog, creator: string, record: Omit<UploadLogRecord, 'id'>): Promise<void> {
+export async function recordCredentials(uploadLog: UploadLog, owner: CredentialsOwner, record: Omit<UploadLogRecord, 'id'>): Promise<void> {
 	try {
-		await uploadLog.log(creator, record);
+		await uploadLog.log(owner, record);
 	} catch (e) {
 		console.error(`could not write upload log for contact ${record.credentials.contactId}`, e);
 	}
@@ -22,8 +22,8 @@ export type CredentialsEntry = {
 };
 
 // GET /api/v1/credentials: the caller's record, newest first, optionally only for some places
-export async function credentialsFor(uploadLog: UploadLog, creator: string, placeIds?: string[]): Promise<CredentialsEntry[]> {
-	const records = await uploadLog.list(creator);
+export async function credentialsFor(uploadLog: UploadLog, owner: CredentialsOwner, placeIds?: string[]): Promise<CredentialsEntry[]> {
+	const records = await uploadLog.list(owner);
 	return records
 		.filter((record) => !placeIds?.length || (record.credentials.placeId && placeIds.includes(record.credentials.placeId)))
 		.map((record) => ({
@@ -38,9 +38,9 @@ export async function credentialsFor(uploadLog: UploadLog, creator: string, plac
 		}));
 }
 
-export async function recallPassword(uploadLog: UploadLog, creator: string, contactId: string): Promise<string | null> {
+export async function recallPassword(uploadLog: UploadLog, owner: CredentialsOwner, contactId: string): Promise<string | null> {
 	try {
-		return (await findCredentials(uploadLog, creator, contactId))?.password ?? null;
+		return (await findCredentials(uploadLog, owner, contactId))?.password ?? null;
 	} catch (e) {
 		console.error(`could not read upload log for contact ${contactId}`, e);
 		return null;

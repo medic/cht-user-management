@@ -1,6 +1,12 @@
 import { z } from 'zod';
 
 // CouchDB reserves ids starting with "_"
+// A job's id names its folder, its archive and its Redis keys, so it's a UUID: hex digits and dashes,
+// nothing that could lead elsewhere. An undo's id is its delete's id with "-undo" added
+const UUID = '[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}';
+export const newJobId = z.string().regex(new RegExp(`^${UUID}$`), 'must be a UUID');
+export const jobId = z.string().regex(new RegExp(`^${UUID}(-undo)?$`), 'must be a UUID');
+
 export const docId = z
 	.string()
 	.min(1)

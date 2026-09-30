@@ -3,7 +3,8 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import type { Session } from '../auth/session';
 import { ApiError, ChtError } from '../errors';
 import { FakeCht } from '../testing/fake-cht';
-import type { UploadLog, UploadLogRecord } from '../upload-log';
+import { MemoryUploadLog } from '../upload-log';
+import { credentialsFor } from './credentials';
 import type { OperationContext } from './context';
 import { runBatch } from './batch';
 import { createPlace } from './create';
@@ -15,16 +16,6 @@ import { clearPlaceCache } from './lookup';
 // Runs against Kenya's deployment (DEPLOYMENT_DIR in .env.test)
 const CHU = 'c_community_health_unit';
 const CHV_AREA = 'd_community_health_volunteer_area';
-
-class MemoryUploadLog implements UploadLog {
-	records: UploadLogRecord[] = [];
-	async log(_creator: string, record: Omit<UploadLogRecord, 'id'>) {
-		this.records.unshift({ id: String(this.records.length), ...record });
-	}
-	async list() {
-		return this.records;
-	}
-}
 
 const admin: Session = {
 	instanceId: 'test',
@@ -295,6 +286,23 @@ describe('createPlace', () => {
 		expect((await createPlace(context, 'area-2', area('2', 'grace owino', '0733000002'))).status).toBe(201);
 		const same = await expectApiError(createPlace(context, 'area-3', area('3', 'MARY  atieno', '0733000003')), 409, 'WARNINGS');
 		expect(same.details?.warnings).toEqual([expect.objectContaining({ placeIds: ['area-1'] })]);
+	});
+
+	it('refuses to give a new place a person from outside the caller\'s facilities', async () => {
+		// jane, and her login, belong to a unit in Kisumu West
+		await createPlace(context, 'place-1', chuRequest());
+		const seme = { ...context, session: { ...admin, facilityIds: ['sub-2'] } };
+		const kogony = chuRequest({ parentId: 'sub-2', place: { name: 'Kogony', code: '654321', link_facility_name: 'Kogony Dispensary', link_facility_code: '54321' }, contact: { id: 'contact-1' } });
+
+		await expectApiError(createPlace(seme, 'place-2', kogony), 403, 'FORBIDDEN_PLACE');
+		expect(cht.docs.has('place-2')).toBe(false);
+		expect(cht.users.get('jane_doe')?.place).toEqual(['place-1']);
+	});
+
+	it('keeps each instance\'s generated passwords apart, even for the same username', async () => {
+		await createPlace(context, 'place-1', chuRequest());
+		expect(await credentialsFor(uploadLog, admin, ['place-1'])).toMatchObject([{ username: 'jane_doe', password: expect.any(String) }]);
+		expect(await credentialsFor(uploadLog, { ...admin, instanceId: 'other' }, ['place-1'])).toEqual([]);
 	});
 
 	it('refuses places outside the caller\'s facilities', async () => {

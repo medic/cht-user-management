@@ -1,6 +1,7 @@
 import { existsSync } from 'node:fs';
 import { mkdir, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
+import { within } from '../paths';
 import { z } from 'zod';
 
 import type { Session } from '../auth/session';
@@ -134,7 +135,7 @@ export async function runRestore(run: RestoreRun): Promise<HierarchyJob> {
 	const docs = await archived(run.archiveDir, source);
 	const isPerson = await personCheck(cht);
 	const places = docs.filter((doc) => !isReport(doc) && !isPerson(doc));
-	const workDir = join(run.workDir, job.id);
+	const workDir = within(run.workDir, job.id);
 	const folder = join(workDir, 'json_docs');
 
 	try {
@@ -146,7 +147,8 @@ export async function runRestore(run: RestoreRun): Promise<HierarchyJob> {
 			await rm(workDir, { recursive: true, force: true });
 			await mkdir(folder, { recursive: true });
 			for (const { _rev: _unused, _deleted: _gone, ...doc } of toWrite) {
-				await writeFile(join(folder, `${doc._id}.doc.json`), JSON.stringify(doc));
+				// named by id, as upload-docs expects; an id with a path in it can't leave the folder
+				await writeFile(within(folder, `${doc._id}.doc.json`), JSON.stringify(doc));
 			}
 			run.log(`Restoring ${toWrite.length} docs from the archive of ${source.branch.placeName}…`);
 			await run.update({ progress: { written: 0, total: docs.length } });
@@ -203,7 +205,7 @@ export async function runRestore(run: RestoreRun): Promise<HierarchyJob> {
 			loginsRecreated.push({ username, previousUsername: account.username });
 			run.log(username === account.username ? `Recreated the login ${username}.` : `Recreated the login of ${account.username} as ${username}.`);
 			const place = places.find((p) => p._id === account.placeIds[0]);
-			await recordCredentials(run.uploadLog, job.createdBy, {
+			await recordCredentials(run.uploadLog, { instanceId: job.instanceId, username: job.createdBy }, {
 				place: String(place?.name ?? ''),
 				person: String(doc.fullname ?? ''),
 				phone: String(doc.phone ?? ''),

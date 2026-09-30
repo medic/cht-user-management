@@ -10,6 +10,7 @@ import { archivePath, checkDelete, type DeleteRequest } from './delete';
 import { checkUndo, previewUndo, type UndoPreview } from './restore';
 import { checkMove, type MoveRequest } from './move';
 import { checkMerge, type MergeRequest } from './merge';
+import { newJobId } from '../places/schemas';
 import { FINISHED, type HierarchyJob, type JobStatus, type JobStore } from './jobs';
 
 // The hierarchy job API (docs/api-contract.md → Hierarchy jobs)
@@ -23,6 +24,8 @@ export async function scheduleJob(
 	request: DeleteRequest | MoveRequest | MergeRequest
 ): Promise<{ status: 200 | 202; job: HierarchyJob }> {
 	const { cht, session, store } = deps;
+	// checked where it's received too: here as well, since the id becomes a folder name
+	newJobId.parse(jobId);
 	const existing = await store.get(session.instanceId, jobId);
 	if (existing) {
 		if (existing.createdBy !== session.username) {

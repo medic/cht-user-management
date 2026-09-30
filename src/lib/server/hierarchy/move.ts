@@ -1,6 +1,7 @@
 import { existsSync } from 'node:fs';
 import { mkdir, readdir, readFile, rm } from 'node:fs/promises';
 import { join } from 'node:path';
+import { within } from '../paths';
 import { z } from 'zod';
 
 import { assertAuthorized, type Session } from '../auth/session';
@@ -155,7 +156,7 @@ export async function runMove(run: MoveRun): Promise<HierarchyJob> {
 	const { job, cht } = run;
 	const { placeId, newParentId } = job.request as MoveRequest;
 	const started = Date.now();
-	const workDir = join(run.workDir, job.id);
+	const workDir = within(run.workDir, job.id);
 	const docs = join(workDir, 'json_docs');
 	const chtConf = (action: 'move-contacts' | 'upload-docs', args: string[], onLine = run.log) =>
 		run.runChtConf({ action, args, workDir, instanceUrl: run.instanceUrl, sessionToken: authSessionValue(run.sessionCookie), onLine });

@@ -1,115 +1,266 @@
-# CHT-IAM (web)
+# CHT User Management Tool
 
-The CHT user management tool: a SvelteKit app implementing [`APP.md`](docs/APP.md) (the design), with
-[`docs/api-contract.md`](docs/api-contract.md) (the HTTP API) and
-[`docs/frontend-contract.md`](docs/frontend-contract.md) (the screens). It replaces the earlier
-Fastify app; that app's README, deployment values and example settings are kept for reference in
-[`docs/legacy/`](docs/legacy).
+## Goal
 
-```sh
-cp .env.example .env   # fill in the keys and REDIS_URL; DEPLOYMENT_DIR names the deployment's folder
-docker run -d --rm --name cht-iam-redis -p 6379:6379 redis:7-alpine redis-server --appendonly yes
-npm install
-npm run dev            # http://localhost:$PORT (default 3000)
-npm test               # unit tests, against an in-memory CHT and a local fake CHT server
-REDIS_TEST_URL=redis://localhost:6379 npm test   # also runs the Redis store tests (in their own namespace)
-npm run check          # type check
-npm run build && npm start
+A simple user-facing web application using [CHT's API](https://docs.communityhealthtoolkit.org/apps/reference/api/) that supports user management needs for CHT projects at scale: creating users, replacing who is behind a place, and moving, merging and deleting places, one at a time or in bulk from CSV files.
+
+How the tool works, and why, is described in [`docs/`](docs):
+
+* [`docs/APP.md`](docs/APP.md): the design, operation by operation
+* [`docs/api-contract.md`](docs/api-contract.md): the HTTP API
+* [`docs/frontend-contract.md`](docs/frontend-contract.md): the screens and the API calls they make
+* [`docs/legacy/`](docs/legacy): the previous version's README, deployment values and example settings
+
+## Using this tool with your CHT Project
+
+To use the User Management Tool with your CHT project, you'll need a deployment folder for your project, then follow the deployment steps.
+
+### Configuration
+
+Everything specific to a project lives in one folder, named by the [`DEPLOYMENT_DIR`](#environment-variables) environment variable. The folders in [`config/deployments/`](config/deployments) (`chis-ke`, `chis-tg`, `chis-civ`, `chis-ml` and `chis-ug`) are examples, and any folder with the same files works:
+
+File | Required | Description
+-- | -- | --
+`config.json` | Yes | The contact types the tool manages. See [config.json](#configjson)
+`instances.json` | Yes | The CHT instances users can log in to. See [instances.json](#instancesjson)
+`logo.png` | No | Logo shown on the login page and navigation bar. `logo.jpg`, `logo.svg` or `logo.webp` also work
+Hook scripts | No | Scripts listed in a contact type's `hooks`. See [Hooks](#hooks)
+
+The folder is read when the server starts, and the server refuses to start if a file is missing or malformed.
+
+#### config.json
+
+ Property | Type | Description
+-- | -- | --
+`contact_types` | Array | One element for each type of place the tool manages
+`contact_types.name` | string | The name of the contact_type as it [appears in the app's base_settings.json](https://docs.communityhealthtoolkit.org/apps/reference/app-settings/hierarchy/)
+`contact_types.friendly` | string | Friendly name of the contact type
+`contact_types.contact_type` | string | The contact_type of the primary contact. [As defined in base_settings.json](https://docs.communityhealthtoolkit.org/apps/reference/app-settings/hierarchy/)
+`contact_types.contact_friendly` | string | Friendly name of the primary contact type
+`contact_types.user_role` | string[] | A list of allowed [user roles](https://docs.communityhealthtoolkit.org/apps/reference/app-settings/user-roles/). If only one is provided, it will be used by default.
+`contact_types.username_from_place` | boolean | When true, the username is generated from the place's name. When false, the username is generated from the primary contact's name. Default is false.
+`contact_types.hierarchy` | Array<ConfigProperty> | Defines how this `contact_type` is connected into the hierarchy. An element with `level:1` (parent) is required and additional elements can be provided to support disambiguation. See [ConfigProperty](#configproperty).
+`contact_types.hierarchy.level` | integer | The hierarchy element with `level:1` is the parent, `level:3` is the great grandparent.
+`contact_types.hierarchy.contact_type` | string | The contact_type of the place at that level
+`contact_types.replacement_property` | ConfigProperty | Defines how this `contact_type` is described when being replaced, and how a CSV row's name is matched to a place when moving, merging or deleting. The `property_name` is always `replacement`. See [ConfigProperty](#configproperty).
+`contact_types.place_properties` | Array<ConfigProperty> | Defines the attributes which are collected and set on the user's created place. See [ConfigProperty](#configproperty).
+`contact_types.contact_properties` | Array<ConfigProperty> | Defines the attributes which are collected and set on the user's primary contact doc. See [ConfigProperty](#configproperty).
+`contact_types.deactivate_users_on_replace` | boolean | Controls what happens to the outgoing person's user account when a place is replaced and the account is left with no places. When `false`, the account is disabled. When `true`, it is deactivated, which allows for account restoration. Either way, the outgoing person's contact is kept, with their reports.
+`contact_types.can_assign_multiple` | boolean | Enable support for assigning a single user to multiple places
+`contact_types.actions` | string[] | Optional. The only actions offered for this type, from `create`, `replace`, `move`, `merge` and `delete`. Every action is offered when left out. eg. `["move"]` for households, which can only be moved.
+`contact_types.hooks` | string[] | Optional. Scripts in the deployment folder that adjust this type's places before they're written. See [Hooks](#hooks).
+
+#### ConfigProperty
+The `ConfigProperty` is a data structure used several times in each `config.json` file. At a high level, a `ConfigProperty` defines a property on an object.
+
+Property | Type | Description
+-- | -- | --
+friendly_name | string | Defines how this data will be labeled in CSV files and throughout the user experience.
+property_name | string | Defines how the value will be stored on the object.
+type | ConfigPropertyType | Defines the validation rules, and auto-formatting rules. See [ConfigPropertyType](#configpropertytype).
+parameter | any | See [ConfigPropertyType](#configpropertytype).
+required | boolean | True if the object should not exist without this information.
+errorDescription | string | Optional. Shown under the field, and as the error when a `regex` value doesn't match.
+unique | 'all' or 'parent' | Dismissable warnings are flagged if a place already exists with this attribute's value. Values can be `all` (warns if any place has the same value) or `parent` (warns if a place with the same parent has the same value). This can only be defined on a `place_properties` or `contact_properties`.
+
+#### ConfigPropertyType
+The `ConfigPropertyType` defines a property's validation rules and auto-formatting rules. The optional `parameter` information alters the behavior of the `ConfigPropertyType`.
+
+| Type            | Validation Rules                                       | Auto Formatting Rules                                                                                          | parameter |
+|-----------------|--------------------------------------------------------|----------------------------------------------------------------------------------------------------------------|-----------|
+| string          | Must be defined                                        | Removes double whitespaces, leading or trailing whitespaces, and any character which is not a letter, digit, mark, space or `()@./-_'` | None |
+| name            | Must be defined                                        | Same as string + `.` becomes a space + title case (keeping roman numerals upper case) + `parameter` behavior  | One or more regexes which are removed from the value when matched (eg. `"parameter": ["\\sCHU"]` will format `this CHU` into `This`) |
+| regex           | Must match the `regex` captured by `parameter`         | Same as `string`                                                                                               | A regex which must be matched to pass validation (eg. `"parameter": "^\\d{6}$"` will accept only 6 digit numbers) |
+| phone           | A valid phone number for the specified locality       | Auto formatting provided by [libphonenumber](https://github.com/google/libphonenumber)                          | Two letter country code specifying the locality of phone number (eg. `"parameter": "KE"`) |
+| dob             | An ISO date, `d/M/yyyy`, or an age in years; in the past | Stored as an ISO date                                                                                        | None |
+| generated       | None. No user inputs.                                  | Uses [LiquidJS](https://liquidjs.com) templates to generate data                                               | [Details](#the-generated-configpropertytype) |
+| select_one      | Single choice from a list of options                   | None                                                                                                           | Dictionary where the keys are the option values and the values are the corresponding labels |
+| select_multiple | Multiple choice from a list of options                 | None                                                                                                           | Same as `select_one` |
+| none            | None                                                   | None                                                                                                           | None |
+
+#### The Generated ConfigPropertyType
+ContactProperties with `type: "generated"` use the [LiquidJS](https://liquidjs.com) template engine to populate a property with data. Here is an example of some configuration properties which use `"type": "generated"`:
+
+```json
+{
+  "place_properties": [
+    {
+      "friendly_name": "CHP Area Name",
+      "property_name": "name",
+      "type": "generated",
+      "parameter": "{{ contact.name }}'s Area",
+      "required": true
+    }
+  ],
+  "contact_properties": [
+    {
+      "friendly_name": "CHP Name",
+      "property_name": "name",
+      "type": "name",
+      "required": true
+    }
+  ]
+}
 ```
 
-`PORT` comes from the environment, or else from `.env`, in development (`npm run dev`, `npm run preview`)
-and production (`npm start`, which loads `.env` when it exists) alike. If the port is taken, the server
-stops with an error rather than moving to another one.
+The user will be prompted to input the contact's name (CHP Name). The user is _not_ prompted to input the place's name (CHP Area Name) because the place's name will automatically be assigned a value.  In this example, if the user puts `john` as the contact's name, then the place will be named `John's Area`.
 
-## Docker
+The data that is passed to the template is consistent with the properties defined in your configuration.
 
-With Compose, the app and its Redis together:
+Variable | Value
+-- | --
+place | Has the attributes from `place_properties.property_name`
+contact | Has the attributes from `contact_properties.property_name`
+lineage | Has the attributes from `hierarchy.property_name`
 
-```sh
-docker compose up -d --build
+#### Password reset on first login
+
+Introduced in CHT v4.17 https://docs.communityhealthtoolkit.org/building/login/#password-reset-on-first-login
+This can be configured by adding this to your contact properties
+
+```json
+{
+  "contact_properties": [
+    {
+      "friendly_name": "Require password change",
+      "property_name": "require_password_change",
+      "type": "select_one",
+      "required": false,
+      "parameter": {
+        "yes": "Yes",
+        "no": "No"
+      }
+    }
+  ]
+}
 ```
 
-It reads `.env`, and sets `REDIS_URL` and the container's port itself. The app is published on
-`PORT` (3000). Redis stays inside the Compose network, with append-only persistence on the
-`redis-data` volume, so it doesn't clash with `docker-compose.redis.yml`'s Redis on 6379. The
-deployment, and with it the instances offered, is the folder `DEPLOYMENT_DIR` names in `.env`. To offer
-`CHT_DEV_INSTANCE`, which production ignores, start it with `NODE_ENV=development`.
+#### instances.json
 
-Or the image on its own:
+The CHT instances users can log in to, listed on the login page in order of their host.
 
-```sh
+```json
+{
+  "instances": [
+    { "id": "migori", "name": "Migori", "host": "migori.echis.go.ke", "idpOrigins": ["https://chwregistry.echis.go.ke"] }
+  ]
+}
+```
+
+Property | Type | Description
+-- | -- | --
+`instances.id` | string | Identifier for the instance: lowercase letters, digits and dashes (eg. `migori`)
+`instances.name` | string | Friendly name for the instance (eg. "Migori")
+`instances.host` | string | Hostname for the instance, with an optional port and no scheme (eg. `migori.echis.go.ke`)
+`instances.useHttp` | boolean | Whether to make an insecure connection (http) to the host (defaults to false)
+`instances.idpOrigins` | string[] | Origins of the identity providers allowed to sign users in with SSO. SSO is off when empty (the default)
+
+#### Hooks
+
+A hook is a script, in the deployment folder, that adjusts a place before it's written, for rules that configuration can't express. A contact type lists its hooks in `hooks`, and they run in that order, when the place is uploaded. Each script exports a `mutate` function:
+
+```js
+// config/deployments/chis-ke/hooks/unit-name.mjs
+export async function mutate(draft, { cht, contactType, isReplacement }) {
+	if (draft.name) draft.name += ' Community Health Unit';
+}
+```
+
+`draft` is the place doc to change. `cht` is the tool's CHT client, to read related docs, `contactType` is the place's type from `config.json`, and `isReplacement` is true when its primary contact is being replaced. Throwing an `Error` refuses the upload, and its message is shown on the item. Hooks run code from the configuration, so only the people who deploy the tool should be able to change the folder.
+
+### Deployment
+This tool is available via Docker by running `docker compose up -d --build`, which starts the tool and its Redis. Set the [Environment Variables](#environment-variables) in a `.env` file first; Compose sets `REDIS_URL` and the port inside the container itself.
+
+The deployment folders in `config/deployments/` are included in the image, so `DEPLOYMENT_DIR` can name one of them, eg. `config/deployments/chis-ke`. For another project, mount its folder into the container and point `DEPLOYMENT_DIR` at it. Keep `/app/data` on a volume, since it holds the copies of deleted places that undoing a delete needs.
+
+The image can also be run on its own, with a Redis the container can reach:
+
+```shell
 docker build -t cht-user-management .
-docker run -d -p 3000:3000 --env-file .env \
-  -v cht-user-management-data:/app/data \
-  cht-user-management
+docker run -d -p 3000:3000 --env-file .env -v cht-user-management-data:/app/data cht-user-management
 ```
 
-- **Settings** come from the environment (`--env-file`), as listed in `.env.example`. None are baked
-  into the image. `REDIS_URL` must be reachable from the container, for example
-  `docker-compose.redis.yml`'s Redis on the same network. `NODE_ENV=production` is set in the image,
-  so `CHT_DEV_INSTANCE` is ignored there.
-- **Deployment:** the folders in `config/deployments/` are in the image, and `DEPLOYMENT_DIR` names
-  one, eg. `config/deployments/chis-ke`. For another deployment, mount its folder and name that.
-- **`/app/data`** holds the archives of deleted and merged docs (`ARCHIVE_LOCATION`). Keep it on a
-  volume so undoing a delete survives restarts. Job working folders go in `/tmp` (`JOB_WORK_DIR`).
-- It runs as the `node` user, on `PORT` (3000). Its health check is `GET /api/v1/config/instances`.
-- Background jobs run cht-conf in child processes of the same container, so allow it the memory of
-  the largest job (`CHT_CONF_HEAP_MB`, 2 GB by default).
+`GET /_healthz` answers `200` once the tool is up, for container and Kubernetes health checks.
 
-## What's implemented
+## Development
 
-| Area | Endpoints | Status |
-|---|---|---|
-| Auth (`APP.md` → Auth) | `GET /api/v1/config/instances`, `POST /api/v1/auth/login`, `POST /api/v1/auth/sso`, `POST /api/v1/auth/logout`, `GET /api/v1/auth/session` | Done |
-| Staged list (`APP.md` → Staged list) | `GET/POST/DELETE /api/v1/staged-items`, `GET/PATCH/DELETE /api/v1/staged-items/{id}`, `POST …/{id}/confirm`, `POST …/confirm`, `POST …/upload`, `POST …/csv`, `GET /api/v1/credentials`, `GET /api/v1/credentials/export` | `create` and `replace` items; no event stream yet (the page polls) |
-| Config and lookups | `GET /api/v1/config/contact-types`, `GET …/{name}/csv-template?kind=create`, `GET /api/v1/places/search`, `GET /api/v1/places/{id}`, `POST /api/v1/checks/duplicates` | Done |
-| Pages | `/login`; `/`, the staged list; `/create` (choose a type, add, `?item=` to edit and fix, or `?person=` for another place for the same person); `/replace` (a new or existing person, all or one place, `?item=` to edit); `/create/csv` (create or replace files). Every page under `src/routes/(app)` requires a session | Done, including one person with several places, from the form or from CSV rows whose person looks the same |
-| Create, replace | `PUT /api/v1/places/{placeId}`, `PUT /api/v1/places/{placeId}/primary-contact`, `POST /api/v1/places/batch` | Done: replace follows `APP.md` (new or existing person, `scope`, the new login before the old accounts are retired) |
-| Move, merge and delete (hierarchy jobs) | `PUT/GET /api/v1/hierarchy-jobs/{jobId}`, `GET /api/v1/hierarchy-jobs`, `POST …/resume`, `GET …/log`, `GET …/archive`, `POST /api/v1/preview` (`kind: "delete"`) | Done, with cht-conf (see below) |
-| Replace lookups | `GET /api/v1/places/{id}` (with who is there now), `GET /api/v1/people/search`, `POST /api/v1/preview` (`kind: "replace"`) | Done |
-| Credentials | `GET /api/v1/upload-log` | Early version: to become `/api/v1/credentials` |
+### NodeJs with reloading code
 
-## Hierarchy jobs
+Create an environment file by `cp .env.example .env`, fill in the keys, and otherwise see [Environment Variables](#environment-variables) for more info. To log in to a CHT running on your machine, set `CHT_DEV_INSTANCE`.
 
-Moving, merging and deleting places run as background jobs (`src/lib/server/hierarchy/`). Every server runs the job
-runner; a Redis lock keeps it to one job at a time per CHT instance. The work is cht-conf's own
-(`move-contacts`, `merge-contacts --merge-primary-contacts --disable-users` or
-`delete-contacts --disable-users`, then `upload-docs`), run by `scripts/cht-conf-job.cjs` in a
-child process per action, in the job's own folder under `JOB_WORK_DIR`, with the CHT session on
-standard input. Before anything is deleted, a full copy of every staged doc goes to
-`ARCHIVE_LOCATION` (default `data/archives`), downloadable from the job for `ARCHIVE_TTL`. While it's kept, the delete can be undone from the Jobs page: a
-`restore` job writes the archive back with cht-conf's `upload-docs`, returns places to accounts that kept a
-login, and, if asked, recreates the disabled accounts' logins with new passwords. Jobs wait
-while CHT's Sentinel backlog is over `MAX_SENTINEL_BACKLOG`, and ask for sign-in when the session
-they carry has expired. cht-conf's known shortcomings are listed in `APP.md` → Deleting places →
-Known issues.
+If you don't have redis running locally, you can start it with:
 
-## Auth
+```shell
+docker compose -f docker-compose.redis.yml up -d
+```
 
-- **Sign in** with a password (`/auth/login`) or an SSO access token (`/auth/sso`), against one of the
-  deployment's instances. Browsers get an `HttpOnly` cookie, `cht_iam_session`; send
-  `"deliver": "token"` to get the token in the body instead, for machine clients to send as
-  `Authorization: Bearer <token>`.
-- **Tokens** are encrypted JWEs (`dir` + `A256GCM`), holding the session record from `APP.md`. The
-  CouchDB `AuthSession` inside can't be read or altered. Session and job tokens use separate keys, so
-  one can't be used as the other.
-- **Sign out** revokes the token in Redis until it would have expired, so a copied token stops working.
-- **When CHT rejects the stored session** (an expired or malformed `AuthSession`), any endpoint
-  answers `401 SESSION_EXPIRED` and clears the cookie.
-- Admission checks: admins (and `ALLOW_ADMIN_LOGIN`), the nine required permissions, a facility,
-  and CHT 4.9.0 or later (`MIN_CHT_VERSION` in `src/lib/server/auth/cht-login.ts`).
+Install the packages, then start a local dev instance that reloads the app when it sees changes to local files:
 
-## Layout
+```shell
+npm ci
+npm run dev
+```
 
-- `src/lib/server/auth/` — sign-in against CHT (`cht-login.ts`), tokens, revocation, and request authentication
-- `src/lib/server/settings.ts` — all configuration, validated at startup
-- `src/lib/server/runtime.ts` — the shared Redis connection, and the services built on it
-- `src/lib/server/places/` — the create, replace and batch operations
-- `src/lib/validation/`, `src/lib/config-types.ts` — property validators and the contact-type shape, **shared by the server and the browser**, so both check with exactly the same rules
-- `src/lib/server/cht/client.ts` — CHT HTTP client; the `Cht` interface is faked in tests (`testing/fake-cht.ts`)
-- `src/lib/server/config.ts` — reads the deployment's folder, named by `DEPLOYMENT_DIR`, at startup:
-  its contact types, logo and each type's hooks
-- `config/deployments/<deployment>/` — one folder per deployment: `config.json` (contact types),
-  `instances.json` (CHT instances, with Kenya's SSO origins), a logo, and the hook scripts its types
-  list in `hooks` (Kenya's `hooks/`: unit names, and the facility fields copied onto CHP areas)
-- `src/routes/api/v1/` — thin HTTP handlers
+The tool is then at `http://localhost:3000`, or on the `PORT` you set.
+
+### Tests and checks
+
+```shell
+npm test                                         # unit tests, against an in-memory CHT
+REDIS_TEST_URL=redis://localhost:6379 npm test   # also runs the Redis store tests
+npm run check                                    # type check
+npm run build && npm start                       # the production build
+```
+
+## Environment Variables
+
+The `.env.example` file has example values. The server refuses to start if a required variable is missing or invalid. Here's what they mean:
+
+Variable | Description | Sample
+-- | -- | --
+`COOKIE_PRIVATE_KEY` | Required. Encrypts session tokens. At least 32 characters, and a production secret. Changing it logs everyone out. Suggest `openssl rand -hex 32` to generate | `4f1c…`
+`WORKER_PRIVATE_KEY` | Required. Encrypts the tokens background jobs carry. At least 32 characters, different from `COOKIE_PRIVATE_KEY`, and a production secret | `9a0e…`
+`SECRET_KEY` | Required. 64 hex characters, used to encrypt staged items and generated passwords | `eg. openssl rand -hex 32`
+`REDIS_URL` | Required. The Redis server, the tool's only datastore. Use `rediss://` for TLS | `redis://localhost:6379`
+`DEPLOYMENT_DIR` | Required. The deployment folder. See [Configuration](#configuration) | `config/deployments/chis-ke`
+`PORT` | Port the web server listens on. Defaults to 3000 | `3000`
+`CHT_DEV_INSTANCE` | A CHT instance to also offer outside production, as host and port | `localhost:5988`
+`CHT_DEV_HTTP` | 'true' for http, otherwise https | `true`
+`CHT_DEV_IDP_ORIGINS` | Comma-separated SSO identity providers for the dev instance | `http://localhost:8080`
+`ALLOW_ADMIN_LOGIN` | Allow login for admin accounts. Defaults to true. | `true`
+`SESSION_TTL` | Duration in seconds a login lasts. Keep it no longer than the instance's CouchDB session timeout. Defaults to 86400 (1 day) | `86400`
+`CREDENTIALS_TTL` | Duration in seconds generated passwords can be seen again. Defaults to 432000 (5 days). | `432000`
+`STAGED_LIST_TTL` | Duration in seconds a staged list is kept without changes. Defaults to 1209600 (14 days) | `1209600`
+`BATCH_MAX_ITEMS` | Most staged items sent to CHT in one batch. Defaults to 100 | `100`
+`MAX_PLACES_LOADED` | A place type with more places than this, eg. households, is only ever searched under a parent. Defaults to 10000 | `10000`
+`MAX_SENTINEL_BACKLOG` | Max sentinel backlog count before the tool starts delaying move, merge and delete jobs. Defaults to 7000 | `7000`
+`JOB_RECHECK` | Duration in seconds before a delayed job checks again. Defaults to 900 | `900`
+`JOB_TTL` | Duration in seconds finished jobs are kept. Defaults to 2592000 (30 days) | `2592000`
+`JOB_TIMEOUT` | Duration in seconds one cht-conf step of a job may take. Defaults to 14400 (4 hours) | `14400`
+`CHT_CONF_HEAP_MB` | Memory, in megabytes, a job's cht-conf may use. Defaults to 2048 | `2048`
+`JOB_WORK_DIR` | Where each job's working folder goes. Removed when the job ends | `/tmp/cht-iam-jobs`
+`ARCHIVE_LOCATION` | Where copies of every deleted and merged doc are kept, so a delete can be undone | `data/archives`
+`ARCHIVE_TTL` | Duration in seconds those copies are kept. Defaults to 2592000 (30 days) | `2592000`
+
+## Development Process
+
+This repo has an automated release process where each feature/bug fix will be released immediately after it is merged to main.
+
+1. Create a ticket for the feature/bug fix.
+2. Submit a PR, and make sure that the PR title is clear, readable, and follows the strict commit message format described in the commit message format section below. If the PR title does not comply, automatic release will fail.
+3. Have the PR reviewed.
+4. Squash and merge the PR to main. The commit message should be the already-formatted PR title but double check it's clear, readable, and follows the strict commit message format to make sure the automatic release works as expected.
+5. Close the ticket.
+
+### Commit message format
+
+The commit format should follow the convention outlined in the [CHT docs](https://docs.communityhealthtoolkit.org/contribute/code/workflow/#commit-message-format).
+Examples are provided below.
+
+| Type        | Example commit message                                                                              | Release type |
+|-------------|-----------------------------------------------------------------------------------------------------|--------------|
+| Bug fixes   | fix(#123): infinite spinner when clicking contacts tab twice                                        | patch        |
+| Performance | perf(#789): lazily loaded angular modules                                                           | patch        |
+| Features    | feat(#456): add home tab                                                                            | minor        |
+| Non-code    | chore(#123): update README                                                                          | none         |
+| Breaking    | perf(#2): remove reporting rates feature <br/> BREAKING CHANGE: reporting rates no longer supported | major        |

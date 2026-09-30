@@ -1,6 +1,7 @@
 import { existsSync } from 'node:fs';
 import { mkdir, readdir, readFile, rm } from 'node:fs/promises';
 import { join } from 'node:path';
+import { within } from '../paths';
 import { z } from 'zod';
 
 import { assertAuthorized, type Session } from '../auth/session';
@@ -143,7 +144,7 @@ export async function runMerge(run: MergeRun): Promise<HierarchyJob> {
 	const { job, cht } = run;
 	const { sourceId, destinationId } = job.request as MergeRequest;
 	const started = Date.now();
-	const workDir = join(run.workDir, job.id);
+	const workDir = within(run.workDir, job.id);
 	const docs = join(workDir, 'json_docs');
 	const chtConf = (action: 'merge-contacts' | 'upload-docs', args: string[], onLine = run.log) =>
 		run.runChtConf({ action, args, workDir, instanceUrl: run.instanceUrl, sessionToken: authSessionValue(run.sessionCookie), onLine });

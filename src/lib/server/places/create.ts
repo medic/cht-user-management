@@ -72,6 +72,9 @@ export async function prepareCreate(context: OperationContext, placeId: string, 
 		if (docType(existingContact) !== contactType.contact_type) {
 			throw new ApiError(409, 'IDEMPOTENCY_CONFLICT', `"${contactId}" already exists and is not a "${contactType.contact_type}"`);
 		}
+		// an existing person, given to this place, must be one the caller manages too: otherwise anyone
+		// could add their place to someone else's login, or get a login made for that person
+		assertAuthorized(session, [existingContact._id, ...lineageIds(existingContact)]);
 		const sharesContact = existingContact.parent?._id !== placeId;
 		if (sharesContact && !contactType.can_assign_multiple) {
 			throw new ApiError(409, 'CONTACT_ALREADY_ASSIGNED', `contact "${contactId}" belongs to another place and "${contactType.name}" cannot share contacts`);
@@ -183,12 +186,12 @@ export async function createPlace(context: OperationContext, placeId: string, re
 		const addedPlace = await ensureUserHasPlaces(cht, existingUser, [placeId]);
 		changed ||= addedPlace;
 		username = existingUser.username;
-		password = await recallPassword(context.uploadLog, session.username, contactId);
+		password = await recallPassword(context.uploadLog, session, contactId);
 		logCredentials = addedPlace && !!password;
 	}
 
 	if (logCredentials && password) {
-		await recordCredentials(context.uploadLog, session.username, {
+		await recordCredentials(context.uploadLog, session, {
 			place: String(placeDoc.name ?? ''),
 			person: String(contactValues.name ?? ''),
 			phone: String(contactValues.phone ?? ''),

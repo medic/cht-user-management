@@ -19,7 +19,7 @@ export const GET = apiHandler(async ({ url, locals }) => {
 		// named after the upload, so each group's file is told apart
 		if (created.startedAt) day = created.startedAt.slice(0, 16).replace(':', '');
 	}
-	let rows = placeIds && !placeIds.length ? [] : await credentialsFor(uploadLog, session.username, placeIds);
+	let rows = placeIds && !placeIds.length ? [] : await credentialsFor(uploadLog, session, placeIds);
 	// ?job=<restore job>: the logins an undo recreated
 	const jobId = url.searchParams.get('job');
 	if (jobId) {

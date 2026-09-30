@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { env } from '$env/dynamic/private';
@@ -158,7 +158,11 @@ function readInstances(source: Env, deploymentDir: string, production: boolean, 
 		// DEPLOYMENT_DIR itself is reported as missing already
 		text = deploymentDir ? readFile(path) : undefined;
 	} catch {
-		problems.push(`${path} could not be read: DEPLOYMENT_DIR must be a deployment's folder`);
+		problems.push(
+			existsSync(deploymentDir)
+				? `${path} could not be read: DEPLOYMENT_DIR must be a deployment's folder`
+				: `DEPLOYMENT_DIR "${deploymentDir}" doesn't exist: point it at the deployment's folder, or mount the folder there`
+		);
 	}
 
 	if (text !== undefined) {

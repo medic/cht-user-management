@@ -4,7 +4,7 @@ import { apiHandler, operationContext } from '$lib/server/http';
 
 export const GET = apiHandler(async ({ locals }) => {
 	const { session, uploadLog } = operationContext(locals);
-	const records = await uploadLog.list(session.username);
+	const records = await uploadLog.list(session);
 	return json({
 		records: records.map((record) => ({
 			placeId: record.credentials.placeId,

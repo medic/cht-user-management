@@ -88,29 +88,29 @@ describe('before scheduling', () => {
 	});
 
 	it('only moves under the level-1 type, where CHT allows it, and never under itself', async () => {
-		await expectApiError(scheduleJob(deps, 'job-1', move({ newParentId: 'county' })), 'PLACE_WRONG_TYPE');
-		await expectApiError(scheduleJob(deps, 'job-1', move({ newParentId: 'chu' })), 'PLACE_WRONG_TYPE');
+		await expectApiError(scheduleJob(deps, '00000000-0000-4000-8000-000000000001', move({ newParentId: 'county' })), 'PLACE_WRONG_TYPE');
+		await expectApiError(scheduleJob(deps, '00000000-0000-4000-8000-000000000001', move({ newParentId: 'chu' })), 'PLACE_WRONG_TYPE');
 		cht.contactTypes.find((type) => type.id === CHU)!.parents = ['a_county'];
-		await expectApiError(scheduleJob(deps, 'job-1', move()), 'PARENT_NOT_ALLOWED');
+		await expectApiError(scheduleJob(deps, '00000000-0000-4000-8000-000000000001', move()), 'PARENT_NOT_ALLOWED');
 	});
 
 	it('refuses to take the primary contact of a place it leaves out from under it', async () => {
 		cht.docs.get('west')!.contact = { _id: 'jane' };
-		await expectApiError(scheduleJob(deps, 'job-1', move()), 'PRIMARY_CONTACT_WOULD_LEAVE');
+		await expectApiError(scheduleJob(deps, '00000000-0000-4000-8000-000000000001', move()), 'PRIMARY_CONTACT_WOULD_LEAVE');
 		// staying in the county is fine for the county's contact
 		cht.docs.get('west')!.contact = undefined;
 		cht.docs.get('county')!.contact = { _id: 'jane' };
-		expect((await scheduleJob(deps, 'job-1', move())).status).toBe(202);
+		expect((await scheduleJob(deps, '00000000-0000-4000-8000-000000000001', move())).status).toBe(202);
 	});
 });
 
 describe('running a move', () => {
 	it('has cht-conf move the branch, and checks the place is under its new parent', async () => {
-		await scheduleJob(deps, 'job-1', move());
+		await scheduleJob(deps, '00000000-0000-4000-8000-000000000001', move());
 
 		await runner().tick();
 
-		expect(await store.get('test', 'job-1')).toMatchObject({ status: 'done', result: { contacts: 4, reports: 0 } });
+		expect(await store.get('test', '00000000-0000-4000-8000-000000000001')).toMatchObject({ status: 'done', result: { contacts: 4, reports: 0 } });
 		expect(cht.docs.get('chu')?.parent).toEqual(lineage('seme', 'county'));
 		expect(cht.docs.get('mary')?.parent).toEqual(lineage('area', 'chu', 'seme', 'county'));
 		// accounts keep their places
@@ -133,22 +133,22 @@ describe('running a move', () => {
 			counts: { places: 1, people: 1 }
 		});
 
-		await scheduleJob(deps, 'job-1', household);
+		await scheduleJob(deps, '00000000-0000-4000-8000-000000000001', household);
 		await runner().tick();
 
-		expect(await store.get('test', 'job-1')).toMatchObject({ status: 'done' });
+		expect(await store.get('test', '00000000-0000-4000-8000-000000000001')).toMatchObject({ status: 'done' });
 		expect(cht.docs.get('home')?.parent).toEqual(lineage('area-2', 'chu', 'west', 'county'));
 		expect(cht.docs.get('head')?.parent).toEqual(lineage('home', 'area-2', 'chu', 'west', 'county'));
 	});
 
 	it('re-runs a move to where the place already is, writing nothing', async () => {
-		await scheduleJob(deps, 'job-1', move());
+		await scheduleJob(deps, '00000000-0000-4000-8000-000000000001', move());
 		await runner().tick();
 
-		const again = await scheduleJob(deps, 'job-2', move());
+		const again = await scheduleJob(deps, '00000000-0000-4000-8000-000000000002', move());
 		expect(again.status).toBe(202);
 		await runner().tick();
-		expect(await store.get('test', 'job-2')).toMatchObject({ status: 'done', result: { contacts: 0 } });
+		expect(await store.get('test', '00000000-0000-4000-8000-000000000002')).toMatchObject({ status: 'done', result: { contacts: 0 } });
 	});
 });
 
@@ -168,7 +168,7 @@ describe('move items in the staged list', () => {
 	async function waitFor(check: () => Promise<boolean>) {
 		for (let i = 0; i < 400 && !(await check()); i++) await new Promise((resolve) => setTimeout(resolve, 5));
 	}
-	const item = (overrides: Record<string, unknown> = {}) => ({ kind: 'move' as const, request: { jobId: 'job-1', contactType: CHU, placeId: 'chu', newParentId: 'seme', ...overrides } });
+	const item = (overrides: Record<string, unknown> = {}) => ({ kind: 'move' as const, request: { jobId: '00000000-0000-4000-8000-000000000001', contactType: CHU, placeId: 'chu', newParentId: 'seme', ...overrides } });
 
 	it('adds a move from the form, saying where it goes, and schedules it on upload', async () => {
 		const added = await addItem(staged, item());
@@ -179,11 +179,11 @@ describe('move items in the staged list', () => {
 			summary: { title: 'Kanyakwar', subtitle: 'Kisumu › Kisumu West', person: 'Moves to Kisumu › Seme, with 2 places and 2 people' }
 		});
 		// the same place again, or a move under a place that's moving
-		await expectApiError(addItem(staged, item({ jobId: 'job-2' })), 'MOVE_ALREADY_STAGED');
+		await expectApiError(addItem(staged, item({ jobId: '00000000-0000-4000-8000-000000000002' })), 'MOVE_ALREADY_STAGED');
 
 		await startUpload(staged);
 		await waitFor(async () => (await staged.tracker.state(owner)).state === 'idle');
-		expect((await listItems(staged, listQuery.parse({}))).items[0]).toMatchObject({ status: 'created', job: { id: 'job-1', status: 'queued' } });
+		expect((await listItems(staged, listQuery.parse({}))).items[0]).toMatchObject({ status: 'created', job: { id: '00000000-0000-4000-8000-000000000001', status: 'queued' } });
 		await runner().tick();
 		expect((await listItems(staged, listQuery.parse({}))).items[0].job).toMatchObject({ status: 'done' });
 	});

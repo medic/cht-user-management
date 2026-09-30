@@ -7,5 +7,5 @@ import { credentialsFor } from '$lib/server/places/credentials';
 export const GET = apiHandler(async ({ url, locals }) => {
 	const { session, uploadLog } = operationContext(locals);
 	const placeIds = url.searchParams.get('placeIds')?.split(',').filter(Boolean);
-	return json({ credentials: await credentialsFor(uploadLog, session.username, placeIds) });
+	return json({ credentials: await credentialsFor(uploadLog, session, placeIds) });
 });

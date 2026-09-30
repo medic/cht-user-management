@@ -44,7 +44,9 @@ describe('loadSettings', () => {
 	it('refuses to start without a deployment folder, or one without instances.json', () => {
 		const { DEPLOYMENT_DIR: _, ...none } = valid;
 		expect(() => loadSettings(none, files({}))).toThrow(/DEPLOYMENT_DIR is required/);
-		expect(() => loadSettings({ ...valid, DEPLOYMENT_DIR: 'nowhere' }, files({}))).toThrow(/nowhere\/instances\.json could not be read: DEPLOYMENT_DIR must be a deployment's folder/);
+		expect(() => loadSettings({ ...valid, DEPLOYMENT_DIR: 'nowhere' }, files({}))).toThrow(`DEPLOYMENT_DIR "nowhere" doesn't exist: point it at the deployment's folder, or mount the folder there`);
+		// the folder is there, but isn't a deployment's
+		expect(() => loadSettings({ ...valid, DEPLOYMENT_DIR: 'docs' }, files({}))).toThrow(/docs\/instances\.json could not be read: DEPLOYMENT_DIR must be a deployment's folder/);
 	});
 
 	it('refuses to start without secrets, with equal keys, or with a malformed secret key', () => {

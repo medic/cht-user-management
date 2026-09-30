@@ -1,9 +1,10 @@
 import { getContactType } from '$lib/server/config';
 import { ApiError } from '$lib/server/errors';
-import { apiHandler, requireParam } from '$lib/server/http';
+import { apiHandler, requireAuth, requireParam } from '$lib/server/http';
 import { templateCsv } from '$lib/server/staged/csv';
 
-export const GET = apiHandler(async ({ params, url }) => {
+export const GET = apiHandler(async ({ params, url, locals }) => {
+	requireAuth(locals);
 	const kind = url.searchParams.get('kind') ?? 'create';
 	if (kind !== 'create' && kind !== 'replace' && kind !== 'move' && kind !== 'merge' && kind !== 'delete') {
 		throw new ApiError(422, 'NOT_YET_SUPPORTED', `CSV templates for "${kind}" aren't available yet`);

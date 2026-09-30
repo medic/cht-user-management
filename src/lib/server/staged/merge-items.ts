@@ -11,7 +11,7 @@ import type { JobStore } from '../hierarchy/jobs';
 import { checkMerge, previewMerge } from '../hierarchy/merge';
 import { lineageIds } from '../places/documents';
 import { isWithinFacilities } from '../places/directory';
-import { docId } from '../places/schemas';
+import { docId, newJobId } from '../places/schemas';
 import { placeLookup } from '../places/lookup';
 import { normalize } from '../places/unique';
 import { resolveHierarchy } from './csv';
@@ -23,7 +23,7 @@ import type { ListOwner, StagedItem } from './types';
 
 export const mergeItemRequest = z
 	.object({
-		jobId: docId,
+		jobId: newJobId,
 		contactType: z.string().min(1),
 		sourceId: docId,
 		destinationId: docId,

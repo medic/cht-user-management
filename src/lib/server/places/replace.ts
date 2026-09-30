@@ -267,7 +267,7 @@ export async function replacePrimaryContact(context: OperationContext, placeId: 
 		changed = (await ensureUserHasPlaces(cht, existingUser, handedOver)) || changed;
 		username = existingUser.username;
 		places = [...new Set([...existingUser.placeIds, ...handedOver])];
-		if (incoming.kind === 'new') password = await recallPassword(context.uploadLog, session.username, contactId);
+		if (incoming.kind === 'new') password = await recallPassword(context.uploadLog, session, contactId);
 	} else {
 		const usernameSource = contactType.username_from_place ? (built.place.name ?? placeDoc.name) : contactValues.name;
 		const user: NewUser = {
@@ -295,7 +295,7 @@ export async function replacePrimaryContact(context: OperationContext, placeId: 
 
 	// 11. the credentials, for a new person
 	if (newCredentials && password) {
-		await recordCredentials(context.uploadLog, session.username, {
+		await recordCredentials(context.uploadLog, session, {
 			place: String(built.place.name ?? placeDoc.name ?? ''),
 			person: String(contactValues.name ?? ''),
 			phone: String(contactValues.phone ?? ''),

@@ -28,7 +28,27 @@ export default defineConfig(({ mode }) => {
 					// Force runes mode for the project, except for libraries. Can be removed in svelte 6.
 					runes: ({ filename }) => filename.split(/[/\\]/).includes('node_modules') ? undefined : true
 				},
-				adapter: adapter()
+				adapter: adapter(),
+				// pages load nothing from elsewhere, and can't be framed (see SECURITY_HEADERS in
+				// hooks.server.ts for the rest). SvelteKit adds hashes or nonces for its own inline scripts
+				csp: {
+					mode: 'auto',
+					directives: {
+						'default-src': ['self'],
+						// and the one inline handler Svelte puts on images, to catch a load or error that happens
+						// before the page's scripts run: allowed by its hash, and nothing else inline
+						'script-src': ['self', 'unsafe-hashes', 'sha256-7dQwUgLau1NFCCGjfn9FsYptB6ZtWxJin6VohGIu20I='],
+						// Svelte sets style attributes, eg. for transitions
+						'style-src': ['self', 'unsafe-inline'],
+						'img-src': ['self', 'data:'],
+						'font-src': ['self'],
+						'connect-src': ['self'],
+						'object-src': ['none'],
+						'base-uri': ['self'],
+						'form-action': ['self'],
+						'frame-ancestors': ['none']
+					}
+				}
 			})
 		],
 		server: {
