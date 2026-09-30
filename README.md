@@ -182,6 +182,31 @@ docker run -d -p 3000:3000 --env-file .env -v cht-user-management-data:/app/data
 
 `GET /_healthz` answers `200` once the tool is up, for container and Kubernetes health checks.
 
+#### Deploying a project that isn't in the image
+
+For another project, keep its [deployment folder](#configuration) wherever suits the project, for example `/srv/my-project`:
+
+```
+my-project/
+├── config.json
+├── instances.json
+├── logo.png          # optional
+└── hooks/            # optional, the scripts its contact types list
+```
+
+Then mount it with a `docker-compose.override.yml` next to `docker-compose.yml`. Compose reads it automatically, so `docker compose up -d --build` is all it takes:
+
+```yaml
+services:
+  app:
+    environment:
+      DEPLOYMENT_DIR: /app/deployment
+    volumes:
+      - /srv/my-project:/app/deployment:ro
+```
+
+Setting `DEPLOYMENT_DIR` here takes precedence over the one in `.env`. If the folder has a problem, the tool doesn't start, and its log names the file.
+
 ## Development
 
 ### NodeJs with reloading code
