@@ -4,7 +4,7 @@
 
 	import { api, ApiRequestError, isSignedOut, signInUrl, type JobView, type UndoPreview } from '$lib/api';
 	import JobStatus from '$lib/components/JobStatus.svelte';
-	import { contactUrl, JOB_KIND_LABELS, JOB_LABELS, MOVING_JOBS } from '$lib/staged';
+	import { JOB_KIND_LABELS, JOB_LABELS, MOVING_JOBS } from '$lib/staged';
 	import type { PageProps } from './$types';
 
 	// Your moves, merges and deletes, newest first (docs/frontend-contract.md → Jobs)
@@ -59,7 +59,6 @@
 		}
 	}
 
-	const instanceUrl = $derived(page.data.session?.instance?.url as string | undefined);
 
 	const plural = (n: number, one: string, many = `${one}s`) => `${n.toLocaleString()} ${n === 1 ? one : many}`;
 

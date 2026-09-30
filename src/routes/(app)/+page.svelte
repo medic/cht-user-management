@@ -31,7 +31,8 @@
 	let selected = $state<string[]>([]);
 	let busy = $state(false);
 	let message = $state<{ kind: 'error' | 'info'; text: string } | null>(null);
-	let search = $state('');
+	// what's typed in the search box: the URL's filter, until typing changes it
+	let search = $derived(data.filters.q);
 	let typedFor = $state<StagedItem | null>(null);
 	let typedName = $state('');
 	let dialog: HTMLDialogElement | undefined = $state();
@@ -47,10 +48,6 @@
 			moreCursor = list.nextCursor;
 			selected = selected.filter((id) => list.items.some((item) => item.id === id && item.status === 'needs_confirmation'));
 		});
-	});
-
-	$effect(() => {
-		search = data.filters.q;
 	});
 
 	const list = $derived(data.list);

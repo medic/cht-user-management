@@ -11,6 +11,7 @@ import { batchWarnings } from '../places/batch';
 import { isWithinFacilities } from '../places/directory';
 import { lineageIds } from '../places/documents';
 import { placeLookup, type PlaceLookup } from '../places/lookup';
+import type { CreateRequest } from '../places/schemas';
 import { normalize, uniquePropertyWarnings, type Warning } from '../places/unique';
 import { ownerOf } from './owner';
 import { replaceColumns, stagedReplaceRow, validateReplaceItems } from './replace-csv';
@@ -323,7 +324,7 @@ async function validateItems(deps: StagedDeps, owner: ListOwner, items: StagedIt
 
 	const complete = resolved.filter((r) => r.parent && !Object.keys(r.errors).length);
 	const betweenRows = batchWarnings(
-		complete.map((r) => ({ op: 'create' as const, placeId: r.item.request.placeId, body: { ...r.item.request, parentId: r.parent!._id } as any }))
+		complete.map((r) => ({ op: 'create' as const, placeId: r.item.request.placeId, body: { ...r.item.request, parentId: r.parent!._id } as CreateRequest }))
 	);
 
 	for (const r of resolved) {
@@ -353,7 +354,7 @@ async function finish(deps: StagedDeps, r: Resolved, rowWarnings: Warning[]): Pr
 		return { status: 'invalid', errors: { ...withoutLineageErrors(contactType, local.errors), ...r.errors }, summary: { ...r.item.summary, subtitle } };
 	}
 
-	const request: Record<string, any> = { ...r.item.request, parentId: r.parent._id };
+	const request: StagedItem['request'] = { ...r.item.request, parentId: r.parent._id };
 	// a later place for a shared person sends no person details; its person's row checks them
 	const built = buildProperties({
 		contactType,

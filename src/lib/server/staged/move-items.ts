@@ -174,7 +174,7 @@ export async function validateMoveItems(
 			...now.errors,
 			...Object.fromEntries(Object.entries(next.errors).map(([key, message]) => [key.replace(/^hierarchy\./, 'new.'), message]))
 		};
-		const request: Record<string, any> = { ...item.request, newParentId: next.parent?._id ?? '' };
+		const request: StagedItem['request'] = { ...item.request, newParentId: next.parent?._id ?? '' };
 
 		const name = raw[contactType.friendly]?.trim() ?? '';
 		if (now.parent && name) {

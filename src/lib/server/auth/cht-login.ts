@@ -173,6 +173,7 @@ async function admit(instance: Instance, username: string, sessionCookie: string
 	return { instanceId: instance.id, username, sessionCookie, facilityIds, chtVersion: version, isAdmin };
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- CHT's untyped JSON; the callers pick out what they check
 async function readJson(options: LoginOptions, instance: Instance, path: string, sessionCookie: string): Promise<any> {
 	const response = await send(options, instance, new URL(path, baseUrl(instance)), {
 		method: 'GET',

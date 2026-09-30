@@ -176,7 +176,7 @@ export async function runRestore(run: RestoreRun): Promise<HierarchyJob> {
 		const loginsRecreated: { username: string; previousUsername: string }[] = [...(job.result?.loginsRecreated ?? [])];
 		const settings = new Map((await cht.getDocs(accounts.map((a) => `org.couchdb.user:${a.username}`))).map((doc) => [String(doc.name), doc]));
 		for (const account of accounts) {
-			const doc: Record<string, any> = settings.get(account.username) ?? {};
+			const doc: Partial<CouchDoc> = settings.get(account.username) ?? {};
 			const contactId = String(account.contactId ?? doc.contact_id ?? '');
 			if (!contactId || !account.placeIds.length) continue;
 			const active = (await cht.usersByContact(contactId)).find((user) => user.username === account.username && !user.inactive);

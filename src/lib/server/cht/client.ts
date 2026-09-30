@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- CouchDB and CHT answer untyped JSON; it's given types where it leaves this file */
 import { ChtError } from '../errors';
 
 export type CouchDoc = { _id: string; _rev?: string; [key: string]: any };

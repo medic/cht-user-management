@@ -17,6 +17,7 @@ export type HierarchyJob = {
 	kind: JobKind;
 	instanceId: string;
 	createdBy: string;
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- one of the kinds' requests, each checked by its own schema
 	request: Record<string, any>;
 	// the branch it works on, for refusing overlapping jobs: the place, and the ids above it
 	branch: { placeId: string; placeName: string; lineage: string[] };

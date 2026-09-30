@@ -2,7 +2,7 @@ import { randomInt } from 'node:crypto';
 
 import { version } from '../../../../package.json';
 import type { ContactType } from '../config';
-import { ApiError, ChtError, isChtStatus } from '../errors';
+import { ApiError, ChtError } from '../errors';
 import { isRetryable, isUpdateConflict, type Cht, type CouchDoc, type NewUser, type UserInfo } from '../cht/client';
 import { formatValue } from '../../validation/validators';
 import type { Lineage } from '../../validation';

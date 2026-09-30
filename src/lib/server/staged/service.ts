@@ -769,6 +769,7 @@ async function recordResult(deps: StagedDeps, owner: ListOwner, id: string, resu
 	if (!current) {
 		return;
 	}
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- each error code's own details
 	const error = (result.body as { error?: { code: string; message: string; details?: Record<string, any> } }).error;
 
 	if (result.status < 300) {

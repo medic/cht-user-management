@@ -22,7 +22,8 @@ export type ChtConfRun = {
 export type ChtConfRunner = (run: ChtConfRun) => Promise<void>;
 
 const SCRIPT = resolve('scripts/cht-conf-job.cjs');
-// cht-conf's colours and progress bar redraws
+// cht-conf's colours and progress bar redraws, which start with the escape character
+// eslint-disable-next-line no-control-regex
 const ANSI = /\u001b\[[0-9;]*[A-Za-z]/g;
 
 export function processRunner(limits: { timeoutSeconds: number; heapMb: number }): ChtConfRunner {

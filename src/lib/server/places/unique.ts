@@ -1,5 +1,5 @@
 import type { ContactProperty, ContactType } from '../config';
-import type { Cht, CouchDoc } from '../cht/client';
+import type { Cht } from '../cht/client';
 import { formatValue } from '../../validation/validators';
 import type { PropertyValues } from '../../validation';
 import { allPlaces, placesUnder } from './lookup';

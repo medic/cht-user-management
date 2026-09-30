@@ -26,6 +26,7 @@ export type StagedItem = {
 	id: string;
 	kind: StagedKind;
 	// exactly the request the upload sends, including its client-chosen ids
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- one of the kinds' requests, each checked by its own schema
 	request: Record<string, any>;
 	source: { type: 'form' } | { type: 'csv'; file: string; row: number };
 	// CSV rows only: the row as uploaded

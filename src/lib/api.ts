@@ -121,6 +121,7 @@ export type JobStatus = 'queued' | 'postponed' | 'needs_sign_in' | 'running' | '
 export type JobView = {
 	id: string;
 	kind: 'move' | 'merge' | 'delete' | 'restore';
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- one of the kinds' requests, each checked by its own schema
 	request: Record<string, any>;
 	branch: { placeId: string; placeName: string; lineage: string[] };
 	// a merge: the place it merges into

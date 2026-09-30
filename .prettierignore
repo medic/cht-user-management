@@ -1,0 +1,11 @@
+# Built or generated
+build
+.svelte-kit
+node_modules
+package-lock.json
+CHANGELOG.md
+
+# Kept as written: the docs, the previous version's files, and data
+*.md
+docs/legacy
+data

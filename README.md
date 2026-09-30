@@ -209,8 +209,12 @@ The tool is then at `http://localhost:3000`, or on the `PORT` you set.
 npm test                                         # unit tests, against an in-memory CHT
 REDIS_TEST_URL=redis://localhost:6379 npm test   # also runs the Redis store tests
 npm run check                                    # type check
+npm run lint                                     # code rules (eslint.config.js)
+npm run format                                   # formats every file (.prettierrc); format:check only checks
 npm run build && npm start                       # the production build
 ```
+
+The code is formatted by [Prettier](https://prettier.io) with 2-space indents (`.prettierrc`), and editors pick up the basics from `.editorconfig`. Run `npm run format` before committing.
 
 ## Environment Variables
 

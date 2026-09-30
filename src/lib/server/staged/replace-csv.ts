@@ -3,7 +3,6 @@ import { randomUUID } from 'node:crypto';
 import type { ContactProperty, ContactType, HierarchyConstraint } from '../../config-types';
 import { buildProperties, resolveRoles, type PropertyInput, type ValidationErrors } from '../../validation';
 import { formatValue } from '../../validation/validators';
-import type { CouchDoc } from '../cht/client';
 import { getContactType } from '../config';
 import { ApiError } from '../errors';
 import { isWithinFacilities } from '../places/directory';
@@ -164,7 +163,7 @@ export async function validateReplaceItems(
 		const names = Object.fromEntries(contactType.hierarchy.map((level) => [level.property_name, raw[level.friendly_name] ?? '']));
 		const hierarchy = await resolveHierarchy(contactType, names, places, (doc) => isWithinFacilities(session, doc));
 		const errors: ValidationErrors = { ...(item.errors ?? {}), ...hierarchy.errors };
-		const request: Record<string, any> = { ...item.request };
+		const request: StagedItem['request'] = { ...item.request };
 
 		// the place being replaced, under the parent found above
 		const replacement = raw[contactType.replacement_property.friendly_name]?.trim() ?? '';
