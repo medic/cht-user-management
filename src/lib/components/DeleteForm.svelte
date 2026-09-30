@@ -110,6 +110,7 @@
 				label={level.friendly_name}
 				type={level.contact_type}
 				parentId={above ? picked[above.property_name]?.id : undefined}
+				parentLabel={above?.friendly_name}
 				selected={picked[level.property_name]}
 				disabled={submitting}
 				onselect={(chosen) => pickLevel(level, chosen)}
@@ -120,6 +121,7 @@
 			label={contactType.friendly}
 			type={contactType.name}
 			parentId={picked[levelOne.property_name]?.id}
+			parentLabel={levelOne.friendly_name}
 			selected={target}
 			required
 			disabled={submitting}

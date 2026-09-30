@@ -5,7 +5,7 @@ import { getContactType } from '../config';
 import { ApiError } from '../errors';
 import type { OperationContext } from '../places/context';
 import { searchPlaces } from '../places/directory';
-import { clearPlaceCache } from '../places/unique';
+import { clearPlaceCache } from '../places/lookup';
 import { FakeCht } from '../testing/fake-cht';
 import { createPlace } from '../places/create';
 import type { UploadLog } from '../upload-log';

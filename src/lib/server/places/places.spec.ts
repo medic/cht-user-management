@@ -10,7 +10,7 @@ import { createPlace } from './create';
 import { conflictBackoff } from './documents';
 import { replacePrimaryContact } from './replace';
 import { createRequest, replaceRequest, type CreateRequest, type ReplaceRequest } from './schemas';
-import { clearPlaceCache } from './unique';
+import { clearPlaceCache } from './lookup';
 
 // Runs against Kenya's deployment (DEPLOYMENT_DIR in .env.test)
 const CHU = 'c_community_health_unit';

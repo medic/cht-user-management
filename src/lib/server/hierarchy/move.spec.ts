@@ -11,6 +11,7 @@ import { stageCsv } from '../staged/csv';
 import { addItem, confirmMany, listItems, listQuery, startUpload, type StagedDeps } from '../staged/service';
 import { MemoryStagedStore } from '../staged/store';
 import { MemoryUploadTracker } from '../staged/upload-tracker';
+import { clearPlaceCache, DEFAULT_MAX_PLACES_LOADED, setMaxPlacesLoaded } from '../places/lookup';
 import { fakeChtConf } from '../testing/fake-cht-conf';
 import { FakeCht } from '../testing/fake-cht';
 import { MemoryJobStore } from './jobs';
@@ -207,5 +208,38 @@ describe('move items in the staged list', () => {
 		// large moves may be confirmed together
 		expect(await confirmMany(staged, [kanyakwar.id])).toEqual({ confirmed: [kanyakwar.id], skipped: [] });
 		expect((await staged.store.get(owner, kanyakwar.id))?.request.acceptLarge).toBe(true);
+	});
+
+	it('finds households row by row under their CHP area, never reading every household', async () => {
+		clearPlaceCache();
+		// three households are "a lot" here, while two sub counties and two CHP areas aren't
+		setMaxPlacesLoaded(2);
+		try {
+			cht.seed(
+				{ _id: 'ann', type: 'contact', contact_type: 'd_community_health_volunteer_area', name: 'Ann Area', parent: lineage('chu', 'west', 'county') },
+				{ _id: 'home', type: 'contact', contact_type: 'e_household', name: 'Otieno Household', parent: lineage('area', 'chu', 'west', 'county') },
+				{ _id: 'home-2', type: 'contact', contact_type: 'e_household', name: 'Achieng Household', parent: lineage('area', 'chu', 'west', 'county') },
+				{ _id: 'home-3', type: 'contact', contact_type: 'e_household', name: 'Otieno Household', parent: lineage('ann', 'chu', 'west', 'county') }
+			);
+			const loaded: string[] = [];
+			const read = cht.placesOfType.bind(cht);
+			cht.placesOfType = (type: string) => (loaded.push(type), read(type));
+			const csv = [
+				'"Sub County","CHU","CHP Area","Household","New Sub County","New CHU","New CHP Area"',
+				'Kisumu West,Kanyakwar,Mary Area,Otieno Household,Kisumu West,Kanyakwar,Ann Area',
+				'Kisumu West,Kanyakwar,Mary Area,Nobody Household,Kisumu West,Kanyakwar,Ann Area'
+			].join('\n');
+
+			await stageCsv(staged, { fileName: 'households.csv', text: csv, contactType: 'e_household', kind: 'move' });
+			await waitFor(async () => (await staged.validationTracker.state(owner)).state === 'idle' && (await staged.store.list(owner)).every((i) => i.status !== 'pending'));
+
+			const [otieno, nobody] = (await listItems(staged, listQuery.parse({ file: 'households.csv' }))).items;
+			expect(otieno).toMatchObject({ status: 'ready', request: { placeId: 'home', newParentId: 'ann' } });
+			expect(nobody.errors?.place).toBe(`Can't find Household "Nobody Household" under "Mary Area"`);
+			expect(loaded).not.toContain('e_household');
+		} finally {
+			setMaxPlacesLoaded(DEFAULT_MAX_PLACES_LOADED);
+			clearPlaceCache();
+		}
 	});
 });

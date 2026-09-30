@@ -8,6 +8,10 @@
 		label: string;
 		type: string;
 		parentId?: string;
+		// the field above, named when this type has too many places to search without it
+		parentLabel?: string;
+		// wait for the field above, whatever the type's size
+		requireParent?: boolean;
 		selected: PlaceSummary | null;
 		// text to start with, eg. a place name from a CSV row that didn't resolve
 		initialQuery?: string;
@@ -19,7 +23,7 @@
 		onselect: (place: PlaceSummary | null) => void;
 	};
 
-	let { id, label, type, parentId, selected, initialQuery = '', required = false, error, disabled = false, exclude = [], onselect }: Props = $props();
+	let { id, label, type, parentId, parentLabel, requireParent = false, selected, initialQuery = '', required = false, error, disabled = false, exclude = [], onselect }: Props = $props();
 
 	// starts with the picked place or the starting text, so it's there in the server-rendered page too
 	let query = $state(untrack(() => selected?.name ?? initialQuery));
@@ -28,15 +32,23 @@
 	let active = $state(-1);
 	let loading = $state(false);
 	let searchError = $state<string | null>(null);
+	// the server said this type can only be searched under a parent: wait for one
+	let needsParent = $state(false);
+	const waiting = $derived((needsParent || requireParent) && !parentId);
 	let timer: ReturnType<typeof setTimeout> | undefined;
 	let requestNumber = 0;
 
-	// follows picks made elsewhere, eg. a level filled in from a lower level's pick
+	// follows picks made elsewhere, eg. a level filled in from a lower level's pick, or cleared because
+	// the level above changed. Typing clears the pick too, but keeps what was typed
 	let lastSelectedId = untrack(() => selected?.id);
+	let clearedByTyping = false;
 	$effect(() => {
 		if (selected?.id !== lastSelectedId) {
+			const hadPick = !!lastSelectedId;
 			lastSelectedId = selected?.id;
 			if (selected) query = selected.name;
+			else if (hadPick && !clearedByTyping) query = '';
+			clearedByTyping = false;
 		}
 	});
 
@@ -61,7 +73,10 @@
 				open = true;
 			}
 		} catch (e) {
-			if (mine === requestNumber) {
+			if (mine === requestNumber && e instanceof ApiRequestError && e.code === 'PARENT_REQUIRED' && !parentId) {
+				needsParent = true;
+				open = false;
+			} else if (mine === requestNumber) {
 				searchError = e instanceof ApiRequestError ? e.message : "Couldn't search places.";
 				open = true;
 			}
@@ -73,7 +88,10 @@
 	function onInput(text: string) {
 		query = text;
 		// typing again means the earlier pick no longer stands
-		if (selected) onselect(null);
+		if (selected) {
+			clearedByTyping = true;
+			onselect(null);
+		}
 		clearTimeout(timer);
 		timer = setTimeout(() => search(text.trim()), 250);
 	}
@@ -121,8 +139,8 @@
 			aria-describedby={error ? `${id}-error` : undefined}
 			class:picked={!!selected}
 			value={query}
-			placeholder="Type to search"
-			{disabled}
+			placeholder={waiting ? `Choose ${parentLabel ?? 'the place above'} first` : 'Type to search'}
+			disabled={disabled || waiting}
 			oninput={(e) => onInput((e.currentTarget as HTMLInputElement).value)}
 			onfocus={() => !selected && search(query.trim())}
 			onblur={() => setTimeout(() => (open = false), 150)}
@@ -155,7 +173,9 @@
 			</ul>
 		{/if}
 	</div>
-	{#if error}<p class="field-error" id={`${id}-error`}>{error}</p>{:else if !selected && query}<p class="hint">Pick a place from the list</p>{/if}
+	{#if error}<p class="field-error" id={`${id}-error`}>{error}</p>
+	{:else if waiting && needsParent}<p class="hint">There are too many to search them all: choose {parentLabel ?? 'the place above'} first</p>
+	{:else if !selected && query}<p class="hint">Pick a place from the list</p>{/if}
 </div>
 
 <style>

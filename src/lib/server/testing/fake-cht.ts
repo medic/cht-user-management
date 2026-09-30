@@ -73,6 +73,11 @@ export class FakeCht implements Cht {
 		return [...this.docs.values()].filter((doc) => (doc.contact_type ?? doc.type) === type).map((doc) => structuredClone(doc));
 	}
 
+	async countPlacesOfType(type: string, upTo: number): Promise<number> {
+		await this.enter('countPlacesOfType');
+		return Math.min(upTo, [...this.docs.values()].filter((doc) => (doc.contact_type ?? doc.type) === type).length);
+	}
+
 	// like contacts_by_depth: a doc is found under every ancestor in its lineage, even once the ancestor
 	// itself is gone
 	async docsAtDepth(parentId: string, depths: number[]): Promise<CouchDoc[]> {

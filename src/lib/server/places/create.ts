@@ -7,7 +7,8 @@ import { generatePassword, sanitizeUsername } from '../username';
 import type { OperationContext, OperationResult } from './context';
 import type { CreateRequest } from './schemas';
 import { recallPassword, recordCredentials } from './credentials';
-import { fromWarningTexts, rememberPlace, uniquePropertyWarnings, warningText, type Warning } from './unique';
+import { rememberPlace } from './lookup';
+import { fromWarningTexts, uniquePropertyWarnings, warningText, type Warning } from './unique';
 import {
 	TOOL,
 	contactAttributes,

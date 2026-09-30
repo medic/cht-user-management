@@ -5,6 +5,7 @@ import { env } from '$env/dynamic/private';
 
 import { instancesFileSchema, type Instance } from './auth/instances';
 import { DEPLOYMENT_FILES } from './config';
+import { DEFAULT_MAX_PLACES_LOADED } from './places/lookup';
 
 export type Settings = {
 	production: boolean;
@@ -21,6 +22,8 @@ export type Settings = {
 	credentialsTtlSeconds: number;
 	stagedListTtlSeconds: number;
 	batchMaxItems: number;
+	// a place type with more places than this is never read whole, only one parent at a time
+	maxPlacesLoaded: number;
 	allowAdminLogin: boolean;
 	instances: Instance[];
 	// hierarchy jobs (APP.md → Hierarchy management → Running the job)
@@ -84,13 +87,15 @@ export function loadSettings(source: Env, readFile: (path: string) => string = (
 		problems.push('REDIS_URL must start with redis:// or rediss://');
 	}
 
-	const seconds = (name: string, fallback: number) => {
+	const positive = (unit: string) => (name: string, fallback: number) => {
 		const value = source[name] ? Number(source[name]) : fallback;
 		if (!Number.isInteger(value) || value <= 0) {
-			problems.push(`${name} must be a positive number of seconds`);
+			problems.push(`${name} must be a positive number${unit}`);
 		}
 		return value;
 	};
+	const seconds = positive(' of seconds');
+	const count = positive('');
 	// PORT itself is read by the Node adapter (and vite.config.ts in development); checked here so a bad
 	// value is reported with everything else
 	if (source.PORT !== undefined) {
@@ -103,17 +108,18 @@ export function loadSettings(source: Env, readFile: (path: string) => string = (
 	const sessionTtlSeconds = seconds('SESSION_TTL', DEFAULT_SESSION_TTL_SECONDS);
 	const credentialsTtlSeconds = seconds('CREDENTIALS_TTL', DEFAULT_CREDENTIALS_TTL_SECONDS);
 	const stagedListTtlSeconds = seconds('STAGED_LIST_TTL', DEFAULT_STAGED_LIST_TTL_SECONDS);
-	const batchMaxItems = seconds('BATCH_MAX_ITEMS', DEFAULT_BATCH_MAX_ITEMS);
+	const batchMaxItems = count('BATCH_MAX_ITEMS', DEFAULT_BATCH_MAX_ITEMS);
+	const maxPlacesLoaded = count('MAX_PLACES_LOADED', DEFAULT_MAX_PLACES_LOADED);
 
 	const jobs: JobSettings = {
-		maxSentinelBacklog: seconds('MAX_SENTINEL_BACKLOG', 7000),
+		maxSentinelBacklog: count('MAX_SENTINEL_BACKLOG', 7000),
 		recheckSeconds: seconds('JOB_RECHECK', 15 * 60),
 		ttlSeconds: seconds('JOB_TTL', 30 * DAY),
 		workDir: source.JOB_WORK_DIR || join(tmpdir(), 'cht-iam-jobs'),
 		archiveDir: source.ARCHIVE_LOCATION || 'data/archives',
 		archiveTtlSeconds: seconds('ARCHIVE_TTL', 30 * DAY),
 		timeoutSeconds: seconds('JOB_TIMEOUT', 4 * 60 * 60),
-		chtConfHeapMb: seconds('CHT_CONF_HEAP_MB', 2048)
+		chtConfHeapMb: positive(' of megabytes')('CHT_CONF_HEAP_MB', 2048)
 	};
 
 	const production = source.NODE_ENV === 'production';
@@ -135,6 +141,7 @@ export function loadSettings(source: Env, readFile: (path: string) => string = (
 		credentialsTtlSeconds,
 		stagedListTtlSeconds,
 		batchMaxItems,
+		maxPlacesLoaded,
 		allowAdminLogin: source.ALLOW_ADMIN_LOGIN !== 'false',
 		instances,
 		jobs

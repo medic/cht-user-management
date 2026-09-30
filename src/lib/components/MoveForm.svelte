@@ -14,11 +14,14 @@
 	const start = untrack(() => ({ contactType }));
 	const levels: HierarchyConstraint[] = [...start.contactType.hierarchy].sort((a, b) => b.level - a.level);
 	const levelOne = levels.find((level) => level.level === 1)!;
+	// where it goes: the levels above the new parent, top first, as the CSV's "New …" columns
+	const destinationLevels = levels.filter((level) => level.level > 1);
 	// made once, when the form opens: scheduling the same id again returns the same job
 	const jobId = crypto.randomUUID();
 
 	let picked = $state<Record<string, PlaceSummary | null>>(Object.fromEntries(levels.map((l) => [l.property_name, null])));
 	let target = $state<PlaceSummary | null>(null);
+	let destination = $state<Record<string, PlaceSummary | null>>(Object.fromEntries(destinationLevels.map((l) => [l.property_name, null])));
 	let newParent = $state<PlaceSummary | null>(null);
 	let preview = $state<MovePreview | null>(null);
 	let previewError = $state<string | null>(null);
@@ -44,11 +47,22 @@
 	function pickTarget(chosen: PlaceSummary | null) {
 		target = chosen;
 		newParent = null;
+		for (const level of destinationLevels) destination[level.property_name] = null;
 		if (!chosen) return;
 		for (const level of levels) {
 			const ancestor = chosen.lineage[level.level - 1];
-			if (ancestor) picked[level.property_name] = { id: ancestor.id, name: ancestor.name, type: level.contact_type, lineage: chosen.lineage.slice(level.level) };
+			const place = ancestor && { id: ancestor.id, name: ancestor.name, type: level.contact_type, lineage: chosen.lineage.slice(level.level) };
+			if (place) picked[level.property_name] = place;
+			// most moves stay close: the new parent starts out searched under the current one's parent
+			if (place && level.level > 1) destination[level.property_name] = place;
 		}
+	}
+
+	// picking a level clears everything below it: each field waits for the one directly above
+	function pickDestination(level: HierarchyConstraint, chosen: PlaceSummary | null) {
+		destination[level.property_name] = chosen;
+		for (const other of destinationLevels) if (other.level < level.level) destination[other.property_name] = null;
+		newParent = null;
 	}
 
 	// the impact, once both places are picked
@@ -106,6 +120,7 @@
 		return days <= 0 ? 'today' : days === 1 ? 'yesterday' : `${days} days ago`;
 	};
 	const levelAbove = (level: HierarchyConstraint) => levels.find((other) => other.level === level.level + 1);
+	const levelTwo = destinationLevels.find((level) => level.level === 2);
 	// the current parent, the place itself and anything under it can't be the new parent
 	const excluded = $derived(target ? [target.id, ...(target.lineage[0] ? [target.lineage[0].id] : [])] : []);
 </script>
@@ -122,6 +137,7 @@
 				label={level.friendly_name}
 				type={level.contact_type}
 				parentId={above ? picked[above.property_name]?.id : undefined}
+				parentLabel={above?.friendly_name}
 				selected={picked[level.property_name]}
 				disabled={submitting}
 				onselect={(chosen) => pickLevel(level, chosen)}
@@ -132,6 +148,7 @@
 			label={contactType.friendly}
 			type={contactType.name}
 			parentId={picked[levelOne.property_name]?.id}
+			parentLabel={levelOne.friendly_name}
 			selected={target}
 			required
 			disabled={submitting}
@@ -143,10 +160,28 @@
 		<section class="card">
 			<h2>Where it goes</h2>
 			{#key target.id}
+				{#each destinationLevels as level (level.property_name)}
+					{@const above = levelAbove(level)}
+					<PlacePicker
+						id={`m-new-${level.property_name}`}
+						label={level.friendly_name}
+						type={level.contact_type}
+						parentId={above ? destination[above.property_name]?.id : undefined}
+						parentLabel={above?.friendly_name}
+						requireParent={!!above}
+						selected={destination[level.property_name]}
+						exclude={[target.id]}
+						disabled={submitting}
+						onselect={(chosen) => pickDestination(level, chosen)}
+					/>
+				{/each}
 				<PlacePicker
 					id="m-parent"
-					label={`New ${levelOne.friendly_name}`}
+					label={levelOne.friendly_name}
 					type={levelOne.contact_type}
+					parentId={levelTwo ? destination[levelTwo.property_name]?.id : undefined}
+					parentLabel={levelTwo?.friendly_name}
+					requireParent={!!levelTwo}
 					selected={newParent}
 					exclude={excluded}
 					required

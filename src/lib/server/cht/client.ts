@@ -31,6 +31,8 @@ export interface Cht {
 	putDoc(doc: CouchDoc): Promise<string>;
 	deleteDoc(id: string, rev: string): Promise<void>;
 	placesOfType(type: string): Promise<CouchDoc[]>;
+	// how many places of the type there are, counting no further than upTo
+	countPlacesOfType(type: string, upTo: number): Promise<number>;
 	docsAtDepth(parentId: string, depths: number[]): Promise<CouchDoc[]>;
 	usersByContact(contactId: string): Promise<UserInfo[]>;
 	usersAtPlace(placeId: string): Promise<UserInfo[]>;
@@ -119,6 +121,14 @@ export class HttpCht implements Cht {
 			query: { key: JSON.stringify([type]), include_docs: 'true', reduce: 'false' }
 		});
 		return result.rows.map((row: any) => row.doc);
+	}
+
+	// ids only, no docs: cheap even for a type with millions of places
+	async countPlacesOfType(type: string, upTo: number): Promise<number> {
+		const result = await this.request('GET', 'medic/_design/medic-client/_view/contacts_by_type', {
+			query: { key: JSON.stringify([type]), limit: String(upTo), reduce: 'false' }
+		});
+		return result.rows.length;
 	}
 
 	async docsAtDepth(parentId: string, depths: number[]): Promise<CouchDoc[]> {

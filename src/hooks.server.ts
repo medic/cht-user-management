@@ -6,18 +6,20 @@ import { presentedToken, SESSION_COOKIE } from '$lib/server/auth/session';
 import { errorResponse } from '$lib/server/http';
 import { getRevocations, startJobRunner } from '$lib/server/runtime';
 import { checkDeployment } from '$lib/server/config';
+import { setMaxPlacesLoaded } from '$lib/server/places/lookup';
 import { getSettings } from '$lib/server/settings';
 
 // Refuse to start when a setting or the deployment's folder is missing or invalid (APP.md → Auth →
 // Configuration)
 export const init: ServerInit = async () => {
-	getSettings();
+	setMaxPlacesLoaded(getSettings().maxPlacesLoaded);
 	await checkDeployment();
 	startJobRunner();
 };
 
-// the dev server reloads this module on changes without calling init again: replace the runner then
+// the dev server reloads this module on changes without calling init again: redo what it set up
 if (import.meta.env.DEV) {
+	setMaxPlacesLoaded(getSettings().maxPlacesLoaded);
 	startJobRunner();
 }
 

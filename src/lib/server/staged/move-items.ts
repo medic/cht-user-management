@@ -12,7 +12,8 @@ import { previewMove } from '../hierarchy/move';
 import { lineageIds } from '../places/documents';
 import { isWithinFacilities } from '../places/directory';
 import { docId } from '../places/schemas';
-import { normalize, placesOfType } from '../places/unique';
+import { placeLookup } from '../places/lookup';
+import { normalize } from '../places/unique';
 import { resolveHierarchy } from './csv';
 import type { StagedDeps } from './service';
 import type { ListOwner, StagedItem } from './types';
@@ -153,11 +154,8 @@ export async function validateMoveItems(
 ): Promise<void> {
 	if (!items.length) return;
 	const { cht, session } = deps.context;
-	const byType = new Map<string, Promise<CouchDoc[]>>();
-	const places = (type: string) => {
-		if (!byType.has(type)) byType.set(type, placesOfType(cht, type));
-		return byType.get(type)!;
-	};
+	// each parent's places are read once for the whole file
+	const places = placeLookup(cht);
 	const list = await deps.store.list(owner);
 
 	for (const item of items) {
@@ -181,8 +179,8 @@ export async function validateMoveItems(
 		const name = raw[contactType.friendly]?.trim() ?? '';
 		if (now.parent && name) {
 			const wanted = normalize(formatValue(contactType.replacement_property, name));
-			const matches = (await places(contactType.name)).filter(
-				(doc) => doc.parent?._id === now.parent!._id && normalize(formatValue(contactType.replacement_property, String(doc.name ?? ''))) === wanted
+			const matches = (await places.under(now.parent!._id, contactType.name)).filter(
+				(doc) => normalize(formatValue(contactType.replacement_property, String(doc.name ?? ''))) === wanted
 			);
 			if (!matches.length) errors.place = `Can't find ${contactType.friendly} "${name}" under "${now.parent.name}"`;
 			else if (matches.length > 1) errors.place = `Found ${matches.length} places called "${name}" under "${now.parent.name}"`;

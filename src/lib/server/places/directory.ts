@@ -1,8 +1,10 @@
 import type { Session } from '../auth/session';
+import { friendlyTypeName } from '../config';
 import type { Cht, CouchDoc } from '../cht/client';
 import { ApiError } from '../errors';
 import { contactRef, docType, lineageIds } from './documents';
-import { normalize, placesOfType } from './unique';
+import { allPlaces, placesUnder, tooManyPlaces } from './lookup';
+import { normalize } from './unique';
 
 export type PlaceSummary = {
 	id: string;
@@ -17,16 +19,20 @@ export function isWithinFacilities(session: Session, doc: CouchDoc): boolean {
 	return session.facilityIds.includes('*') || [doc._id, ...lineageIds(doc)].some((id) => session.facilityIds.includes(id));
 }
 
-// GET /api/v1/places/search: places of a type whose name matches, best matches first
+// GET /api/v1/places/search: places of a type whose name matches, best matches first. Under a parent,
+// only that parent's places are read; without one, a type too large to read whole can't be searched
 export async function searchPlaces(
 	cht: Cht,
 	session: Session,
 	query: { type: string; q?: string; parentId?: string; limit: number }
 ): Promise<PlaceSummary[]> {
 	const wanted = normalize(query.q?.trim() ?? '');
-	const candidates = (await placesOfType(cht, query.type))
+	const docs = query.parentId ? await placesUnder(cht, query.parentId, query.type) : await allPlaces(cht, query.type);
+	if (!docs) {
+		throw tooManyPlaces(`${friendlyTypeName(query.type)} places`);
+	}
+	const candidates = docs
 		.filter((doc) => isWithinFacilities(session, doc))
-		.filter((doc) => !query.parentId || doc.parent?._id === query.parentId)
 		.map((doc) => ({ doc, name: String(doc.name ?? ''), rank: matchRank(normalize(String(doc.name ?? '')), wanted) }))
 		.filter((c) => c.rank !== undefined)
 		.sort((a, b) => a.rank! - b.rank! || a.name.localeCompare(b.name))

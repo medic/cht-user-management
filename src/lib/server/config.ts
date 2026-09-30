@@ -146,6 +146,17 @@ export function getContactType(name: string, action?: Action): ContactType {
 
 const PAST: Record<Action, string> = { create: 'created', replace: 'replaced', move: 'moved', merge: 'merged', delete: 'deleted' };
 
+// A place type's display name: a contact type's `friendly`, or a hierarchy level's `friendly_name`
+// for types that only appear above others, eg. sub counties; else the type itself
+export function friendlyTypeName(type: string): string {
+	const types = deployment().config.contact_types;
+	return (
+		types.find((t) => t.name === type)?.friendly ??
+		types.flatMap((t) => t.hierarchy).find((level) => level.contact_type === type)?.friendly_name ??
+		type
+	);
+}
+
 export function getParentLevel(contactType: ContactType): HierarchyConstraint {
 	const parent = contactType.hierarchy.find((level) => level.level === 1);
 	if (!parent) {

@@ -50,7 +50,7 @@ The API has two kinds of client:
 Behaviour: [APP.md → Auth](APP.md#auth).
 
 ### `GET /config/instances` (no auth)
-The instances a user can sign in to. Hosts aren't exposed.
+The instances a user can sign in to, sorted by host. Hosts aren't exposed.
 ```json
 { "instances": [ { "id": "ke-prod", "name": "Kenya eCHIS" } ] }
 ```
@@ -168,7 +168,9 @@ All read-only, and all scoped to the caller's facilities.
 
 ### `GET /places/search?type={contactType}&q={text}&parentId={id}&limit=20`
 Places of `type` whose name matches `q` (case- and accent-insensitive, ranked best first), under
-`parentId` if given. Used by every hierarchy field and place picker.
+`parentId` if given. Used by every hierarchy field and place picker. With `parentId`, only that
+parent's places are read. Without it, a type with more than `MAX_PLACES_LOADED` places returns
+`422 PARENT_REQUIRED`: search again with the place above ([APP.md → Finding places](APP.md#finding-places)).
 ```json
 { "places": [ {
   "id": "0b6c…", "name": "Kanyakwar Community Health Unit", "type": "c_community_health_unit",
@@ -192,7 +194,8 @@ Everything the replace, move, merge and delete forms show about a place.
 `lastSync` is `null` when unknown: always for non-admin callers. `404 PLACE_NOT_FOUND`.
 
 ### `GET /people/search?type={contactType}&q={text}&limit=20`
-People who could take over a place of `type` in a replace.
+People who could take over a place of `type` in a replace. `422 PARENT_REQUIRED` for a type with
+more than `MAX_PLACES_LOADED` places, whose people can't be searched across the type.
 ```json
 { "people": [ {
   "id": "77d0…", "name": "Paul Oduor", "phone": "+254…",

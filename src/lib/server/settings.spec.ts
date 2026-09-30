@@ -47,6 +47,19 @@ describe('loadSettings', () => {
 		expect(() => loadSettings({ ...valid, DEPLOYMENT_DIR: 'nowhere' }, files({}))).toThrow(/nowhere\/instances\.json could not be read: DEPLOYMENT_DIR must be a deployment's folder/);
 	});
 
+	it('refuses to start without secrets, with equal keys, or with a malformed secret key', () => {
+		expect(() => loadSettings({}, reads(instancesFile))).toThrow(/COOKIE_PRIVATE_KEY is required[\s\S]*REDIS_URL is required/);
+		expect(() => loadSettings({ ...valid, WORKER_PRIVATE_KEY: valid.COOKIE_PRIVATE_KEY }, reads(instancesFile))).toThrow(/must differ/);
+		expect(() => loadSettings({ ...valid, SECRET_KEY: 'nothex' }, reads(instancesFile))).toThrow(/SECRET_KEY must be 64 hex/);
+	});
+
+	it('reads MAX_PLACES_LOADED, a count, and refuses anything else', () => {
+		expect(loadSettings(valid, reads(instancesFile)).maxPlacesLoaded).toBe(10_000);
+		expect(loadSettings({ ...valid, MAX_PLACES_LOADED: '500' }, reads(instancesFile)).maxPlacesLoaded).toBe(500);
+		expect(() => loadSettings({ ...valid, MAX_PLACES_LOADED: 'lots' }, reads(instancesFile))).toThrow('MAX_PLACES_LOADED must be a positive number');
+		expect(() => loadSettings({ ...valid, BATCH_MAX_ITEMS: '0' }, reads(instancesFile))).toThrow(/BATCH_MAX_ITEMS must be a positive number$/m);
+	});
+
 	it('refuses to start with an invalid PORT', () => {
 		expect(() => loadSettings({ ...valid, PORT: 'abc' }, reads(instancesFile))).toThrow(/PORT must be a number/);
 		expect(() => loadSettings({ ...valid, PORT: '70000' }, reads(instancesFile))).toThrow(/PORT must be a number/);

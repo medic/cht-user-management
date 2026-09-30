@@ -113,6 +113,7 @@
 			label={level.friendly_name}
 			type={level.contact_type}
 			parentId={above ? picks[above.property_name]?.id : undefined}
+			parentLabel={above?.friendly_name}
 			selected={picks[level.property_name]}
 			disabled={submitting}
 			onselect={(chosen) => {
@@ -126,6 +127,7 @@
 		{label}
 		type={contactType.name}
 		parentId={picks[levelOne.property_name]?.id}
+		parentLabel={levelOne.friendly_name}
 		selected={picked}
 		{exclude}
 		required

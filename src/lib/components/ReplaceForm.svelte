@@ -266,6 +266,7 @@
 				label={level.friendly_name}
 				type={level.contact_type}
 				parentId={above ? picked[above.property_name]?.id : undefined}
+				parentLabel={above?.friendly_name}
 				selected={picked[level.property_name]}
 				initialQuery={start.item?.raw?.[level.friendly_name] ?? ''}
 				error={shown(`hierarchy.${level.property_name}`)}
@@ -278,6 +279,7 @@
 			label={contactType.replacement_property.friendly_name}
 			type={contactType.name}
 			parentId={picked[levelOne.property_name]?.id}
+			parentLabel={levelOne.friendly_name}
 			selected={target}
 			initialQuery={start.item?.raw?.[contactType.replacement_property.friendly_name] ?? ''}
 			required

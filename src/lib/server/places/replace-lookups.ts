@@ -6,7 +6,8 @@ import { contactRef } from './documents';
 import { isWithinFacilities, namesOf } from './directory';
 import { eligibility, prepareReplace, type PersonNotEligible } from './replace';
 import type { ReplaceRequest } from './schemas';
-import { normalize, placesOfType } from './unique';
+import { allPlaces, tooManyPlaces } from './lookup';
+import { normalize } from './unique';
 
 // Read-only lookups for the replace form (APP.md → Replacing in the UI)
 
@@ -25,7 +26,12 @@ export type PersonMatch = {
 export async function searchPeople(cht: Cht, session: Session, query: { type: string; q?: string; limit: number }): Promise<PersonMatch[]> {
 	const contactType = getContactType(query.type, 'replace');
 	const wanted = normalize(query.q?.trim() ?? '');
-	const places = (await placesOfType(cht, contactType.name)).filter((doc) => isWithinFacilities(session, doc));
+	// the type's places are searched whole: a type too large for that is replaced by picking the place
+	const all = await allPlaces(cht, contactType.name);
+	if (!all) {
+		throw tooManyPlaces(`${contactType.friendly} places to search their people`);
+	}
+	const places = all.filter((doc) => isWithinFacilities(session, doc));
 	const contactIds = [...new Set(places.map((doc) => contactRef(doc.contact)).filter((id): id is string => !!id))];
 	const people = (contactIds.length ? await cht.getDocs(contactIds) : [])
 		.filter((doc) => doc.type === contactType.contact_type || doc.contact_type === contactType.contact_type)

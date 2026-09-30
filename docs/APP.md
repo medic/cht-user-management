@@ -274,6 +274,30 @@ That's the whole migration story: no scripts to run on deploy, and nothing to ro
 
 ## App Functionality
 
+## Finding places
+
+Every form, CSV row and check finds places by type and name: the parent for a new place, the place
+to replace, move, merge or delete, and duplicates. How depends on how many places the type has,
+since some types, such as households, run to hundreds of thousands:
+
+- **A type with at most `MAX_PLACES_LOADED` places** (10,000 by default) is read whole, kept for a
+  few minutes, and searched in memory. Places the tool creates are added to it straight away.
+- **A larger type is never read whole.** Only the places under one parent are read, when they're
+  needed, and each parent once per CSV file.
+
+Whether a type is large is checked by counting its places, no further than one past the limit and
+without reading the docs, again every few minutes. Nothing is configured per type, so any
+deployment's large types are handled the same way. For a large type:
+
+- **Searching it needs the place above.** A search without a parent is refused with
+  `PARENT_REQUIRED`, and a form's field for it waits until the field above is filled in.
+- **A CSV row finds it under the level above**, so that level must be filled in. The place a row
+  acts on is always looked for under the row's parent, whatever the type's size.
+- **Duplicate checks look within the parent.** A property `unique` within its parent is only ever
+  compared with the parent's places, for every type. One `unique` across all places can only be
+  checked within the parent for a large type.
+- **Replacing it can't search people across the type**; the place is picked instead.
+
 ## Staged list
 
 Nothing goes to CHT straight from a form or a file. Requests are first added to the user's **staged
@@ -1092,8 +1116,14 @@ Every job has a status the user can see, on its staged item and in a list of job
 
 1. **Find the place to move.** Pick the contact type, then search for the place by name within
    the hierarchy, as elsewhere. Show where it is now, and how much is under it.
-2. **Find the new parent.** Search places of the type at hierarchy level 1, within the caller's
-   facilities. The current parent, the place itself, and anything under it can't be picked.
+2. **Find the new parent**, the way the place was found: a field for each level above the new
+   parent (the type's hierarchy above level 1, as the CSV's "New …" columns), top first, then the
+   new parent itself, at level 1. Each field searches under the one directly above it, and waits
+   until that one is picked, so even a type too large to search whole is found (see
+   [Finding places](#finding-places)). The fields start out filled in down to the current
+   parent's parent, since most moves stay close: moving within the same unit only takes picking
+   the new parent. Changing a level clears the ones below it. Only the caller's facilities are
+   searched, and the current parent, the place itself, and anything under it can't be picked.
 3. **Show the impact** (above), and have the user confirm it.
 4. **Add to the staged list** as a `ready` `move` item. Uploading it schedules the job, and the item
    then shows the job's status.

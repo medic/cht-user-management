@@ -10,7 +10,8 @@ import { ApiError } from '../errors';
 import { batchWarnings } from '../places/batch';
 import { isWithinFacilities } from '../places/directory';
 import { lineageIds } from '../places/documents';
-import { normalize, placesOfType, uniquePropertyWarnings, type Warning } from '../places/unique';
+import { placeLookup, type PlaceLookup } from '../places/lookup';
+import { normalize, uniquePropertyWarnings, type Warning } from '../places/unique';
 import { ownerOf } from './owner';
 import { replaceColumns, stagedReplaceRow, validateReplaceItems } from './replace-csv';
 import { deleteColumns, stagedDeleteRow, validateDeleteItems } from './delete-items';
@@ -295,11 +296,8 @@ async function validateItems(deps: StagedDeps, owner: ListOwner, items: StagedIt
 		return;
 	}
 	const { cht, session } = deps.context;
-	const byType = new Map<string, Promise<CouchDoc[]>>();
-	const places = (type: string) => {
-		if (!byType.has(type)) byType.set(type, placesOfType(cht, type));
-		return byType.get(type)!;
-	};
+	// each parent's places are read once for the whole file
+	const places = placeLookup(cht);
 
 	const all = new Map((await deps.store.list(owner)).map((item) => [item.id, item]));
 	const personOf = (item: StagedItem): PropertyInput | undefined =>
@@ -387,7 +385,7 @@ async function finish(deps: StagedDeps, r: Resolved, rowWarnings: Warning[]): Pr
 export async function resolveHierarchy(
 	contactType: ContactType,
 	names: Record<string, string>,
-	places: (type: string) => Promise<CouchDoc[]>,
+	places: PlaceLookup,
 	allowed: (doc: CouchDoc) => boolean
 ): Promise<Omit<Resolved, 'item'>> {
 	const errors: ValidationErrors = {};
@@ -405,12 +403,15 @@ export async function resolveHierarchy(
 		}
 
 		const wanted = normalize(formatValue(level, name));
-		let matches = (await places(level.contact_type)).filter((doc) => normalize(formatValue(level, String(doc.name ?? ''))) === wanted);
-		if (above) {
-			const anchor = above;
-			matches = matches.filter((doc) => (anchor.level === level.level + 1 ? doc.parent?._id === anchor.doc._id : lineageIds(doc).includes(anchor.doc._id)));
-		}
+		// under the place found above, only its places are read: the way a type too large to read whole is found
+		const candidates = above ? await places.under(above.doc._id, level.contact_type, above.level - level.level) : await places.all(level.contact_type);
 		const under = above ? ` under "${above.doc.name}"` : '';
+		if (!candidates) {
+			const higher = contactType.hierarchy.filter((l) => l.level > level.level).sort((a, b) => a.level - b.level)[0];
+			errors[key] = `There are too many places to find ${level.friendly_name} "${name}" among them all${higher ? `: fill in ${higher.friendly_name}` : ''}`;
+			continue;
+		}
+		const matches = candidates.filter((doc) => normalize(formatValue(level, String(doc.name ?? ''))) === wanted);
 
 		if (!matches.length) {
 			errors[key] = `Can't find ${level.friendly_name} "${name}"${under}`;

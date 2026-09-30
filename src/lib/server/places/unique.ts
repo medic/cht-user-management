@@ -2,35 +2,7 @@ import type { ContactProperty, ContactType } from '../config';
 import type { Cht, CouchDoc } from '../cht/client';
 import { formatValue } from '../../validation/validators';
 import type { PropertyValues } from '../../validation';
-
-// A read-through cache of all places of a type, so a batch doesn't refetch them for every item. It
-// only feeds warnings; nothing is written based on it.
-const TTL_MS = 5 * 60 * 1000;
-const cache = new Map<string, { at: number; docs: Promise<CouchDoc[]> }>();
-
-export function placesOfType(cht: Cht, type: string): Promise<CouchDoc[]> {
-	const key = `${cht.domain}:${type}`;
-	const entry = cache.get(key);
-	if (entry && Date.now() - entry.at < TTL_MS) {
-		return entry.docs;
-	}
-
-	const docs = cht.placesOfType(type);
-	cache.set(key, { at: Date.now(), docs });
-	docs.catch(() => cache.delete(key));
-	return docs;
-}
-
-export function rememberPlace(cht: Cht, type: string, doc: CouchDoc): void {
-	const entry = cache.get(`${cht.domain}:${type}`);
-	if (entry) {
-		entry.docs = entry.docs.then((docs) => [...docs.filter((d) => d._id !== doc._id), doc]);
-	}
-}
-
-export function clearPlaceCache(): void {
-	cache.clear();
-}
+import { allPlaces, placesUnder } from './lookup';
 
 export function normalize(value: string): string {
 	return value.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase();
@@ -79,7 +51,10 @@ export async function uniquePropertyMatches(
 		return [];
 	}
 
-	const docs = await placesOfType(cht, contactType.name);
+	// only the parent's places when every property is unique within its parent. A type too large to
+	// read whole is checked within the parent too, even for "all" (APP.md → Finding places)
+	const everywhere = properties.some((p) => p.unique === 'all') ? await allPlaces(cht, contactType.name) : null;
+	const docs = everywhere ?? (await placesUnder(cht, target.parentId, contactType.name));
 	const warnings: DuplicateMatch[] = [];
 	for (const property of properties) {
 		const wanted = normalize(target.values[property.property_name]);

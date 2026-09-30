@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import type { Session } from '../auth/session';
 import { ApiError, ChtError } from '../errors';
 import type { OperationContext } from '../places/context';
-import { clearPlaceCache } from '../places/unique';
+import { clearPlaceCache } from '../places/lookup';
 import { FakeCht } from '../testing/fake-cht';
 import type { UploadLog, UploadLogRecord } from '../upload-log';
 import {

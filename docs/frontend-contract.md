@@ -162,7 +162,9 @@ values. When editing an existing place it shows old → new.
 A search box per hierarchy level, top level first. Each level searches
 `GET /places/search?type=<that level's type>&q=…&parentId=<the level above, once picked>`,
 debounced by about 250 ms. Results show the name and location; picking one stores its id and
-enables the level below. Clearing a level clears everything below it.
+enables the level below. Clearing a level clears everything below it, text included. When a search without a
+parent returns `PARENT_REQUIRED` (a type with too many places to search whole), the box waits,
+disabled, with "Choose {level above} first", until the level above is picked.
 
 ### Person search
 For replacing with an existing person: `GET /people/search?type=…&q=…`. Results show the name,
@@ -243,8 +245,12 @@ Behaviour: [APP.md → Hierarchy management](APP.md#3-hierarchy-management). Eac
 
 - **Move:**
   1. Find the place to move, and show where it is.
-  2. Find the new parent: place search at the type's level-1 hierarchy type. The current parent,
-     the place itself and anything under it are excluded from the results.
+  2. Find the new parent: a place search per level above the new parent (the type's hierarchy
+     levels above 1), top first, then the level-1 type. Each is disabled, with "Choose {level
+     above} first", until the one directly above is picked, and searches with `parentId` set to it.
+     They start out filled in from the place's current location, down to its parent's parent.
+     Changing a level clears those below it. The current parent, the place itself and anything
+     under it are excluded from the results.
   3. Show the impact panel.
   4. For a large move, the user ticks "I understand this is a large move".
   5. Add to list.

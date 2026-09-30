@@ -7,7 +7,8 @@ import type { CouchDoc } from '../cht/client';
 import { getContactType } from '../config';
 import { ApiError } from '../errors';
 import { isWithinFacilities } from '../places/directory';
-import { normalize, placesOfType } from '../places/unique';
+import { placeLookup } from '../places/lookup';
+import { normalize } from '../places/unique';
 import { resolveHierarchy, ROLES_COLUMN } from './csv';
 import { parseReplaceItem, stageReplace } from './replace-items';
 import type { StagedDeps } from './service';
@@ -146,11 +147,8 @@ export async function validateReplaceItems(
 		return;
 	}
 	const { cht, session } = deps.context;
-	const byType = new Map<string, Promise<CouchDoc[]>>();
-	const places = (type: string) => {
-		if (!byType.has(type)) byType.set(type, placesOfType(cht, type));
-		return byType.get(type)!;
-	};
+	// each parent's places are read once for the whole file
+	const places = placeLookup(cht);
 
 	// every Username's account, in one request: user-settings docs hold the account's contact
 	const usernames = [...new Set(items.map((item) => item.raw?.[USERNAME_COLUMN]?.trim()).filter((u): u is string => !!u))];
@@ -172,8 +170,8 @@ export async function validateReplaceItems(
 		const replacement = raw[contactType.replacement_property.friendly_name]?.trim() ?? '';
 		if (hierarchy.parent && replacement) {
 			const wanted = normalize(formatValue(contactType.replacement_property, replacement));
-			const matches = (await places(contactType.name)).filter(
-				(doc) => doc.parent?._id === hierarchy.parent!._id && normalize(formatValue(contactType.replacement_property, String(doc.name ?? ''))) === wanted
+			const matches = (await places.under(hierarchy.parent!._id, contactType.name)).filter(
+				(doc) => normalize(formatValue(contactType.replacement_property, String(doc.name ?? ''))) === wanted
 			);
 			if (!matches.length) errors.replacement = `Can't find ${contactType.friendly} "${replacement}" under "${hierarchy.parent.name}"`;
 			else if (matches.length > 1) errors.replacement = `Found ${matches.length} places called "${replacement}" under "${hierarchy.parent.name}"`;
