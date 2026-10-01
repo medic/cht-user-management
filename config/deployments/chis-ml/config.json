@@ -1,0 +1,421 @@
+{
+  "contact_types": [
+    {
+      "name": "c40_health_area",
+      "friendly": "Health Area",
+      "contact_type": "c42_health_area",
+      "user_role": ["dtc", "manager_stock"],
+      "username_from_place": false,
+      "deactivate_users_on_replace": false,
+      "hierarchy": [
+        {
+          "friendly_name": "District",
+          "property_name": "district",
+          "contact_type": "c30_district",
+          "type": "name",
+          "required": true,
+          "level": 1
+        }
+      ],
+      "replacement_property": {
+        "friendly_name": "Affected Health Area",
+        "property_name": "replacement",
+        "type": "string",
+        "parameter": ["\\(*Area*\\)"],
+        "required": true
+      },
+      "place_properties": [
+        {
+          "friendly_name": "Health Area Name",
+          "property_name": "name",
+          "type": "string",
+          "parameter": ["\\(*Area*\\)"],
+          "required": true,
+          "hint": "Name of the Health Area"
+        }
+      ],
+      "contact_properties": [
+        {
+          "friendly_name": "First name",
+          "property_name": "first_name",
+          "type": "string",
+          "parameter": ["\\(*First*\\)"],
+          "required": true,
+          "hint": "First name of the primary contact"
+        },
+        {
+          "friendly_name": "Last name",
+          "property_name": "last_name",
+          "type": "string",
+          "parameter": ["\\(*Last*\\)"],
+          "required": true,
+          "hint": "Last name of the primary contact"
+        },
+        {
+          "friendly_name": "Full Name",
+          "property_name": "name",
+          "type": "generated",
+          "parameter": "{{ contact.first_name }} {{ contact.last_name }}",
+          "required": false
+        },
+        {
+          "friendly_name": "Phone Number",
+          "property_name": "phone",
+          "type": "regex",
+          "parameter": "^(\\d{2}\\s?){4}$",
+          "required": true,
+          "hint": "Phone number of the primary contact"
+        },
+        {
+          "friendly_name": "Type of user",
+          "property_name": "role",
+          "type": "select_one",
+          "parameter": {
+            "dtc": "DTC",
+            "manager_stock": "Stock Manager"
+          },
+          "required": true,
+          "hint": "Type of user associated to the primary contact (dtc / manager_stock)"
+        },
+        {
+          "friendly_name": "Membership Structure",
+          "property_name": "membership_structure",
+          "type": "string",
+          "parameter": ["\\(STRUCTURE[ -]NAME\\)"],
+          "required": true,
+          "hint": "Membership Structure of the primary contact"
+        },
+        {
+          "friendly_name": "Require password change",
+          "property_name": "require_password_change",
+          "type": "select_one",
+          "required": false,
+          "parameter": {
+            "yes": "Yes",
+            "no": "No"
+          }
+        }
+      ]
+    },
+    {
+      "name": "c50_supervision_area",
+      "friendly": "Supervision Area",
+      "contact_type": "c52_supervisor",
+      "user_role": ["supervisor", "oca_supervisor"],
+      "username_from_place": false,
+      "deactivate_users_on_replace": false,
+      "hierarchy": [
+        {
+          "friendly_name": "Health Area",
+          "property_name": "health_area",
+          "contact_type": "c40_health_area",
+          "type": "name",
+          "required": true,
+          "level": 1
+        }
+      ],
+      "replacement_property": {
+        "friendly_name": "Affected Supervision Area",
+        "property_name": "replacement",
+        "type": "string",
+        "parameter": ["\\(*Area*\\)"],
+        "required": true
+      },
+      "place_properties": [
+        {
+          "friendly_name": "Supervision Area Name",
+          "property_name": "name",
+          "type": "string",
+          "parameter": ["\\(*Area*\\)"],
+          "required": true,
+          "hint": "Name of the Supervision Area"
+        }
+      ],
+      "contact_properties": [
+        {
+          "friendly_name": "First name",
+          "property_name": "first_name",
+          "type": "string",
+          "parameter": ["\\(*First*\\)"],
+          "required": true,
+          "hint": "First name of the primary contact"
+        },
+        {
+          "friendly_name": "Last name",
+          "property_name": "last_name",
+          "type": "string",
+          "parameter": ["\\(*Last*\\)"],
+          "required": true,
+          "hint": "Last name of the primary contact"
+        },
+        {
+          "friendly_name": "Full Name",
+          "property_name": "name",
+          "type": "generated",
+          "parameter": "{{ contact.first_name }} {{ contact.last_name }}",
+          "required": false
+        },
+        {
+          "friendly_name": "Phone Number",
+          "property_name": "phone",
+          "type": "regex",
+          "parameter": "^(\\d{2}\\s?){4}$",
+          "required": true,
+          "hint": "Phone number of the primary contact"
+        },
+        {
+          "friendly_name": "Type of user",
+          "property_name": "role",
+          "type": "select_one",
+          "parameter": {
+            "supervisor": "Supervisor",
+            "oca_supervisor": "ADC (OCA Coach)"
+          },
+          "required": true,
+          "hint": "Type of user associated to the primary contact (supervisor / oca_supervisor)"
+        },
+        {
+          "friendly_name": "Require password change",
+          "property_name": "require_password_change",
+          "type": "select_one",
+          "required": false,
+          "parameter": {
+            "yes": "Yes",
+            "no": "No"
+          }
+        }
+      ]
+    },
+    {
+      "name": "c60_chw_site",
+      "friendly": "CHW Site",
+      "contact_type": "c62_chw",
+      "user_role": ["chw"],
+      "username_from_place": false,
+      "deactivate_users_on_replace": false,
+      "hierarchy": [
+        {
+          "friendly_name": "Supervision area",
+          "property_name": "supervision_area",
+          "contact_type": "c50_supervision_area",
+          "type": "name",
+          "required": true,
+          "level": 1
+        }
+      ],
+      "replacement_property": {
+        "friendly_name": "Affected CHW Site",
+        "property_name": "replacement",
+        "type": "string",
+        "parameter": ["\\(*Site*\\)"],
+        "required": true
+      },
+      "place_properties": [
+        {
+          "friendly_name": "CHW Site Name",
+          "property_name": "name",
+          "type": "string",
+          "parameter": ["\\(*Site*\\)"],
+          "required": true,
+          "hint": "Name of the CHW Site"
+        }
+      ],
+      "contact_properties": [
+        {
+          "friendly_name": "First name",
+          "property_name": "first_name",
+          "type": "string",
+          "parameter": ["\\(*First*\\)"],
+          "required": true,
+          "hint": "First name of the primary contact"
+        },
+        {
+          "friendly_name": "Last name",
+          "property_name": "last_name",
+          "type": "string",
+          "parameter": ["\\(*Last*\\)"],
+          "required": true,
+          "hint": "Last name of the primary contact"
+        },
+        {
+          "friendly_name": "Full Name",
+          "property_name": "name",
+          "type": "generated",
+          "parameter": "{{ contact.first_name }} {{ contact.last_name }}",
+          "required": false
+        },
+        {
+          "friendly_name": "Site category",
+          "property_name": "site_category",
+          "type": "select_one",
+          "parameter": {
+            "existing": "Existing",
+            "unexisting": "Unexisting"
+          },
+          "required": true,
+          "hint": "Site category of the primary contact (existing, unexisting)"
+        },
+        {
+          "friendly_name": "Type of user",
+          "property_name": "role",
+          "type": "select_one",
+          "parameter": {
+            "chw": "chw"
+          },
+          "required": true,
+          "hint": "Type of user associated to the primary contact ('chw' only allowed here)"
+        },
+        {
+          "friendly_name": "Gender",
+          "property_name": "sex",
+          "type": "select_one",
+          "parameter": {
+            "male": "Masculin",
+            "female": "Feminin"
+          },
+          "required": true,
+          "hint": "Gender of the primary contact"
+        },
+        {
+          "friendly_name": "Phone Number",
+          "property_name": "phone",
+          "type": "regex",
+          "parameter": "^(\\d{2}\\s?){4}$",
+          "required": true,
+          "hint": "Phone number of the primary contact"
+        },
+        {
+          "friendly_name": "Geolocalized",
+          "property_name": "geolocalized",
+          "type": "select_one",
+          "parameter": {
+            "true": "Yes",
+            "false": "No"
+          },
+          "required": true,
+          "hint": "Has been geolocated? (true / false)"
+        },
+        {
+          "friendly_name": "Require password change",
+          "property_name": "require_password_change",
+          "type": "select_one",
+          "required": false,
+          "parameter": {
+            "yes": "Yes",
+            "no": "No"
+          }
+        }
+      ]
+    },
+    {
+      "name": "c70_village",
+      "friendly": "Village",
+      "contact_type": "c72_village",
+      "user_role": ["oca", "cvs", "savings", "wash_comity"],
+      "username_from_place": false,
+      "deactivate_users_on_replace": false,
+      "hierarchy": [
+        {
+          "friendly_name": "CHW Site",
+          "property_name": "chw_site",
+          "contact_type": "c60_chw_site",
+          "type": "name",
+          "required": true,
+          "level": 1
+        }
+      ],
+      "replacement_property": {
+        "friendly_name": "Affected Village",
+        "property_name": "replacement",
+        "type": "string",
+        "parameter": ["\\(*Village*\\)"],
+        "required": true
+      },
+      "place_properties": [
+        {
+          "friendly_name": "Village Name",
+          "property_name": "name",
+          "type": "string",
+          "parameter": ["\\(*Village*\\)"],
+          "required": true,
+          "hint": "Name of the Village"
+        }
+      ],
+      "contact_properties": [
+        {
+          "friendly_name": "First name",
+          "property_name": "first_name",
+          "type": "string",
+          "parameter": ["\\(*First*\\)"],
+          "required": true,
+          "hint": "First name of the primary contact"
+        },
+        {
+          "friendly_name": "Last name",
+          "property_name": "last_name",
+          "type": "string",
+          "parameter": ["\\(*Last*\\)"],
+          "required": true,
+          "hint": "Last name of the primary contact"
+        },
+        {
+          "friendly_name": "Full Name",
+          "property_name": "name",
+          "type": "generated",
+          "parameter": "{{ contact.first_name }} {{ contact.last_name }}",
+          "required": false
+        },
+        {
+          "friendly_name": "Gender",
+          "property_name": "sex",
+          "type": "select_one",
+          "parameter": {
+            "male": "Masculin",
+            "female": "Feminin"
+          },
+          "required": true,
+          "hint": "Gender of the primary contact"
+        },
+        {
+          "friendly_name": "Phone Number",
+          "property_name": "phone",
+          "type": "regex",
+          "parameter": "^(\\d{2}\\s?){4}$",
+          "required": true,
+          "hint": "Phone number of the primary contact"
+        },
+        {
+          "friendly_name": "Out of Area",
+          "property_name": "out_chw_area",
+          "type": "select_one",
+          "parameter": {
+            "true": "Yes",
+            "false": "No"
+          },
+          "required": true,
+          "hint": "Out of CHW Area ? (true / false)"
+        },
+        {
+          "friendly_name": "Type of user",
+          "property_name": "role",
+          "type": "select_one",
+          "parameter": {
+            "village_head": "Village Head"
+          },
+          "required": true,
+          "hint": "Type of user associated to the primary contact ('village_head' only allowed here)"
+        },
+        {
+          "friendly_name": "Require password change",
+          "property_name": "require_password_change",
+          "type": "select_one",
+          "required": false,
+          "parameter": {
+            "yes": "Yes",
+            "no": "No"
+          }
+        }
+      ]
+    }
+  ]
+}

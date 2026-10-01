@@ -1,1 +1,19 @@
+# Built inside the image
 node_modules
+build
+.svelte-kit
+
+# Never baked into the image: settings and secrets come from the environment
+.env
+.env.*
+!.env.example
+
+# Data and tooling that don't belong in the image
+data
+.git
+.github
+.vscode
+docs
+*.md
+!README.md
+vite.config.ts.timestamp-*

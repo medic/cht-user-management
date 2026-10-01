@@ -1,48 +1,43 @@
+# The app and its Redis. Settings come from .env (see .env.example):
+#
+#   docker compose up -d --build
+#
+# Compose sets what must differ inside the containers: where Redis is, and the port the app listens on.
+# DEPLOYMENT_DIR names the deployment's folder, and with it the instances; config/deployments/ is in
+# the image. To offer a local CHT from CHT_DEV_INSTANCE, which production ignores:
+#   NODE_ENV=development docker compose up -d
 services:
+  app:
+    build: .
+    image: cht-user-management
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      REDIS_URL: redis://redis:6379
+      PORT: 3000
+      NODE_ENV: ${NODE_ENV:-production}
+    ports:
+      - '${PORT:-3000}:3000'
+    volumes:
+      # archives of deleted and merged docs, which undo needs
+      - app-data:/app/data
+    depends_on:
+      redis:
+        condition: service_healthy
+
   redis:
-    image: redis:6.2-alpine
-    restart: always
+    image: redis:7-alpine
+    restart: unless-stopped
+    # staged lists, sessions, credentials and jobs live here: keep them on disk
+    command: ['redis-server', '--appendonly', 'yes']
     volumes:
       - redis-data:/data
-
-  cht-user-management:
-    image: ${CHT_USER_MANAGEMENT_IMAGE:-public.ecr.aws/medic/cht-user-management:latest}
-    env_file:
-      - .env
-    environment:
-      - NODE_ENV=${NODE_ENV:-production}
-      - EXTERNAL_PORT=${EXTERNAL_PORT:-3500}
-      - COOKIE_PRIVATE_KEY=${COOKIE_PRIVATE_KEY}
-      - WORKER_PRIVATE_KEY=${WORKER_PRIVATE_KEY}
-      - SECRET_KEY=${SECRET_KEY}
-      - CONFIG_NAME=${CONFIG_NAME}
-      - CHT_DEV_HTTP=${CHT_DEV_HTTP}
-      - CHT_DEV_URL_PORT=${CHT_DEV_URL_PORT}
-      - REDIS_HOST=${REDIS_HOST:-redis}
-      - REDIS_PORT=${REDIS_PORT:-6379}
-      - ALLOW_ADMIN_LOGIN=${ALLOW_ADMIN_LOGIN}
-      - CACHE_TTL=${CACHE_TTL}
-      - MATOMO_HOST=${MATOMO_HOST}
-    ports:
-      - "${EXTERNAL_PORT-3500}:${PORT:-3500}"
-    restart: always
-    command: npm start
-    depends_on:
-      - redis
-
-  cht-user-management-worker:
-    image: ${CHT_USER_MANAGEMENT_WORKER_IMAGE:-public.ecr.aws/medic/cht-user-management-worker:latest}
-    restart: always
-    command: npm run start:worker
-    environment:
-      - NODE_ENV=${NODE_ENV:-production}
-      - REDIS_HOST=${REDIS_HOST:-redis}
-      - REDIS_PORT=${REDIS_PORT:-6379}
-      - WORKER_PRIVATE_KEY=${WORKER_PRIVATE_KEY}
-      - CONFIG_NAME=${CONFIG_NAME}
-      - CHT_CONF_MAX_OLD_SPACE_MB=${CHT_CONF_MAX_OLD_SPACE_MB}
-    depends_on:
-      - redis
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 10
 
 volumes:
+  app-data:
   redis-data:

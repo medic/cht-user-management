@@ -10,11 +10,14 @@ jobs:
     timeout-minutes: 15
 
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-node@v1
-      with:
-        node-version: 20.x
-    - run: npm ci
-    - run: npm run build
-    - run: npm run lint
-    - run: npm test
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+      - run: npm ci
+      # the style (.prettierrc) and the code rules (eslint.config.js); fix with npm run format and npm run lint
+      - run: npm run format:check
+      - run: npm run lint
+      - run: npm run check
+      - run: npm test
+      - run: npm run build
