@@ -1,4 +1,5 @@
 import { existsSync } from 'node:fs';
+import { rm } from 'node:fs/promises';
 
 import { issueToken } from '../auth/tokens';
 import type { Session } from '../auth/session';
@@ -11,6 +12,7 @@ import { checkUndo, previewUndo, type UndoPreview } from './restore';
 import { checkMove, type MoveRequest } from './move';
 import { checkMerge, type MergeRequest } from './merge';
 import { newJobId } from '../places/schemas';
+import { within } from '../paths';
 import { FINISHED, type HierarchyJob, type JobStatus, type JobStore } from './jobs';
 
 // The hierarchy job API (docs/api-contract.md → Hierarchy jobs)
@@ -179,4 +181,19 @@ export function jobArchive(settings: JobSettings, job: HierarchyJob): string {
     throw new ApiError(404, 'ARCHIVE_NOT_FOUND', "This job has no archive, or it's no longer kept.");
   }
   return path;
+}
+
+// A job that succeeded, gone with everything it left: its record and log, its archive of deleted or
+// merged docs, any work folder, and the undo of a delete. False, and nothing removed, while it or its
+// undo is still to run, running, or failed, and so still to be finished or retried (APP.md → Data storage)
+export async function forgetJob(deps: Pick<JobDeps, 'store' | 'settings'>, instanceId: string, jobId: string): Promise<boolean> {
+  const job = await deps.store.get(instanceId, jobId);
+  if (!job) return true;
+  if (job.status !== 'done') return false;
+  if (job.kind === 'delete' && !(await forgetJob(deps, instanceId, `${job.id}-undo`))) return false;
+
+  await rm(archivePath(deps.settings.archiveDir, job), { force: true });
+  await rm(within(deps.settings.workDir, job.id), { recursive: true, force: true });
+  await deps.store.remove(instanceId, job.id, job.createdBy);
+  return true;
 }

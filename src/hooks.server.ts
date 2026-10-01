@@ -4,7 +4,7 @@ import { authenticate } from '$lib/server/auth/authenticate';
 import { authError } from '$lib/server/auth/errors';
 import { presentedToken, SESSION_COOKIE } from '$lib/server/auth/session';
 import { errorResponse } from '$lib/server/http';
-import { getRevocations, startJobRunner } from '$lib/server/runtime';
+import { getRevocations, startDataSweeper, startJobRunner } from '$lib/server/runtime';
 import { checkDeployment } from '$lib/server/config';
 import { setMaxPlacesLoaded } from '$lib/server/places/lookup';
 import { getSettings } from '$lib/server/settings';
@@ -15,12 +15,14 @@ export const init: ServerInit = async () => {
   setMaxPlacesLoaded(getSettings().maxPlacesLoaded);
   await checkDeployment();
   startJobRunner();
+  startDataSweeper();
 };
 
 // the dev server reloads this module on changes without calling init again: redo what it set up
 if (import.meta.env.DEV) {
   setMaxPlacesLoaded(getSettings().maxPlacesLoaded);
   startJobRunner();
+  startDataSweeper();
 }
 
 const PUBLIC_PATHS = new Set(['/api/v1/config/instances', '/api/v1/config/logo', '/api/v1/auth/login', '/api/v1/auth/sso']);

@@ -14,8 +14,8 @@ import { RedisUploadLog, type UploadLog } from './upload-log';
 // (APP.md → Data storage), shared by every server instance.
 let redis: Redis | undefined;
 let revocations: RevocationList | undefined;
-let uploadLog: UploadLog | undefined;
-let stagedStore: StagedStore | undefined;
+let uploadLog: RedisUploadLog | undefined;
+let stagedStore: RedisStagedStore | undefined;
 let uploadTracker: UploadTracker | undefined;
 let validationTracker: UploadTracker | undefined;
 
@@ -31,13 +31,13 @@ export function getRevocations(): RevocationList {
 
 export function getUploadLog(): UploadLog {
   const settings = getSettings();
-  uploadLog ??= new RedisUploadLog(getRedis(), settings.secretKey, settings.credentialsTtlSeconds);
+  uploadLog ??= new RedisUploadLog(getRedis(), settings.secretKey, settings.dataTtlSeconds);
   return uploadLog;
 }
 
 export function getStagedStore(): StagedStore {
   const settings = getSettings();
-  stagedStore ??= new RedisStagedStore(getRedis(), settings.secretKey, settings.stagedListTtlSeconds);
+  stagedStore ??= new RedisStagedStore(getRedis(), settings.secretKey);
   return stagedStore;
 }
 
@@ -51,7 +51,7 @@ let jobRunner: JobRunner | undefined;
 
 export function getJobStore(): JobStore {
   const settings = getSettings();
-  jobStore ??= new RedisJobStore(getRedis(), settings.secretKey, settings.jobs.ttlSeconds);
+  jobStore ??= new RedisJobStore(getRedis(), settings.secretKey, settings.dataTtlSeconds);
   return jobStore;
 }
 
@@ -85,4 +85,37 @@ export function startJobRunner(): JobRunner {
 export function getValidationTracker(): UploadTracker {
   validationTracker ??= new RedisUploadTracker(getRedis(), 'validation');
   return validationTracker;
+}
+
+// Removes staged items and passwords past DATA_RETENTION_TTL every few minutes, so nothing that
+// succeeded is kept longer just because no one read it (jobs and their logs expire in Redis on their
+// own, and the job runner sweeps their archives). Safe on every server at once: removals are idempotent
+const SWEEPER = Symbol.for('cht-iam.dataSweeper');
+type WithSweeper = typeof globalThis & { [SWEEPER]?: ReturnType<typeof setInterval> };
+const SWEEP_MS = 10 * 60 * 1000;
+
+export function startDataSweeper(): void {
+  const global = globalThis as WithSweeper;
+  clearInterval(global[SWEEPER]);
+  const sweep = async () => {
+    try {
+      // loaded here: the staged service reaches this module through http.ts
+      const { expired, forgetItemJob } = await import('./staged/service');
+      const settings = getSettings();
+      const deps = {
+        ttlSeconds: settings.dataTtlSeconds,
+        jobs: { store: getJobStore(), workerKey: settings.workerKey, settings: settings.jobs }
+      };
+      await (getStagedStore() as RedisStagedStore).sweep(async (owner, item) => {
+        if (!(await expired(deps, owner, item))) return false;
+        await forgetItemJob(deps, owner, item);
+        return true;
+      });
+      await (getUploadLog() as RedisUploadLog).sweep();
+    } catch (e) {
+      console.error('data sweep', e);
+    }
+  };
+  void sweep();
+  global[SWEEPER] = setInterval(sweep, SWEEP_MS);
 }

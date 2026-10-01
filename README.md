@@ -258,18 +258,15 @@ Variable | Description | Sample
 `CHT_DEV_IDP_ORIGINS` | Comma-separated SSO identity providers for the dev instance | `http://localhost:8080`
 `ALLOW_ADMIN_LOGIN` | Allow login for admin accounts. Defaults to true. | `true`
 `SESSION_TTL` | Duration in seconds a login lasts. Keep it no longer than the instance's CouchDB session timeout. Defaults to 86400 (1 day) | `86400`
-`CREDENTIALS_TTL` | Duration in seconds generated passwords can be seen again. Defaults to 432000 (5 days). | `432000`
-`STAGED_LIST_TTL` | Duration in seconds a staged list is kept without changes. Defaults to 1209600 (14 days) | `1209600`
+`DATA_RETENTION_TTL` | Duration in seconds the tool holds what succeeded: done staged items, finished jobs with their logs and archives, and generated passwords. Anything unfinished or failed is kept until it's dealt with. Defaults to 1209600 (14 days) | `1209600`
 `BATCH_MAX_ITEMS` | Most staged items sent to CHT in one batch. Defaults to 100 | `100`
 `MAX_PLACES_LOADED` | A place type with more places than this, eg. households, is only ever searched under a parent. Defaults to 10000 | `10000`
 `MAX_SENTINEL_BACKLOG` | Max sentinel backlog count before the tool starts delaying move, merge and delete jobs. Defaults to 7000 | `7000`
 `JOB_RECHECK` | Duration in seconds before a delayed job checks again. Defaults to 900 | `900`
-`JOB_TTL` | Duration in seconds finished jobs are kept. Defaults to 2592000 (30 days) | `2592000`
 `JOB_TIMEOUT` | Duration in seconds one cht-conf step of a job may take. Defaults to 14400 (4 hours) | `14400`
 `CHT_CONF_HEAP_MB` | Memory, in megabytes, a job's cht-conf may use. Defaults to 2048 | `2048`
 `JOB_WORK_DIR` | Where each job's working folder goes. Removed when the job ends | `/tmp/cht-iam-jobs`
-`ARCHIVE_LOCATION` | Where copies of every deleted and merged doc are kept, so a delete can be undone | `data/archives`
-`ARCHIVE_TTL` | Duration in seconds those copies are kept. Defaults to 2592000 (30 days) | `2592000`
+`ARCHIVE_LOCATION` | Where copies of every deleted and merged doc are kept, as long as their job, so a delete can be undone | `data/archives`
 
 ## Development Process
 

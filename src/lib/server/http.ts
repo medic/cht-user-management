@@ -119,7 +119,8 @@ export function stagedDeps(locals: App.Locals): StagedDeps {
     validationTracker: getValidationTracker(),
     context: operationContext(locals),
     maxBatch: getSettings().batchMaxItems,
-    jobs: { store: getJobStore(), workerKey: getSettings().workerKey, settings: getSettings().jobs }
+    jobs: { store: getJobStore(), workerKey: getSettings().workerKey, settings: getSettings().jobs },
+    ttlSeconds: getSettings().dataTtlSeconds
   };
 }
 

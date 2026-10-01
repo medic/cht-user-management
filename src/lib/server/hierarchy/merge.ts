@@ -158,7 +158,8 @@ export type MergeRun = {
   runChtConf: ChtConfRunner;
   workDir: string;
   archiveDir: string;
-  archiveTtlSeconds: number;
+  // DATA_RETENTION_TTL: the archive goes with its job, this long after the job succeeds
+  ttlSeconds: number;
   log: (line: string) => void;
   update: (change: Partial<HierarchyJob>) => Promise<HierarchyJob>;
 };
@@ -218,7 +219,7 @@ export async function runMerge(run: MergeRun): Promise<HierarchyJob> {
     );
     await run.update({
       phase: 'archived',
-      archive: { available: true, docs: kept, expiresAt: new Date(Date.now() + run.archiveTtlSeconds * 1000).toISOString() }
+      archive: { available: true, docs: kept, expiresAt: new Date(Date.now() + run.ttlSeconds * 1000).toISOString() }
     });
 
     // 3. cht-conf writes them, and handles the accounts at the source

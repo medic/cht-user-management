@@ -30,22 +30,47 @@ export interface UploadLog {
   list(owner: CredentialsOwner): Promise<UploadLogRecord[]>;
 }
 
+// Each entry is scored by when it was made, and removed ttlSeconds later: on every read and write,
+// entries older than that go (APP.md → Data storage). The key itself expires with its newest entry
 export class RedisUploadLog implements UploadLog {
   constructor(
     private readonly redis: Redis,
     private readonly secretKeyHex: string,
-    private readonly ttlSeconds: number
+    private readonly ttlSeconds: number,
+    private readonly now: () => number = Date.now
   ) {}
 
   async log(owner: CredentialsOwner, record: Omit<UploadLogRecord, 'id'>): Promise<void> {
     const key = credentialsKey(owner);
     const encrypted = this.encrypt(JSON.stringify({ id: crypto.randomUUID(), ...record }));
-    await this.redis.pipeline().zadd(key, Date.now(), encrypted).expire(key, this.ttlSeconds).exec();
+    await this.redis
+      .pipeline()
+      .zremrangebyscore(key, '-inf', this.expiredBefore())
+      .zadd(key, this.now(), encrypted)
+      .expire(key, this.ttlSeconds)
+      .exec();
   }
 
   async list(owner: CredentialsOwner): Promise<UploadLogRecord[]> {
-    const entries = await this.redis.zrevrange(credentialsKey(owner), 0, -1);
+    const key = credentialsKey(owner);
+    const [, [, entries]] = (await this.redis
+      .pipeline()
+      .zremrangebyscore(key, '-inf', this.expiredBefore())
+      .zrevrange(key, 0, -1)
+      .exec()) as [unknown, [unknown, string[]]];
     return entries.map((entry) => JSON.parse(this.decrypt(entry)));
+  }
+
+  // Every record's expired entries, removed whether or not anyone reads them
+  async sweep(): Promise<void> {
+    for await (const keys of this.redis.scanStream({ match: 'credentials:*', count: 100 }) as AsyncIterable<string[]>) {
+      for (const key of keys) await this.redis.zremrangebyscore(key, '-inf', this.expiredBefore());
+    }
+  }
+
+  // scores below this are older than ttlSeconds ("(" leaves out an entry made exactly then)
+  private expiredBefore(): string {
+    return `(${this.now() - this.ttlSeconds * 1000}`;
   }
 
   private encrypt(text: string): string {
@@ -76,14 +101,6 @@ export class MemoryUploadLog implements UploadLog {
 
   async list(owner: CredentialsOwner): Promise<UploadLogRecord[]> {
     return this.byOwner.get(credentialsKey(owner)) ?? [];
-  }
-}
-
-// Used when Redis isn't configured: nothing is retained, so replays can't return passwords
-export class DisabledUploadLog implements UploadLog {
-  async log(): Promise<void> {}
-  async list(): Promise<UploadLogRecord[]> {
-    return [];
   }
 }
 

@@ -13,7 +13,7 @@ import { parseReplaceItem, stageReplace } from './replace-items';
 import { parseDeleteItem, stageDelete } from './delete-items';
 import { parseMoveItem, stageMove } from './move-items';
 import { parseMergeItem, stageMerge } from './merge-items';
-import { scheduleJob, view, type JobDeps } from '../hierarchy/service';
+import { forgetJob, scheduleJob, view, type JobDeps } from '../hierarchy/service';
 import { toErrorBody } from '../http';
 import type { StagedStore } from './store';
 import { STAGED_KINDS, STAGED_STATUSES, type ListOwner, type StagedItem, type StagedStatus } from './types';
@@ -35,6 +35,9 @@ export type StagedDeps = {
   maxBatch: number;
   // for delete items: uploading one schedules a hierarchy job
   jobs?: Omit<JobDeps, 'cht' | 'session'>;
+  // DATA_RETENTION_TTL: every item goes this long after it was added
+  ttlSeconds?: number;
+  now?: () => number;
 };
 
 export const createItemRequest = createRequest.extend({ placeId: docId });
@@ -85,7 +88,7 @@ export async function listItems(deps: StagedDeps, query: z.infer<typeof listQuer
   await recoverInterruptedUpload(deps, owner);
 
   const text = query.q?.trim().toLowerCase();
-  const matching = (await deps.store.list(owner))
+  const matching = (await currentItems(deps, owner))
     .filter((item) => !query.status || item.status === query.status)
     .filter((item) => !query.kind || item.kind === query.kind)
     .filter((item) => !query.file || (item.source.type === 'csv' && item.source.file === query.file))
@@ -115,6 +118,45 @@ export async function listItems(deps: StagedDeps, query: z.infer<typeof listQuer
     upload,
     validation
   };
+}
+
+// An item that succeeded goes DATA_RETENTION_TTL after it did (APP.md → Data storage): once uploaded,
+// or once its job is done. Its upload started just before any password it made, so it goes with that,
+// never after. Anything else stays until it's dealt with
+export async function expired(deps: Pick<StagedDeps, 'jobs' | 'ttlSeconds' | 'now'>, owner: ListOwner, item: StagedItem): Promise<boolean> {
+  if (!deps.ttlSeconds || item.status !== 'created') return false;
+  let succeededAt = Date.parse(item.upload?.startedAt ?? item.updatedAt);
+  const jobId = JOB_KINDS.includes(item.kind) ? item.request.jobId : undefined;
+  if (jobId && deps.jobs) {
+    const job = await deps.jobs.store.get(owner.instanceId, jobId);
+    // a job that's gone had succeeded: only those expire
+    if (job && job.status !== 'done') return false;
+    if (job) succeededAt = Date.parse(job.finishedAt ?? job.updatedAt);
+  }
+  return (deps.now?.() ?? Date.now()) - succeededAt >= deps.ttlSeconds * 1000;
+}
+
+// the kinds whose upload schedules a background job
+const JOB_KINDS: StagedItem['kind'][] = ['delete', 'move', 'merge'];
+
+// An expired item's job goes with it, with what the job left
+export async function forgetItemJob(deps: Pick<StagedDeps, 'jobs'>, owner: ListOwner, item: StagedItem): Promise<void> {
+  const jobId = JOB_KINDS.includes(item.kind) ? item.request.jobId : undefined;
+  if (jobId && deps.jobs) await forgetJob(deps.jobs, owner.instanceId, jobId);
+}
+
+async function forget(deps: StagedDeps, owner: ListOwner, item: StagedItem): Promise<void> {
+  await forgetItemJob(deps, owner, item);
+  await deps.store.remove(owner, item.id);
+}
+
+// The list, with expired items removed from it
+async function currentItems(deps: StagedDeps, owner: ListOwner): Promise<StagedItem[]> {
+  const items = await deps.store.list(owner);
+  const gone: StagedItem[] = [];
+  for (const item of items) if (await expired(deps, owner, item)) gone.push(item);
+  for (const item of gone) await forget(deps, owner, item);
+  return gone.length ? items.filter((item) => !gone.includes(item)) : items;
 }
 
 // An upload whose server stopped leaves items "uploading" with no lock held; nothing will finish them
@@ -809,9 +851,11 @@ async function recordResult(deps: StagedDeps, owner: ListOwner, id: string, resu
   const error = (result.body as { error?: { code: string; message: string; details?: Record<string, any> } }).error;
 
   if (result.status < 300) {
+    // the password is only ever kept in the credentials record, which expires it on time
+    const { password: _password, ...created } = result.body as Record<string, unknown>;
     await saveIgnoringConflict(deps, owner, current, {
       status: 'created',
-      result: result.body as Record<string, unknown>,
+      result: created,
       failure: undefined
     });
   } else if (error?.code === 'WARNINGS') {
@@ -861,7 +905,11 @@ async function saveIgnoringConflict(
 }
 
 async function requireItem(deps: StagedDeps, owner: ListOwner, id: string): Promise<StagedItem> {
-  const item = await deps.store.get(owner, id);
+  let item = await deps.store.get(owner, id);
+  if (item && (await expired(deps, owner, item))) {
+    await forget(deps, owner, item);
+    item = undefined;
+  }
   if (!item) {
     throw new ApiError(404, 'ITEM_NOT_FOUND', 'This item is no longer in your staged list.');
   }
@@ -879,7 +927,7 @@ function itemLocked(item: StagedItem): ApiError {
 // The places one upload created, for downloading their logins together: `upload` is its runId, or
 // "earlier" for items uploaded before uploads were recorded on items
 export async function placesCreatedBy(deps: StagedDeps, upload: string): Promise<{ placeIds: string[]; startedAt?: string }> {
-  const created = (await deps.store.list(ownerOf(deps.context))).filter(
+  const created = (await currentItems(deps, ownerOf(deps.context))).filter(
     (item) => item.status === 'created' && (upload === UPLOADED_EARLIER ? !item.upload : item.upload?.runId === upload)
   );
   return {

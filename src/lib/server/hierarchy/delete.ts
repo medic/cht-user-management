@@ -168,7 +168,8 @@ export type DeleteRun = {
   runChtConf: ChtConfRunner;
   workDir: string;
   archiveDir: string;
-  archiveTtlSeconds: number;
+  // DATA_RETENTION_TTL: the archive goes with its job, this long after the job succeeds
+  ttlSeconds: number;
   log: (line: string) => void;
   // saves the job's progress as the run goes
   update: (change: Partial<HierarchyJob>) => Promise<HierarchyJob>;
@@ -225,7 +226,7 @@ export async function runDelete(run: DeleteRun): Promise<HierarchyJob> {
     await run.update({
       phase: 'archived',
       accounts,
-      archive: { available: true, docs: archived, expiresAt: new Date(Date.now() + run.archiveTtlSeconds * 1000).toISOString() }
+      archive: { available: true, docs: archived, expiresAt: new Date(Date.now() + run.ttlSeconds * 1000).toISOString() }
     });
 
     // 3. cht-conf writes the deletions and handles the accounts at the deleted places

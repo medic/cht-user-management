@@ -299,7 +299,11 @@ signed-in instance.
 ### `GET /staged-items?status=&kind=&q=&limit=&cursor=`
 Items not uploaded come first, then each upload's items, the latest upload first. Each uploaded
 item carries `upload: { runId, startedAt }`. Within each group, the newest come first; the rows of one
-CSV upload were added together, so they stay together in file order.
+CSV upload were added together, so they stay together in file order. A done item is removed
+`DATA_RETENTION_TTL` after it succeeded: after its upload started (so as its passwords expire from
+`GET /credentials`), or for a move, merge or delete, after its job finished. After that, it's gone
+from the list, the counts, and `GET /staged-items/{id}` (`404 ITEM_NOT_FOUND`). Items that haven't
+succeeded never expire.
 ```json
 { "items": [ … ], "nextCursor": "…",
   "counts": { "pending": 0, "invalid": 3, "needs_confirmation": 1, "ready": 40, "created": 12, "failed": 0 },
@@ -536,8 +540,10 @@ once the archive has expired.
 
 Behaviour: step 8 of [APP.md → Create Users → Steps](APP.md#steps).
 
-### `GET /credentials?placeIds=&limit=&cursor=`
-The caller's credentials record, newest first, until each entry expires.
+### `GET /credentials?placeIds=`
+The caller's credentials record on this instance, newest first. Each entry is kept for
+`DATA_RETENTION_TTL` after it was made, then forgotten; `expiresAt` says when. Passwords are only
+here: done staged items don't carry them.
 ```json
 { "credentials": [ { "placeId": "…", "contactId": "…", "place": "…", "person": "…", "phone": "…",
                      "username": "…", "password": "…", "createdAt": "…", "expiresAt": "…" } ] }

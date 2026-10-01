@@ -37,8 +37,6 @@ else
 end
 redis.call('HSET', KEYS[1], ARGV[1], ARGV[3])
 redis.call('HINCRBY', KEYS[2], ARGV[4], 1)
-redis.call('EXPIRE', KEYS[1], ARGV[5])
-redis.call('EXPIRE', KEYS[2], ARGV[5])
 return 1
 `;
 
@@ -54,8 +52,7 @@ return 1
 export class RedisStagedStore implements StagedStore {
   constructor(
     private readonly redis: Redis,
-    private readonly secretKeyHex: string,
-    private readonly ttlSeconds: number
+    private readonly secretKeyHex: string
   ) {}
 
   async list(owner: ListOwner): Promise<StagedItem[]> {
@@ -88,8 +85,7 @@ export class RedisStagedStore implements StagedStore {
         next.id,
         expectedRevision === null ? '' : String(expectedRevision),
         this.encode(next),
-        next.status,
-        String(this.ttlSeconds)
+        next.status
       );
     } catch (e) {
       if ((e as Error).message?.includes('REVISION')) {
@@ -102,6 +98,32 @@ export class RedisStagedStore implements StagedStore {
 
   async remove(owner: ListOwner, id: string): Promise<boolean> {
     return (await this.redis.eval(REMOVE_SCRIPT, 2, this.itemsKey(owner), this.countsKey(owner), id)) === 1;
+  }
+
+  // Every list's items that `expire` says have expired, removed whether or not anyone reads the list
+  // (APP.md → Data storage). Returns how many went. `match` narrows it to some lists, eg. in tests
+  async sweep(expire: (owner: ListOwner, item: StagedItem) => Promise<boolean>, match = 'staged:*'): Promise<number> {
+    let removed = 0;
+    for await (const keys of this.redis.scanStream({ match, count: 100 }) as AsyncIterable<string[]>) {
+      for (const key of keys.filter((key) => !key.endsWith(':counts'))) {
+        // staged:{instance}:{user}, the instance being letters, digits and dashes
+        const [, instanceId, ...user] = key.split(':');
+        const owner = { instanceId, username: decodeURIComponent(user.join(':')) };
+        for (const [id, value] of Object.entries(await this.redis.hgetall(key))) {
+          let item: StagedItem;
+          try {
+            item = this.decode(value);
+          } catch {
+            // eg. written under another SECRET_KEY: left alone, and the rest still swept
+            console.error(`staged item ${id} in ${key} can't be read; not swept`);
+            continue;
+          }
+          if (!(await expire(owner, item))) continue;
+          removed += (await this.redis.eval(REMOVE_SCRIPT, 2, key, `${key}:counts`, id)) === 1 ? 1 : 0;
+        }
+      }
+    }
+    return removed;
   }
 
   private itemsKey(owner: ListOwner): string {

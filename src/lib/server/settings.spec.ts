@@ -33,7 +33,7 @@ describe('loadSettings', () => {
     expect(settings).toMatchObject({
       deploymentDir: 'deployments/ke',
       sessionTtlSeconds: 86400,
-      credentialsTtlSeconds: 432000,
+      dataTtlSeconds: 1209600,
       allowAdminLogin: true,
       production: false
     });
@@ -63,6 +63,18 @@ describe('loadSettings', () => {
     expect(() => loadSettings({}, reads(instancesFile))).toThrow(/COOKIE_PRIVATE_KEY is required[\s\S]*REDIS_URL is required/);
     expect(() => loadSettings({ ...valid, WORKER_PRIVATE_KEY: valid.COOKIE_PRIVATE_KEY }, reads(instancesFile))).toThrow(/must differ/);
     expect(() => loadSettings({ ...valid, SECRET_KEY: 'nothex' }, reads(instancesFile))).toThrow(/SECRET_KEY must be 64 hex/);
+  });
+
+  it('holds data for DATA_RETENTION_TTL, the one lifetime, and refuses the settings it replaced', () => {
+    const settings = loadSettings({ ...valid, DATA_RETENTION_TTL: '604800' }, reads(instancesFile));
+    expect(settings.dataTtlSeconds).toBe(604800);
+    // jobs, and the token a queued job carries, use it too
+    expect(settings.jobs.ttlSeconds).toBe(604800);
+    for (const name of ['STAGED_LIST_TTL', 'CREDENTIALS_TTL', 'JOB_TTL', 'ARCHIVE_TTL']) {
+      expect(() => loadSettings({ ...valid, [name]: '100' }, reads(instancesFile)), name).toThrow(
+        `${name} is no longer read: DATA_RETENTION_TTL is how long all stored data is kept`
+      );
+    }
   });
 
   it('reads MAX_PLACES_LOADED, a count, and refuses anything else', () => {

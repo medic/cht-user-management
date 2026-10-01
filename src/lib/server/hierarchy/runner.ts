@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { readdir, rm, stat } from 'node:fs/promises';
+import { readdir, rm } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import type { Instance } from '../auth/instances';
@@ -33,6 +33,9 @@ export type RunnerDeps = {
 
 const LOCK_MS = 60_000;
 const LOG_TAIL = 30;
+
+// how often archives whose job is gone are looked for
+const SWEEP_MS = 10 * 60 * 1000;
 
 export class JobRunner {
   private readonly owner = randomUUID();
@@ -173,7 +176,7 @@ export class JobRunner {
           runChtConf: this.deps.runChtConf,
           workDir: settings.workDir,
           archiveDir: settings.archiveDir,
-          archiveTtlSeconds: settings.archiveTtlSeconds,
+          ttlSeconds: settings.ttlSeconds,
           log,
           update: save
         });
@@ -205,7 +208,7 @@ export class JobRunner {
         runChtConf: this.deps.runChtConf,
         workDir: settings.workDir,
         archiveDir: settings.archiveDir,
-        archiveTtlSeconds: settings.archiveTtlSeconds,
+        ttlSeconds: settings.ttlSeconds,
         log,
         update: save
       });
@@ -229,16 +232,16 @@ export class JobRunner {
     return new Date(this.now().getTime() + this.deps.settings.recheckSeconds * 1000).toISOString();
   }
 
-  // archives past ARCHIVE_TTL, checked at most hourly
+  // archives go with their job, which goes DATA_RETENTION_TTL after it succeeded. A failed job keeps
+  // its archive for a retry. Checked every few minutes
   private async sweepArchives(): Promise<void> {
-    if (Date.now() - this.lastSweep < 3_600_000) return;
+    if (Date.now() - this.lastSweep < SWEEP_MS) return;
     this.lastSweep = Date.now();
     const root = this.deps.settings.archiveDir;
-    const cutoff = Date.now() - this.deps.settings.archiveTtlSeconds * 1000;
     for (const instance of await readdir(root).catch(() => [] as string[])) {
       for (const name of await readdir(join(root, instance)).catch(() => [] as string[])) {
-        const path = join(root, instance, name);
-        if ((await stat(path)).mtimeMs < cutoff) await rm(path, { force: true });
+        const jobId = name.replace(/\.ndjson\.gz$/, '');
+        if (!(await this.deps.store.get(instance, jobId))) await rm(join(root, instance, name), { force: true });
       }
     }
   }

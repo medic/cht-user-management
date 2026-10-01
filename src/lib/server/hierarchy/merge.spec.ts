@@ -48,7 +48,6 @@ beforeEach(() => {
     ttlSeconds: 86_400,
     workDir: join(dir, 'work'),
     archiveDir: join(dir, 'archives'),
-    archiveTtlSeconds: 86_400,
     timeoutSeconds: 60,
     chtConfHeapMb: 256
   };

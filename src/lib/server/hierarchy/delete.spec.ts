@@ -49,7 +49,6 @@ beforeEach(() => {
     ttlSeconds: 86_400,
     workDir: join(dir, 'work'),
     archiveDir: join(dir, 'archives'),
-    archiveTtlSeconds: 86_400,
     timeoutSeconds: 60,
     chtConfHeapMb: 256
   };
@@ -329,6 +328,68 @@ describe('delete items in the staged list', () => {
     listed = (await listItems(staged, listQuery.parse({}))).items[0];
     expect(listed).toMatchObject({ id: added.id, job: { status: 'done', result: { contacts: 6, reports: 2 } } });
     expect(cht.docs.has('chu')).toBe(false);
+  });
+
+  it('removes an expired item with its job, the job’s log and archive, and the undo', async () => {
+    const JOB = '00000000-0000-4000-8000-000000000001';
+    const DAY_MS = 24 * 60 * 60 * 1000;
+    let now = Date.now();
+    staged = { ...staged, ttlSeconds: 5 * 24 * 60 * 60, now: () => now };
+    await addItem(staged, item());
+    await startUpload(staged);
+    await waitFor(async () => (await staged.tracker.state(owner)).state === 'idle');
+    await runner().tick();
+    await undoJob(deps, JOB, { recreateLogins: false });
+    await runner().tick();
+    const done = (await store.get('test', JOB))!;
+    expect(existsSync(archivePath(settings.archiveDir, done))).toBe(true);
+    expect(await store.log('test', JOB)).not.toEqual([]);
+
+    now += 4 * DAY_MS;
+    expect((await listItems(staged, listQuery.parse({}))).items).toHaveLength(1);
+
+    now += 1 * DAY_MS + 1000;
+    expect((await listItems(staged, listQuery.parse({}))).items).toEqual([]);
+    expect(await store.get('test', JOB)).toBeUndefined();
+    expect(await store.get('test', `${JOB}-undo`)).toBeUndefined();
+    expect(await store.log('test', JOB)).toEqual([]);
+    expect(await store.forUser('test', 'manager')).toEqual([]);
+    expect(existsSync(archivePath(settings.archiveDir, done))).toBe(false);
+    // what the undo put back stays in CHT
+    expect(cht.docs.has('chu')).toBe(true);
+  });
+
+  it('keeps a done item while its job is still to run, and removes both once the job has succeeded', async () => {
+    const JOB = '00000000-0000-4000-8000-000000000001';
+    let now = Date.now();
+    staged = { ...staged, ttlSeconds: 60, now: () => now };
+    await addItem(staged, item());
+    await startUpload(staged);
+    await waitFor(async () => (await staged.tracker.state(owner)).state === 'idle');
+
+    now += 61_000;
+    expect((await listItems(staged, listQuery.parse({}))).items).toMatchObject([{ job: { status: 'queued' } }]);
+
+    await runner().tick();
+    expect((await listItems(staged, listQuery.parse({}))).items).toEqual([]);
+    expect(await store.get('test', JOB)).toBeUndefined();
+  });
+
+  it('never expires a failed job, its archive or its item, so it can be retried', async () => {
+    const JOB = '00000000-0000-4000-8000-000000000001';
+    let now = Date.now();
+    staged = { ...staged, ttlSeconds: 60, now: () => now };
+    await addItem(staged, item());
+    await startUpload(staged);
+    await waitFor(async () => (await staged.tracker.state(owner)).state === 'idle');
+    await runner(fakeChtConf(cht, { fail: 'upload-docs' })).tick();
+    const failed = (await store.get('test', JOB))!;
+    expect(failed.status).toBe('failed');
+
+    now += 365 * 24 * 60 * 60 * 1000;
+    expect((await listItems(staged, listQuery.parse({}))).items).toMatchObject([{ job: { status: 'failed' } }]);
+    expect(await store.get('test', JOB)).toMatchObject({ status: 'failed' });
+    expect(existsSync(archivePath(settings.archiveDir, failed))).toBe(true);
   });
 
   it('stages CSV rows to wait for their name to be typed', async () => {

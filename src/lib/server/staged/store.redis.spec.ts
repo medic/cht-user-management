@@ -41,7 +41,7 @@ describe.skipIf(!url)('Redis staged store', () => {
   });
 
   it('stores items encrypted, checks revisions and keeps counts in step', async () => {
-    const store = new RedisStagedStore(redis, SECRET, 60);
+    const store = new RedisStagedStore(redis, SECRET);
 
     const saved = await store.put(owner, item('a'), null);
     expect(saved.revision).toBe(1);
@@ -64,7 +64,28 @@ describe.skipIf(!url)('Redis staged store', () => {
     expect(await store.remove(owner, 'a')).toBe(true);
     expect(await store.remove(owner, 'a')).toBe(false);
     expect(await store.counts(owner)).toEqual({ ready: 1 });
-    expect(await redis.ttl(`staged:${owner.instanceId}:${encodeURIComponent(owner.username)}`)).toBeGreaterThan(0);
+    // unfinished work never expires: only the sweep removes items, and only successful ones
+    expect(await redis.ttl(`staged:${owner.instanceId}:${encodeURIComponent(owner.username)}`)).toBe(-1);
+  });
+
+  it('sweeps every list, removing what the check says has expired and keeping the counts right', async () => {
+    const store = new RedisStagedStore(redis, SECRET);
+    await store.put(owner, item('old', 'created'), null);
+    await store.put(owner, item('new', 'created'), null);
+    await store.put(owner, item('waiting', 'ready'), null);
+    const seen: string[] = [];
+
+    const removed = await store.sweep(async (listOwner, found) => {
+      expect(listOwner).toEqual(owner);
+      seen.push(found.id);
+      return found.id === 'old';
+    }, `staged:${owner.instanceId}:*`);
+
+    expect(removed).toBe(1);
+    // the owner is read back from the key, odd characters included
+    expect(seen.sort()).toEqual(['b', 'new', 'old', 'waiting']);
+    expect((await store.list(owner)).map((i) => i.id).sort()).toEqual(['b', 'new', 'waiting']);
+    expect(await store.counts(owner)).toEqual({ created: 1, ready: 2 });
   });
 
   it('allows one upload per list, released only by the run that holds it', async () => {

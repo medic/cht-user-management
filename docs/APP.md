@@ -204,22 +204,34 @@ is only ever in encrypted values.
 
 | Data | Redis type and key | Expires |
 |---|---|---|
-| **Staged items** | Hash `staged:{instance}:{user}`: item id → encrypted item | Whole list, `STAGED_LIST_TTL` (e.g. 14 days) after its last change |
+| **Staged items** | Hash `staged:{instance}:{user}`: item id → encrypted item | An item that succeeded, `DATA_RETENTION_TTL` (e.g. 14 days) after it did: once uploaded, or for a move, merge or delete, once its job is done. Anything else never: it stays until it's fixed, uploaded or removed |
 | **Staged counts** | Hash `staged:{instance}:{user}:counts`: status → number of items | With the list |
-| **Credentials record** | Sorted set `credentials:{instance}:{user}`: encrypted entries scored by creation time | Each entry after `CREDENTIALS_TTL` (e.g. 5 days). Entries older than that are removed on every read and write (`ZREMRANGEBYSCORE`), and the whole key expires with its newest entry |
+| **Credentials record** | Sorted set `credentials:{instance}:{user}`: encrypted entries scored by creation time | Each entry `DATA_RETENTION_TTL` after it was made. Entries older than that are removed on every read and write (`ZREMRANGEBYSCORE`) and by the sweep, and the whole key expires with its newest entry |
 | **Revoked tokens** | String `revoked:{jti}` | When the token itself would have expired |
-| **Hierarchy jobs** | A queue per instance, `jobs:{instance}`, holding each job's request, status, progress, result and log | Finished jobs after `JOB_TTL` (e.g. 30 days) |
+| **Hierarchy jobs** | A queue per instance, `jobs:{instance}`, holding each job's request, status, progress, result and log | A job that succeeded, with its log, `DATA_RETENTION_TTL` after it finished (a key expiry set when it's saved done), and with its staged item if that goes first. One still to run, running, or failed never, so it can be finished or retried |
 | **Validation and upload runs** | A queue, `runs:{instance}`, with one job per staged list and run | When the run finishes |
 | **Run locks** | String `lock:{instance}:{user}:{validation\|upload}`, set only if absent, with a short expiry that the running worker keeps extending | If the worker dies, the lock lapses and the run can be picked up again |
 | **Events** | Stream `events:{instance}:{user}`, capped at the last ~1,000 events | By the cap. This is what lets a reconnecting client catch up from `Last-Event-ID` |
+
+Passwords are kept only in the credentials record. A done staged item keeps what the upload created
+(place, person, username), but not the password; its row fetches that from the record. The two
+expire together: a done item goes `DATA_RETENTION_TTL` after its upload started, just before its
+password, so no row is left showing a login whose password is gone. The places and users stay in
+CHT; only the rows go.
+
+**Nothing that succeeded is kept past `DATA_RETENTION_TTL`**, whether or not anyone looks at it.
+Reads leave out and remove what has expired, and a sweep on every server removes the rest every few
+minutes: staged items and passwords, and the archives of jobs that are gone. Jobs and their logs
+expire in Redis on their own. What hasn't succeeded (items still to fix or upload, jobs still to run
+or that failed) has no expiry, so work in progress is never lost to a timer.
 
 The staged list is one hash per user. A list holds hundreds or a few thousand items, so filtering
 it by status, kind or text is done by reading the hash and filtering in memory. There are no
 secondary indexes to keep in step; only the counts hash is updated alongside the items.
 
-**Not in Redis:** the archives of deleted docs. They can be large, and they're kept for as long as
-`ARCHIVE_TTL` (e.g. 30 days), so they go to disk or object storage (`ARCHIVE_LOCATION`). The job
-records where. The indexes built while validating a CSV aren't stored either; they live in the
+**Not in Redis:** the archives of deleted and merged docs. They can be large, so they go to disk or
+object storage (`ARCHIVE_LOCATION`), and each is kept exactly as long as its job. The job records
+where. The indexes built while validating a CSV aren't stored either; they live in the
 worker's memory for the length of the run.
 
 ### Encryption
@@ -267,10 +279,8 @@ That's the whole migration story: no scripts to run on deploy, and nothing to ro
 |---|---|
 | `REDIS_URL` | Connection, including password and TLS (`rediss://`) |
 | `SECRET_KEY` | Encrypts staged items and credentials (required). Earlier keys can be kept to read older values during rotation |
-| `STAGED_LIST_TTL` | How long a staged list is kept after its last change |
-| `CREDENTIALS_TTL` | How long a generated password can be seen again |
-| `JOB_TTL` | How long finished jobs are kept |
-| `ARCHIVE_LOCATION`, `ARCHIVE_TTL` | Where delete archives are written, and for how long |
+| `DATA_RETENTION_TTL` | How long the app holds what succeeded: staged items, jobs with their logs and archives, and generated passwords. The only data lifetime; what hasn't succeeded is kept until it's dealt with |
+| `ARCHIVE_LOCATION` | Where delete and merge archives are written. Each is kept as long as its job |
 
 ## App Functionality
 
@@ -1313,7 +1323,7 @@ It runs as a background job exactly like a [move](#running-the-job). What it doe
 
 #### Undoing a delete
 
-While its archive is kept, a finished delete can be undone. The undo is a job of its own, a
+While its archive is kept, which is `DATA_RETENTION_TTL` after the delete finished at most, a finished delete can be undone. The undo is a job of its own, a
 **restore**, in the same queue, with the same wait for Sentinel, the user's session and the same
 overlap rule.
 

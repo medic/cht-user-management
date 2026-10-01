@@ -13,6 +13,7 @@ import {
   confirmMany,
   editItem,
   findSamePerson,
+  getItem,
   listItems,
   listQuery,
   removeItem,
@@ -23,6 +24,7 @@ import {
 } from './service';
 import { stageCsv } from './csv';
 import { createPlace } from '../places/create';
+import { credentialsFor } from '../places/credentials';
 import { previewReplace, searchPeople } from '../places/replace-lookups';
 import { replaceRequest } from '../places/schemas';
 import { MemoryStagedStore } from './store';
@@ -229,6 +231,14 @@ describe('uploading', () => {
     expect(upload).toMatchObject({ state: 'idle', done: 2, total: 2 });
     // newest first
     expect(items.map((i) => i.result?.username)).toEqual(['worker_2', 'worker_1']);
+    // the passwords are only in the credentials record, not on the items
+    expect(items.every((i) => !('password' in (i.result ?? {})))).toBe(true);
+    expect(JSON.stringify(await deps.store.list({ instanceId: 'test', username: 'manager' }))).not.toContain(
+      cht.users.get('worker_1')!.password
+    );
+    expect(await credentialsFor(deps.context.uploadLog, session, ['place-1'])).toMatchObject([
+      { username: 'worker_1', password: cht.users.get('worker_1')!.password }
+    ]);
     expect(cht.docs.has('place-1') && cht.docs.has('place-2')).toBe(true);
   });
 
@@ -277,6 +287,28 @@ describe('uploading', () => {
       }
     });
     expect(cht.docs.has('area-1') || cht.docs.has('promoter-1')).toBe(false);
+  });
+
+  it('removes done items once their passwords have expired, and keeps the rest', async () => {
+    const DAY_MS = 24 * 60 * 60 * 1000;
+    let now = Date.now();
+    deps = { ...deps, ttlSeconds: 5 * 24 * 60 * 60, now: () => now };
+    await addItem(deps, chu(1));
+    await addItem(deps, chu(2));
+    await uploadAndWait();
+    const waiting = await addItem(deps, chu(3, { place: { ...chu(3).request.place, code: '100003' } }));
+    const [done] = (await list()).items.filter((item) => item.status === 'created');
+
+    now += 4 * DAY_MS;
+    expect((await list()).counts).toEqual({ created: 2, ready: 1 });
+
+    // the passwords made by the upload are gone after 5 days, and so are its rows
+    now += 1 * DAY_MS + 1000;
+    const after = await list();
+    expect(after.items.map((item) => item.id)).toEqual([waiting.id]);
+    expect(after.counts).toEqual({ ready: 1 });
+    await expectApiError(getItem(deps, done.id), 'ITEM_NOT_FOUND');
+    expect(cht.docs.has('place-1')).toBe(true);
   });
 
   it('marks failures, and retries them when asked', async () => {

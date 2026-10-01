@@ -19,10 +19,17 @@ export type CredentialsEntry = {
   username?: string;
   password?: string;
   createdAt?: string;
+  // when the record forgets it: ttlSeconds after it was made
+  expiresAt?: string;
 };
 
 // GET /api/v1/credentials: the caller's record, newest first, optionally only for some places
-export async function credentialsFor(uploadLog: UploadLog, owner: CredentialsOwner, placeIds?: string[]): Promise<CredentialsEntry[]> {
+export async function credentialsFor(
+  uploadLog: UploadLog,
+  owner: CredentialsOwner,
+  placeIds?: string[],
+  ttlSeconds?: number
+): Promise<CredentialsEntry[]> {
   const records = await uploadLog.list(owner);
   return records
     .filter((record) => !placeIds?.length || (record.credentials.placeId && placeIds.includes(record.credentials.placeId)))
@@ -34,7 +41,9 @@ export async function credentialsFor(uploadLog: UploadLog, owner: CredentialsOwn
       phone: record.phone,
       username: record.credentials.username,
       password: record.credentials.password,
-      createdAt: record.credentials.created_at ? new Date(record.credentials.created_at).toISOString() : undefined
+      createdAt: record.credentials.created_at ? new Date(record.credentials.created_at).toISOString() : undefined,
+      expiresAt:
+        record.credentials.created_at && ttlSeconds ? new Date(record.credentials.created_at + ttlSeconds * 1000).toISOString() : undefined
     }));
 }
 

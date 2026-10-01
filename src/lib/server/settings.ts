@@ -19,8 +19,9 @@ export type Settings = {
   secretKey: string;
   redisUrl: string;
   sessionTtlSeconds: number;
-  credentialsTtlSeconds: number;
-  stagedListTtlSeconds: number;
+  // DATA_RETENTION_TTL: how long the app holds anything it stores. Each staged item, job (with its log
+  // and archive) and generated password is removed this long after it was made (APP.md → Data storage)
+  dataTtlSeconds: number;
   batchMaxItems: number;
   // a place type with more places than this is never read whole, only one parent at a time
   maxPlacesLoaded: number;
@@ -35,13 +36,13 @@ export type JobSettings = {
   maxSentinelBacklog: number;
   // how soon a postponed job checks again
   recheckSeconds: number;
-  // how long finished jobs, and the job token a queued job carries, are kept
+  // DATA_RETENTION_TTL: a job, its log and archive, and the job token it carries, go this long after
+  // it was scheduled
   ttlSeconds: number;
   // each job gets a folder of its own here for cht-conf's staged docs, removed when it ends
   workDir: string;
-  // copies of every doc a delete removes, kept for archiveTtlSeconds
+  // copies of every doc a delete or merge removes, kept with their job
   archiveDir: string;
-  archiveTtlSeconds: number;
   // one cht-conf action may take this long, with this much memory
   timeoutSeconds: number;
   chtConfHeapMb: number;
@@ -49,10 +50,10 @@ export type JobSettings = {
 
 const MIN_KEY_LENGTH = 32;
 const DEFAULT_SESSION_TTL_SECONDS = 24 * 60 * 60;
-const DEFAULT_CREDENTIALS_TTL_SECONDS = 5 * 24 * 60 * 60;
-const DEFAULT_STAGED_LIST_TTL_SECONDS = 14 * 24 * 60 * 60;
+const DEFAULT_DATA_TTL_SECONDS = 14 * 24 * 60 * 60;
+// replaced by DATA_RETENTION_TTL, the one lifetime for stored data
+const RETIRED_TTLS = ['STAGED_LIST_TTL', 'CREDENTIALS_TTL', 'JOB_TTL', 'ARCHIVE_TTL'];
 const DEFAULT_BATCH_MAX_ITEMS = 100;
-const DAY = 24 * 60 * 60;
 
 type Env = Record<string, string | undefined>;
 
@@ -109,18 +110,19 @@ export function loadSettings(source: Env, readFile: (path: string) => string = (
   }
 
   const sessionTtlSeconds = seconds('SESSION_TTL', DEFAULT_SESSION_TTL_SECONDS);
-  const credentialsTtlSeconds = seconds('CREDENTIALS_TTL', DEFAULT_CREDENTIALS_TTL_SECONDS);
-  const stagedListTtlSeconds = seconds('STAGED_LIST_TTL', DEFAULT_STAGED_LIST_TTL_SECONDS);
+  const dataTtlSeconds = seconds('DATA_RETENTION_TTL', DEFAULT_DATA_TTL_SECONDS);
+  for (const name of RETIRED_TTLS.filter((name) => source[name] !== undefined)) {
+    problems.push(`${name} is no longer read: DATA_RETENTION_TTL is how long all stored data is kept`);
+  }
   const batchMaxItems = count('BATCH_MAX_ITEMS', DEFAULT_BATCH_MAX_ITEMS);
   const maxPlacesLoaded = count('MAX_PLACES_LOADED', DEFAULT_MAX_PLACES_LOADED);
 
   const jobs: JobSettings = {
     maxSentinelBacklog: count('MAX_SENTINEL_BACKLOG', 7000),
     recheckSeconds: seconds('JOB_RECHECK', 15 * 60),
-    ttlSeconds: seconds('JOB_TTL', 30 * DAY),
+    ttlSeconds: dataTtlSeconds,
     workDir: source.JOB_WORK_DIR || join(tmpdir(), 'cht-iam-jobs'),
     archiveDir: source.ARCHIVE_LOCATION || 'data/archives',
-    archiveTtlSeconds: seconds('ARCHIVE_TTL', 30 * DAY),
     timeoutSeconds: seconds('JOB_TIMEOUT', 4 * 60 * 60),
     chtConfHeapMb: positive(' of megabytes')('CHT_CONF_HEAP_MB', 2048)
   };
@@ -141,8 +143,7 @@ export function loadSettings(source: Env, readFile: (path: string) => string = (
     secretKey,
     redisUrl,
     sessionTtlSeconds,
-    credentialsTtlSeconds,
-    stagedListTtlSeconds,
+    dataTtlSeconds,
     batchMaxItems,
     maxPlacesLoaded,
     allowAdminLogin: source.ALLOW_ADMIN_LOGIN !== 'false',
