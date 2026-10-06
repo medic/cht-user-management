@@ -1,0 +1,89 @@
+name: Deploy
+
+# After each published image (docker-build.yml), upgrade Medic's deployments to it: see
+# scripts/deploy/README.md. Kenya is self-hosted by the Ministry of Health and isn't deployed here
+on:
+  workflow_run:
+    workflows: [Docker build and publish]
+    types:
+      - completed
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    steps:
+      - name: 'Configure'
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{vars.AWS_REGION}}
+          aws-access-key-id: ${{ secrets.DEPLOY_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.DEPLOY_ACCESS_KEY }}
+
+      - name: install oathtool
+        run: sudo apt-get install -y oathtool jq
+
+      # one sign-in for every deployment: an MFA code can't be used twice
+      - id: auth
+        name: Authenticate to STS
+        run: |
+          mfa_serial="arn:aws:iam::${{vars.AWS_ACCOUNT_NUMBER}}:mfa/${{vars.MFA_ID}}"
+          mfa_code=$(oathtool -b --totp ${{secrets.MFA_KEY}})
+          STS=$(aws sts get-session-token --region "${{vars.AWS_REGION}}" --serial-number "$mfa_serial" --token-code "$mfa_code")
+
+          aws_access_key_id=$(echo "$STS" | jq -r '.Credentials.AccessKeyId')
+          echo "::add-mask::$aws_access_key_id"
+          aws_secret_access_key=$(echo "$STS" | jq -r '.Credentials.SecretAccessKey')
+          echo "::add-mask::$aws_secret_access_key"
+          aws_session_token=$(echo "$STS" | jq -r '.Credentials.SessionToken')
+          echo "::add-mask::$aws_session_token"
+
+          echo "AWS_ACCESS_KEY_ID=$aws_access_key_id" >> "$GITHUB_OUTPUT"
+          echo "AWS_SECRET_ACCESS_KEY=$aws_secret_access_key" >> "$GITHUB_OUTPUT"
+          echo "AWS_SESSION_TOKEN=$aws_session_token" >> "$GITHUB_OUTPUT"
+
+      - name: Assume role
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{vars.AWS_REGION}}
+          aws-access-key-id: ${{ steps.auth.outputs.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ steps.auth.outputs.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ steps.auth.outputs.AWS_SESSION_TOKEN }}
+          role-skip-session-tagging: true
+          role-to-assume: 'arn:aws:iam::${{vars.AWS_ACCOUNT_NUMBER}}:role/eks-${{vars.AWS_USER}}'
+
+      # the released commit, whose package.json carries the version the image was tagged with
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - name: Set PKG_VERSION
+        run: echo "PKG_VERSION=$(jq -r .version package.json)" >> "$GITHUB_ENV"
+
+      - name: Update kubeconfig
+        run: |
+          aws eks update-kubeconfig --name ${{vars.CLUSTER}} --region ${{vars.AWS_REGION}}
+          helm repo add medic https://docs.communityhealthtoolkit.org/helm-charts
+          helm repo update medic
+
+      # Each deployment in turn: its archive volume (created once, unchanged after), then the
+      # upgrade. --atomic rolls back to the running version if the new one doesn't become healthy,
+      # eg. a missing setting or SECRET_KEY. A failure doesn't stop the others; the job fails at the end
+      - name: Upgrade users-chis-civ, users-chis-tg, users-chis-ml
+        working-directory: scripts/deploy
+        run: |
+          failed=()
+          for release in users-chis-civ users-chis-tg users-chis-ml; do
+            echo "::group::$release"
+            if sed "s/RELEASE/$release/" data-volume.yaml | kubectl --namespace ${{vars.NAMESPACE}} apply -f - \
+              && helm upgrade --namespace ${{vars.NAMESPACE}} --values values/$release.yaml $release medic/cht-user-management \
+                --set cht-user-management.image.tag=$PKG_VERSION --wait --atomic --timeout 10m \
+              && curl -sfS --retry 6 --retry-delay 10 --retry-all-errors https://$release.app.medicmobile.org/_healthz; then
+              echo "$release: $PKG_VERSION is up"
+            else
+              echo "::error::$release wasn't upgraded to $PKG_VERSION; see the log above"
+              failed+=("$release")
+            fi
+            echo "::endgroup::"
+          done
+          [ ${#failed[@]} -eq 0 ] || { echo "Failed: ${failed[*]}"; exit 1; }

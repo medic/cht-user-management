@@ -283,7 +283,7 @@ This repo has an automated release process where each feature/bug fix will be re
 4. Squash and merge the PR to main. The commit message should be the already-formatted PR title but double check it's clear, readable, and follows the strict commit message format to make sure the automatic release works as expected.
 5. Close the ticket.
 
-Every release publishes a Docker image, tagged with its version and `latest`, to [Amazon ECR Public](https://gallery.ecr.aws/medic/cht-user-management) (`.github/workflows/docker-build.yml`). Medic's own deployments are described in [`scripts/deploy`](scripts/deploy).
+Every release publishes a Docker image, tagged with its version and `latest`, to [Amazon ECR Public](https://gallery.ecr.aws/medic/cht-user-management) (`.github/workflows/docker-build.yml`). Each published image is then deployed to Medic's own deployments automatically (`.github/workflows/deploy.yml`); they're described in [`scripts/deploy`](scripts/deploy).
 
 ### Commit message format
 

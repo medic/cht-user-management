@@ -4,6 +4,8 @@ This readme talks about how to use `helm` and `kubectl` running locally on your 
 
 The deployments use Medic's [`cht-user-management` chart](https://github.com/medic/helm-charts), with one values file each in [`values/`](values). The previous version's values are kept in [`docs/legacy/deploy`](../../docs/legacy/deploy).
 
+**Deploys are automatic.** Each release publishes an image, and [`deploy.yml`](../../.github/workflows/deploy.yml) then upgrades `users-chis-civ`, `users-chis-tg` and `users-chis-ml` to it, one after the other: it creates each one's archive volume if it's missing, runs `helm upgrade --wait --atomic` (which rolls back to the running version if the new one doesn't become healthy), and checks `/_healthz` on its public address. A deployment that fails doesn't stop the others, and the workflow run fails, naming it. The commands below are for a first install, or for doing the same by hand.
+
 ### Key/Value pairs used
 
 | Key       | Value                                                   |
