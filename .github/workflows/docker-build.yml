@@ -1,0 +1,57 @@
+name: Docker build and publish
+
+# Each release (semantic-release publishes one per merge to main that needs it) gets an image:
+# public.ecr.aws/medic/cht-user-management, tagged with the version and latest
+on:
+  release:
+    types: [published]
+
+env:
+  ECR_REPO: 'public.ecr.aws/s5s3h4s7'
+  IMAGE: 'cht-user-management'
+
+jobs:
+  publish:
+    name: Publish Docker image
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name }}
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.ECR_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.ECR_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Log in to Amazon ECR Public
+        uses: aws-actions/amazon-ecr-login@v2
+        with:
+          registry-type: public
+
+      - name: Build
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+          docker build -t "$ECR_REPO/$IMAGE:$VERSION" -t "$ECR_REPO/$IMAGE:latest" .
+
+      # the image starts, reads its settings and serves /_healthz before anything is pushed
+      - name: Smoke test
+        run: |
+          docker network create smoke
+          docker run -d --name redis --network smoke redis:7-alpine
+          docker run -d --name app --network smoke -p 3000:3000 \
+            -e COOKIE_PRIVATE_KEY="$(openssl rand -hex 32)" -e WORKER_PRIVATE_KEY="$(openssl rand -hex 32)" \
+            -e SECRET_KEY="$(openssl rand -hex 32)" -e REDIS_URL=redis://redis:6379 \
+            -e DEPLOYMENT_DIR=config/deployments/chis-ke "$ECR_REPO/$IMAGE:$VERSION"
+          for i in $(seq 1 30); do curl -sf http://localhost:3000/_healthz && exit 0; sleep 2; done
+          docker logs app
+          exit 1
+
+      - name: Push
+        run: |
+          docker push "$ECR_REPO/$IMAGE:$VERSION"
+          docker push "$ECR_REPO/$IMAGE:latest"

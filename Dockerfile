@@ -20,10 +20,12 @@ RUN npm run build \
 # ---- run: the built app and its production dependencies only
 FROM node:22-bookworm-slim
 WORKDIR /app
+# BODY_SIZE_LIMIT: CSV files may be 5 MB, plus the form around them; the Node adapter's default is 512K
 ENV NODE_ENV=production \
 	PORT=3000 \
 	ARCHIVE_LOCATION=/app/data/archives \
-	JOB_WORK_DIR=/tmp/cht-iam-jobs
+	JOB_WORK_DIR=/tmp/cht-iam-jobs \
+	BODY_SIZE_LIMIT=6M
 
 COPY --from=build --chown=node:node /app/package.json ./
 COPY --from=build --chown=node:node /app/node_modules ./node_modules

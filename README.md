@@ -173,6 +173,8 @@ This tool is available via Docker by running `docker compose up -d --build`, whi
 
 The deployment folders in `config/deployments/` are included in the image, so `DEPLOYMENT_DIR` can name one of them, eg. `config/deployments/chis-ke`. For another project, mount its folder into the container and point `DEPLOYMENT_DIR` at it. Keep `/app/data` on a volume, since it holds the copies of deleted places that undoing a delete needs.
 
+Behind an https proxy that keeps the `Host` header, nothing more is needed. Otherwise set `ORIGIN` to the address people use, or CSV uploads are refused as cross-site; see [Environment Variables](#environment-variables).
+
 The image can also be run on its own, with a Redis the container can reach:
 
 ```shell
@@ -253,6 +255,9 @@ Variable | Description | Sample
 `REDIS_URL` | Required. The Redis server, the tool's only datastore. Use `rediss://` for TLS | `redis://localhost:6379`
 `DEPLOYMENT_DIR` | Required. The deployment folder. See [Configuration](#configuration) | `config/deployments/chis-ke`
 `PORT` | Port the web server listens on. Defaults to 3000 | `3000`
+`ORIGIN` | The address people use to reach the tool. SvelteKit refuses form posts, such as CSV uploads, from any other. Needed when it's served over plain http, as with Docker Compose (which sets `http://localhost:$PORT` itself), or behind a proxy that changes the `Host` header. Not needed behind an https proxy that keeps it | `https://users.example.org`
+`PROTOCOL_HEADER`, `HOST_HEADER` | Instead of `ORIGIN`, the headers a proxy uses to pass on the original scheme and host | `x-forwarded-proto`, `x-forwarded-host`
+`BODY_SIZE_LIMIT` | The largest request the server reads. CSV files may be 5 MB, so allow a little more. `6M` in the Docker image; 512K otherwise, so set it for `npm start` | `6M`
 `CHT_DEV_INSTANCE` | A CHT instance to also offer outside production, as host and port | `localhost:5988`
 `CHT_DEV_HTTP` | 'true' for http, otherwise https | `true`
 `CHT_DEV_IDP_ORIGINS` | Comma-separated SSO identity providers for the dev instance | `http://localhost:8080`
@@ -277,6 +282,8 @@ This repo has an automated release process where each feature/bug fix will be re
 3. Have the PR reviewed.
 4. Squash and merge the PR to main. The commit message should be the already-formatted PR title but double check it's clear, readable, and follows the strict commit message format to make sure the automatic release works as expected.
 5. Close the ticket.
+
+Every release publishes a Docker image, tagged with its version and `latest`, to [Amazon ECR Public](https://gallery.ecr.aws/medic/cht-user-management) (`.github/workflows/docker-build.yml`). Medic's own deployments are described in [`scripts/deploy`](scripts/deploy).
 
 ### Commit message format
 

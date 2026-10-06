@@ -13,7 +13,15 @@ export const POST = apiHandler(async ({ request, locals }) => {
   let form: FormData;
   try {
     form = await request.formData();
-  } catch {
+  } catch (e) {
+    // the Node adapter refuses a body over BODY_SIZE_LIMIT (512 KB unless set) before it's read
+    if ((e as { status?: number }).status === 413) {
+      throw new ApiError(
+        413,
+        'CSV_TOO_LARGE',
+        "The file is larger than this server accepts. Split it, or raise the server's BODY_SIZE_LIMIT."
+      );
+    }
     throw new ApiError(400, 'INVALID_REQUEST', 'send the file as multipart/form-data');
   }
 
