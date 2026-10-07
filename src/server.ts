@@ -66,8 +66,8 @@ const build = (opts: FastifyServerOptions): FastifyInstance => {
   });
 
   // hijack the response from fastify-metrics appending additional metrics
-  fastify.addHook('onSend', async (request, reply, payload: string) => {
-    if (request.routerPath === PROMETHEUS_ENDPOINT) {
+  fastify.addHook('onSend', async (request, _reply, payload: string) => {
+    if (request.routeOptions?.url === PROMETHEUS_ENDPOINT || request.routerPath === PROMETHEUS_ENDPOINT) {
       const bullmqMetrics = await getChtConfQueue().bullQueue.exportPrometheusMetrics();
       return payload + bullmqMetrics;
     }
@@ -80,23 +80,21 @@ const build = (opts: FastifyServerOptions): FastifyInstance => {
       return;
     }
 
-    if (req.routeOptions.url && UNAUTHENTICATED_ENDPOINTS.includes(req.routeOptions.url)) {
+    if (req.routeOptions?.url && UNAUTHENTICATED_ENDPOINTS.includes(req.routeOptions.url)) {
       return;
     }
 
     const cookieToken = req.cookies[Auth.AUTH_COOKIE_NAME] as string;
     if (!cookieToken) {
-      reply.redirect('/login');
-      throw new Error('user must login');
+      return reply.redirect('/login');
     }
 
     try {
       const chtSession = Auth.createCookieSession(cookieToken);
       req.chtSession = chtSession;
       req.sessionCache = SessionCache.getForSession(chtSession);
-    } catch (e) {
-      reply.redirect('/login');
-      throw e;
+    } catch {
+      return reply.redirect('/login');
     }
   });
 
