@@ -1,0 +1,24 @@
+{
+  "instances": [
+    {
+      "id": "echis-uganda",
+      "name": "eCHIS Uganda",
+      "host": "echis.health.go.ug"
+    },
+    {
+      "id": "echis-dev",
+      "name": "eCHIS Dev",
+      "host": "vhtapp-4x.dev.medicmobile.org"
+    },
+    {
+      "id": "echis-training",
+      "name": "eCHIS Training",
+      "host": "moh-ug-test.dev.medicmobile.org"
+    },
+    {
+      "id": "echis-dev-moh",
+      "name": "eCHIS Dev (MoH)",
+      "host": "echis-dev.health.go.ug"
+    }
+  ]
+}

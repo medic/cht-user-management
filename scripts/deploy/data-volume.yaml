@@ -1,0 +1,12 @@
+# The volume for a deployment's archives (/app/data), created once, before the first install:
+#   sed 's/RELEASE/users-chis-tg/' data-volume.yaml | kubectl --namespace users-chis-prod apply -f -
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: RELEASE-data
+spec:
+  accessModes: [ReadWriteOnce]
+  storageClassName: ebs-gp2
+  resources:
+    requests:
+      storage: 5Gi
