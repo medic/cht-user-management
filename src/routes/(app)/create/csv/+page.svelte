@@ -36,7 +36,7 @@
       form.set('file', file);
       form.set('kind', kind);
       form.set('contactType', contactType.name);
-      const response = await fetch('/api/v1/staged-items/csv', {
+      const response = await fetch('/api/v2/staged-items/csv', {
         method: 'POST',
         body: form,
         headers: { 'X-Config-Version': data.config.configVersion }
@@ -107,7 +107,7 @@
   {#if contactType}
     <p class="template">
       Start from the template, which has one column per field:
-      <a href={`/api/v1/config/contact-types/${encodeURIComponent(contactType.name)}/csv-template?kind=${kind}`} download>
+      <a href={`/api/v2/config/contact-types/${encodeURIComponent(contactType.name)}/csv-template?kind=${kind}`} download>
         Download the {contactType.friendly}
         {kind === 'create' ? '' : `${kind} `}template
       </a>

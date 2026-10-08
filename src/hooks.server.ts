@@ -25,7 +25,7 @@ if (import.meta.env.DEV) {
   startDataSweeper();
 }
 
-const PUBLIC_PATHS = new Set(['/api/v1/config/instances', '/api/v1/config/logo', '/api/v1/auth/login', '/api/v1/auth/sso']);
+const PUBLIC_PATHS = new Set(['/api/v2/config/instances', '/api/v2/config/logo', '/api/v2/auth/login', '/api/v2/auth/sso']);
 
 // Every response gets the security headers; API responses also stay out of caches, since some carry
 // passwords. Pages also get a Content-Security-Policy, from the csp option in vite.config.ts

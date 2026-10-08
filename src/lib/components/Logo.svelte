@@ -13,7 +13,7 @@
   </svg>
 {:else}
   <span class="plate {size}">
-    <img src="/api/v1/config/logo" alt="" onerror={() => (missing = true)} />
+    <img src="/api/v2/config/logo" alt="" onerror={() => (missing = true)} />
   </span>
 {/if}
 

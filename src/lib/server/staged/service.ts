@@ -495,7 +495,7 @@ function findPersonItem(all: StagedItem[], request: CreateItemRequest, self?: st
   return personItem;
 }
 
-// POST /api/v1/checks/same-person: the staged person a form entry looks like, if any, for the form
+// POST /api/v2/checks/same-person: the staged person a form entry looks like, if any, for the form
 // to ask whether they're the same (APP.md → One person, many places)
 export async function findSamePerson(deps: StagedDeps, query: z.infer<typeof samePersonQuery>) {
   const same = samePersonIn(

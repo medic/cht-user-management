@@ -27,7 +27,7 @@ export async function api<T>(
 
   let response: Response;
   try {
-    response = await fetcher(`/api/v1${path}`, {
+    response = await fetcher(`/api/v2${path}`, {
       method: init.method ?? 'GET',
       headers,
       body: init.body === undefined ? undefined : JSON.stringify(init.body)

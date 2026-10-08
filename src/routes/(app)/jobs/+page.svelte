@@ -98,7 +98,7 @@
           <!-- one line: the log, then undo at the far right -->
           <span class="links">
             {#if job.status !== 'queued'}
-              <a class="log" href={`/api/v1/hierarchy-jobs/${encodeURIComponent(job.id)}/log`} target="_blank" rel="noopener">Log</a>
+              <a class="log" href={`/api/v2/hierarchy-jobs/${encodeURIComponent(job.id)}/log`} target="_blank" rel="noopener">Log</a>
             {/if}
             {#if undoable(job)}
               <button class="undo" type="button" onclick={() => askUndo(job)} title="Undo this delete">Undo</button>

@@ -82,7 +82,7 @@ function parseRows(text: string): Row[] {
   }
 }
 
-// POST /api/v1/staged-items/csv: stage every row straight away, check what needs no CHT, and leave
+// POST /api/v2/staged-items/csv: stage every row straight away, check what needs no CHT, and leave
 // the rest to a background run (APP.md → Adding from a CSV: pre-validation)
 export async function stageCsv(
   deps: StagedDeps,

@@ -223,13 +223,13 @@
   function downloadLogins() {
     const placeIds = items.filter((item) => item.status === 'created').map((item) => item.result?.placeId ?? item.request.placeId);
     const query = placeIds.length ? `?placeIds=${encodeURIComponent(placeIds.join(','))}` : '';
-    window.location.href = `/api/v1/credentials/export${query}`;
+    window.location.href = `/api/v2/credentials/export${query}`;
   }
 
   // one upload's logins; the server finds its items, including any not paged in yet
   function downloadGroupLogins(group: Group) {
     const upload = group.key === UPLOADED_EARLIER ? UPLOADED_EARLIER : group.runId;
-    if (upload) window.location.href = `/api/v1/credentials/export?upload=${encodeURIComponent(upload)}`;
+    if (upload) window.location.href = `/api/v2/credentials/export?upload=${encodeURIComponent(upload)}`;
   }
 
   async function showMore() {

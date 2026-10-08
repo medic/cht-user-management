@@ -121,7 +121,7 @@ export async function prepareCreate(context: OperationContext, placeId: string, 
   return { contactType, contactId, parentDoc, ancestors, existingPlace, existingContact, lineage, writeContact, built, roles, warnings };
 }
 
-// PUT /api/v1/places/{placeId} — every step checks what already exists, so repeating the same request
+// PUT /api/v2/places/{placeId} — every step checks what already exists, so repeating the same request
 // resumes an interrupted attempt and replays a finished one
 export async function createPlace(
   context: OperationContext,

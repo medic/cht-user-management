@@ -23,7 +23,7 @@ export type CredentialsEntry = {
   expiresAt?: string;
 };
 
-// GET /api/v1/credentials: the caller's record, newest first, optionally only for some places
+// GET /api/v2/credentials: the caller's record, newest first, optionally only for some places
 export async function credentialsFor(
   uploadLog: UploadLog,
   owner: CredentialsOwner,

@@ -19,7 +19,7 @@ export function isWithinFacilities(session: Session, doc: CouchDoc): boolean {
   return session.facilityIds.includes('*') || [doc._id, ...lineageIds(doc)].some((id) => session.facilityIds.includes(id));
 }
 
-// GET /api/v1/places/search: places of a type whose name matches, best matches first. Under a parent,
+// GET /api/v2/places/search: places of a type whose name matches, best matches first. Under a parent,
 // only that parent's places are read; without one, a type too large to read whole can't be searched
 export async function searchPlaces(
   cht: Cht,
@@ -61,7 +61,7 @@ export type PlaceDetail = PlaceSummary & {
   accounts: { username: string; roles: string[]; active: boolean; places: { id: string; name: string }[] }[];
 };
 
-// GET /api/v1/places/{id}
+// GET /api/v2/places/{id}
 export async function placeDetail(cht: Cht, session: Session, id: string): Promise<PlaceDetail> {
   const doc = await cht.getDoc(id);
   const isPlace = doc && docType(doc) && !['person', 'data_record'].includes(String(doc.type));

@@ -204,7 +204,7 @@ export async function prepareReplace(context: OperationContext, placeId: string,
   };
 }
 
-// PUT /api/v1/places/{placeId}/primary-contact. Every step checks what's already done, so a repeat
+// PUT /api/v2/places/{placeId}/primary-contact. Every step checks what's already done, so a repeat
 // resumes an interrupted attempt and replays a finished one.
 export async function replacePrimaryContact(
   context: OperationContext,

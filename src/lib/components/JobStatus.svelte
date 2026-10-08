@@ -69,7 +69,7 @@
     </span>
     {#if links && logins.length}
       <span class="own-line">
-        <a class="link" href={`/api/v1/credentials/export?job=${encodeURIComponent(job.id)}`} download>Download their logins</a>
+        <a class="link" href={`/api/v2/credentials/export?job=${encodeURIComponent(job.id)}`} download>Download their logins</a>
       </span>
     {/if}
   {:else if job.status === 'done' && job.result && job.kind === 'merge'}
@@ -89,7 +89,7 @@
     </span>
     {#if links && job.archive?.available}
       <span class="own-line">
-        <a class="link" href={`/api/v1/hierarchy-jobs/${encodeURIComponent(job.id)}/archive`} download
+        <a class="link" href={`/api/v2/hierarchy-jobs/${encodeURIComponent(job.id)}/archive`} download
           >Download the copy from before the merge</a
         >
       </span>
@@ -108,7 +108,7 @@
     </span>
     {#if links && job.archive?.available}
       <span class="own-line">
-        <a class="link" href={`/api/v1/hierarchy-jobs/${encodeURIComponent(job.id)}/archive`} download>Download what was deleted</a>
+        <a class="link" href={`/api/v2/hierarchy-jobs/${encodeURIComponent(job.id)}/archive`} download>Download what was deleted</a>
       </span>
     {/if}
   {:else if job.status === 'failed'}
@@ -116,7 +116,7 @@
     <button class="btn btn-primary btn-small" type="button" onclick={resume} disabled={busy}>Retry</button>
   {/if}
   {#if log && job.status !== 'queued'}
-    <a class="link" href={`/api/v1/hierarchy-jobs/${encodeURIComponent(job.id)}/log`} target="_blank" rel="noopener">Log</a>
+    <a class="link" href={`/api/v2/hierarchy-jobs/${encodeURIComponent(job.id)}/log`} target="_blank" rel="noopener">Log</a>
   {/if}
   {#if error}<span class="failed">{error}</span>{/if}
 </div>

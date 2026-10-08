@@ -15,7 +15,7 @@ export type BatchItemResult = { placeId: string; status: number; body: unknown }
 // legacy UPLOAD_BATCH_SIZE
 const CONCURRENCY = 15;
 
-// POST /api/v1/places/batch — each item runs exactly like its single endpoint; creates whose parent
+// POST /api/v2/places/batch — each item runs exactly like its single endpoint; creates whose parent
 // is created by another item run after it, mirroring legacy doUpload's independents-then-dependents
 export async function runBatch(
   context: OperationContext,

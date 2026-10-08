@@ -20,7 +20,7 @@ export type PersonMatch = {
   reason?: PersonNotEligible;
 };
 
-// GET /api/v1/people/search: people who could take over a place of this type. They're found among
+// GET /api/v2/people/search: people who could take over a place of this type. They're found among
 // the primary contacts of the type's places, within the caller's facilities, since that's who holds
 // an account with the type's roles. Everyone found is listed; `eligible` says who can be picked.
 export async function searchPeople(cht: Cht, session: Session, query: { type: string; q?: string; limit: number }): Promise<PersonMatch[]> {
@@ -90,7 +90,7 @@ export type ReplacePreview = {
   generated: Record<string, { from: string; to: string }>;
 };
 
-// POST /api/v1/preview with kind "replace": what the replace would do, without doing it. It runs the
+// POST /api/v2/preview with kind "replace": what the replace would do, without doing it. It runs the
 // replace's own checks, so a request the replace would refuse is refused here the same way.
 export async function previewReplace(context: OperationContext, placeId: string, request: ReplaceRequest): Promise<ReplacePreview> {
   const prepared = await prepareReplace(context, placeId, request);

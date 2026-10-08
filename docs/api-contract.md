@@ -18,7 +18,7 @@ The API has two kinds of client:
 
 ## 1. Conventions
 
-- **Base path** `/api/v1`. Bodies are JSON, except CSV uploads (`multipart/form-data`) and
+- **Base path** `/api/v2`. Bodies are JSON, except CSV uploads (`multipart/form-data`) and
   downloads (`text/csv`, `application/zip`).
 - **Auth**: send either the session cookie (browsers) or `Authorization: Bearer <token>`
   (machine clients). See [§2](#2-auth).
@@ -52,7 +52,7 @@ Behaviour: [APP.md → Auth](APP.md#auth).
 
 ### `GET /_healthz` (no auth)
 `200 { "status": "ok" }` while the server is up, for container and Kubernetes probes. Outside
-`/api/v1`, and never cached. A server whose settings or deployment folder are broken refuses to
+`/api/v2`, and never cached. A server whose settings or deployment folder are broken refuses to
 start, so it never answers this.
 
 ### `GET /config/instances` (no auth)
