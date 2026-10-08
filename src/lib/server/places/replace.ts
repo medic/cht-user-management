@@ -6,7 +6,7 @@ import { buildProperties, resolveRoles, type Lineage, type ValidationErrors } fr
 import { generatePassword, sanitizeUsername } from '../username';
 import type { OperationContext, OperationResult } from './context';
 import type { ReplaceRequest } from './schemas';
-import { putNew, validationFailed } from './create';
+import { ownershipFields, putNew, validationFailed } from './create';
 import { recallPassword, recordCredentials } from './credentials';
 import { isWithinFacilities } from './directory';
 import {
@@ -147,6 +147,7 @@ export async function prepareReplace(context: OperationContext, placeId: string,
   const roles = isNewPerson ? resolveRoles(contactType, request.user?.roles) : { roles: [] as string[] };
   if ('error' in roles && roles.error) errors['user.roles'] = roles.error;
   if (!isNewPerson && request.user) errors['user.roles'] = 'Only a new person gets roles; an existing person keeps their own';
+  const ownership = ownershipFields(request.externalOwnership, errors);
   if (Object.keys(errors).length) {
     throw validationFailed(errors);
   }
@@ -194,6 +195,7 @@ export async function prepareReplace(context: OperationContext, placeId: string,
     ancestors,
     lineage,
     built,
+    ownership,
     roles: roles.roles,
     incoming,
     state,
@@ -213,7 +215,7 @@ export async function replacePrimaryContact(
 ): Promise<OperationResult<ReplaceResult>> {
   const { cht, session } = context;
   const prepared = await prepareReplace(context, placeId, request);
-  const { contactType, contactId, placeDoc, lineage, built, incoming, scope } = prepared;
+  const { contactType, contactId, placeDoc, lineage, built, ownership, incoming, scope } = prepared;
   const now = Date.now();
   let changed = false;
 
@@ -254,16 +256,24 @@ export async function replacePrimaryContact(
   let entry = prepared.entry;
   if (prepared.state === 'fresh') {
     const outgoingId = prepared.outgoing.contactId;
-    entry = await switchPlace(cht, contactType, placeId, outgoingId, incomingRef, built.place, {
-      contact: contactId,
-      previous_contact: outgoingId,
-      scope,
-      affected_places: prepared.affectedPlaceIds,
-      outgoing_users: prepared.outgoing.accounts.map((account) => account.username),
-      tool: TOOL,
-      username: session.username,
-      replaced_time: now
-    });
+    entry = await switchPlace(
+      cht,
+      contactType,
+      placeId,
+      outgoingId,
+      incomingRef,
+      { ...built.place, ...ownership },
+      {
+        contact: contactId,
+        previous_contact: outgoingId,
+        scope,
+        affected_places: prepared.affectedPlaceIds,
+        outgoing_users: prepared.outgoing.accounts.map((account) => account.username),
+        tool: TOOL,
+        username: session.username,
+        replaced_time: now
+      }
+    );
     changed = true;
   }
   const recorded = entry!;
@@ -356,7 +366,7 @@ async function switchPlace(
   placeId: string,
   expectedContact: string | null,
   incomingRef: Record<string, unknown>,
-  placeValues: Record<string, string>,
+  placeValues: Record<string, string | true>,
   newEntry: ReplacementEntry
 ): Promise<ReplacementEntry> {
   return retryOnConflict(async () => {

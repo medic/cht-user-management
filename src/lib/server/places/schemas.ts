@@ -15,6 +15,10 @@ export const docId = z
 
 const propertyValues = z.record(z.string(), z.union([z.string(), z.array(z.string())]));
 
+// Marks the place as owned by an external system, written to the deployment's
+// attribute_for_external_ownership: true, or a reference to the record in that system
+const externalOwnership = z.union([z.literal(true), z.string().refine((value) => value.trim().length > 0, 'must not be empty')]);
+
 export const createRequest = z
   .object({
     contactType: z.string().min(1),
@@ -25,6 +29,7 @@ export const createRequest = z
       .object({ roles: z.array(z.string().min(1)).min(1) })
       .strict()
       .optional(),
+    externalOwnership: externalOwnership.optional(),
     ignoreWarnings: z.boolean().default(false)
   })
   .strict();
@@ -40,7 +45,8 @@ export const replaceRequest = z
     user: z
       .object({ roles: z.array(z.string().min(1)).min(1) })
       .strict()
-      .optional()
+      .optional(),
+    externalOwnership: externalOwnership.optional()
   })
   .strict();
 

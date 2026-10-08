@@ -49,6 +49,7 @@ The folder is read when the server starts, and the server refuses to start if a 
 `contact_types.can_assign_multiple` | boolean | Enable support for assigning a single user to multiple places
 `contact_types.actions` | string[] | Optional. The only actions offered for this type, from `create`, `replace`, `move`, `merge` and `delete`. Every action is offered when left out. eg. `["move"]` for households, which can only be moved.
 `contact_types.hooks` | string[] | Optional. Scripts in the deployment folder that adjust this type's places before they're written. See [Hooks](#hooks).
+`attribute_for_external_ownership` | string | Optional. The attribute written on a place to mark it as owned by an external system, when a create or replace request sends `externalOwnership` (eg. Kenya's `chw_registry_link`). It can't also be a place property.
 
 #### ConfigProperty
 The `ConfigProperty` is a data structure used several times in each `config.json` file. At a high level, a `ConfigProperty` defines a property on an object.

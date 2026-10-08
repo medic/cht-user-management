@@ -341,6 +341,20 @@ describe('createPlace', () => {
   });
 });
 
+describe('externalOwnership', () => {
+  it("writes the deployment's attribute_for_external_ownership on a created place", async () => {
+    await createPlace(context, 'place-1', chuRequest({ externalOwnership: 'registry/42' }));
+    expect(cht.docs.get('place-1')?.chw_registry_link).toBe('registry/42');
+  });
+
+  it('writes it when a place is replaced, and leaves it alone otherwise', async () => {
+    await createPlace(context, 'place-1', chuRequest());
+    expect(cht.docs.get('place-1')).not.toHaveProperty('chw_registry_link');
+    await replacePrimaryContact(context, 'place-1', replaceChu('contact-2', 'john roe', { externalOwnership: true }));
+    expect(cht.docs.get('place-1')?.chw_registry_link).toBe(true);
+  });
+});
+
 describe('replacePrimaryContact', () => {
   const kogony = { name: 'Kogony', code: '654321', link_facility_name: 'Kogony Dispensary', link_facility_code: '54321' };
   const kisian = { name: 'Kisian', code: '777777', link_facility_name: 'Kisian Dispensary', link_facility_code: '77777' };

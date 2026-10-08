@@ -25,6 +25,9 @@ export {
 
 export type ConfigSystem = {
   contact_types: ContactType[];
+  // optional: the attribute written on a place to mark it as owned by an external system, eg. Kenya's
+  // CHW registry (`chw_registry_link`): true, or a reference to the record in that system
+  attribute_for_external_ownership?: string;
 };
 
 // The fields written onto a place doc before lineage and attribution are added
@@ -91,6 +94,18 @@ export function loadDeployment(dir: string): Deployment {
     const missing = (type.hooks ?? []).find((file) => !existsSync(join(dir, file)));
     if (missing) {
       throw new Error(`${path}: the hook "${missing}" of "${type.name}" isn't in ${dir}`);
+    }
+  }
+
+  // the attribute is written by the API, so a place property of the same name would fight it
+  const ownership: unknown = config.attribute_for_external_ownership;
+  if (ownership !== undefined) {
+    if (typeof ownership !== 'string' || !ownership) {
+      throw new Error(`${path}: "attribute_for_external_ownership" must be the name of an attribute`);
+    }
+    const collision = types.find((type) => type.place_properties?.some((property) => property.property_name === ownership));
+    if (collision) {
+      throw new Error(`${path}: attribute_for_external_ownership "${ownership}" is also a place property of "${collision.name}"`);
     }
   }
 
@@ -167,6 +182,11 @@ export function friendlyTypeName(type: string): string {
     types.flatMap((t) => t.hierarchy).find((level) => level.contact_type === type)?.friendly_name ??
     type
   );
+}
+
+// The attribute that marks a place as owned by an external system, when the deployment names one
+export function externalOwnershipAttribute(): string | undefined {
+  return deployment().config.attribute_for_external_ownership;
 }
 
 export function getParentLevel(contactType: ContactType): HierarchyConstraint {

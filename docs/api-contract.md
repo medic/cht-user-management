@@ -19,7 +19,9 @@ The API has two kinds of client:
 ## 1. Conventions
 
 - **Base path** `/api/v2`. Bodies are JSON, except CSV uploads (`multipart/form-data`) and
-  downloads (`text/csv`, `application/zip`).
+  downloads (`text/csv`, `application/zip`). `/api/v1` is the previous version's API, kept as it was
+  for the clients that use it ([§12](#12-the-previous-versions-api-apiv1)); it follows none of these
+  conventions.
 - **Auth**: send either the session cookie (browsers) or `Authorization: Bearer <token>`
   (machine clients). See [§2](#2-auth).
 - **Ids for new things are chosen by the client**: `placeId`, `contact.id`, `jobId`. UUIDs are
@@ -425,7 +427,9 @@ Called by the staged-list upload, and directly by machine clients.
 
 ### `PUT /places/{placeId}` — create
 Behaviour: [APP.md → Create Users](APP.md#1-create-users). Body as in
-[The request](APP.md#the-request), without `placeId`, which comes from the path.
+[The request](APP.md#the-request), without `placeId`, which comes from the path. `externalOwnership`
+(`true` or a reference) marks the place as owned by an external system, for deployments with an
+`attribute_for_external_ownership` ([APP.md → External ownership](APP.md#what-drives-it-contact-types)).
 
 | Status | Body / code |
 |---|---|
@@ -447,7 +451,8 @@ Behaviour: [APP.md → Replace Existing Users](APP.md#2-replace-existing-users).
   "contact": { "id": "c0ff…", "properties": { … } },   // no properties: an existing person takes over
   "scope": "all",                                      // or "place"
   "place": { },
-  "user": { "roles": [ … ] }
+  "user": { "roles": [ … ] },
+  "externalOwnership": true                            // optional, as for create
 }
 ```
 
@@ -591,3 +596,46 @@ server's buffer is recovered by re-reading `GET /staged-items` and `GET /hierarc
 | 409 | Conflicts with current state: warnings to confirm, ids reused, overtaken, concurrent change, revision mismatch, locked item, overlapping job, changed config |
 | 422 | Well-formed, but invalid: field errors, wrong types, rules like "can't merge into itself" |
 | 502 / 504 | CHT failed or couldn't be reached; the request can be re-sent |
+
+---
+
+## 12. The previous version's API (`/api/v1`)
+
+The endpoints of the previous version, kept for the systems that call them, such as Kenya's CHW
+registry. Paths, bodies and responses are as they were. Each is a thin layer over the operations
+above, so a place created, replaced, moved, merged or deleted through them is the same as through
+v2: the outgoing person of a replace is kept, and jobs appear in `GET /api/v2/hierarchy-jobs`.
+
+**Conventions, as before.**
+- **Auth**: `POST /api/v1/sso-login` returns the token as `AuthToken`. Send it back as the
+  `AuthToken` cookie (or as a bearer token). Without a valid one, every other `/api/v1` endpoint
+  answers `302` to `/login`.
+- **Bodies** are JSON objects (`500 body expected as application/json` otherwise). Form-encoded
+  bodies are read too, but only from the app's own origin: SvelteKit refuses cross-site form posts.
+- **Failures the endpoint expects** are a `200` with a body saying so, in each endpoint's own shape.
+  Anything else, including an unknown `type`, is `500 { statusCode, error, message }`; malformed JSON
+  is `400`.
+- **Places are named by their hierarchy**, as flat keys: each level's `property_name` (e.g.
+  `SUBCOUNTY`), and `replacement` for the place itself. A name matches a place's name, or its
+  formatted form, ignoring case; a level that matches several places is settled by the levels below
+  it. Only places within the caller's facilities are found. A hierarchy that can't be resolved is
+  `{ "error": "hierarchy cannot be resolved: index 1 - Place Not Found", "isAmbiguous": false, "parentMissing": true }`.
+- **Properties** are `place_<property_name>`, `contact_<property_name>` and `user_role`
+  (space-separated, for types with several roles); validation errors are keyed the same way.
+  The deployment's `attribute_for_external_ownership`, sent as a key, claims the place.
+
+| Endpoint | Body | Response |
+|---|---|---|
+| `POST /api/v1/sso-login` (no auth) | `{ domain, access_token }`: `domain` is the instance's name | `{ ok: true, AuthToken }` |
+| `POST /api/v1/search[?clear_cache=1]` | `{ type, <parent levels>, replacement }` | `[ { place_id, name, score } ]`: places of `type` under the parent, whose name matches `replacement`, best (lowest score) first |
+| `POST /api/v1/create-user-and-place` | `{ type, <levels>, place_…, contact_…, user_role? }` | `{ place_id, contact_id, username, password, warnings }`, or `{ success: false, errors }` |
+| `POST /api/v1/manage-hierarchy` | `{ op: move\|merge\|delete, place_type, source_<levels>, destination_<levels> }` | `{ jobName, action, instanceUrl, sourceId, destinationId }`, or `{ error }` |
+| `GET /version` (no auth) | | The version, as text |
+
+`create-user-and-place` with a `replacement` replaces that place's person (`scope: "all"`), as
+[`PUT /places/{placeId}/primary-contact`](#put-placesplaceidprimary-contact--replace) does; without
+one, it creates the place under its parent. Duplicates don't stop it: they're returned in
+`warnings`, as text. `manage-hierarchy` schedules the job as
+[`PUT /hierarchy-jobs/{jobId}`](#put-hierarchy-jobsjobid--schedule-a-move-merge-or-delete) does, with
+the same checks; a move names the new parent in `destination_<levels>`, a merge the place merged into
+(`destination_replacement` included).

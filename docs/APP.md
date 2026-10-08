@@ -506,6 +506,12 @@ People are told apart from places by CHT's own settings: CHT's `person` type, an
 type CHT marks as a person, such as a household's members. So a move, merge or delete counts them
 as people, not places.
 
+**External ownership.** A deployment can name an `attribute_for_external_ownership` at the top of
+its configuration (Kenya: `chw_registry_link`). A create or replace request may then send
+`externalOwnership`: `true`, or a reference to the record in the external system that owns the
+place, and it's written to the place under that attribute. The attribute can't also be a place
+property, and a request that sends it to a deployment without one is a validation error.
+
 **One folder per deployment.** Everything deployment-specific lives in one folder, and the app
 is told which folder to use: its contact types, the CHT instances users sign in to, an optional
 logo, and any hooks. The app knows no deployment by name, so any folder in that shape works.
@@ -532,6 +538,7 @@ treat the folder as trusted: only the people who deploy the app should be able t
   "place":   { "name": "Kanyakwar", "code": "123456" },
   "contact": { "id": "9ab2…", "properties": { "name": "Jane Doe", "phone": "0712345678" } },
   "user":    { "roles": ["community_health_assistant"] },   // only for types with several roles
+  "externalOwnership": "https://registry.example/chu/42",   // optional, see External ownership
   "ignoreWarnings": false
 }
 ```

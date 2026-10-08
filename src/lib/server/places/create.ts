@@ -1,5 +1,5 @@
 import { assertAuthorized } from '../auth/session';
-import { getContactType, getParentLevel, mutate, type PlaceDraft } from '../config';
+import { externalOwnershipAttribute, getContactType, getParentLevel, mutate, type PlaceDraft } from '../config';
 import { ApiError } from '../errors';
 import { isUpdateConflict, type Cht, type CouchDoc, type NewUser } from '../cht/client';
 import { buildProperties, resolveRoles, type ValidationErrors } from '../../validation';
@@ -103,6 +103,7 @@ export async function prepareCreate(context: OperationContext, placeId: string, 
   if (roles.error) {
     errors['user.roles'] = roles.error;
   }
+  const ownership = ownershipFields(request.externalOwnership, errors);
   if (Object.keys(errors).length) {
     throw validationFailed(errors);
   }
@@ -118,7 +119,33 @@ export async function prepareCreate(context: OperationContext, placeId: string, 
     }
   }
 
-  return { contactType, contactId, parentDoc, ancestors, existingPlace, existingContact, lineage, writeContact, built, roles, warnings };
+  return {
+    contactType,
+    contactId,
+    parentDoc,
+    ancestors,
+    existingPlace,
+    existingContact,
+    lineage,
+    writeContact,
+    built,
+    roles,
+    ownership,
+    warnings
+  };
+}
+
+// The place's external ownership, as the attribute the deployment names for it
+export function ownershipFields(claim: true | string | undefined, errors: ValidationErrors): Record<string, true | string> {
+  if (claim === undefined) {
+    return {};
+  }
+  const attribute = externalOwnershipAttribute();
+  if (!attribute) {
+    errors.externalOwnership = 'this deployment has no attribute_for_external_ownership';
+    return {};
+  }
+  return { [attribute]: claim };
 }
 
 // PUT /api/v2/places/{placeId} — every step checks what already exists, so repeating the same request
@@ -129,7 +156,7 @@ export async function createPlace(
   request: CreateRequest
 ): Promise<OperationResult<CreateResult>> {
   const { cht, session } = context;
-  const { contactType, contactId, parentDoc, existingPlace, existingContact, lineage, writeContact, built, roles, warnings } =
+  const { contactType, contactId, parentDoc, existingPlace, existingContact, lineage, writeContact, built, roles, ownership, warnings } =
     await prepareCreate(context, placeId, request);
 
   const now = Date.now();
@@ -139,7 +166,7 @@ export async function createPlace(
 
   let placeDoc = existingPlace;
   if (!placeDoc) {
-    const draft: PlaceDraft = { ...built.place, contact_type: contactType.name, parent: parentDoc._id };
+    const draft: PlaceDraft = { ...built.place, ...ownership, contact_type: contactType.name, parent: parentDoc._id };
     await mutate(draft, { cht, contactType, isReplacement: false });
     const { contact_type: _contactType, parent: _parent, ...fields } = draft;
     const contactLineage = existingContact?.parent

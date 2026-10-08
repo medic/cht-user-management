@@ -67,6 +67,19 @@ describe('the deployment folder', () => {
     expect(() => getContactType('c_unit')).toThrow(/DEPLOYMENT_DIR is required/);
   });
 
+  it('refuses an attribute_for_external_ownership that is also a place property', () => {
+    const config = (attribute: unknown) =>
+      JSON.stringify({
+        contact_types: [{ name: 'c_unit', place_properties: [{ property_name: 'code' }] }],
+        attribute_for_external_ownership: attribute
+      });
+    expect(loadDeployment(folder({ 'config.json': config('registry_link') })).config.attribute_for_external_ownership).toBe(
+      'registry_link'
+    );
+    expect(() => loadDeployment(folder({ 'config.json': config('code') }))).toThrow(/"code" is also a place property of "c_unit"/);
+    expect(() => loadDeployment(folder({ 'config.json': config(true) }))).toThrow(/must be the name of an attribute/);
+  });
+
   it('runs each type’s own hooks, in order, and never another type’s', async () => {
     const types = [
       { name: 'c_unit', hooks: ['hooks/unit.mjs', 'hooks/tag.mjs'] },
