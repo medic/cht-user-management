@@ -51,6 +51,7 @@
     "jose": "^6.2.12",
     "libphonenumber-js": "^1.13.14",
     "luxon": "^3.7.2",
+    "prom-client": "^15.1.3",
     "semver": "^7.8.5",
     "zod": "^4.6.5"
   },

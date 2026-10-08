@@ -185,6 +185,8 @@ docker run -d -p 3000:3000 --env-file .env -v cht-user-management-data:/app/data
 
 `GET /_healthz` answers `200` once the tool is up, for container and Kubernetes health checks.
 
+`GET /metrics` serves Prometheus metrics: Node.js and process metrics, and the duration of requests by method, route and status (`http_request_duration_seconds`, `http_request_summary_seconds`). Like `/_healthz`, it needs no sign-in, so block it at the ingress if it shouldn't be reachable from outside.
+
 #### Deploying a project that isn't in the image
 
 For another project, keep its [deployment folder](#configuration) wherever suits the project, for example `/srv/my-project`:

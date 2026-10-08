@@ -7,6 +7,7 @@ import { errorResponse } from '$lib/server/http';
 import { LEGACY_AUTH_COOKIE, LEGACY_PUBLIC_PATHS } from '$lib/server/legacy/auth';
 import { getRevocations, startDataSweeper, startJobRunner } from '$lib/server/runtime';
 import { checkDeployment } from '$lib/server/config';
+import { startMetrics, timeRequest } from '$lib/server/metrics';
 import { setMaxPlacesLoaded } from '$lib/server/places/lookup';
 import { getSettings } from '$lib/server/settings';
 
@@ -15,6 +16,7 @@ import { getSettings } from '$lib/server/settings';
 export const init: ServerInit = async () => {
   setMaxPlacesLoaded(getSettings().maxPlacesLoaded);
   await checkDeployment();
+  startMetrics();
   startJobRunner();
   startDataSweeper();
 };
@@ -38,7 +40,20 @@ const SECURITY_HEADERS: Record<string, string> = {
   'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), payment=(), usb=()'
 };
 
+// Each request is timed for /metrics, by its route
 export const handle: Handle = async ({ event, resolve }) => {
+  const done = timeRequest(event.request.method);
+  try {
+    const response = await secured({ event, resolve });
+    done?.(event.route.id, response.status);
+    return response;
+  } catch (e) {
+    done?.(event.route.id, 500);
+    throw e;
+  }
+};
+
+const secured: Handle = async ({ event, resolve }) => {
   let response = await authenticated({ event, resolve });
   const headers: Record<string, string> = { ...SECURITY_HEADERS };
   // browsers only heed it over https, so it's harmless behind plain http
