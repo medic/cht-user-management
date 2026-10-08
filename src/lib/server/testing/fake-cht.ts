@@ -1,7 +1,15 @@
 import { ChtError } from '../errors';
-import type { Cht, CouchDoc, NewUser, UserInfo } from '../cht/client';
+import type { Cht, CouchDoc, NewOidcUser, NewUser, UserInfo } from '../cht/client';
 
-type StoredUser = { username: string; password: string; place: string[]; contact: string; roles: string[]; inactive?: boolean };
+type StoredUser = {
+  username: string;
+  password?: string;
+  oidc_username?: string;
+  place: string[];
+  contact: string;
+  roles: string[];
+  inactive?: boolean;
+};
 type Method = keyof Cht;
 
 // In-memory stand-in for a CHT instance, with enough CouchDB behaviour (revs, 409s) to exercise retries
@@ -156,6 +164,36 @@ export class FakeCht implements Cht {
         contact: user.contact,
         roles: [...user.roles]
       });
+    });
+  }
+
+  async createOidcUser(user: NewOidcUser): Promise<void> {
+    return this.run('createOidcUser', () => {
+      if (this.users.has(user.username)) {
+        throw new ChtError(400, `Username "${user.username}" already taken.`);
+      }
+      this.users.set(user.username, { ...structuredClone(user) });
+    });
+  }
+
+  // like CHT's people API: the place must exist, and the person gets its lineage
+  personCounter = 0;
+  async createPerson(placeId: string, attributes: Record<string, unknown>): Promise<string> {
+    return this.run('createPerson', () => {
+      const place = this.docs.get(placeId);
+      if (!place) {
+        throw new ChtError(404, `Failed to find place.`);
+      }
+      const id = `person-${++this.personCounter}`;
+      const { _id, parent } = place;
+      this.docs.set(id, {
+        type: 'person',
+        ...structuredClone(attributes),
+        _id: id,
+        parent: { _id, parent },
+        _rev: `1-${++this.revCounter}`
+      });
+      return id;
     });
   }
 

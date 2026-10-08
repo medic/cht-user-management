@@ -630,6 +630,10 @@ v2: the outgoing person of a replace is kept, and jobs appear in `GET /api/v2/hi
 | `POST /api/v1/search[?clear_cache=1]` | `{ type, <parent levels>, replacement }` | `[ { place_id, name, score } ]`: places of `type` under the parent, whose name matches `replacement`, best (lowest score) first |
 | `POST /api/v1/create-user-and-place` | `{ type, <levels>, place_…, contact_…, user_role? }` | `{ place_id, contact_id, username, password, warnings }`, or `{ success: false, errors }` |
 | `POST /api/v1/manage-hierarchy` | `{ op: move\|merge\|delete, place_type, source_<levels>, destination_<levels> }` | `{ jobName, action, instanceUrl, sourceId, destinationId }`, or `{ error }` |
+| `POST /api/v1/disable-users-at` | `{ type, <parent levels>, replacement }`, as for search | `{ place_id, place_name, disabled }`: the best match's accounts lose it, and those left with no place are disabled. `{ success: false, error, isDuplicate? }` when nothing matches or several tie |
+| `POST /api/v1/create-user[?exclusiveFacilities=true]` | `{ oidc_username, role \| roles, facility_ids, contact }` | `{ success: true, username, unassigned? }`, `{ success: false, errors }` or `{ error }` |
+| `POST /api/v1/set-user-facilities` | `{ username \| oidc_username, facility_ids, role \| roles }` | `{ username, facilityIds, unassigned }`; `{ success: false, error, userNotFound: true }` for an unknown user |
+| `POST /api/v1/update-place?place_id=…&type=…` | `{ place_…, contact_…, <ownership attribute> }` | `{ success: true, place_id, contact_id, place, contact }`: each property changed, `{ previous, current }`. `{ success: false, errors }` or `{ error }` |
 | `GET /version` (no auth) | | The version, as text |
 
 `create-user-and-place` with a `replacement` replaces that place's person (`scope: "all"`), as
@@ -639,3 +643,21 @@ one, it creates the place under its parent. Duplicates don't stop it: they're re
 [`PUT /hierarchy-jobs/{jobId}`](#put-hierarchy-jobsjobid--schedule-a-move-merge-or-delete) does, with
 the same checks; a move names the new parent in `destination_<levels>`, a merge the place merged into
 (`destination_replacement` included).
+
+Four of them do what v2 has no operation for:
+- `create-user` makes an account for someone who signs in through the identity provider (SSO), over
+  several existing places: a new person, created under the first place through CHT's people API,
+  becomes the primary contact of each, and the account (`oidc_username`, no password) gets them all.
+  Its username is the `oidc_username` made safe: `jane.doe@moh.go.ke` → `jane_dot_doe_at_moh_dot_go_dot_ke`.
+  With `exclusiveFacilities=true`, every other account loses those places.
+- `set-user-facilities` gives an account exactly these places (and these roles), then takes them from
+  every other account. An account left with no place gets the role `disabled`, which CHT doesn't
+  know and so grants nothing, and keeps one place: CHT needs one, and the account, its password and
+  its SSO link stay for when it gets places again. `unassigned` lists each account changed, with an
+  `error` for one that couldn't be.
+- `disable-users-at` finds the place as `search` does, and acts on the best match only.
+- `update-place` corrects a place's and its primary contact's properties: each one sent replaces the
+  doc's, the rest are kept (formatted again), generated ones are worked out again, and each doc
+  written records the change in `user_attribution.edits`. An unknown key is an error. The ownership
+  attribute can also be released, with `null` or `false`. Types whose generated properties are built
+  from the hierarchy can't be edited, since it isn't resolved here.

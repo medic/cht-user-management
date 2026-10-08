@@ -22,6 +22,16 @@ export type NewUser = {
   password_change_required: boolean;
 };
 
+// A user who signs in through the identity provider (SSO): no password, which CHT forbids with
+// oidc_username. Several places need a role with `can_have_multiple_places`
+export type NewOidcUser = {
+  username: string;
+  oidc_username: string;
+  roles: string[];
+  place: string[];
+  contact: string;
+};
+
 export interface Cht {
   readonly domain: string;
   getDoc(id: string): Promise<CouchDoc | null>;
@@ -38,6 +48,9 @@ export interface Cht {
   usersByContact(contactId: string): Promise<UserInfo[]>;
   usersAtPlace(placeId: string): Promise<UserInfo[]>;
   createUser(user: NewUser): Promise<void>;
+  createOidcUser(user: NewOidcUser): Promise<void>;
+  // a person under the place, through CHT's people API (api/v1/people); returns its id
+  createPerson(placeId: string, attributes: Record<string, unknown>): Promise<string>;
   updateUser(username: string, patch: { place?: string[]; roles?: string[] }): Promise<void>;
   disableUser(username: string): Promise<void>;
   // how many changes CHT's Sentinel still has to process (GET api/v2/monitoring)
@@ -152,6 +165,15 @@ export class HttpCht implements Cht {
   async createUser(user: NewUser): Promise<void> {
     // callers handle retries: a blind retry here could create the user twice
     await this.request('POST', 'api/v3/users', { body: user, retries: 0 });
+  }
+
+  async createOidcUser(user: NewOidcUser): Promise<void> {
+    await this.request('POST', 'api/v3/users', { body: user, retries: 0 });
+  }
+
+  async createPerson(placeId: string, attributes: Record<string, unknown>): Promise<string> {
+    const result = await this.request('POST', 'api/v1/people', { body: { ...attributes, place: placeId } });
+    return result.id;
   }
 
   async updateUser(username: string, patch: { place?: string[]; roles?: string[] }): Promise<void> {
