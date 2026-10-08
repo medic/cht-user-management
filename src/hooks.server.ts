@@ -4,7 +4,7 @@ import { authenticate } from '$lib/server/auth/authenticate';
 import { authError } from '$lib/server/auth/errors';
 import { presentedToken, SESSION_COOKIE } from '$lib/server/auth/session';
 import { errorResponse } from '$lib/server/http';
-import { LEGACY_AUTH_COOKIE, LEGACY_PUBLIC_PATHS } from '$lib/server/legacy/auth';
+import { LEGACY_AUTH_COOKIE, LEGACY_PAGE_PATHS, LEGACY_PUBLIC_PATHS } from '$lib/server/legacy/auth';
 import { getRevocations, startDataSweeper, startJobRunner } from '$lib/server/runtime';
 import { checkDeployment } from '$lib/server/config';
 import { startMetrics, timeRequest } from '$lib/server/metrics';
@@ -83,13 +83,13 @@ function routedPath(pathname: string): string {
 
 const authenticated = async ({ event, resolve }: Parameters<Handle>[0]): Promise<Response> => {
   const pathname = routedPath(event.url.pathname);
-  if (!pathname.startsWith('/api/') || PUBLIC_PATHS.has(pathname) || LEGACY_PUBLIC_PATHS.has(pathname)) {
+  // the previous version's endpoints (/api/v1, and page routes clients still call) also take the
+  // token from its cookie, and send anyone not signed in to the login page, as it did
+  const legacy = pathname.startsWith('/api/v1/') || LEGACY_PAGE_PATHS.has(pathname);
+  if ((!pathname.startsWith('/api/') && !legacy) || PUBLIC_PATHS.has(pathname) || LEGACY_PUBLIC_PATHS.has(pathname)) {
     return resolve(event);
   }
 
-  // the previous version's endpoints (/api/v1) also take the token from its cookie, and send anyone
-  // not signed in to the login page, as it did
-  const legacy = pathname.startsWith('/api/v1/');
   try {
     const cookie = (legacy ? event.cookies.get(LEGACY_AUTH_COOKIE) : undefined) ?? event.cookies.get(SESSION_COOKIE);
     const token = presentedToken(event.request.headers.get('authorization'), cookie);

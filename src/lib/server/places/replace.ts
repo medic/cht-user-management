@@ -9,6 +9,7 @@ import type { ReplaceRequest } from './schemas';
 import { ownershipFields, putNew, validationFailed } from './create';
 import { recallPassword, recordCredentials } from './credentials';
 import { isWithinFacilities } from './directory';
+import { rememberPlace } from './lookup';
 import {
   TOOL,
   contactAttributes,
@@ -394,7 +395,9 @@ async function switchPlace(
     attribution.replacements = [...(attribution.replacements ?? []), newEntry];
     doc.user_attribution = attribution;
     doc.contact = incomingRef;
-    await cht.putDoc(doc);
+    doc._rev = await cht.putDoc(doc);
+    // its name may have changed: found by it straight away, as a created place is
+    rememberPlace(cht, contactType.name, doc);
     return newEntry;
   });
 }
@@ -440,7 +443,8 @@ async function switchOtherPlace(
     attribution.previousPrimaryContacts = [...(attribution.previousPrimaryContacts ?? []), outgoingId];
     doc.user_attribution = attribution;
     doc.contact = incomingRef;
-    await cht.putDoc(doc);
+    doc._rev = await cht.putDoc(doc);
+    rememberPlace(cht, String(docType(doc)), doc);
     return 'switched';
   });
 }

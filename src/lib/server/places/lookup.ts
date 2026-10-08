@@ -85,7 +85,15 @@ export function rememberPlace(cht: Cht, type: string, doc: CouchDoc): void {
   }
 }
 
-export function clearPlaceCache(): void {
-  lists.clear();
-  sizes.clear();
+// Every instance's lists, or only those of the instance at `domain`
+export function clearPlaceCache(domain?: string): void {
+  for (const cache of [lists, sizes]) {
+    if (domain === undefined) {
+      cache.clear();
+      continue;
+    }
+    for (const key of cache.keys()) {
+      if (key.startsWith(`${domain}:`)) cache.delete(key);
+    }
+  }
 }

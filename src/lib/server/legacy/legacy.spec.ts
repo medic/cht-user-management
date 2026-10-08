@@ -148,6 +148,22 @@ describe('POST /api/v1/search', () => {
     expect(result).toEqual({ hits: [{ place_id: 'chu', name: 'Kanyakwar', score: 0 }] });
   });
 
+  it("reads the instance's places again with clear_cache, and only that instance's", async () => {
+    const other = new FakeCht();
+    Object.assign(other, { domain: 'other.cht' });
+    other.seed({ _id: 'x', type: 'contact', contact_type: 'b_sub_county', name: 'Other' });
+    await searchPlaces({ ...context, cht: other }, { type: CHU, SUBCOUNTY: 'Other', replacement: 'x' });
+    await searchPlaces(context, { type: CHU, SUBCOUNTY: 'Kisumu West', replacement: 'Kanyakwar' });
+    cht.seed({ _id: 'chu-2', type: 'contact', contact_type: CHU, name: 'Kogony', parent: lineage('west', 'kisumu') });
+    other.calls.length = 0;
+
+    const body = { type: CHU, SUBCOUNTY: 'Kisumu West', replacement: 'Kogony' };
+    expect(await searchPlaces(context, body)).toEqual({ hits: [] });
+    expect(await searchPlaces(context, body, { clearCache: true })).toEqual({ hits: [{ place_id: 'chu-2', name: 'Kogony', score: 0 }] });
+    await searchPlaces({ ...context, cht: other }, { type: CHU, SUBCOUNTY: 'Other', replacement: 'x' });
+    expect(other.calls).not.toContain('placesOfType');
+  });
+
   it('throws for an unknown type, which the endpoint answers with a 500', async () => {
     await expect(searchPlaces(context, { type: 'bogus' })).rejects.toThrow('unrecognized contact type: "bogus"');
   });
@@ -217,6 +233,14 @@ describe('POST /api/v1/create-user-and-place', () => {
     expect(await createUserAndPlace(context, chu)).toEqual({ success: false, errors: 'something went wrong' });
   });
 
+  it('reports any other upload failure in the body, as before', async () => {
+    // nothing in the name makes a username
+    expect(await createUserAndPlace(context, { ...chu, contact_name: '日本' })).toEqual({
+      success: false,
+      errors: 'Error: username cannot be empty'
+    });
+  });
+
   it('with a replacement, hands the place to a new person, keeping the outgoing person', async () => {
     const result = await createUserAndPlace(context, {
       type: CHU,
@@ -231,6 +255,20 @@ describe('POST /api/v1/create-user-and-place', () => {
     expect(cht.docs.get('jane')).toBeDefined();
     expect(cht.users.get('jane')?.inactive).toBe(true);
     expect(cht.users.get('grace_owino')?.place).toEqual(['chu']);
+  });
+
+  it('finds a replaced place by its new name straight away', async () => {
+    await searchPlaces(context, { type: CHV_AREA, SUBCOUNTY: 'Kisumu West', CHU: 'Kanyakwar', replacement: 'Mary' });
+    await createUserAndPlace(context, {
+      type: CHV_AREA,
+      SUBCOUNTY: 'Kisumu West',
+      CHU: 'Kanyakwar',
+      replacement: 'Mary Atieno',
+      contact_name: 'Grace Owino',
+      contact_phone: '0722000222'
+    });
+    const result = await searchPlaces(context, { type: CHV_AREA, SUBCOUNTY: 'Kisumu West', CHU: 'Kanyakwar', replacement: 'Grace Owino' });
+    expect(result).toEqual({ hits: [expect.objectContaining({ place_id: 'area', name: 'Grace Owino Area' })] });
   });
 
   it('with a replacement, warns about its own unique values, as before', async () => {

@@ -11,7 +11,7 @@ import { createRequest, replaceRequest } from '../places/schemas';
 import { uniquePropertyMatches, type Warning } from '../places/unique';
 import { buildProperties, resolveRoles, type ValidationErrors } from '../../validation';
 import { legacyErrorKeys, readForm, type LegacyForm } from './form';
-import { legacyContactType } from './http';
+import { errorString, legacyContactType } from './http';
 import { rankNameMatches } from './name-match';
 import {
   asRemotePlace,
@@ -38,7 +38,7 @@ export async function searchPlaces(
   const contactType = legacyContactType(body.type);
   const [baseLevel] = hierarchyWithReplacement(contactType);
   if (options.clearCache) {
-    clearPlaceCache();
+    clearPlaceCache(context.cht.domain);
   }
 
   // the levels above the place only: the place itself is what's searched for
@@ -143,10 +143,12 @@ export async function createUserAndPlace(context: OperationContext, body: Record
     if (e instanceof ApiError && e.code === 'VALIDATION_FAILED') {
       return { success: false, errors: legacyErrorKeys((e.details ?? {}) as ValidationErrors) };
     }
-    if (e instanceof ApiError || e instanceof ChtError) {
+    // any other failure of the upload, as the previous version reported it: CHT's message, or the
+    // error as text (a hook's refusal included, which threw a plain Error there)
+    if (e instanceof ChtError || (e instanceof ApiError && e.code !== 'HOOK_FAILED')) {
       return { success: false, errors: e.message };
     }
-    throw e;
+    return { success: false, errors: errorString(e) };
   }
 }
 

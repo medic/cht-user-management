@@ -8,6 +8,9 @@ export const LEGACY_AUTH_COOKIE = 'AuthToken';
 // /api/v1 endpoints anyone may call
 export const LEGACY_PUBLIC_PATHS = new Set(['/api/v1/sso-login']);
 
+// The previous version's page routes that clients still call, signed in as for /api/v1
+export const LEGACY_PAGE_PATHS = new Set(['/search']);
+
 // The previous version named instances by their display name ("domain": "Migori"), which is each
 // instance's `name` now. Its local development instance was "$Development"
 export function legacyInstance(settings: Settings, domain: unknown): Instance {

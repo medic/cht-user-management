@@ -610,15 +610,17 @@ v2: the outgoing person of a replace is kept, and jobs appear in `GET /api/v2/hi
 - **Auth**: `POST /api/v1/sso-login` returns the token as `AuthToken`. Send it back as the
   `AuthToken` cookie (or as a bearer token). Without a valid one, every other `/api/v1` endpoint
   answers `302` to `/login`.
-- **Bodies** are JSON objects (`500 body expected as application/json` otherwise). Form-encoded
-  bodies are read too, but only from the app's own origin: SvelteKit refuses cross-site form posts.
+- **Bodies** are JSON objects (`500 body expected as application/json` otherwise). Send JSON:
+  SvelteKit refuses a form-encoded post unless it carries the app's own `Origin`, so servers and
+  scripts posting forms get `403`, where the previous version accepted them.
 - **Failures the endpoint expects** are a `200` with a body saying so, in each endpoint's own shape.
   Anything else, including an unknown `type`, is `500 { statusCode, error, message }`; malformed JSON
   is `400`.
 - **Places are named by their hierarchy**, as flat keys: each level's `property_name` (e.g.
   `SUBCOUNTY`), and `replacement` for the place itself. A name matches a place's name, or its
   formatted form, ignoring case; a level that matches several places is settled by the levels below
-  it. Only places within the caller's facilities are found. A hierarchy that can't be resolved is
+  it. Only places within the caller's facilities are found for each level (the results of `search` and
+  `disable-users-at` are the places under the level found, as before). A hierarchy that can't be resolved is
   `{ "error": "hierarchy cannot be resolved: index 1 - Place Not Found", "isAmbiguous": false, "parentMissing": true }`.
 - **Properties** are `place_<property_name>`, `contact_<property_name>` and `user_role`
   (space-separated, for types with several roles); validation errors are keyed the same way.
@@ -632,9 +634,10 @@ v2: the outgoing person of a replace is kept, and jobs appear in `GET /api/v2/hi
 | `POST /api/v1/manage-hierarchy` | `{ op: move\|merge\|delete, place_type, source_<levels>, destination_<levels> }` | `{ jobName, action, instanceUrl, sourceId, destinationId }`, or `{ error }` |
 | `POST /api/v1/disable-users-at` | `{ type, <parent levels>, replacement }`, as for search | `{ place_id, place_name, disabled }`: the best match's accounts lose it, and those left with no place are disabled. `{ success: false, error, isDuplicate? }` when nothing matches or several tie |
 | `POST /api/v1/create-user[?exclusiveFacilities=true]` | `{ oidc_username, role \| roles, facility_ids, contact }` | `{ success: true, username, unassigned? }`, `{ success: false, errors }` or `{ error }` |
-| `POST /api/v1/set-user-facilities` | `{ username \| oidc_username, facility_ids, role \| roles }` | `{ username, facilityIds, unassigned }`; `{ success: false, error, userNotFound: true }` for an unknown user |
+| `POST /api/v1/set-user-facilities` | `{ username \| oidc_username, facility_ids, role \| roles }` | `{ username, facilityIds, unassigned }`; `{ success: false, error, userNotFound: true }` for an unknown user, `{ success: false, errors }` or `{ error }` |
 | `POST /api/v1/update-place?place_id=…&type=…` | `{ place_…, contact_…, <ownership attribute> }` | `{ success: true, place_id, contact_id, place, contact }`: each property changed, `{ previous, current }`. `{ success: false, errors }` or `{ error }` |
 | `GET /version` (no auth) | | The version, as text |
+| `POST /search?type=…&level=…&clear_cache=1` | (ignored) | The previous version's search box, kept for clients that call it to have the caller's instance's places read again. `200`, empty |
 
 `create-user-and-place` with a `replacement` replaces that place's person (`scope: "all"`), as
 [`PUT /places/{placeId}/primary-contact`](#put-placesplaceidprimary-contact--replace) does; without
