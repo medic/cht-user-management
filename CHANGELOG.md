@@ -1,3 +1,10 @@
+## [2.14.2](https://github.com/medic/cht-user-management/compare/v2.14.1...v2.14.2) (2026-10-09)
+
+
+### Bug Fixes
+
+* **#402:** fix date range error ([#404](https://github.com/medic/cht-user-management/issues/404)) ([ca15087](https://github.com/medic/cht-user-management/commit/ca15087c0f4d7364a91e1077b83c20b33b093426)), closes [#402](https://github.com/medic/cht-user-management/issues/402)
+
 ## [2.14.1](https://github.com/medic/cht-user-management/compare/v2.14.0...v2.14.1) (2026-09-01)
 
 
