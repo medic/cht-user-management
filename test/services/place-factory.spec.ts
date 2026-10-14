@@ -500,6 +500,56 @@ describe('services/place-factory.ts', () => {
     const place: Place = await PlaceFactory.createOne(fakeFormData, contactType, sessionCache, chtApi);
     expectInvalidProperties(place.validationErrors, ['place_name'], 'Required');
   });
+
+  describe('reassign', () => {
+    const arrange = (placeContact: any, usersByContact: { [contactId: string]: any[] }) => {
+      const api: any = {
+        getUser: sinon.stub().callsFake(async (contactId: string) => usersByContact[contactId]?.shift()),
+        updateUser: sinon.stub().resolves(),
+        getDoc: sinon.stub().resolves({ _id: 'p1', contact: placeContact }),
+        setDoc: sinon.stub().resolves(),
+        disableUser: sinon.stub().resolves(),
+        deleteDoc: sinon.stub().resolves(),
+      };
+      return api;
+    };
+
+    it('keeps the user and contact when the place already belongs to the contact', async () => {
+      const owner = { username: 'owner', place: [{ _id: 'p1' }] };
+      const api = arrange({ _id: 'c1' }, { c1: [owner, owner] });
+
+      await PlaceFactory.reassign('c1', 'p1', api);
+
+      expect(api.updateUser.args).to.deep.eq([[{ username: 'owner', place: ['p1'] }]]);
+      expect(api.disableUser.called).to.be.false;
+      expect(api.deleteDoc.called).to.be.false;
+      expect(api.setDoc.args[0][1].contact).to.deep.eq({ _id: 'c1' });
+    });
+
+    it('disables the previous user and deletes their contact, saving the new contact as a doc reference', async () => {
+      const newUser = { username: 'new', place: [{ _id: 'p0' }] };
+      const prevUser = { username: 'prev', place: [{ _id: 'p1' }] };
+      const api = arrange('c-prev', { 'c-new': [newUser], 'c-prev': [prevUser, undefined] });
+
+      await PlaceFactory.reassign('c-new', 'p1', api);
+
+      expect(api.disableUser.calledOnceWith('prev')).to.be.true;
+      expect(api.deleteDoc.calledOnceWith('c-prev')).to.be.true;
+      expect(api.setDoc.args[0][1].contact).to.deep.eq({ _id: 'c-new' });
+    });
+
+    it('keeps the previous contact while another user still references it', async () => {
+      const newUser = { username: 'new', place: [{ _id: 'p0' }] };
+      const prevUser = { username: 'prev', place: [{ _id: 'p1' }] };
+      const sharing = { username: 'sharing', place: [{ _id: 'p9' }] };
+      const api = arrange({ _id: 'c-prev' }, { 'c-new': [newUser], 'c-prev': [prevUser, sharing] });
+
+      await PlaceFactory.reassign('c-new', 'p1', api);
+
+      expect(api.disableUser.calledOnceWith('prev')).to.be.true;
+      expect(api.deleteDoc.called).to.be.false;
+    });
+  });
 });
 
 it('#165 - create a place when generated property is required', async () => {

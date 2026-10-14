@@ -111,14 +111,29 @@ export class ChtApi {
     return doc;
   }
 
+  // Idempotent: a doc which is already gone (eg. the response to an earlier delete was lost) is not an error
   async deleteDoc(docId: string): Promise<void> {
-    const doc: any = await this.getDoc(docId);
+    let doc: any;
+    try {
+      doc = await this.getDoc(docId);
+    } catch (err: any) {
+      if (err.response?.status === 404) {
+        return;
+      }
+      throw err;
+    }
 
     const deleteContactUrl = `medic/${doc._id}?rev=${doc._rev}`;
     console.log('axios.delete', deleteContactUrl);
-    const resp = await this.axiosInstance.delete(deleteContactUrl);
-    if (!resp.data.ok) {
-      throw Error('response from chtApi.deleteDoc was not OK');
+    try {
+      const resp = await this.axiosInstance.delete(deleteContactUrl);
+      if (!resp.data.ok) {
+        throw Error('response from chtApi.deleteDoc was not OK');
+      }
+    } catch (err: any) {
+      if (err.response?.status !== 404) {
+        throw err;
+      }
     }
   }
 

@@ -169,6 +169,8 @@ describe('services/upload-manager.ts', () => {
       .onSecondCall().resolves([subcounty])
       .onThirdCall().resolves([toReplace]);
 
+    chtApi.getUser.onSecondCall().resolves(undefined); // the outgoing user is disabled by now
+
     const place = await PlaceFactory.createOne(fakeFormData, contactType, sessionCache, chtApi);
     expect(place.validationErrors).to.be.empty; // only parent is required when replacing
 
@@ -489,6 +491,81 @@ describe('services/upload-manager.ts', () => {
     expect(chtApi.deleteDoc.callCount).to.eq(0);
     expect(chtApi.disableUser.callCount).to.eq(1);
     expect(place.isCreated).to.be.true;
+  });
+
+  describe('outgoing contact safety during replacement', () => {
+    const uploadReplacement = async (arrange: (chtApi: any) => void) => {
+      const { subcounty, sessionCache, contactType, fakeFormData, chtApi, uploadLogger } = await createMocks();
+      fakeFormData.hierarchy_replacement = 'to-replace';
+      fakeFormData.place_name = '';
+      arrange(chtApi);
+
+      const toReplace: ChtDoc = { _id: 'id-replace', name: 'to-replace', parent: { _id: subcounty._id } };
+      chtApi.getPlacesWithType
+        .onFirstCall().resolves([])
+        .onSecondCall().resolves([subcounty])
+        .onThirdCall().resolves([toReplace]);
+
+      const place = await PlaceFactory.createOne(fakeFormData, contactType, sessionCache, chtApi);
+      await new UploadManager(uploadLogger).doUpload([place], chtApi);
+      return { place, chtApi };
+    };
+
+    it('does not delete the new contact when a retry records it as the previous contact', async () => {
+      const { chtApi } = await uploadReplacement(api => {
+        api.getUser.resolves(undefined);
+        api.updatePlace.resolves({
+          _id: 'updated-place-id',
+          user_attribution: { previousPrimaryContacts: ['prev_contact_id', 'replacement-contact-id'] },
+        });
+      });
+
+      expect(chtApi.deleteDoc.args).to.deep.eq([['prev_contact_id']]);
+    });
+
+    it('does not delete the outgoing contact when disabling its users fails', async () => {
+      const { place, chtApi } = await uploadReplacement(api => {
+        api.getUsersAtPlace.rejects(new Error('network'));
+      });
+
+      expect(chtApi.deleteDoc.called).to.be.false;
+      expect(place.isCreated).to.be.false;
+    });
+
+    it('does not delete the outgoing contact while a user still references it', async () => {
+      const { chtApi } = await uploadReplacement(() => undefined); // default getUser always finds a user
+
+      expect(chtApi.deleteDoc.called).to.be.false;
+    });
+  });
+
+  it('reassigning a place to the contact which already owns it keeps the user and contact', async () => {
+    const { chtApi, uploadLogger } = await createMocks();
+    chtApi.getDoc = sinon.stub().resolves({ _id: 'p1', contact: { _id: 'owner-contact' } });
+    chtApi.setDoc = sinon.stub().resolves();
+    const user: any = { username: 'owner', place: [{ _id: 'p1' }] };
+
+    await new UploadManager(uploadLogger).reassign('owner-contact', user, ['p1'], chtApi as any);
+
+    expect(chtApi.updateUser.args).to.deep.eq([[{ username: 'owner', place: ['p1'] }]]);
+    expect(chtApi.disableUser.called).to.be.false;
+    expect(chtApi.deleteDoc.called).to.be.false;
+  });
+
+  it('reassigning keeps the previous contact while another user still references it', async () => {
+    const { chtApi, uploadLogger } = await createMocks();
+    chtApi.getDoc = sinon.stub().resolves({ _id: 'p1', contact: { _id: 'prev-contact' } });
+    chtApi.setDoc = sinon.stub().resolves();
+    chtApi.getUser = sinon.stub().resolves(undefined)
+      .onFirstCall().resolves({ username: 'prev', place: [{ _id: 'p1' }] })
+      .onSecondCall().resolves({ username: 'sharing', place: [{ _id: 'p9' }] });
+    const user: any = { username: 'new', place: [{ _id: 'p0' }] };
+
+    await new UploadManager(uploadLogger).reassign('new-contact', user, ['p1'], chtApi as any);
+
+    expect(chtApi.disableUser.calledOnceWith('prev')).to.be.true;
+    expect(chtApi.deleteDoc.called).to.be.false;
+    expect(chtApi.setDoc.args[0][1].contact).to.deep.eq({ _id: 'new-contact' });
   });
 });
 
