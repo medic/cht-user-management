@@ -1,3 +1,10 @@
+## [2.14.3](https://github.com/medic/cht-user-management/compare/v2.14.2...v2.14.3) (2026-10-16)
+
+
+### Bug Fixes
+
+* **#405:** stop replace and reassign leaving users without a contact ([#406](https://github.com/medic/cht-user-management/issues/406)) ([4111cf4](https://github.com/medic/cht-user-management/commit/4111cf4bdea25628b02d663a5f974fa79d8812d0)), closes [#405](https://github.com/medic/cht-user-management/issues/405)
+
 ## [2.14.2](https://github.com/medic/cht-user-management/compare/v2.14.1...v2.14.2) (2026-10-09)
 
 
