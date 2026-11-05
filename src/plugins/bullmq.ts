@@ -8,6 +8,8 @@ import { Job, Queue } from 'bullmq';
 
 import { getChtConfQueue } from '../lib/queues';
 
+type BullBoardQueue = Parameters<typeof createBullBoard>[0]['queues'][number];
+
 export class SafeBullMQAdapter extends BullMQAdapter {
   constructor(queue: Queue) {
     super(queue);
@@ -61,7 +63,7 @@ async function bullMQBoardPlugin(fastify: FastifyInstance) {
     queues: [
       new SafeBullMQAdapter(
         getChtConfQueue().bullQueue
-      ),
+      ) as BullBoardQueue,
     ],
     serverAdapter,
     options: {
