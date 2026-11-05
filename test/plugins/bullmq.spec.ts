@@ -3,7 +3,7 @@ import sinon from 'sinon';
 import { Queue } from 'bullmq';
 import Fastify from 'fastify';
 
-import bullMQBoardPlugin, { SafeBullMQAdapter } from '../../src/plugins/bullmq';
+import bullMQBoardPlugin, { SafeBullMQAdapter, redactJobData } from '../../src/plugins/bullmq';
 
 describe('plugins/bullmq.ts', () => {
   let mockQueue: sinon.SinonStubbedInstance<Queue>;
@@ -21,6 +21,22 @@ describe('plugins/bullmq.ts', () => {
   });
 
   describe('SafeBullMQAdapter', () => {
+    it('is read only', () => {
+      expect(adapter.readOnlyMode).to.be.true;
+    });
+
+    it('redacts the session token from job data', () => {
+      const data = { sourceId: 'a', destinationId: 'b', sessionToken: 'secret' };
+      expect(adapter.format('data', data)).to.deep.eq({ sourceId: 'a', destinationId: 'b', sessionToken: '[REDACTED]' });
+      expect(data.sessionToken).to.eq('secret');
+    });
+
+    it('redactJobData tolerates non-object data', () => {
+      expect(redactJobData(undefined)).to.be.undefined;
+      expect(redactJobData('x')).to.eq('x');
+      expect(redactJobData({ sourceId: 'a' })).to.deep.eq({ sourceId: 'a' });
+    });
+
     it('should set opts.delay to job.delay when opts.delay is undefined', async () => {
       const mockJob: any = {
         id: 'job-1',
@@ -115,11 +131,62 @@ describe('plugins/bullmq.ts', () => {
     });
   });
 
+  describe('Bull Board access control', () => {
+    let fastify: ReturnType<typeof Fastify>;
+
+    const buildWithSession = async (chtSession: any) => {
+      fastify = Fastify();
+      fastify.addHook('preValidation', async (req: any) => {
+        req.chtSession = chtSession;
+      });
+      await fastify.register(bullMQBoardPlugin);
+      fastify.get('/board/api/queues/test-access', async () => ({ ok: true }));
+      fastify.get('/boardroom', async () => ({ ok: true }));
+    };
+
+    afterEach(async () => {
+      await fastify.close();
+    });
+
+    it('allows admins', async () => {
+      await buildWithSession({ isAdmin: true });
+      const response = await fastify.inject({ method: 'GET', url: '/board/api/queues/test-access' });
+      expect(response.statusCode).to.equal(200);
+    });
+
+    it('rejects non-admins', async () => {
+      await buildWithSession({ isAdmin: false });
+      const response = await fastify.inject({ method: 'GET', url: '/board/api/queues/test-access' });
+      expect(response.statusCode).to.equal(403);
+    });
+
+    it('rejects requests without a session', async () => {
+      await buildWithSession(undefined);
+      const response = await fastify.inject({ method: 'GET', url: '/board/api/queues/test-access' });
+      expect(response.statusCode).to.equal(403);
+    });
+
+    it('rejects non-admins on the board root', async () => {
+      await buildWithSession({ isAdmin: false });
+      const response = await fastify.inject({ method: 'GET', url: '/board' });
+      expect(response.statusCode).to.equal(403);
+    });
+
+    it('does not affect other routes', async () => {
+      await buildWithSession({ isAdmin: false });
+      const response = await fastify.inject({ method: 'GET', url: '/boardroom' });
+      expect(response.statusCode).to.equal(200);
+    });
+  });
+
   describe('Fastify onSend hook for Bull Board API', () => {
     let fastify: ReturnType<typeof Fastify>;
 
     beforeEach(async () => {
       fastify = Fastify();
+      fastify.addHook('preValidation', async (req: any) => {
+        req.chtSession = { isAdmin: true };
+      });
       await fastify.register(bullMQBoardPlugin);
     });
 
