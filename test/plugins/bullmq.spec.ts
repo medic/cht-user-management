@@ -172,6 +172,21 @@ describe('plugins/bullmq.ts', () => {
       expect(response.statusCode).to.equal(403);
     });
 
+    for (const url of ['/%62oard/api/queues/test-access', '/b%6Fard/api/queues/test-access', '/board%2Fapi/queues/test-access']) {
+      it(`rejects non-admins using an encoded path: ${url}`, async () => {
+        await buildWithSession({ isAdmin: false });
+        const response = await fastify.inject({ method: 'GET', url });
+        expect(response.statusCode).to.not.equal(200);
+        expect(response.json()).to.not.have.property('ok');
+      });
+    }
+
+    it('rejects non-admins on board routes with a query string', async () => {
+      await buildWithSession({ isAdmin: false });
+      const response = await fastify.inject({ method: 'GET', url: '/board?x=1' });
+      expect(response.statusCode).to.equal(403);
+    });
+
     it('does not affect other routes', async () => {
       await buildWithSession({ isAdmin: false });
       const response = await fastify.inject({ method: 'GET', url: '/boardroom' });

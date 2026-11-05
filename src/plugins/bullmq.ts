@@ -25,10 +25,11 @@ export const redactJobData = (data: any) => {
   return redacted;
 };
 
-const isBoardRequest = (url: string) => url === BOARD_PREFIX || url.startsWith(`${BOARD_PREFIX}/`) || url.startsWith(`${BOARD_PREFIX}?`);
+const isBoardRoute = (routeUrl?: string) => !!routeUrl && (routeUrl === BOARD_PREFIX || routeUrl.startsWith(`${BOARD_PREFIX}/`));
 
 export const assertBoardAccess = async (req: FastifyRequest, reply: FastifyReply) => {
-  if (!isBoardRequest(req.url)) {
+  // match on the route pattern, not req.url: the router decodes the path, so /%62oard reaches /board routes
+  if (!isBoardRoute(req.routeOptions?.url)) {
     return;
   }
 
