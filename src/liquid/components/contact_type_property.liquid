@@ -32,7 +32,7 @@
               pattern="{{ prop.parameter }}"
             {% endif %}
             {% if data[prop_name] %}
-              value="{{ data[prop_name] }}"
+              value="{{ data[prop_name] | escape }}"
             {% endif %}
             {% if prop.required == true %}
               required
