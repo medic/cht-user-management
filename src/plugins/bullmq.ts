@@ -1,4 +1,4 @@
-import { FastifyInstance } from 'fastify';
+import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import fp from 'fastify-plugin';
 
 import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
@@ -9,10 +9,40 @@ import { Job, Queue } from 'bullmq';
 import { getChtConfQueue } from '../lib/queues';
 
 type BullBoardQueue = Parameters<typeof createBullBoard>[0]['queues'][number];
+const BOARD_PREFIX = '/board';
+const REDACTED_JOB_DATA_FIELDS = ['sessionToken'];
+
+export const redactJobData = (data: any) => {
+  if (!data || typeof data !== 'object' || Array.isArray(data)) {
+    return data;
+  }
+
+  const redacted = { ...data };
+  for (const field of REDACTED_JOB_DATA_FIELDS) {
+    if (field in redacted) {
+      redacted[field] = '[REDACTED]';
+    }
+  }
+  return redacted;
+};
+
+const isBoardRoute = (routeUrl?: string) => !!routeUrl && (routeUrl === BOARD_PREFIX || routeUrl.startsWith(`${BOARD_PREFIX}/`));
+
+export const assertBoardAccess = async (req: FastifyRequest, reply: FastifyReply) => {
+  // match on the route pattern, not req.url: the router decodes the path, so /%62oard reaches /board routes
+  if (!isBoardRoute(req.routeOptions?.url)) {
+    return;
+  }
+
+  if (!req.chtSession?.isAdmin) {
+    return reply.code(403).send({ error: 'Forbidden' });
+  }
+};
 
 export class SafeBullMQAdapter extends BullMQAdapter {
   constructor(queue: Queue) {
-    super(queue);
+    super(queue, { readOnlyMode: true });
+    this.setFormatter('data', redactJobData);
   }
 
   private alignJobOptsDelay(job: Job | any): Job | any {
@@ -73,14 +103,17 @@ async function bullMQBoardPlugin(fastify: FastifyInstance) {
     },
   });
 
-  serverAdapter.setBasePath('/board');
+  // runs after the global login hook (preValidation) has populated req.chtSession
+  fastify.addHook('preHandler', assertBoardAccess);
+
+  serverAdapter.setBasePath(BOARD_PREFIX);
   fastify.register(serverAdapter.registerPlugin(), { 
-    prefix: '/board',
+    prefix: BOARD_PREFIX,
     basePath: '',
   });
 
   fastify.addHook('onSend', async (request, _reply, payload) => {
-    if (typeof payload === 'string' && request.url.startsWith('/board/api/queues')) {
+    if (typeof payload === 'string' && request.url.startsWith(`${BOARD_PREFIX}/api/queues`)) {
       try {
         const parsed = JSON.parse(payload);
         if (Array.isArray(parsed?.queues)) {
