@@ -1,3 +1,10 @@
+## [2.14.4](https://github.com/medic/cht-user-management/compare/v2.14.3...v2.14.4) (2026-11-06)
+
+
+### Bug Fixes
+
+* protect CHT session tokens stored in worker jobs ([#412](https://github.com/medic/cht-user-management/issues/412)) ([6778339](https://github.com/medic/cht-user-management/commit/677833991631128a7a3737c856d5af3b5a6f74fb))
+
 ## [2.14.3](https://github.com/medic/cht-user-management/compare/v2.14.2...v2.14.3) (2026-10-16)
 
 

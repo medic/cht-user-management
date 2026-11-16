@@ -32,7 +32,7 @@
       {% endif %}
 
       {% for hierarchy in hierarchy %}
-        {% if hierarchy.level != 0 or op == 'replace' or place.hierarchyProperties.replacement.original %}
+        {% if hierarchy.level != 0 or op == 'replace' or place.hierarchyProperties.replacement.original != blank %}
           {% render 'components/search_input.liquid',
             type: contactType.name,
             hierarchy: hierarchy,
