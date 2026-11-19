@@ -61,4 +61,38 @@ describe('liquid templates escape reflected user input', () => {
 
     expect(html).to.not.contain('<img src=x');
   });
+
+  describe('reassign form', () => {
+    const base = {
+      contactType: { name: 'c_community_health_unit', friendly: 'CHU' },
+      hierarchy: [],
+      session: { authInfo: { domain: 'example.com' } },
+    };
+
+    it('escapes the reflected contact link and errors', async () => {
+      const html = await liquid.renderFile('reassign/form', {
+        ...base,
+        data: { contact: `</textarea>${PAYLOAD}` },
+        places: [],
+        errors: { contact: PAYLOAD, part: PAYLOAD },
+      });
+
+      expect(html).to.not.contain('<img src=x');
+      expect(html).to.not.contain('</textarea><');
+      expect(html).to.contain('&lt;/textarea&gt;');
+    });
+
+    it('escapes the staged place fields', async () => {
+      const place = { id: PAYLOAD, name: PAYLOAD, levels: [PAYLOAD] };
+      const html = await liquid.renderFile('reassign/form', {
+        ...base,
+        data: {},
+        places: [{ place, value: PAYLOAD }],
+        errors: {},
+      });
+
+      expect(html).to.not.contain('<img src=x');
+      expect(html).to.contain('<p>&#34;&gt;&lt;img src=x onerror=alert(1)&gt;</p>');
+    });
+  });
 });
