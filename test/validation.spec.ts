@@ -90,6 +90,7 @@ const scenarios: Scenario[] = [
   { type: 'select_one', prop: 'f', isValid: false, propertyParameter: GENDER_OPTIONS, error: 'Invalid value selected' },
   { type: 'select_one', prop: 'f', isValid: false, propertyParameter: GENDER_OPTIONS, propertyErrorDescription: 'Pick a sex', error: 'Pick a sex' },
   { type: 'select_one', prop: '', isValid: false, propertyParameter: GENDER_OPTIONS },
+  
   // form input carries option keys, so labels are not matched
   { type: 'select_one', prop: 'F', isValid: true, propertyParameter: { F: 'Female', M: 'Male' }, formatted: 'F' },
   { type: 'select_one', prop: 'Female', isValid: false, propertyParameter: { F: 'Female', M: 'Male' } },
