@@ -1,5 +1,5 @@
 import {ContactProperty} from '../config';
-import { IValidator } from '.';
+import { InputSource, IValidator } from '.';
 import ValidatorString from './validator-string';
 import ValidatorSelectOne from './validator-select-one';
 
@@ -7,7 +7,7 @@ const DELIMITER = ' ';
 
 export default class ValidatorSelectMultiple implements IValidator {
 
-  isValid(input: string, property: ContactProperty): boolean | string {
+  isValid(input: string, property: ContactProperty, source: InputSource = 'form'): boolean | string {
     // Verify property.parameter is an object and is not null
     if (!property?.parameter || typeof property.parameter !== 'object') {
       throw new TypeError(`Expected attribute "parameter" on property ${property.property_name} to be an object.`);
@@ -18,7 +18,7 @@ export default class ValidatorSelectMultiple implements IValidator {
 
     const selectedValues = this.parseInput(input, stringValidator); 
     const invalidValues = selectedValues.filter(
-      value => selectOneValidator.isValid(value, property) !== true
+      value => selectOneValidator.isValid(value, property, source) !== true
     );
 
     if (invalidValues.length > 0) {
@@ -33,9 +33,9 @@ export default class ValidatorSelectMultiple implements IValidator {
     return true;
   }
 
-  format(input: string, property: ContactProperty): string {
+  format(input: string, property: ContactProperty, source: InputSource = 'form'): string {
     const options = this.parseInput(input, new ValidatorString())
-      .map(value => ValidatorSelectOne.findOption(value, property));
+      .map(value => ValidatorSelectOne.findOption(value, property, source));
     if (options.length && options.every(Boolean)) {
       return options.join(DELIMITER);
     }

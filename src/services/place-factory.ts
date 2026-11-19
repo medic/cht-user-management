@@ -160,18 +160,18 @@ export default class PlaceFactory {
 
         // place properties must be read after hierarchy constraints since validation logic is dependent on isReplacement
         for (const placeProperty of contactType.place_properties) {
-          const createFromValue = (value: string) => new ContactPropertyValue(place, placeProperty, 'place_', value);
+          const createFromValue = (value: string) => new ContactPropertyValue(place, placeProperty, 'place_', value, 'csv');
           lookupPropertyAndCreateValue(place.properties, placeProperty, createFromValue);
         }
 
         for (const contactProperty of contactType.contact_properties) {
-          const createFromValue = (value: string) => new ContactPropertyValue(place, contactProperty, 'contact_', value);
+          const createFromValue = (value: string) => new ContactPropertyValue(place, contactProperty, 'contact_', value, 'csv');
           lookupPropertyAndCreateValue(place.contact.properties, contactProperty, createFromValue);
         }
 
         if (Config.hasMultipleRoles(contactType)) {
           const userRoleProperty = Config.getUserRoleConfig(contactType);
-          const createFromValue = (value: string) => new ContactPropertyValue(place, userRoleProperty, 'user_', value);
+          const createFromValue = (value: string) => new ContactPropertyValue(place, userRoleProperty, 'user_', value, 'csv');
           lookupPropertyAndCreateValue(place.userRoleProperties, userRoleProperty, createFromValue);
         }
 

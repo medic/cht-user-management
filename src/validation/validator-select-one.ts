@@ -1,11 +1,11 @@
 import {ContactProperty} from '../config';
-import { IValidator } from '.';
+import { InputSource, IValidator } from '.';
 import ValidatorString from './validator-string';
 
 export default class ValidatorSelectOne implements IValidator {
-  isValid(input: string, property: ContactProperty): boolean|string {
+  isValid(input: string, property: ContactProperty, source: InputSource = 'form'): boolean|string {
     const stringValidator = new ValidatorString();
-    const trimmedInput = stringValidator.format(input); 
+    const trimmedInput = stringValidator.format(input);
 
     if (trimmedInput.length === 0 && property.required) {
       return `Value is required`;
@@ -14,30 +14,37 @@ export default class ValidatorSelectOne implements IValidator {
     if (!property?.parameter || typeof property.parameter !== 'object') {
       throw new TypeError(`Expected attribute "parameter" on property ${property.property_name} to be an object.`);
     }
-    return !!ValidatorSelectOne.findOption(input, property);
+    return !!ValidatorSelectOne.findOption(input, property, source);
   }
 
-  format(input: string, property: ContactProperty): string {
-    return ValidatorSelectOne.findOption(input, property) ?? input;
+  format(input: string, property: ContactProperty, source: InputSource = 'form'): string {
+    return ValidatorSelectOne.findOption(input, property, source) ?? input;
   }
 
   get defaultError(): string {
     return 'Invalid value selected';
   }
 
-  // Matches the option's value or label, ignoring case and surrounding whitespace (eg. "Male" -> "male")
-  public static findOption(input: string, property: ContactProperty): string | undefined {
+  // Returns the option key matching the input,
+  // Form/API inputs are matched on keys
+  // CSV inputs are matched on labels.
+  public static findOption(input: string, property: ContactProperty, source: InputSource = 'form'): string | undefined {
     if (!property?.parameter || typeof property.parameter !== 'object') {
       return;
     }
 
-    const normalized = new ValidatorString().format(input).toLowerCase();
-    if (!normalized) {
+    const stringValidator = new ValidatorString();
+    const normalize = (value: unknown) => stringValidator.format(String(value)).toLowerCase();
+
+    const normalizedInput = normalize(input);
+    if (!normalizedInput) {
       return;
     }
 
-    const isMatch = ([value, label]: [string, unknown]) => value.toLowerCase() === normalized
-      || String(label).toLowerCase() === normalized;
-    return Object.entries(property.parameter).find(isMatch)?.[0];
+    const options = Object.entries(property.parameter);
+    const byKey = () => options.find(([key]) => normalize(key) === normalizedInput);
+    const byLabel = () => options.find(([, label]) => normalize(label) === normalizedInput);
+    const match = source === 'csv' ? byLabel() : byKey();
+    return match?.[0];
   }
 }
