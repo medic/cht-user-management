@@ -14,12 +14,7 @@ export default class ValidatorSelectOne implements IValidator {
     if (!property?.parameter || typeof property.parameter !== 'object') {
       throw new TypeError(`Expected attribute "parameter" on property ${property.property_name} to be an object.`);
     }
-
-    if (ValidatorSelectOne.findOption(input, property)) {
-      return true;
-    }
-
-    return property.errorDescription || `Must be one of: ${Object.values(property.parameter).join(', ')}`;
+    return !!ValidatorSelectOne.findOption(input, property);
   }
 
   format(input: string, property: ContactProperty): string {
