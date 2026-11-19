@@ -85,7 +85,7 @@ const scenarios: Scenario[] = [
   { type: 'select_one', prop: 'FeMale ', isValid: true, propertyParameter: GENDER_OPTIONS, formatted: 'female' },
   { type: 'select_one', prop: 'Male', isValid: true, propertyParameter: GENDER_OPTIONS, formatted: 'male' },
   { type: 'select_one', prop: 'MALE', isValid: true, propertyParameter: GENDER_OPTIONS, formatted: 'male' },
-  { type: 'select_one', prop: 'f', isValid: false, propertyParameter: GENDER_OPTIONS, error: 'Must be one of: Male, Female' },
+  { type: 'select_one', prop: 'f', isValid: false, propertyParameter: GENDER_OPTIONS, error: 'Invalid value selected' },
   { type: 'select_one', prop: 'f', isValid: false, propertyParameter: GENDER_OPTIONS, propertyErrorDescription: 'Pick a sex', error: 'Pick a sex' },
   { type: 'select_one', prop: '', isValid: false, propertyParameter: GENDER_OPTIONS },
   { type: 'select_one', prop: 'Female', isValid: true, propertyParameter: { F: 'Female', M: 'Male' }, formatted: 'F' },
