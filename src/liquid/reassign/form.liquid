@@ -23,7 +23,7 @@
           %}
         {% endfor %}
         {% if errors.part %}
-          <div class="has-text-danger">* {{ errors.part }}</div>
+          <div class="has-text-danger">* {{ errors.part | escape }}</div>
         {% endif %}
       </div>
       <div class="is-flex is-justify-content-end py-4">
@@ -52,13 +52,13 @@
             style="border-bottom: 1px solid #dcdcdc;"
           >
             <div>
-              <p>{{ item.place.name }}</p>
-              <p class="is-size-7">{{ item.place.levels }}</p>
+              <p>{{ item.place.name | escape }}</p>
+              <p class="is-size-7">{{ item.place.levels | escape }}</p>
             </div>
-            <div hx-sse="swap:update-{{item.place.id}}" hx-target="this" hx-swap="innerHTML">
+            <div hx-sse="swap:update-{{item.place.id | escape}}" hx-target="this" hx-swap="innerHTML">
               {% if data.in_progress != true %}
                 <button
-                  hx-post="/reassign/part/delete?place_id={{item.place.id}}"
+                  hx-post="/reassign/part/delete?place_id={{item.place.id | url_encode}}"
                   hx-target="#form_reassign"
                   hx-swap="outerHTML"
                   class="button is-small is-light is-danger"
@@ -68,7 +68,7 @@
               {% endif %}
             </div>
           </div>
-          <input name="list_{{ item.place.id }}" value="{{ item.value }}" hidden>
+          <input name="list_{{ item.place.id | escape }}" value="{{ item.value | escape }}" hidden>
         {% endfor %}
       </div>
     {% endif %}
@@ -95,9 +95,9 @@
             class="textarea"
             rows="3"
             placeholder="https://{{session.authInfo.domain}}/#/contacts/19634c6118f13e43f685301e240036bc"
-          >{% if data.contact %}{{data.contact}}{% endif %}</textarea>
+          >{% if data.contact %}{{data.contact | escape}}{% endif %}</textarea>
           {% if errors.contact -%}
-            <p style="color: red;">{{ errors.contact }}</p>
+            <p style="color: red;">{{ errors.contact | escape }}</p>
           {% endif %}
         </div>
       </div>
