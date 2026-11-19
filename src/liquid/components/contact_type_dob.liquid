@@ -8,7 +8,7 @@
     {% endif %}
     class="input"
     {% if data[prop_name] %}
-      value="{{ data[prop_name] }}"
+      value="{{ data[prop_name] | escape }}"
     {% endif %}
   >
 </div>

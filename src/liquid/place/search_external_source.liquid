@@ -11,7 +11,7 @@
   <input name="source_id" value="{{ source.id }}" hidden>
   <section class="section is-small">
     {% if error %}
-      <div class="notification is-danger is-light">{{ error }}</div>
+      <div class="notification is-danger is-light">{{ error | escape }}</div>
     {% endif %}
     {% for hierarchy in hierarchy %}
       {% if hierarchy.level != 0 and hierarchy.external_mapping[source.id].is_filter %}
