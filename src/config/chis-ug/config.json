@@ -218,7 +218,7 @@
             "male": "Male",
             "female": "Female"
           },
-          "errorDescription": "Must be one of Male or Female",
+          "errorDescription": "Must be one of: Male, Female",
           "required": true,
           "external_mapping": {
             "chwr": {
