@@ -1,3 +1,10 @@
+## [2.14.5](https://github.com/medic/cht-user-management/compare/v2.14.4...v2.14.5) (2026-11-19)
+
+
+### Bug Fixes
+
+* **#409:** escape reflected user input in liquid templates ([#410](https://github.com/medic/cht-user-management/issues/410)) ([4d2bed3](https://github.com/medic/cht-user-management/commit/4d2bed3980889c0b87dd5e26b43f76b6ff5006e2)), closes [#409](https://github.com/medic/cht-user-management/issues/409)
+
 ## [2.14.4](https://github.com/medic/cht-user-management/compare/v2.14.3...v2.14.4) (2026-11-06)
 
 
