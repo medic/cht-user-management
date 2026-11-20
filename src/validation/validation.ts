@@ -1,6 +1,6 @@
 import _ from 'lodash';
 import { Config, ContactProperty, HierarchyConstraint } from '../config';
-import { IValidator } from '.';
+import { InputSource, IValidator } from '.';
 import Place from '../services/place';
 import RemotePlaceResolver from '../lib/remote-place-resolver';
 
@@ -35,7 +35,8 @@ export class Validation {
   public static validateProperty(
     value: string,
     property : ContactProperty,
-    requiredProperties: ContactProperty[]
+    requiredProperties: ContactProperty[],
+    source: InputSource = 'form'
   ) : string | undefined {
     const isRequired = requiredProperties.some((prop) => _.isEqual(prop, property));
     if (!value && isRequired) {
@@ -43,17 +44,17 @@ export class Validation {
     }
 
     if (value || isRequired) {
-      const isValid = Validation.isValid(property, value);
+      const isValid = Validation.isValid(property, value, source);
       if (isValid === false || typeof isValid === 'string') {
         return isValid === false ? 'Value is invalid' : isValid as string;
       }
     }
   }
 
-  public static format(property: ContactProperty, value: string): string {
+  public static format(property: ContactProperty, value: string, source: InputSource = 'form'): string {
     const validator = this.getValidator(property);
     if (!(validator instanceof ValidatorGenerated) && value) {
-      return validator.format(value, property);
+      return validator.format(value, property, source);
     }
 
     return value;
@@ -103,10 +104,10 @@ export class Validation {
     return Object.keys(TypeValidatorMap);
   }
 
-  private static isValid(property : ContactProperty, value: string) : boolean | string {
+  private static isValid(property : ContactProperty, value: string, source: InputSource) : boolean | string {
     const validator = this.getValidator(property);
     try {
-      const isValid = validator.isValid(value, property);
+      const isValid = validator.isValid(value, property, source);
       return isValid === false ? property.errorDescription || validator.defaultError : isValid;
     } catch (e) {
       const error = `Error in isValid for '${property.type}': ${e}`;

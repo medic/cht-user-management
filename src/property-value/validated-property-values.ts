@@ -1,23 +1,25 @@
 import { Config, ContactProperty, HierarchyConstraint } from '../config';
 import { IPropertyValue } from '.';
 import Place from '../services/place';
-import Validation from '../validation';
+import Validation, { InputSource } from '../validation';
 
 abstract class AbstractPropertyValue implements IPropertyValue {
   public readonly original: string;
   protected readonly place: Place;
   protected readonly property: ContactProperty;
   private readonly propertyPrefix: string;
+  protected readonly source: InputSource;
   
   protected formattedValue: string;
   private validationErrorValue?: string;
 
-  constructor(place: Place, property: ContactProperty, prefix: string, value: string) {
+  constructor(place: Place, property: ContactProperty, prefix: string, value: string, source: InputSource = 'form') {
     this.original = value;
     this.place = place;
     this.property = property;
     this.propertyPrefix = prefix;
-    this.formattedValue = Validation.format(this.property, value);
+    this.source = source;
+    this.formattedValue = Validation.format(this.property, value, source);
   }
 
   public validate(): void {
@@ -44,8 +46,8 @@ abstract class AbstractPropertyValue implements IPropertyValue {
 }
 
 export class ContactPropertyValue extends AbstractPropertyValue {
-  constructor(place: Place, property: ContactProperty, prefix: string, value: string) {
-    super(place, property, prefix, value);
+  constructor(place: Place, property: ContactProperty, prefix: string, value: string, source: InputSource = 'form') {
+    super(place, property, prefix, value, source);
   }
   
   protected override doValidation(): string | undefined {
@@ -58,7 +60,7 @@ export class ContactPropertyValue extends AbstractPropertyValue {
       valueToValidate = this.formattedValue;
     }
     
-    return Validation.validateProperty(valueToValidate, this.property, requiredProperties);
+    return Validation.validateProperty(valueToValidate, this.property, requiredProperties, this.source);
   }
 }
 

@@ -129,7 +129,7 @@ export default class Place {
       const result: any = {};
       for (const key of Object.keys(properties)) {
         const keyWithPrefix: string = prefix + key;
-        result[keyWithPrefix] = properties[key].original;
+        result[keyWithPrefix] = properties[key].formatted || properties[key].original;
       }
 
       return result;
