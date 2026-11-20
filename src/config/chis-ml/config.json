@@ -99,8 +99,9 @@
             "dtc": "DTC",
             "manager_stock": "Stock Manager"
           },
+          "errorDescription": "Must be one of: DTC, Stock Manager",
           "required": true,
-          "hint": "Type of user associated to the primary contact (dtc / manager_stock)"
+          "hint": "Type of user associated to the primary contact (DTC / Stock Manager)"
         },
         {
           "friendly_name": "Membership Structure",
@@ -209,8 +210,9 @@
             "supervisor": "Supervisor",
             "oca_supervisor": "ADC (OCA Coach)"
           },
+          "errorDescription": "Must be one of: Supervisor, ADC (OCA Coach)",
           "required": true,
-          "hint": "Type of user associated to the primary contact (supervisor / oca_supervisor)"
+          "hint": "Type of user associated to the primary contact (Supervisor / ADC (OCA Coach))"
         },
         {
           "friendly_name": "Require password change",
@@ -321,6 +323,7 @@
             "male": "Masculin",
             "female": "Feminin"
           },
+          "errorDescription": "Must be one of: Masculin, Feminin",
           "required": true,
           "hint": "Gender of the primary contact"
         },
@@ -340,8 +343,9 @@
             "true": "Yes",
             "false": "No"
           },
+          "errorDescription": "Must be one of: Yes, No",
           "required": true,
-          "hint": "Has been geolocated? (true / false)"
+          "hint": "Has been geolocated? (Yes / No)"
         },
         {
           "friendly_name": "Require password change",
@@ -434,6 +438,7 @@
             "male": "Masculin",
             "female": "Feminin"
           },
+          "errorDescription": "Must be one of: Masculin, Feminin",
           "required": true,
           "hint": "Gender of the primary contact"
         },
@@ -453,8 +458,9 @@
             "true": "Yes",
             "false": "No"
           },
+          "errorDescription": "Must be one of: Yes, No",
           "required": true,
-          "hint": "Out of CHW Area ? (true / false)"
+          "hint": "Out of CHW Area ? (Yes / No)"
         },
         {
           "friendly_name": "Type of user",
@@ -463,8 +469,9 @@
           "parameter": {
             "village_head": "Village Head"
           },
+          "errorDescription": "Must be one of: Village Head",
           "required": true,
-          "hint": "Type of user associated to the primary contact ('village_head' only allowed here)"
+          "hint": "Type of user associated to the primary contact ('Village Head' only allowed here)"
         },
         {
           "friendly_name": "Require password change",
