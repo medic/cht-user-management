@@ -102,6 +102,7 @@
             "male": "Masculin",
             "female": "Feminin"
           },
+          "errorDescription": "Doit être l'une des valeurs : Masculin, Feminin",
           "required": true
         },
         {
@@ -135,7 +136,8 @@
           "parameter": {
             "yes": "Yes",
             "no": "No"
-          }
+          },
+          "errorDescription": "Doit être l'une des valeurs : Yes, No"
         }
       ]
     },
@@ -235,6 +237,7 @@
             "male": "Masculin",
             "female": "Feminin"
           },
+          "errorDescription": "Doit être l'une des valeurs : Masculin, Feminin",
           "required": true
         },
         {
@@ -261,7 +264,8 @@
           "parameter": {
             "yes": "Yes",
             "no": "No"
-          }
+          },
+          "errorDescription": "Doit être l'une des valeurs : Yes, No"
         }
       ]
     },
@@ -363,6 +367,7 @@
             "chw": "ASC",
             "community_user": "Relai Communautaire"
           },
+          "errorDescription": "Doit être l'une des valeurs : ASC, Relai Communautaire",
           "required": true
         },
         {
@@ -373,6 +378,7 @@
             "male": "Masculin",
             "female": "Feminin"
           },
+          "errorDescription": "Doit être l'une des valeurs : Masculin, Feminin",
           "required": true
         },
         {
@@ -400,6 +406,7 @@
             "social_worker": "Travailleur social / volontaire",
             "other": "Autre"
           },
+          "errorDescription": "Doit être l'une des valeurs : Agent de Santé, Artisan, Boutiquier, Chauffeur, Commerçant (e), Cultivateur, Ecolier, Elève/étudiant, Eleveur, Employé de commerce, Enseignant (e), FAT/Policier/Gendarme, Ménagère, Ouvrier, Retraité, Revendeur ( se ), Sans emploi, Travailleur social / volontaire, Autre",
           "required": true
         },
         {
@@ -426,6 +433,7 @@
             "secondary": "Secondaire",
             "university": "Universitaire"
           },
+          "errorDescription": "Doit être l'une des valeurs : Pas de Niveau, Primaire, Secondaire, Universitaire",
           "required": true
         },
         {
@@ -436,7 +444,8 @@
           "parameter": {
             "yes": "Yes",
             "no": "No"
-          }
+          },
+          "errorDescription": "Doit être l'une des valeurs : Yes, No"
         }
       ]
     }
