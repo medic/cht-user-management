@@ -3,7 +3,7 @@ import sinon from 'sinon';
 
 import { Config } from '../../src/config';
 import Place from '../../src/services/place';
-import { mockSimpleContactType, mockValidContactType } from '../mocks';
+import { mockProperty, mockSimpleContactType, mockValidContactType } from '../mocks';
 import { UnvalidatedPropertyValue, ContactPropertyValue } from '../../src/property-value';
 import { RemotePlace } from '../../src/lib/remote-place-cache';
 
@@ -46,6 +46,35 @@ describe('services/place.ts', () => {
       place_prop: 'abc',
       contact_prop: 'efg',
     });
+  });
+
+  it('asFormData uses the formatted value so edit forms match select options', () => {
+    const contactType = mockSimpleContactType('string', undefined);
+    const ownership = mockProperty('select_one', { public: 'Public', private: 'Private' }, 'ownership');
+    const sex = mockProperty('select_one', { male: 'Male', female: 'Female' }, 'sex');
+    const place = new Place(contactType);
+    place.properties.ownership = new ContactPropertyValue(place, ownership, 'place_', ' PRIVATE ');
+    place.contact.properties.sex = new ContactPropertyValue(place, sex, 'contact_', 'Female');
+
+    const actual = place.asFormData('hierarchy_');
+
+    expect(place.contact.properties.sex.original).to.eq('Female');
+    expect(actual).to.deep.eq({
+      place_ownership: 'private',
+      contact_sex: 'female',
+    });
+  });
+
+  it('asFormData falls back to the original value when the formatted value is empty', () => {
+    const contactType = mockSimpleContactType('string', undefined);
+    const property = Config.getPropertyWithName(contactType.place_properties, 'prop');
+    const place = new Place(contactType);
+    place.properties.prop = new ContactPropertyValue(place, property, 'place_', '!!!');
+
+    const actual = place.asFormData('hierarchy_');
+
+    expect(place.properties.prop.formatted).to.eq('');
+    expect(actual).to.deep.eq({ place_prop: '!!!' });
   });
 
   it('basic asRemotePlace', () => {

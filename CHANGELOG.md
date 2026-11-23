@@ -1,3 +1,24 @@
+## [2.14.6](https://github.com/medic/cht-user-management/compare/v2.14.5...v2.14.6) (2026-11-20)
+
+
+### Bug Fixes
+
+* accept select_one values case-insensitively and by label ([#407](https://github.com/medic/cht-user-management/issues/407)) ([81041cd](https://github.com/medic/cht-user-management/commit/81041cdc6538906185faad86f9c426a63e82f7e8))
+
+## [2.14.5](https://github.com/medic/cht-user-management/compare/v2.14.4...v2.14.5) (2026-11-19)
+
+
+### Bug Fixes
+
+* **#409:** escape reflected user input in liquid templates ([#410](https://github.com/medic/cht-user-management/issues/410)) ([4d2bed3](https://github.com/medic/cht-user-management/commit/4d2bed3980889c0b87dd5e26b43f76b6ff5006e2)), closes [#409](https://github.com/medic/cht-user-management/issues/409)
+
+## [2.14.4](https://github.com/medic/cht-user-management/compare/v2.14.3...v2.14.4) (2026-11-06)
+
+
+### Bug Fixes
+
+* protect CHT session tokens stored in worker jobs ([#412](https://github.com/medic/cht-user-management/issues/412)) ([6778339](https://github.com/medic/cht-user-management/commit/677833991631128a7a3737c856d5af3b5a6f74fb))
+
 ## [2.14.3](https://github.com/medic/cht-user-management/compare/v2.14.2...v2.14.3) (2026-10-16)
 
 
