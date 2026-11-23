@@ -29,7 +29,7 @@ export class UploadReplacementWithDeactivation implements Uploader {
     const previousPrimaryContact = updatedPlaceDoc.user_attribution?.previousPrimaryContacts?.pop();
     if (previousPrimaryContact) {
       const user = await this.chtApi.getUser(previousPrimaryContact);
-      if (Array.isArray(user.place) && user.place.length > 1) {
+      if (Array.isArray(user?.place) && user.place.length > 1) {
         const places = (user.place as CouchDoc[]).map(p => p._id);
         for (let i = 0; i < places.length; i++) {
           await this.chtApi.updatePlace(places[i], contactId);

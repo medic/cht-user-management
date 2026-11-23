@@ -15,7 +15,9 @@ export default class ValidatorName implements IValidator {
   format(input : string, property : ContactProperty) : string {
     input = input.replace(/\./g, ' ');
     input = input.replace(/\//g, ' / ');
-    let toFormat = input;
+
+    // Collapse whitespace before the `parameter` patterns are removed (#398)
+    let toFormat = input.replace(/\s+/g, ' ');
     if (property.parameter) {
       if (!Array.isArray(property.parameter)) {
         throw Error(`property with type "name": parameter should be an array`);
@@ -44,7 +46,7 @@ export default class ValidatorName implements IValidator {
 
     const isRomanNumeral = /^[ivx]+$/i;
     const hasForwardSlash = /\//g;
-    const hasApostrophe = /\s*'\s*/g;
+    const spaceBeforeApostrophe = /\s+'/g;
     const hasParentheses = /\(([^)]+)\)/g;
     const hasExtraSpaces = /\s+/g;
 
@@ -57,7 +59,7 @@ export default class ValidatorName implements IValidator {
 
     return value.toLowerCase()
       .replace(hasForwardSlash, ' / ')
-      .replace(hasApostrophe, '\'')
+      .replace(spaceBeforeApostrophe, '\'')
       .replace(hasParentheses, match => `(${titleCase(match.slice(1, -1))})`)
       .split(' ')
       .filter(Boolean)

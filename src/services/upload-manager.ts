@@ -33,8 +33,11 @@ export class UploadManager extends EventEmitter {
   };
 
   doUpload = async (places: Place[], chtApi: ChtApi, ignoreWarnings: boolean = false) => {
+    const inFlightStates = [PlaceUploadState.SCHEDULED, PlaceUploadState.IN_PROGRESS];
     const validPlaces = places.filter(p => {
-      return !p.hasValidationErrors && (ignoreWarnings || !p.warnings.length);
+      return !p.hasValidationErrors
+        && (ignoreWarnings || !p.warnings.length)
+        && !inFlightStates.includes(p.state);
     });
     const placesNeedingUpload = validPlaces.filter(p => !p.isCreated);
     this.eventedPlaceStateChange(placesNeedingUpload, PlaceUploadState.SCHEDULED);
@@ -68,7 +71,7 @@ export class UploadManager extends EventEmitter {
       places.forEach(p => {
         this.emit('refresh_place', { id: p, state: PlaceUploadState.IN_PROGRESS });
       });
-      await api.updateUser({ username: user.username, place: [...user.place.map(d => d._id), ...places] });
+      await api.updateUser({ username: user.username, place: _.uniq([...user.place.map(d => d._id), ...places]) });
       await this.updateContact(contactId, places, api);
     } catch (err: any) {
       places.forEach(p => {
@@ -81,9 +84,10 @@ export class UploadManager extends EventEmitter {
     for (let i = 0; i < places.length; i++) {
       try {
         const place = await api.getDoc(places[i]);
-        if (place.contact) {
-          const contactId = place.contact._id ?? place.contact;
-          const prevUser = await api.getUser(contactId) as UserInfo & { place: CouchDoc[] };
+        const prevContactId = place.contact?._id ?? place.contact;
+        // when the place already belongs to this contact there is no previous user to strip or delete
+        if (prevContactId && prevContactId !== contactId) {
+          const prevUser = await api.getUser(prevContactId) as UserInfo & { place: CouchDoc[] };
           if (prevUser) {
             const prevUserPlaces = prevUser.place.map(p => p._id).filter(id => id !== places[i]);
             if (prevUserPlaces.length > 0) {
@@ -93,11 +97,14 @@ export class UploadManager extends EventEmitter {
               });
             } else {
               await api.disableUser(prevUser.username);
-              await api.deleteDoc(contactId);
+              // another user may share this contact; only delete it once none remain
+              if (!(await api.getUser(prevContactId))) {
+                await api.deleteDoc(prevContactId);
+              }
             }
           }
         }
-        place.contact = contactId;
+        place.contact = { _id: contactId };
         await api.setDoc(places[i], place);
         this.emit('refresh_place', { id: places[i], state: PlaceUploadState.SUCCESS });
       } catch (err: any) {

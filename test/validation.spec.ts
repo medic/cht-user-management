@@ -3,10 +3,12 @@ import { expect } from 'chai';
 
 import { mockPlace, mockSimpleContactType } from './mocks';
 import RemotePlaceResolver from '../src/lib/remote-place-resolver';
-import { UnvalidatedPropertyValue } from '../src/property-value';
+import { ContactPropertyValue, UnvalidatedPropertyValue } from '../src/property-value';
+import { InputSource } from '../src/validation';
 
 type Scenario = {
   type: string;
+  source?: InputSource;
   prop?: string;
   isValid: boolean;
   propertyParameter?: string | string[] | object;
@@ -18,6 +20,7 @@ type Scenario = {
 const EMAIL_REGEX = '^[a-zA-Z0-9._+-]+@[a-zA-Z0-9.-]+.[a-zA-Z]{2,}$';
 const GENDER_OPTIONS = { male: 'Male', female: 'Female' };
 const CANDIES_OPTIONS = { chocolate: 'Chocolate', strawberry: 'Strawberry' };
+const CHU_NAME_PARAMETER = ['\\sCommunity Health Unit', '\\sCommunity Unit', '\\sUnit'];
 
 const scenarios: Scenario[] = [
   { type: 'string', prop: undefined, isValid: false, error: 'Required', formatted: '' },
@@ -57,6 +60,7 @@ const scenarios: Scenario[] = [
   { type: 'name', prop: 'गण्डकी', isValid: true, formatted: 'गण्डकी' },
   { type: 'name', prop: 'लुम्बिनी', isValid: true, formatted: 'लुम्बिनी' },
   { type: 'name', prop: 'Sam\'s CHU', propertyParameter: ['CHU', 'Comm Unit'], isValid: true, formatted: 'Sam\'s' },
+  { type: 'name', prop: 'A Community  Unit', isValid: true, formatted: 'A', propertyParameter: CHU_NAME_PARAMETER },
   { type: 'name', prop: 'Jonathan M.Barasa', isValid: true, formatted: 'Jonathan M Barasa' },
   { type: 'name', prop: 'Robert xiv', isValid: true, formatted: 'Robert XIV' },
   { type: 'name', prop: ' ', isValid: true, formatted: '' },
@@ -78,18 +82,44 @@ const scenarios: Scenario[] = [
   { type: 'dob', prop: '1/13/1985', isValid: false },
 
   { type: 'select_one', prop: undefined, isValid: false, error: 'Required', formatted: '' },
-  { type: 'select_one', prop: ' male', isValid: true, propertyParameter: GENDER_OPTIONS },
-  { type: 'select_one', prop: 'female ', isValid: true, propertyParameter: GENDER_OPTIONS },
-  { type: 'select_one', prop: 'FeMale ', isValid: false, propertyParameter: GENDER_OPTIONS },
-  { type: 'select_one', prop: 'f', isValid: false, propertyParameter: GENDER_OPTIONS },
+  { type: 'select_one', prop: ' male', isValid: true, propertyParameter: GENDER_OPTIONS, formatted: 'male' },
+  { type: 'select_one', prop: 'female ', isValid: true, propertyParameter: GENDER_OPTIONS, formatted: 'female' },
+  { type: 'select_one', prop: 'FeMale ', isValid: true, propertyParameter: GENDER_OPTIONS, formatted: 'female' },
+  { type: 'select_one', prop: 'Male', isValid: true, propertyParameter: GENDER_OPTIONS, formatted: 'male' },
+  { type: 'select_one', prop: 'MALE', isValid: true, propertyParameter: GENDER_OPTIONS, formatted: 'male' },
+  { type: 'select_one', prop: 'f', isValid: false, propertyParameter: GENDER_OPTIONS, error: 'Invalid value selected' },
+  { type: 'select_one', prop: 'f', isValid: false, propertyParameter: GENDER_OPTIONS, propertyErrorDescription: 'Pick a sex', error: 'Pick a sex' },
   { type: 'select_one', prop: '', isValid: false, propertyParameter: GENDER_OPTIONS },
+  
+  // form input carries option keys, so labels are not matched
+  { type: 'select_one', prop: 'F', isValid: true, propertyParameter: { F: 'Female', M: 'Male' }, formatted: 'F' },
+  { type: 'select_one', prop: 'Female', isValid: false, propertyParameter: { F: 'Female', M: 'Male' } },
+  { type: 'select_one', prop: 'yes', isValid: true, propertyParameter: { no: 'Yes', yes: 'No' }, formatted: 'yes' },
+
+  // csv inputs are matched on label
+  { type: 'select_one', source: 'csv', prop: 'Female', isValid: true, propertyParameter: { F: 'Female', M: 'Male' }, formatted: 'F' },
+  { type: 'select_one', source: 'csv', prop: 'm', isValid: false, propertyParameter: { F: 'Female', M: 'Male' } },
+  {
+    type: 'select_one', source: 'csv', prop: 'masculin', isValid: true,
+    propertyParameter: { male: 'Masculin', female: 'Feminin' }, formatted: 'male',
+  },
+  {
+    type: 'select_one', source: 'csv', prop: 'ASC + 5km', isValid: true,
+    propertyParameter: { min_5km: 'ASC - 5km', max_5km: 'ASC + 5km' }, formatted: 'max_5km',
+  },
+  { type: 'select_one', source: 'csv', prop: 'yes', isValid: true, propertyParameter: { no: 'Yes', yes: 'No' }, formatted: 'no' },
+  { type: 'select_one', source: 'csv', prop: 'maybe', isValid: false, propertyParameter: { no: 'Yes', yes: 'No' } },
 
   { type: 'select_multiple', prop: undefined, isValid: false, error: 'Required', formatted: '' },
   { type: 'select_multiple', prop: 'chocolate', isValid: true, propertyParameter: CANDIES_OPTIONS },
   { type: 'select_multiple', prop: 'chocolate strawberry', isValid: true, propertyParameter: CANDIES_OPTIONS },
-  { type: 'select_multiple', prop: ' chocolate  strawberry', isValid: true, propertyParameter: CANDIES_OPTIONS },
+  { type: 'select_multiple', prop: ' chocolate  strawberry', isValid: true, propertyParameter: CANDIES_OPTIONS, formatted: 'chocolate strawberry' },
+  { type: 'select_multiple', prop: 'Chocolate STRAWBERRY', isValid: true, propertyParameter: CANDIES_OPTIONS, formatted: 'chocolate strawberry' },
+  { type: 'select_multiple', prop: 'chocolate mint', isValid: false, propertyParameter: CANDIES_OPTIONS, error: 'Invalid values' },
   { type: 'select_multiple', prop: 'c,s', isValid: false, propertyParameter: CANDIES_OPTIONS, error: 'Invalid values' },
   { type: 'select_multiple', prop: '', isValid: false, propertyParameter: CANDIES_OPTIONS, error: 'Required' },
+  { type: 'select_multiple', prop: 'no', isValid: true, propertyParameter: { no: 'Yes', yes: 'No' }, formatted: 'no' },
+  { type: 'select_multiple', source: 'csv', prop: 'no Yes', isValid: true, propertyParameter: { no: 'Yes', yes: 'No' }, formatted: 'yes no' },
 
   { type: 'generated', prop: 'b', propertyParameter: 'a {{ place.prop }} c', isValid: true, formatted: 'a b c' },
   { type: 'generated', prop: 'b', propertyParameter: '{{ contact.name }} ({{ lineage.PARENT }})', isValid: true, formatted: 'Contact (Parent)' },
@@ -102,6 +132,11 @@ describe('validation', () => {
       const contactType = mockSimpleContactType(scenario.type, scenario.propertyParameter, scenario.propertyErrorDescription);
       contactType.contact_properties = [contactType.place_properties[0]];
       const place = mockPlace(contactType, { place_prop: scenario.prop });
+      if (scenario.source === 'csv') {
+        const property = contactType.place_properties.find(p => p.property_name === 'prop')!;
+        place.properties.prop = new ContactPropertyValue(place, property, 'place_', scenario.prop as string, 'csv');
+        place.validate();
+      }
 
       const actualValidity = Object.keys(place.validationErrors || {});
       expect(actualValidity).to.deep.eq(scenario.isValid ? [] : ['place_prop']);

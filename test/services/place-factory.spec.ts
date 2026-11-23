@@ -8,6 +8,8 @@ import { ChtDoc, expectInvalidProperties, mockChtSession, mockParentPlace, mockP
 import { Config, ContactType } from '../../src/config';
 import Place from '../../src/services/place';
 import PlaceFactory from '../../src/services/place-factory';
+import { ChtApi } from '../../src/lib/cht-api';
+import ChtSession from '../../src/lib/cht-session';
 import RemotePlaceCache from '../../src/lib/remote-place-cache';
 import RemotePlaceResolver from '../../src/lib/remote-place-resolver';
 import SessionCache from '../../src/services/session-cache';
@@ -19,7 +21,8 @@ const { expect } = Chai;
 
 describe('services/place-factory.ts', () => {
   beforeEach(() => {
-    RemotePlaceCache.clear({});
+    RemotePlaceCache.clear({} as ChtApi);
+    SessionCache.getForSession(mockChtSession()).removeAll();
   });
 
   it('name conflict at local yields invalid', async () => {
@@ -497,6 +500,56 @@ describe('services/place-factory.ts', () => {
     const place: Place = await PlaceFactory.createOne(fakeFormData, contactType, sessionCache, chtApi);
     expectInvalidProperties(place.validationErrors, ['place_name'], 'Required');
   });
+
+  describe('reassign', () => {
+    const arrange = (placeContact: any, usersByContact: { [contactId: string]: any[] }) => {
+      const api: any = {
+        getUser: sinon.stub().callsFake(async (contactId: string) => usersByContact[contactId]?.shift()),
+        updateUser: sinon.stub().resolves(),
+        getDoc: sinon.stub().resolves({ _id: 'p1', contact: placeContact }),
+        setDoc: sinon.stub().resolves(),
+        disableUser: sinon.stub().resolves(),
+        deleteDoc: sinon.stub().resolves(),
+      };
+      return api;
+    };
+
+    it('keeps the user and contact when the place already belongs to the contact', async () => {
+      const owner = { username: 'owner', place: [{ _id: 'p1' }] };
+      const api = arrange({ _id: 'c1' }, { c1: [owner, owner] });
+
+      await PlaceFactory.reassign('c1', 'p1', api);
+
+      expect(api.updateUser.args).to.deep.eq([[{ username: 'owner', place: ['p1'] }]]);
+      expect(api.disableUser.called).to.be.false;
+      expect(api.deleteDoc.called).to.be.false;
+      expect(api.setDoc.args[0][1].contact).to.deep.eq({ _id: 'c1' });
+    });
+
+    it('disables the previous user and deletes their contact, saving the new contact as a doc reference', async () => {
+      const newUser = { username: 'new', place: [{ _id: 'p0' }] };
+      const prevUser = { username: 'prev', place: [{ _id: 'p1' }] };
+      const api = arrange('c-prev', { 'c-new': [newUser], 'c-prev': [prevUser, undefined] });
+
+      await PlaceFactory.reassign('c-new', 'p1', api);
+
+      expect(api.disableUser.calledOnceWith('prev')).to.be.true;
+      expect(api.deleteDoc.calledOnceWith('c-prev')).to.be.true;
+      expect(api.setDoc.args[0][1].contact).to.deep.eq({ _id: 'c-new' });
+    });
+
+    it('keeps the previous contact while another user still references it', async () => {
+      const newUser = { username: 'new', place: [{ _id: 'p0' }] };
+      const prevUser = { username: 'prev', place: [{ _id: 'p1' }] };
+      const sharing = { username: 'sharing', place: [{ _id: 'p9' }] };
+      const api = arrange({ _id: 'c-prev' }, { 'c-new': [newUser], 'c-prev': [prevUser, sharing] });
+
+      await PlaceFactory.reassign('c-new', 'p1', api);
+
+      expect(api.disableUser.calledOnceWith('prev')).to.be.true;
+      expect(api.deleteDoc.called).to.be.false;
+    });
+  });
 });
 
 it('#165 - create a place when generated property is required', async () => {
@@ -531,12 +584,12 @@ it('create multiple places with single contact', async () => {
 });
 
 export function mockGroupedFormData(contactType: ContactType, placeCount: number) {
-  const genPlaceFormData = (contactType, uniqfix) => {
-    const data = {};
-    contactType.place_properties.forEach(p => data[`place_${p.property_name}`] = p.property_name + uniqfix);
+  const genPlaceFormData = (contactType: ContactType, uniqfix: string) => {
+    const data: Record<string, any> = {};
+    contactType.place_properties.forEach((p: any) => data[`place_${p.property_name}`] = p.property_name + uniqfix);
     return data;
   };
-  const formData = {};
+  const formData: Record<string, any> = {};
   for (let i = 0; i < placeCount; i++) {
     formData[`list_${i}`] = Buffer.from(JSON.stringify(genPlaceFormData(contactType, `${i}`))).toString('base64');
   }
@@ -549,7 +602,8 @@ function mockScenario() {
     _id: 'parent-id',
     name: 'parent-name',
   };
-  const sessionCache = new SessionCache();
+  const session = mockChtSession();
+  const sessionCache = SessionCache.getForSession(session);
   const chtApi = {
     chtSession: mockChtSession(),
     getPlacesWithType: sinon.stub()
@@ -558,6 +612,11 @@ function mockScenario() {
       .onThirdCall().resolves([]),
     createPlace: sinon.stub().resolves({ placeId: 'created-place-id', contactId: 'created-contact-id' }),
     createUser: sinon.stub().resolves(),
+  } as unknown as ChtApi & {
+    chtSession: ChtSession;
+    getPlacesWithType: sinon.SinonStub;
+    createPlace: sinon.SinonStub;
+    createUser: sinon.SinonStub;
   };
   const fakeFormData: any = {
     place_name: 'place',

@@ -28,6 +28,8 @@ export const mockPlace = (contactType: ContactType, formDataOverride?: any) : Pl
     name: new UnvalidatedPropertyValue('parent'),
     lineage: [],
     type: 'remote',
+    placeType: 'remote',
+    uniquePlaceValues: {},
   };
   place.validate();
   return place;
@@ -160,7 +162,7 @@ export function mockChtSession(userFacilityId: string = '*') : ChtSession {
     facilityIds: [userFacilityId],
     chtCoreVersion: '4.9.0',
   };
-  return new ChtSession(creationDetails);
+  return new (ChtSession as any)(creationDetails);
 }
 
 export function expectInvalidProperties(

@@ -7,7 +7,7 @@
         {% if data[property_name] and data[property_name] != empty %}
           <tr>
             <td>Source {{ hierarchy.friendly_name }}</td>
-            <td>{{ data[property_name] }}</td>
+            <td>{{ data[property_name] | escape }}</td>
           </tr>
         {% endif %}
       {% endfor %}
@@ -17,7 +17,7 @@
         {% if data[property_name] and data[property_name] != empty %}
           <tr>
             <td>Destination {{ hierarchy.friendly_name }}</td>
-            <td>{{ data[property_name] }}</td>
+            <td>{{ data[property_name] | escape }}</td>
           </tr>
         {% endif %}
       {% endfor %}

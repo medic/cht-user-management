@@ -1,3 +1,122 @@
+## [2.14.6](https://github.com/medic/cht-user-management/compare/v2.14.5...v2.14.6) (2026-11-20)
+
+
+### Bug Fixes
+
+* accept select_one values case-insensitively and by label ([#407](https://github.com/medic/cht-user-management/issues/407)) ([81041cd](https://github.com/medic/cht-user-management/commit/81041cdc6538906185faad86f9c426a63e82f7e8))
+
+## [2.14.5](https://github.com/medic/cht-user-management/compare/v2.14.4...v2.14.5) (2026-11-19)
+
+
+### Bug Fixes
+
+* **#409:** escape reflected user input in liquid templates ([#410](https://github.com/medic/cht-user-management/issues/410)) ([4d2bed3](https://github.com/medic/cht-user-management/commit/4d2bed3980889c0b87dd5e26b43f76b6ff5006e2)), closes [#409](https://github.com/medic/cht-user-management/issues/409)
+
+## [2.14.4](https://github.com/medic/cht-user-management/compare/v2.14.3...v2.14.4) (2026-11-06)
+
+
+### Bug Fixes
+
+* protect CHT session tokens stored in worker jobs ([#412](https://github.com/medic/cht-user-management/issues/412)) ([6778339](https://github.com/medic/cht-user-management/commit/677833991631128a7a3737c856d5af3b5a6f74fb))
+
+## [2.14.3](https://github.com/medic/cht-user-management/compare/v2.14.2...v2.14.3) (2026-10-16)
+
+
+### Bug Fixes
+
+* **#405:** stop replace and reassign leaving users without a contact ([#406](https://github.com/medic/cht-user-management/issues/406)) ([4111cf4](https://github.com/medic/cht-user-management/commit/4111cf4bdea25628b02d663a5f974fa79d8812d0)), closes [#405](https://github.com/medic/cht-user-management/issues/405)
+
+## [2.14.2](https://github.com/medic/cht-user-management/compare/v2.14.1...v2.14.2) (2026-10-09)
+
+
+### Bug Fixes
+
+* **#402:** fix date range error ([#404](https://github.com/medic/cht-user-management/issues/404)) ([ca15087](https://github.com/medic/cht-user-management/commit/ca15087c0f4d7364a91e1077b83c20b33b093426)), closes [#402](https://github.com/medic/cht-user-management/issues/402)
+
+## [2.14.1](https://github.com/medic/cht-user-management/compare/v2.14.0...v2.14.1) (2026-09-01)
+
+
+### Bug Fixes
+
+* **#396:** update cht-conf version ([8e30f6f](https://github.com/medic/cht-user-management/commit/8e30f6fe0adf25f4e413e699dbe9b301fafd4c7a)), closes [#396](https://github.com/medic/cht-user-management/issues/396)
+
+# [2.14.0](https://github.com/medic/cht-user-management/compare/v2.13.0...v2.14.0) (2026-08-25)
+
+
+### Features
+
+* **#394:** environment variables provide control of worker thread's cht-conf heap size ([#395](https://github.com/medic/cht-user-management/issues/395)) ([5171fc0](https://github.com/medic/cht-user-management/commit/5171fc040eaa1bb0e3eec316f3c704f512fd1bee)), closes [#394](https://github.com/medic/cht-user-management/issues/394)
+
+# [2.13.0](https://github.com/medic/cht-user-management/compare/v2.12.9...v2.13.0) (2026-08-20)
+
+
+### Features
+
+* **#391:** make attribute_for_external_ownership settable when creating or replacing ([#393](https://github.com/medic/cht-user-management/issues/393)) ([59ce3aa](https://github.com/medic/cht-user-management/commit/59ce3aa4cb6ce3ef04199f65079b08cc544cc304)), closes [#391](https://github.com/medic/cht-user-management/issues/391) [#392](https://github.com/medic/cht-user-management/issues/392)
+
+## [2.12.9](https://github.com/medic/cht-user-management/compare/v2.12.8...v2.12.9) (2026-08-20)
+
+
+### Bug Fixes
+
+* **#376:** don't return external sources if contact type has no external source mapping ([#378](https://github.com/medic/cht-user-management/issues/378)) ([86d4674](https://github.com/medic/cht-user-management/commit/86d4674166d78dfdf2391a1f6358515ce5813c46)), closes [#376](https://github.com/medic/cht-user-management/issues/376)
+
+## [2.12.8](https://github.com/medic/cht-user-management/compare/v2.12.7...v2.12.8) (2026-08-08)
+
+
+### Bug Fixes
+
+* **#389:** crash during retry when there are no users associated with place ([#390](https://github.com/medic/cht-user-management/issues/390)) ([909a039](https://github.com/medic/cht-user-management/commit/909a0397ef3ecb703e9ef3789f945879d75aa98f)), closes [#389](https://github.com/medic/cht-user-management/issues/389)
+
+## [2.12.7](https://github.com/medic/cht-user-management/compare/v2.12.6...v2.12.7) (2026-07-30)
+
+
+### Bug Fixes
+
+* **#385:** fix for uri-too-long via bump to cht-conf@latest ([#386](https://github.com/medic/cht-user-management/issues/386)) ([ee15f4d](https://github.com/medic/cht-user-management/commit/ee15f4df07af5e60f29d9d886ea43e0a85313d44))
+
+## [2.12.6](https://github.com/medic/cht-user-management/compare/v2.12.5...v2.12.6) (2026-07-22)
+
+
+### Bug Fixes
+
+* **#382:** make doUpload trigger cht request once for same place ([7761a9f](https://github.com/medic/cht-user-management/commit/7761a9f14d2b21709f09d0bbe00cc7c4222b5703)), closes [#382](https://github.com/medic/cht-user-management/issues/382)
+
+## [2.12.5](https://github.com/medic/cht-user-management/compare/v2.12.4...v2.12.5) (2026-07-15)
+
+
+### Bug Fixes
+
+* **#355:** design adjustments to API endpoints during CHA creation in CHW-R ([#360](https://github.com/medic/cht-user-management/issues/360)) ([7cdae65](https://github.com/medic/cht-user-management/commit/7cdae65ef65b02c6d97f0fab0853886ebd212baf)), closes [#355](https://github.com/medic/cht-user-management/issues/355) [#343](https://github.com/medic/cht-user-management/issues/343) [#355](https://github.com/medic/cht-user-management/issues/355)
+
+## [2.12.4](https://github.com/medic/cht-user-management/compare/v2.12.3...v2.12.4) (2026-07-14)
+
+
+### Bug Fixes
+
+* **#375:** update echis area name stripping ([#377](https://github.com/medic/cht-user-management/issues/377)) ([6b1d4f7](https://github.com/medic/cht-user-management/commit/6b1d4f786cd624f69412d70a62b4b9f69f0f6980)), closes [#375](https://github.com/medic/cht-user-management/issues/375)
+
+## [2.12.3](https://github.com/medic/cht-user-management/compare/v2.12.2...v2.12.3) (2026-07-13)
+
+
+### Bug Fixes
+
+* **#372:** add chwregistry prod url for chis-ke ([#374](https://github.com/medic/cht-user-management/issues/374)) ([eebfc8c](https://github.com/medic/cht-user-management/commit/eebfc8c36b38178fb9eeca07186caf352c18a11f)), closes [#372](https://github.com/medic/cht-user-management/issues/372)
+
+## [2.12.2](https://github.com/medic/cht-user-management/compare/v2.12.1...v2.12.2) (2026-07-02)
+
+
+### Bug Fixes
+
+* navbar spacing issue ([#370](https://github.com/medic/cht-user-management/issues/370)) ([1e62704](https://github.com/medic/cht-user-management/commit/1e62704467dee3ea035ea5308c5f75b3cf948dcc))
+
+## [2.12.1](https://github.com/medic/cht-user-management/compare/v2.12.0...v2.12.1) (2026-06-30)
+
+
+### Bug Fixes
+
+* **#364:** refine fuzzy name matching ([#371](https://github.com/medic/cht-user-management/issues/371)) ([9a5abff](https://github.com/medic/cht-user-management/commit/9a5abffdda8d51d04e865eeab38a88d507d519c5)), closes [#364](https://github.com/medic/cht-user-management/issues/364)
+
 # [2.12.0](https://github.com/medic/cht-user-management/compare/v2.11.1...v2.12.0) (2026-06-29)
 
 

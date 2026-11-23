@@ -1,8 +1,11 @@
 import { expect } from 'chai';
+import sinon from 'sinon';
 
+import { Config } from '../../src/config';
 import Place from '../../src/services/place';
-import { mockSimpleContactType, mockValidContactType } from '../mocks';
+import { mockProperty, mockSimpleContactType, mockValidContactType } from '../mocks';
 import { UnvalidatedPropertyValue, ContactPropertyValue } from '../../src/property-value';
+import { RemotePlace } from '../../src/lib/remote-place-cache';
 
 describe('services/place.ts', () => {
   it('setPropertiesFromFormData', () => {
@@ -45,6 +48,35 @@ describe('services/place.ts', () => {
     });
   });
 
+  it('asFormData uses the formatted value so edit forms match select options', () => {
+    const contactType = mockSimpleContactType('string', undefined);
+    const ownership = mockProperty('select_one', { public: 'Public', private: 'Private' }, 'ownership');
+    const sex = mockProperty('select_one', { male: 'Male', female: 'Female' }, 'sex');
+    const place = new Place(contactType);
+    place.properties.ownership = new ContactPropertyValue(place, ownership, 'place_', ' PRIVATE ');
+    place.contact.properties.sex = new ContactPropertyValue(place, sex, 'contact_', 'Female');
+
+    const actual = place.asFormData('hierarchy_');
+
+    expect(place.contact.properties.sex.original).to.eq('Female');
+    expect(actual).to.deep.eq({
+      place_ownership: 'private',
+      contact_sex: 'female',
+    });
+  });
+
+  it('asFormData falls back to the original value when the formatted value is empty', () => {
+    const contactType = mockSimpleContactType('string', undefined);
+    const property = Config.getPropertyWithName(contactType.place_properties, 'prop');
+    const place = new Place(contactType);
+    place.properties.prop = new ContactPropertyValue(place, property, 'place_', '!!!');
+
+    const actual = place.asFormData('hierarchy_');
+
+    expect(place.properties.prop.formatted).to.eq('');
+    expect(actual).to.deep.eq({ place_prop: '!!!' });
+  });
+
   it('basic asRemotePlace', () => {
     const contactType = mockSimpleContactType('string', undefined);
     const place = new Place(contactType);
@@ -54,13 +86,13 @@ describe('services/place.ts', () => {
       name: new UnvalidatedPropertyValue('replaced'),
       lineage: ['parent-id'],
       type: 'remote',
-    };
+    } as unknown as RemotePlace;
     place.resolvedHierarchy[1] = {
       id: 'parent-id',
       name: new UnvalidatedPropertyValue('parent'),
       lineage: [],
       type: 'remote',
-    };
+    } as unknown as RemotePlace;
     const actual = place.asRemotePlace();
 
     expect(actual).to.deep.nested.include({
@@ -79,14 +111,14 @@ describe('services/place.ts', () => {
       name: new UnvalidatedPropertyValue('replaced'),
       lineage: ['parent-id', 'grandparent-id', 'greatgrandparent-id'],
       type: 'remote',
-    };
+    } as unknown as RemotePlace;
 
     place.resolvedHierarchy[3] = {
       id: 'greatgrandparent-id',
       name: new UnvalidatedPropertyValue('greatgrandparent'),
       lineage: [],
       type: 'remote',
-    };
+    } as unknown as RemotePlace;
     const actual = place.asRemotePlace();
 
     expect(actual).to.deep.nested.include({
@@ -129,6 +161,91 @@ describe('services/place.ts', () => {
 
     expect(actual.contact.type).to.eq(contactType.contact_type);
     expect(actual.contact.contact_type).to.be.undefined;
+  });
+
+  describe('external identity ownership', () => {
+    const OWNERSHIP_ATTRIBUTE = 'chw_registry_link';
+
+    beforeEach(() => {
+      sinon.stub(Config, 'getExternalIdentityOwnershipAttribute').returns(OWNERSHIP_ATTRIBUTE);
+    });
+
+    afterEach(() => sinon.restore());
+
+    // asChtPayload is what both a new place and a replacement are written from
+    it('asChtPayload carries the claim onto the place being created or replaced', () => {
+      const contactType = mockSimpleContactType('string', undefined);
+      const place = new Place(contactType);
+      place.setPropertiesFromFormData({ [OWNERSHIP_ATTRIBUTE]: 'an-external-uuid' }, 'hierarchy_');
+
+      expect(place.asChtPayload('usr')[OWNERSHIP_ATTRIBUTE]).to.eq('an-external-uuid');
+    });
+
+    it('asChtPayload marks the place as owned when the claim carries no reference', () => {
+      const contactType = mockSimpleContactType('string', undefined);
+      const place = new Place(contactType);
+      place.setPropertiesFromFormData({ [OWNERSHIP_ATTRIBUTE]: true }, 'hierarchy_');
+
+      expect(place.asChtPayload('usr')[OWNERSHIP_ATTRIBUTE]).to.eq(true);
+    });
+
+    it('asChtPayload writes no attribute when ownership was never claimed', () => {
+      const contactType = mockSimpleContactType('string', undefined);
+      const place = new Place(contactType);
+      place.setPropertiesFromFormData({ place_prop: 'abc' }, 'hierarchy_');
+
+      expect(place.externalIdentity).to.be.undefined;
+      expect(place.asChtPayload('usr')).to.not.have.property(OWNERSHIP_ATTRIBUTE);
+    });
+
+    // nothing to release on a place which does not exist yet
+    it('asChtPayload writes no attribute for a release', () => {
+      const contactType = mockSimpleContactType('string', undefined);
+      const place = new Place(contactType);
+      place.setPropertiesFromFormData({ [OWNERSHIP_ATTRIBUTE]: null }, 'hierarchy_');
+
+      expect(place.externalIdentity).to.eq(null);
+      expect(place.asChtPayload('usr')).to.not.have.property(OWNERSHIP_ATTRIBUTE);
+    });
+
+    // form data is re-applied when a staged place is edited, and must not drop the claim
+    it('a later form submission which is silent on ownership keeps the claim', () => {
+      const contactType = mockSimpleContactType('string', undefined);
+      const place = new Place(contactType);
+      place.setPropertiesFromFormData({ [OWNERSHIP_ATTRIBUTE]: 'an-external-uuid' }, 'hierarchy_');
+      place.setPropertiesFromFormData({ place_prop: 'abc' }, 'hierarchy_');
+
+      expect(place.externalIdentity).to.eq('an-external-uuid');
+    });
+
+    it('rejects a claim which is neither a reference nor a release', () => {
+      const contactType = mockSimpleContactType('string', undefined);
+      const place = new Place(contactType);
+
+      expect(() => place.setPropertiesFromFormData({ [OWNERSHIP_ATTRIBUTE]: 42 }, 'hierarchy_'))
+        .to.throw('must be true, a reference to the external record, or null to release');
+    });
+
+    // ownership is opt-in per partner, so a client which sends the field everywhere is not punished
+    // for the partners which do not track it
+    it('ignores a claim when the partner config names no attribute', () => {
+      (Config.getExternalIdentityOwnershipAttribute as sinon.SinonStub).returns(undefined);
+      const contactType = mockSimpleContactType('string', undefined);
+      const place = new Place(contactType);
+
+      place.setPropertiesFromFormData({ [OWNERSHIP_ATTRIBUTE]: true }, 'hierarchy_');
+
+      expect(place.externalIdentity).to.be.undefined;
+      expect(place.asChtPayload('usr')).to.not.have.property(OWNERSHIP_ATTRIBUTE);
+    });
+
+    it('ignores a value which is not a valid claim when no attribute is configured', () => {
+      (Config.getExternalIdentityOwnershipAttribute as sinon.SinonStub).returns(undefined);
+      const contactType = mockSimpleContactType('string', undefined);
+      const place = new Place(contactType);
+
+      expect(() => place.setPropertiesFromFormData({ [OWNERSHIP_ATTRIBUTE]: 42 }, 'hierarchy_')).to.not.throw();
+    });
   });
 
   it('setPropertiesFromFormData supports multiple roles', () => {

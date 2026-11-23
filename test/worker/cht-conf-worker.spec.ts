@@ -7,19 +7,20 @@ import Auth from '../../src/lib/authentication';
 import { ChtConfWorker } from '../../src/worker/cht-conf-worker';
 import { HierarchyAction } from '../../src/lib/manage-hierarchy';
 import { mockChtSession } from '../mocks';
+import { Job } from 'bullmq';
 
 const { expect } = Chai;
 
-const mockMonitoringResponse = (backlog) => ({ data: { sentinel: { backlog } } });
+const mockMonitoringResponse = (backlog: number) => ({ data: { sentinel: { backlog } } });
 describe('worker/cht-conf-worker', () => {
-  let executeStub;
-  let monitoringStub;
+  let executeStub: Sinon.SinonStub;
+  let monitoringStub: Sinon.SinonStub;
 
   beforeEach(() => {
     executeStub = Sinon.stub().resolves(true);
     monitoringStub = Sinon.stub().resolves(mockMonitoringResponse(10));
-    ChtConfWorker.fetchMonitoringApi = monitoringStub;
-    ChtConfWorker.executeCommand = executeStub;
+    (ChtConfWorker as any).fetchMonitoringApi = monitoringStub;
+    (ChtConfWorker as any).executeCommand = executeStub;
 
     const now = new Date('1-1-2000');
     Sinon.useFakeTimers(now);
@@ -32,7 +33,7 @@ describe('worker/cht-conf-worker', () => {
   describe('handleJob', () => {
     it('move contacts', async () => {
       const job = mockJob('move');
-      await ChtConfWorker.handleJob(job);
+      await (ChtConfWorker as any).handleJob(job as unknown as Job<any, any, string>);
 
       expect(executeStub.calledOnce).to.be.true;
       expect(executeStub.args[0][1]).to.deep.eq([
@@ -49,7 +50,7 @@ describe('worker/cht-conf-worker', () => {
 
     it('merge contacts', async () => {
       const job = mockJob('merge');
-      await ChtConfWorker.handleJob(job);
+      await (ChtConfWorker as any).handleJob(job as unknown as Job<any, any, string>);
 
       expect(executeStub.calledOnce).to.be.true;
       expect(executeStub.args[0][1]).to.deep.eq([
@@ -68,7 +69,7 @@ describe('worker/cht-conf-worker', () => {
 
     it('delete contacts', async () => {
       const job = mockJob('delete');
-      await ChtConfWorker.handleJob(job);
+      await (ChtConfWorker as any).handleJob(job as unknown as Job<any, any, string>);
 
       expect(executeStub.calledOnce).to.be.true;
       expect(executeStub.args[0][1]).to.deep.eq([
@@ -86,7 +87,7 @@ describe('worker/cht-conf-worker', () => {
     it('log and throw when execution fails', async () => {
       executeStub.rejects('failure');
       const job = mockJob('delete');
-      const actual = ChtConfWorker.handleJob(job);
+      const actual = (ChtConfWorker as any).handleJob(job as unknown as Job<any, any, string>);
       await expect(actual).to.eventually.be.rejectedWith('following error: failure');
 
       expect(job.log.calledOnce).to.be.true;
@@ -96,13 +97,37 @@ describe('worker/cht-conf-worker', () => {
     it('sentinel backlog causes postpone', async () => {
       monitoringStub.resolves(mockMonitoringResponse(10000));
       const job = mockJob('move');
-      const actual = ChtConfWorker.handleJob(job);
+      const actual = (ChtConfWorker as any).handleJob(job as unknown as Job<any, any, string>);
       await expect(actual).to.eventually.be.rejectedWith();
       expect(executeStub.callCount).to.eq(0);
 
       expect(job.log.calledOnce).to.be.true;
       expect(job.log.args[0][0]).to.include('backlog too high');
       expect(job.log.args[0][0]).to.include('until 4:00 AM');
+    });
+  });
+
+  describe('buildCommandEnv', () => {
+    afterEach(() => {
+      delete process.env.CHT_CONF_MAX_OLD_SPACE_MB;
+      delete process.env.NODE_OPTIONS;
+    });
+
+    it('defaults the heap given to cht-conf', () => {
+      const actual = (ChtConfWorker as any).buildCommandEnv();
+      expect(actual.NODE_OPTIONS).to.eq('--max-old-space-size=1024');
+    });
+
+    it('heap size is configurable', () => {
+      process.env.CHT_CONF_MAX_OLD_SPACE_MB = '8192';
+      const actual = (ChtConfWorker as any).buildCommandEnv();
+      expect(actual.NODE_OPTIONS).to.eq('--max-old-space-size=8192');
+    });
+
+    it('preserves existing NODE_OPTIONS', () => {
+      process.env.NODE_OPTIONS = '--enable-source-maps';
+      const actual = (ChtConfWorker as any).buildCommandEnv();
+      expect(actual.NODE_OPTIONS).to.eq('--enable-source-maps --max-old-space-size=1024');
     });
   });
 });

@@ -76,12 +76,15 @@ export default class PlaceFactory {
       throw new Error('We did not find a user from the link provided. ' +
         'Please make sure the link is correct and the contact can login to the instance');
     }
-    const updatedPlaces = [...user.place.map(d => d._id), placeId];
+    const updatedPlaces = [...new Set([...user.place.map(d => d._id), placeId])];
     await api.updateUser({ username: user.username, place: updatedPlaces });
     const place = await api.getDoc(placeId);
-    if (place.contact) {
-      const contactId = place.contact._id ?? place.contact;
-      const prevUser = await api.getUser(contactId) as UserInfo & { place: CouchDoc[] };
+    const contactId = place.contact?._id ?? place.contact;
+    // when the place already belongs to this contact there is no previous user to strip or delete
+    const prevUser = contactId && contactId !== newContactId
+      ? await api.getUser(contactId) as UserInfo & { place: CouchDoc[] }
+      : undefined;
+    if (prevUser) {
       const prevUserPlaces = prevUser.place.map(p => p._id).filter(id => id !== placeId);
       if (prevUserPlaces.length > 0) {
         await api.updateUser({
@@ -90,10 +93,13 @@ export default class PlaceFactory {
         });
       } else {
         await api.disableUser(prevUser.username);
-        await api.deleteDoc(contactId);
+        // another user may share this contact; only delete it once none remain
+        if (!(await api.getUser(contactId))) {
+          await api.deleteDoc(contactId);
+        }
       }
     }
-    place.contact = newContactId;
+    place.contact = { _id: newContactId };
     await api.setDoc(placeId, place);
   };
 
@@ -154,18 +160,18 @@ export default class PlaceFactory {
 
         // place properties must be read after hierarchy constraints since validation logic is dependent on isReplacement
         for (const placeProperty of contactType.place_properties) {
-          const createFromValue = (value: string) => new ContactPropertyValue(place, placeProperty, 'place_', value);
+          const createFromValue = (value: string) => new ContactPropertyValue(place, placeProperty, 'place_', value, 'csv');
           lookupPropertyAndCreateValue(place.properties, placeProperty, createFromValue);
         }
 
         for (const contactProperty of contactType.contact_properties) {
-          const createFromValue = (value: string) => new ContactPropertyValue(place, contactProperty, 'contact_', value);
+          const createFromValue = (value: string) => new ContactPropertyValue(place, contactProperty, 'contact_', value, 'csv');
           lookupPropertyAndCreateValue(place.contact.properties, contactProperty, createFromValue);
         }
 
         if (Config.hasMultipleRoles(contactType)) {
           const userRoleProperty = Config.getUserRoleConfig(contactType);
-          const createFromValue = (value: string) => new ContactPropertyValue(place, userRoleProperty, 'user_', value);
+          const createFromValue = (value: string) => new ContactPropertyValue(place, userRoleProperty, 'user_', value, 'csv');
           lookupPropertyAndCreateValue(place.userRoleProperties, userRoleProperty, createFromValue);
         }
 

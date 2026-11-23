@@ -17,7 +17,9 @@ export class UploadReplacementWithDeletion implements Uploader {
 
   private updatePlace = async(payload: PlacePayload | string, contactId: string) => {
     const updatedPlaceDoc = await retryOnUpdateConflict<any>(() => this.chtApi.updatePlace(payload, contactId));
-    return updatedPlaceDoc.user_attribution?.previousPrimaryContacts?.pop();
+    // a retried replacement records the new contact as "previous" too, so it must never be returned
+    const previousContacts: string[] = updatedPlaceDoc.user_attribution?.previousPrimaryContacts ?? [];
+    return previousContacts.filter(id => id !== contactId).pop();
   };
 
   handlePlacePayload = async (place: Place, payload: PlacePayload): Promise<CreatedPlaceResult> => {
@@ -32,17 +34,22 @@ export class UploadReplacementWithDeletion implements Uploader {
     const previousPrimaryContact = await this.updatePlace(payload, contactId);
     if (previousPrimaryContact) {
       const user = await this.chtApi.getUser(previousPrimaryContact);
-      if (Array.isArray(user.place) && user.place.length > 1) {
+      if (Array.isArray(user?.place) && user.place.length > 1) {
         const places = (user.place as CouchDoc[]).map(p => p._id);
         for (let i = 0; i < places.length; i++) {
           await this.updatePlace(places[i], contactId);
         }
         placeIds = places;
       }
-      await retryOnUpdateConflict<any>(() => this.chtApi.deleteDoc(previousPrimaryContact));
     }
     placeIds =  placeIds.filter(id => id !== placeId);
     await DisableUsers.disableUsersAt([placeId, ...placeIds], this.chtApi);
+
+    // Only delete the outgoing contact once no user references it: deleting first (or while a user
+    // remains) leaves that user with a contact that does not exist
+    if (previousPrimaryContact && !(await this.chtApi.getUser(previousPrimaryContact))) {
+      await retryOnUpdateConflict<any>(() => this.chtApi.deleteDoc(previousPrimaryContact));
+    }
     return { placeId, placeIds, contactId };
   };
 }

@@ -40,6 +40,7 @@ services:
       - REDIS_PORT=${REDIS_PORT:-6379}
       - WORKER_PRIVATE_KEY=${WORKER_PRIVATE_KEY}
       - CONFIG_NAME=${CONFIG_NAME}
+      - CHT_CONF_MAX_OLD_SPACE_MB=${CHT_CONF_MAX_OLD_SPACE_MB}
     depends_on:
       - redis
 

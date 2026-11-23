@@ -2,11 +2,13 @@ import { expect } from 'chai';
 import fs from 'fs';
 
 import SessionCache from '../src/services/session-cache';
-import { ChtDoc, createChu, expectInvalidProperties, mockChtApi } from './mocks';
+import { ChtDoc, createChu, expectInvalidProperties, mockChtApi, mockChtSession } from './mocks';
 import RemotePlaceCache from '../src/lib/remote-place-cache';
 import { Config } from '../src/config';
 import PlaceFactory from '../src/services/place-factory';
 import { UploadManager } from '../src/services/upload-manager';
+import { UploadLogger } from '../src/services/upload-log';
+import { ChtApi } from '../src/lib/cht-api';
 import Place from '../src/services/place';
 
 const subcounty: ChtDoc = {
@@ -36,11 +38,16 @@ It is quite difficult to resolve. Not all fetched information has a correspondin
 */
 describe('warnings', () => {
   beforeEach(() => {
-    RemotePlaceCache.clear({});
+    RemotePlaceCache.clear({} as ChtApi);
+  });
+
+  afterEach(() => {
+    SessionCache.getForSession(mockChtSession()).removeAll();
   });
 
   it('no warnings', async () => {
-    const sessionCache = new SessionCache();
+    const session = mockChtSession();
+    const sessionCache = SessionCache.getForSession(session);
     const chtApi = mockChtApi([subcounty], []);
     const first = await createChu(subcounty, 'chu-1', sessionCache, chtApi);
     const second = await createChu(subcounty, 'chu-2', sessionCache, chtApi, { place_code: '121212' });
@@ -51,7 +58,8 @@ describe('warnings', () => {
 
   describe('unique name warnings', () => {
     it('two local places share same name and same parent', async () => {
-      const sessionCache = new SessionCache();
+      const session = mockChtSession();
+      const sessionCache = SessionCache.getForSession(session);
       const chtApi = mockChtApi([subcounty], []);
       const first = await createChu(subcounty, 'chu', sessionCache, chtApi);
       const second = await createChu(subcounty, 'chu', sessionCache, chtApi, { place_code: '121212' });
@@ -62,7 +70,8 @@ describe('warnings', () => {
     });
     
     it('duplicate names but only after fuzzing', async () => {
-      const sessionCache = new SessionCache();
+      const session = mockChtSession();
+      const sessionCache = SessionCache.getForSession(session);
       const chtApi = mockChtApi([subcounty], []);
       const first = await createChu(subcounty, 'ABC Community Health Unit', sessionCache, chtApi);
       const second = await createChu(subcounty, 'abc', sessionCache, chtApi, { place_code: '121212' });
@@ -73,7 +82,8 @@ describe('warnings', () => {
     });
     
     it('name warning after fuzzing of generated name on remote property', async () => {
-      const sessionCache = new SessionCache();
+      const session = mockChtSession();
+      const sessionCache = SessionCache.getForSession(session);
       const chtApi = mockChtApi([subcounty], [chuDoc], [chpDoc]);
 
       const chuType = Config.getContactType('d_community_health_volunteer_area');
@@ -91,7 +101,8 @@ describe('warnings', () => {
     });
 
     it('name warning for conflicting new and replacement CHP (replace first)', async () => {
-      const sessionCache = new SessionCache();
+      const session = mockChtSession();
+      const sessionCache = SessionCache.getForSession(session);
       const chtApi = mockChtApi([subcounty], [chuDoc], [chpDoc]);
 
       const chuType = Config.getContactType('d_community_health_volunteer_area');
@@ -117,7 +128,8 @@ describe('warnings', () => {
     });
 
     it('name warning for conflicting new and replacement CHP (new first)', async () => {
-      const sessionCache = new SessionCache();
+      const session = mockChtSession();
+      const sessionCache = SessionCache.getForSession(session);
       const chtApi = mockChtApi([subcounty], [chuDoc], [chpDoc]);
 
       const chuType = Config.getContactType('d_community_health_volunteer_area');
@@ -142,7 +154,8 @@ describe('warnings', () => {
     });
 
     it('no name warnings when there are multiple invalid replacements', async () => {
-      const sessionCache = new SessionCache();
+      const session = mockChtSession();
+      const sessionCache = SessionCache.getForSession(session);
       const chtApi = mockChtApi([subcounty], [chuDoc], [chpDoc]);
 
       const chuType = Config.getContactType('d_community_health_volunteer_area');
@@ -170,7 +183,8 @@ describe('warnings', () => {
     it('name warning for CHU fuzzed remote place match', async () => {
       const remotePlace: ChtDoc = { _id: 'remote-chu', name: 'Abc Community Health Unit', parent: { _id: subcounty._id } };
   
-      const sessionCache = new SessionCache();
+      const session = mockChtSession();
+      const sessionCache = SessionCache.getForSession(session);
       const chtApi = mockChtApi([subcounty], [remotePlace]);
       const first = await createChu(subcounty, 'abc', sessionCache, chtApi);
   
@@ -180,7 +194,8 @@ describe('warnings', () => {
     });
     
     it('no warning when local place and remote place share same name but different parents', async () => {
-      const sessionCache = new SessionCache();
+      const session = mockChtSession();
+      const sessionCache = SessionCache.getForSession(session);
       const chtApi = mockChtApi([subcounty, subcounty2], []);
       const first = await createChu(subcounty, 'chu', sessionCache, chtApi);
       const second = await createChu(subcounty2, 'chu', sessionCache, chtApi, { place_code: '121212' });
@@ -190,7 +205,8 @@ describe('warnings', () => {
     });
 
     it('no name warning for generated names', async () => {
-      const sessionCache = new SessionCache();
+      const session = mockChtSession();
+      const sessionCache = SessionCache.getForSession(session);
       const chtApi = mockChtApi([subcounty], [chuDoc], [chpDoc]);
   
       const chuType = Config.getContactType('d_community_health_volunteer_area');
@@ -206,7 +222,8 @@ describe('warnings', () => {
     });
 
     it('no name warning when local names match but parent is invalid', async () => {
-      const sessionCache = new SessionCache();
+      const session = mockChtSession();
+      const sessionCache = SessionCache.getForSession(session);
       const chtApi = mockChtApi([subcounty], [chuDoc], [chpDoc]);
 
       const chuType = Config.getContactType('d_community_health_volunteer_area');
@@ -231,7 +248,8 @@ describe('warnings', () => {
   });
 
   it('csv import of multiple.csv', async () => {
-    const sessionCache = new SessionCache();
+    const session = mockChtSession();
+    const sessionCache = SessionCache.getForSession(session);
     const chtApi = mockChtApi([subcounty], [chuDoc], []);
 
     const singleCsvBuffer = fs.readFileSync('./test/multiple.csv');
@@ -247,7 +265,8 @@ describe('warnings', () => {
   });
 
   it('warn if two local try to replace the same remote', async () => {
-    const sessionCache = new SessionCache();
+    const session = mockChtSession();
+    const sessionCache = SessionCache.getForSession(session);
     const chtApi = mockChtApi([subcounty], [chuDoc], [chpDoc]);
 
     const chuType = Config.getContactType('d_community_health_volunteer_area');
@@ -272,7 +291,8 @@ describe('warnings', () => {
   });
 
   it('warn if two local places have the same phone number', async () => {
-    const sessionCache = new SessionCache();
+    const session = mockChtSession();
+    const sessionCache = SessionCache.getForSession(session);
     const chtApi = mockChtApi([subcounty], [chuDoc], [chpDoc]);
 
     const chuType = Config.getContactType('d_community_health_volunteer_area');
@@ -295,7 +315,8 @@ describe('warnings', () => {
   });
 
   it('warn if a created place has same phone number as staged place', async () => {
-    const sessionCache = new SessionCache();
+    const session = mockChtSession();
+    const sessionCache = SessionCache.getForSession(session);
     const chtApi = mockChtApi([subcounty], [chuDoc], []);
     const chuType = Config.getContactType('d_community_health_volunteer_area');
     const chpData = {
@@ -308,7 +329,7 @@ describe('warnings', () => {
     expect(first.validationErrors).to.be.empty;
     expect(first.warnings).to.be.empty;
 
-    const uploadManager = new UploadManager();
+    const uploadManager = new UploadManager(undefined as unknown as UploadLogger);
     await uploadManager.doUpload([first], chtApi, false);
     expect(first.isCreated).to.be.true;
 
@@ -322,7 +343,8 @@ describe('warnings', () => {
   });
 
   it('can replace multiple CHAs at the same time without warning', async () => {
-    const sessionCache = new SessionCache();
+    const session = mockChtSession();
+    const sessionCache = SessionCache.getForSession(session);
     const secondChu: ChtDoc = {
       _id: 'chu-2',
       name: 'second',
@@ -362,7 +384,8 @@ describe('warnings', () => {
   });
 
   it('two local places with duplicate CHU Code', async () => {
-    const sessionCache = new SessionCache();
+    const session = mockChtSession();
+    const sessionCache = SessionCache.getForSession(session);
     const chtApi = mockChtApi([subcounty, subcounty2], []);
     const first = await createChu(subcounty, 'chu-1', sessionCache, chtApi);
     const second = await createChu(subcounty2, 'chu-2', sessionCache, chtApi);
@@ -376,7 +399,8 @@ describe('warnings', () => {
     const chuCode = '111111';
     const remotePlace: ChtDoc = { _id: 'remote', name: 'remote', parent: { _id: subcounty._id }, code: chuCode };
 
-    const sessionCache = new SessionCache();
+    const session = mockChtSession();
+    const sessionCache = SessionCache.getForSession(session);
     const chtApi = mockChtApi([subcounty], [remotePlace]);
     const first = await createChu(subcounty, 'abc', sessionCache, chtApi, { place_code: chuCode });
 
@@ -388,7 +412,8 @@ describe('warnings', () => {
     const chuCode = 'invalid';
     const remotePlace: ChtDoc = { _id: 'remote', name: 'remote', parent: { _id: subcounty._id }, code: chuCode };
 
-    const sessionCache = new SessionCache();
+    const session = mockChtSession();
+    const sessionCache = SessionCache.getForSession(session);
     const chtApi = mockChtApi([subcounty], [remotePlace]);
     const first = await createChu(subcounty, 'abc', sessionCache, chtApi, { place_code: chuCode });
 
@@ -400,7 +425,8 @@ describe('warnings', () => {
     const chuName = 'abc';
     const remotePlace: ChtDoc = { _id: 'remote', name: chuName, parent: { _id: subcounty._id }, code: chuCode };
 
-    const sessionCache = new SessionCache();
+    const session = mockChtSession();
+    const sessionCache = SessionCache.getForSession(session);
     const chtApi = mockChtApi([subcounty], [remotePlace]);
     const createIdenticalChu = async () => createChu(subcounty, chuName, sessionCache, chtApi, { place_code: chuCode });
 
