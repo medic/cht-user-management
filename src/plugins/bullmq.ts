@@ -8,6 +8,7 @@ import { Job, Queue } from 'bullmq';
 
 import { getChtConfQueue } from '../lib/queues';
 
+type BullBoardQueue = Parameters<typeof createBullBoard>[0]['queues'][number];
 const BOARD_PREFIX = '/board';
 const REDACTED_JOB_DATA_FIELDS = ['sessionToken'];
 
@@ -92,7 +93,7 @@ async function bullMQBoardPlugin(fastify: FastifyInstance) {
     queues: [
       new SafeBullMQAdapter(
         getChtConfQueue().bullQueue
-      ),
+      ) as BullBoardQueue,
     ],
     serverAdapter,
     options: {

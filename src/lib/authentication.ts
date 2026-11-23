@@ -57,7 +57,7 @@ export default class Auth {
   }
 
 
-  private static encodeToken(session: ChtSession, signingKey: string, expiresIn: string) {
+  private static encodeToken(session: ChtSession, signingKey: string, expiresIn: jwt.SignOptions['expiresIn']): string {
     const data = JSON.stringify(session);
     return jwt.sign({ data }, signingKey, { expiresIn });
   }
