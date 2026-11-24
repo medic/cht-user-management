@@ -108,7 +108,7 @@ export class Validation {
     const validator = this.getValidator(property);
     try {
       const isValid = validator.isValid(value, property, source);
-      return isValid === false ? property.errorDescription || validator.defaultError : isValid;
+      return isValid || property.errorDescription || validator.defaultError(value, property, source);
     } catch (e) {
       const error = `Error in isValid for '${property.type}': ${e}`;
       console.log(error);

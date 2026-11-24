@@ -3,12 +3,9 @@ import { InputSource, IValidator } from '.';
 import ValidatorString from './validator-string';
 
 export default class ValidatorSelectOne implements IValidator {
-  isValid(input: string, property: ContactProperty, source: InputSource = 'form'): boolean|string {
-    const stringValidator = new ValidatorString();
-    const trimmedInput = stringValidator.format(input);
-
-    if (trimmedInput.length === 0 && property.required) {
-      return `Value is required`;
+  isValid(input: string, property: ContactProperty, source: InputSource = 'form'): boolean {
+    if (this.isRequiredAndEmpty(input, property)) {
+      return false;
     }
     // Verify property.parameter is an object
     if (!property?.parameter || typeof property.parameter !== 'object') {
@@ -21,8 +18,31 @@ export default class ValidatorSelectOne implements IValidator {
     return ValidatorSelectOne.findOption(input, property, source) ?? input;
   }
 
-  get defaultError(): string {
-    return 'Invalid value selected';
+  defaultError(input: string, property: ContactProperty, source: InputSource = 'form'): string {
+    if (this.isRequiredAndEmpty(input, property)) {
+      return 'Value is required';
+    }
+
+    return ValidatorSelectOne.describeOptions(property, source) || 'Invalid value selected';
+  }
+
+  // Lists the values accepted from this source: option keys for form, option labels for csv
+  public static describeOptions(property: ContactProperty, source: InputSource = 'form'): string | undefined {
+    if (!property?.parameter || typeof property.parameter !== 'object') {
+      return;
+    }
+
+    const options = Object.entries(property.parameter);
+    if (!options.length) {
+      return;
+    }
+
+    const accepted = options.map(([key, label]) => source === 'csv' ? label : key);
+    return `Must be one of: ${accepted.map(value => `"${value}"`).join(', ')}`;
+  }
+
+  private isRequiredAndEmpty(input: string, property: ContactProperty): boolean {
+    return !!property?.required && new ValidatorString().format(input).length === 0;
   }
 
   // Returns the option key matching the input,

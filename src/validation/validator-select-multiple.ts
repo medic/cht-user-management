@@ -7,30 +7,18 @@ const DELIMITER = ' ';
 
 export default class ValidatorSelectMultiple implements IValidator {
 
-  isValid(input: string, property: ContactProperty, source: InputSource = 'form'): boolean | string {
+  isValid(input: string, property: ContactProperty, source: InputSource = 'form'): boolean {
     // Verify property.parameter is an object and is not null
     if (!property?.parameter || typeof property.parameter !== 'object') {
       throw new TypeError(`Expected attribute "parameter" on property ${property.property_name} to be an object.`);
     }
 
-    const selectOneValidator = new ValidatorSelectOne();
-    const stringValidator = new ValidatorString();
-
-    const selectedValues = this.parseInput(input, stringValidator); 
-    const invalidValues = selectedValues.filter(
-      value => selectOneValidator.isValid(value, property, source) !== true
-    );
-
-    if (invalidValues.length > 0) {
-      return `Invalid values for property "${property.friendly_name}": ${invalidValues.join(', ')}`;
+    const selectedValues = this.parseInput(input, new ValidatorString());
+    if (selectedValues.length === 0) {
+      return !property.required;
     }
 
-    // Check if any values are missing and property is required
-    if (selectedValues.length === 0 && property.required) {
-      return 'Value is required';
-    }
-
-    return true;
+    return this.findInvalidValues(selectedValues, property, source).length === 0;
   }
 
   format(input: string, property: ContactProperty, source: InputSource = 'form'): string {
@@ -44,8 +32,24 @@ export default class ValidatorSelectMultiple implements IValidator {
     return Array.isArray(input) ? input.join(DELIMITER) : input;
   }
 
-  get defaultError(): string {
+  defaultError(input: string, property: ContactProperty, source: InputSource = 'form'): string {
+    const selectedValues = this.parseInput(input, new ValidatorString());
+    const invalidValues = this.findInvalidValues(selectedValues, property, source);
+    if (invalidValues.length > 0) {
+      const invalidDescription = `Invalid values for property "${property.friendly_name}": ${invalidValues.join(', ')}`;
+      const optionsDescription = ValidatorSelectOne.describeOptions(property, source);
+      return optionsDescription ? `${invalidDescription}. ${optionsDescription}` : invalidDescription;
+    }
+
+    if (selectedValues.length === 0) {
+      return 'Value is required';
+    }
+
     return `Invalid input. Please use 'space' as delimiter.`;
+  }
+
+  private findInvalidValues(selectedValues: string[], property: ContactProperty, source: InputSource): string[] {
+    return selectedValues.filter(value => !ValidatorSelectOne.findOption(value, property, source));
   }
 
   private parseInput(input: string|string[], stringValidator: ValidatorString): string[] {

@@ -14,7 +14,7 @@ type GeneratorScope = {
 };
 
 export default class ValidatorGenerated implements IValidator {
-  isValid(input: string, property : ContactProperty) : boolean | string {
+  isValid(input: string, property : ContactProperty): boolean {
     const parameter = this.getParameter(property);
     return engine.parse(parameter)?.length > 0;
   }
@@ -42,7 +42,7 @@ export default class ValidatorGenerated implements IValidator {
     return engine.parseAndRenderSync(parameter, generationScope);
   }
 
-  get defaultError(): string {
+  defaultError(): string {
     return `Template cannot be genereated`;
   }
 

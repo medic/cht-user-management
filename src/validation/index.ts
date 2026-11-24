@@ -14,9 +14,9 @@ export type ValidationError = {
 export type InputSource = 'form' | 'csv';
 
 export interface IValidator {
-  isValid(input: string, property? : ContactProperty, source?: InputSource) : boolean | string;
+  isValid(input: string, property? : ContactProperty, source?: InputSource) : boolean;
   format(input : string, property? : ContactProperty, source?: InputSource) : string;
-  get defaultError(): string;
+  defaultError(input: string, property? : ContactProperty, source?: InputSource): string;
 }
 
 export default Validation;
