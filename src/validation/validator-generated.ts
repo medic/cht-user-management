@@ -43,7 +43,7 @@ export default class ValidatorGenerated implements IValidator {
   }
 
   defaultError(): string {
-    return `Template cannot be genereated`;
+    return `Template cannot be generated`;
   }
 
   private getParameter(property: ContactProperty) {
