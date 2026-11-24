@@ -406,7 +406,6 @@
             "social_worker": "Travailleur social / volontaire",
             "other": "Autre"
           },
-          "errorDescription": "Doit être l'une des valeurs : Agent de Santé, Artisan, Boutiquier, Chauffeur, Commerçant (e), Cultivateur, Ecolier, Elève/étudiant, Eleveur, Employé de commerce, Enseignant (e), FAT/Policier/Gendarme, Ménagère, Ouvrier, Retraité, Revendeur ( se ), Sans emploi, Travailleur social / volontaire, Autre",
           "required": true
         },
         {

@@ -121,7 +121,8 @@
           "parameter": {
             "yes": "Yes",
             "no": "No"
-          }
+          },
+          "errorDescription": "Must be one of: Yes, No"
         }
       ]
     },
@@ -222,7 +223,8 @@
           "parameter": {
             "yes": "Yes",
             "no": "No"
-          }
+          },
+          "errorDescription": "Must be one of: Yes, No"
         }
       ]
     },
@@ -302,6 +304,7 @@
             "existing": "Existing",
             "unexisting": "Unexisting"
           },
+          "errorDescription": "Must be one of: Existing, Unexisting",
           "required": true,
           "hint": "Site category of the primary contact (existing, unexisting)"
         },
@@ -312,6 +315,7 @@
           "parameter": {
             "chw": "chw"
           },
+          "errorDescription": "Must be one of: chw",
           "required": true,
           "hint": "Type of user associated to the primary contact ('chw' only allowed here)"
         },
@@ -355,7 +359,8 @@
           "parameter": {
             "yes": "Yes",
             "no": "No"
-          }
+          },
+          "errorDescription": "Must be one of: Yes, No"
         }
       ]
     },
@@ -481,7 +486,8 @@
           "parameter": {
             "yes": "Yes",
             "no": "No"
-          }
+          },
+          "errorDescription": "Must be one of: Yes, No"
         }
       ]
     }
