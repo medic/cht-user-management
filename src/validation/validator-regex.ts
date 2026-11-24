@@ -4,7 +4,7 @@ import { IValidator } from '.';
 import ValidatorString from './validator-string';
 
 export default class ValidatorRegex implements IValidator {
-  isValid(input: string, property : ContactProperty): boolean {
+  isValid(input: string, property: ContactProperty): boolean {
     if (!property.parameter) {
       throw Error(`property of type regex - ${property.friendly_name} is missing parameter`);
     }
@@ -20,12 +20,12 @@ export default class ValidatorRegex implements IValidator {
     return !!match && match.length > 0;
   }
 
-  format(input : string) : string {
+  format(input: string): string {
     const validatorStr = new ValidatorString();
     return validatorStr.format(input);
   }
 
   defaultError(): string {
-    throw Error(`property of type regex - 'errorDescription' is required`);
+    return 'Value does not match the expected format.';
   }
 }

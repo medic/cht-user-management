@@ -134,7 +134,7 @@ const scenarios: Scenario[] = [
     type: 'select_multiple', prop: 'chocolate mint', isValid: false, propertyParameter: CANDIES_OPTIONS,
     propertyErrorDescription: 'Pick candies', error: 'Pick candies',
   },
-  { type: 'select_multiple', prop: 'c,s', isValid: false, propertyParameter: CANDIES_OPTIONS, error: 'Invalid values' },
+  { type: 'select_multiple', prop: 'c,s', isValid: false, propertyParameter: CANDIES_OPTIONS, error: 'Separate values with a space' },
   { type: 'select_multiple', prop: '', isValid: false, propertyParameter: CANDIES_OPTIONS, error: 'Required' },
   { type: 'select_multiple', prop: 'no', isValid: true, propertyParameter: { no: 'Yes', yes: 'No' }, formatted: 'no' },
   { type: 'select_multiple', source: 'csv', prop: 'no Yes', isValid: true, propertyParameter: { no: 'Yes', yes: 'No' }, formatted: 'yes no' },
@@ -259,7 +259,8 @@ describe('validation', () => {
 
     place.validate();
     expect(place.validationErrors).to.deep.eq({
-      user_role: `Invalid values for property "Roles": stockmanager. Must be one of: "supervisor", "stock_manager"`
+      user_role: 'Invalid values for property "Roles": stockmanager. Must be one of: "supervisor", "stock_manager". '
+        + 'Separate values with a space'
     });
   });
 });

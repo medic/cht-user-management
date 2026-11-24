@@ -38,14 +38,13 @@ export default class ValidatorSelectMultiple implements IValidator {
     if (invalidValues.length > 0) {
       const invalidDescription = `Invalid values for property "${property.friendly_name}": ${invalidValues.join(', ')}`;
       const optionsDescription = ValidatorSelectOne.describeOptions(property, source);
-      return optionsDescription ? `${invalidDescription}. ${optionsDescription}` : invalidDescription;
+      const delimiterDescription = 'Separate values with a space';
+      return optionsDescription
+        ? `${invalidDescription}. ${optionsDescription}. ${delimiterDescription}`
+        : `${invalidDescription}. ${delimiterDescription}`;
     }
 
-    if (selectedValues.length === 0) {
-      return 'Value is required';
-    }
-
-    return `Invalid input. Please use 'space' as delimiter.`;
+    return 'Value is required';
   }
 
   private findInvalidValues(selectedValues: string[], property: ContactProperty, source: InputSource): string[] {
