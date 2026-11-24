@@ -1,3 +1,17 @@
+## [2.14.7](https://github.com/medic/cht-user-management/compare/v2.14.6...v2.14.7) (2026-11-23)
+
+
+### Bug Fixes
+
+* update README resultsKey and other_filters ([#369](https://github.com/medic/cht-user-management/issues/369)) ([3f34316](https://github.com/medic/cht-user-management/commit/3f34316bff1eadf8271b7d2aeca044d88978bdf3))
+
+## [2.14.6](https://github.com/medic/cht-user-management/compare/v2.14.5...v2.14.6) (2026-11-20)
+
+
+### Bug Fixes
+
+* accept select_one values case-insensitively and by label ([#407](https://github.com/medic/cht-user-management/issues/407)) ([81041cd](https://github.com/medic/cht-user-management/commit/81041cdc6538906185faad86f9c426a63e82f7e8))
+
 ## [2.14.5](https://github.com/medic/cht-user-management/compare/v2.14.4...v2.14.5) (2026-11-19)
 
 
