@@ -1,3 +1,10 @@
+## [2.14.8](https://github.com/medic/cht-user-management/compare/v2.14.7...v2.14.8) (2026-11-25)
+
+
+### Bug Fixes
+
+* improve validation error handling and messages across validators ([#416](https://github.com/medic/cht-user-management/issues/416)) ([d10659e](https://github.com/medic/cht-user-management/commit/d10659eda08719d94786bb18cac77a0429e570fe))
+
 ## [2.14.7](https://github.com/medic/cht-user-management/compare/v2.14.6...v2.14.7) (2026-11-23)
 
 
