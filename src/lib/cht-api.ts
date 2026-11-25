@@ -161,6 +161,7 @@ export class ChtApi {
     const params = {
       key: JSON.stringify([placeType]),
       include_docs: true,
+      reduce: false,
     };
     console.log('axios.get', url, params);
     const resp = await this.axiosInstance.get(url, { params });
@@ -181,11 +182,11 @@ export class ChtApi {
       keys,
       include_docs: true,
     };
-    
+
     const resp = await this.axiosInstance.post(url, payload);
     return resp.data.rows.map((row: any) => row.doc);
   }
-  
+
   async getUsersAtPlace(placeId: string): Promise<UserInfo[]> {
     const url = `api/v2/users?facility_id=${placeId}`;
     console.log('axios.get', url);
