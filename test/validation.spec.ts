@@ -37,6 +37,10 @@ const scenarios: Scenario[] = [
   { type: 'phone', prop: '712345678', isValid: true, formatted: '+254712345678', propertyParameter: 'KE' },
   { type: 'phone', prop: '+255712345678', isValid: false, formatted: '+255712345678', propertyParameter: 'UG', error: 'Not a valid' },
   { type: 'phone', prop: '(705) 877-2274', isValid: false, formatted: '+17058772274', propertyParameter: 'US', error: 'US' },
+  {
+    type: 'phone', prop: '+255712345678', isValid: false, formatted: '+255712345678', propertyParameter: 'UG',
+    propertyErrorDescription: 'Enter a Ugandan number', error: 'Enter a Ugandan number',
+  },
 
   { type: 'regex', prop: undefined, isValid: false, error: 'Required', formatted: '' },
   { type: 'regex', propertyParameter: '^\\d{6}$', prop: '123456', isValid: true },
@@ -87,7 +91,7 @@ const scenarios: Scenario[] = [
   { type: 'select_one', prop: 'FeMale ', isValid: true, propertyParameter: GENDER_OPTIONS, formatted: 'female' },
   { type: 'select_one', prop: 'Male', isValid: true, propertyParameter: GENDER_OPTIONS, formatted: 'male' },
   { type: 'select_one', prop: 'MALE', isValid: true, propertyParameter: GENDER_OPTIONS, formatted: 'male' },
-  { type: 'select_one', prop: 'f', isValid: false, propertyParameter: GENDER_OPTIONS, error: 'Invalid value selected' },
+  { type: 'select_one', prop: 'f', isValid: false, propertyParameter: GENDER_OPTIONS, error: 'Must be one of: "male", "female"' },
   { type: 'select_one', prop: 'f', isValid: false, propertyParameter: GENDER_OPTIONS, propertyErrorDescription: 'Pick a sex', error: 'Pick a sex' },
   { type: 'select_one', prop: '', isValid: false, propertyParameter: GENDER_OPTIONS },
   
@@ -98,7 +102,10 @@ const scenarios: Scenario[] = [
 
   // csv inputs are matched on label
   { type: 'select_one', source: 'csv', prop: 'Female', isValid: true, propertyParameter: { F: 'Female', M: 'Male' }, formatted: 'F' },
-  { type: 'select_one', source: 'csv', prop: 'm', isValid: false, propertyParameter: { F: 'Female', M: 'Male' } },
+  {
+    type: 'select_one', source: 'csv', prop: 'm', isValid: false,
+    propertyParameter: { F: 'Female', M: 'Male' }, error: 'Must be one of: "Female", "Male"',
+  },
   {
     type: 'select_one', source: 'csv', prop: 'masculin', isValid: true,
     propertyParameter: { male: 'Masculin', female: 'Feminin' }, formatted: 'male',
@@ -115,8 +122,19 @@ const scenarios: Scenario[] = [
   { type: 'select_multiple', prop: 'chocolate strawberry', isValid: true, propertyParameter: CANDIES_OPTIONS },
   { type: 'select_multiple', prop: ' chocolate  strawberry', isValid: true, propertyParameter: CANDIES_OPTIONS, formatted: 'chocolate strawberry' },
   { type: 'select_multiple', prop: 'Chocolate STRAWBERRY', isValid: true, propertyParameter: CANDIES_OPTIONS, formatted: 'chocolate strawberry' },
-  { type: 'select_multiple', prop: 'chocolate mint', isValid: false, propertyParameter: CANDIES_OPTIONS, error: 'Invalid values' },
-  { type: 'select_multiple', prop: 'c,s', isValid: false, propertyParameter: CANDIES_OPTIONS, error: 'Invalid values' },
+  {
+    type: 'select_multiple', prop: 'chocolate mint', isValid: false, propertyParameter: CANDIES_OPTIONS,
+    error: 'Invalid values for property "friendly prop": mint. Must be one of: "chocolate", "strawberry"',
+  },
+  {
+    type: 'select_multiple', source: 'csv', prop: 'Chocolate mint', isValid: false, propertyParameter: CANDIES_OPTIONS,
+    error: 'Invalid values for property "friendly prop": mint. Must be one of: "Chocolate", "Strawberry"',
+  },
+  {
+    type: 'select_multiple', prop: 'chocolate mint', isValid: false, propertyParameter: CANDIES_OPTIONS,
+    propertyErrorDescription: 'Pick candies', error: 'Pick candies',
+  },
+  { type: 'select_multiple', prop: 'c,s', isValid: false, propertyParameter: CANDIES_OPTIONS, error: 'Separate values with a space' },
   { type: 'select_multiple', prop: '', isValid: false, propertyParameter: CANDIES_OPTIONS, error: 'Required' },
   { type: 'select_multiple', prop: 'no', isValid: true, propertyParameter: { no: 'Yes', yes: 'No' }, formatted: 'no' },
   { type: 'select_multiple', source: 'csv', prop: 'no Yes', isValid: true, propertyParameter: { no: 'Yes', yes: 'No' }, formatted: 'yes no' },
@@ -241,7 +259,8 @@ describe('validation', () => {
 
     place.validate();
     expect(place.validationErrors).to.deep.eq({
-      user_role: `Invalid values for property "Roles": stockmanager`
+      user_role: 'Invalid values for property "Roles": stockmanager. Must be one of: "supervisor", "stock_manager". '
+        + 'Separate values with a space'
     });
   });
 });

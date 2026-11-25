@@ -3,7 +3,7 @@ import { IValidator } from '.';
 import ValidatorString from './validator-string';
 
 export default class ValidatorName implements IValidator {
-  isValid(input: string, property : ContactProperty) : boolean | string {
+  isValid(input: string, property : ContactProperty): boolean {
     // Verify property.parameter is always array
     if (property.parameter && !Array.isArray(property.parameter)) {
       throw Error(`Property '${property.friendly_name}' of type 'name' expects 'parameter' to be an array.`);
@@ -33,7 +33,7 @@ export default class ValidatorName implements IValidator {
     return this.titleCase(validatorStr.format(toFormat));
   }
 
-  get defaultError(): string {
+  defaultError(): string {
     return 'Is Required';
   }
 

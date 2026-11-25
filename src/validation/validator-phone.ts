@@ -4,7 +4,7 @@ import { ContactProperty } from '../config';
 import { IValidator } from '.';
 
 export default class ValidatorPhone implements IValidator {
-  isValid(input: string, property: ContactProperty): boolean | string {
+  isValid(input: string, property: ContactProperty): boolean {
     if (!property.parameter) {
       throw Error(`property of type phone on ${property.friendly_name} missing parameter with locale`);
     }
@@ -14,13 +14,9 @@ export default class ValidatorPhone implements IValidator {
     }
 
     try {
-      const isValid = isValidNumberForRegion(input, property.parameter as CountryCode);
-      if (isValid) {
-        return true;
-      }
-      return `Not a valid ${property.parameter} phone number`;
-    } catch (e: any) {
-      return e.toString();
+      return isValidNumberForRegion(input, property.parameter as CountryCode);
+    } catch {
+      return false;
     }
   }
 
@@ -37,7 +33,7 @@ export default class ValidatorPhone implements IValidator {
     }
   }
 
-  get defaultError(): string {
-    return 'Not a valid regional phone number';
+  defaultError(_input: string, property?: ContactProperty): string {
+    return `Not a valid ${property?.parameter || 'regional'} phone number`;
   }
 }

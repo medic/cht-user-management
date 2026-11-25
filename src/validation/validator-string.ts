@@ -1,7 +1,7 @@
 import { IValidator } from '.';
 
 export default class ValidatorString implements IValidator {
-  isValid(input: string) : boolean | string {
+  isValid(input: string): boolean {
     return !!input;
   }
 
@@ -11,7 +11,7 @@ export default class ValidatorString implements IValidator {
     return input.trim();
   }
 
-  get defaultError(): string {
+  defaultError(): string {
     return 'Is Required';
   }
 }

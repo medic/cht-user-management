@@ -76,11 +76,9 @@ export default async function newHandler(fastify: FastifyInstance) {
     const placeData: { [key: string]: string } = {};
     contactType.place_properties.forEach(prop => {
       const validator = Validation.getValidatorForType(prop.type);
-      const valid = validator?.isValid(formData['place_' + prop.property_name], prop);
-      if (typeof valid === 'string') {
-        errors[prop.property_name] = valid;
-      } else if (valid === false) {
-        errors[prop.property_name] = prop.errorDescription ?? 'invalid value';
+      const value = formData['place_' + prop.property_name];
+      if (validator && !validator.isValid(value, prop)) {
+        errors[prop.property_name] = prop.errorDescription ?? validator.defaultError(value, prop);
       } else {
         placeData['place_' + prop.property_name] = formData['place_' + prop.property_name];
       }
@@ -147,11 +145,9 @@ export default async function newHandler(fastify: FastifyInstance) {
     const errors = {} as { [key: string]: string };
     contactType.contact_properties.forEach(prop => {
       const validator = Validation.getValidatorForType(prop.type);
-      const valid = validator?.isValid(body['contact_' + prop.property_name], prop);
-      if (typeof valid === 'string') {
-        errors[prop.property_name] = valid;
-      } else if (valid === false) {
-        errors[prop.property_name] = prop.errorDescription ?? 'invalid value';
+      const value = body['contact_' + prop.property_name];
+      if (validator && !validator.isValid(value, prop)) {
+        errors[prop.property_name] = prop.errorDescription ?? validator.defaultError(value, prop);
       }
     });
 
