@@ -18,8 +18,9 @@
 }
 
 .scroll-box {
+  width: 100%;
   max-height: 20rem;
-  overflow-y: scroll;
+  overflow-y: auto;
 }
 
 .cell-wrap {
