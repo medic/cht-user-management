@@ -96,6 +96,7 @@
             "male": "Masculin",
             "female": "Feminin"
           },
+          "errorDescription": "Doit être l'une des valeurs : Masculin, Feminin",
           "required": true,
           "hint": "Sexe du superviseur"
         },
@@ -115,7 +116,8 @@
           "parameter": {
             "yes": "Yes",
             "no": "No"
-          }
+          },
+          "errorDescription": "Doit être l'une des valeurs : Yes, No"
         }
       ]
     },
@@ -213,6 +215,7 @@
             "min_5km": "ASC - 5km",
             "max_5km": "ASC + 5km"
           },
+          "errorDescription": "Doit être l'une des valeurs : ASC - 5km, ASC + 5km",
           "required": true,
           "hint": "Type d'ASC"
         },
@@ -224,6 +227,7 @@
             "male": "Masculin",
             "female": "Feminin"
           },
+          "errorDescription": "Doit être l'une des valeurs : Masculin, Feminin",
           "required": true,
           "hint": "Sexe de l'ASC"
         },
@@ -253,6 +257,7 @@
             "higher": "Higher",
             "none": "None"
           },
+          "errorDescription": "Doit être l'une des valeurs : Primary, Secondary, Higher, None",
           "required": false,
           "hint": "Niveau d'étude de l'ASC"
         },
@@ -264,7 +269,8 @@
           "parameter": {
             "yes": "Yes",
             "no": "No"
-          }
+          },
+          "errorDescription": "Doit être l'une des valeurs : Yes, No"
         }
       ]
     }
