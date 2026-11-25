@@ -102,6 +102,7 @@
             "male": "Masculin",
             "female": "Feminin"
           },
+          "errorDescription": "Doit être l'une des valeurs : Masculin, Feminin",
           "required": true
         },
         {
@@ -135,7 +136,8 @@
           "parameter": {
             "yes": "Yes",
             "no": "No"
-          }
+          },
+          "errorDescription": "Doit être l'une des valeurs : Yes, No"
         }
       ]
     },
@@ -235,6 +237,7 @@
             "male": "Masculin",
             "female": "Feminin"
           },
+          "errorDescription": "Doit être l'une des valeurs : Masculin, Feminin",
           "required": true
         },
         {
@@ -261,7 +264,8 @@
           "parameter": {
             "yes": "Yes",
             "no": "No"
-          }
+          },
+          "errorDescription": "Doit être l'une des valeurs : Yes, No"
         }
       ]
     },
@@ -363,6 +367,7 @@
             "chw": "ASC",
             "community_user": "Relai Communautaire"
           },
+          "errorDescription": "Doit être l'une des valeurs : ASC, Relai Communautaire",
           "required": true
         },
         {
@@ -373,6 +378,7 @@
             "male": "Masculin",
             "female": "Feminin"
           },
+          "errorDescription": "Doit être l'une des valeurs : Masculin, Feminin",
           "required": true
         },
         {
@@ -426,6 +432,7 @@
             "secondary": "Secondaire",
             "university": "Universitaire"
           },
+          "errorDescription": "Doit être l'une des valeurs : Pas de Niveau, Primaire, Secondaire, Universitaire",
           "required": true
         },
         {
@@ -436,7 +443,8 @@
           "parameter": {
             "yes": "Yes",
             "no": "No"
-          }
+          },
+          "errorDescription": "Doit être l'une des valeurs : Yes, No"
         }
       ]
     }

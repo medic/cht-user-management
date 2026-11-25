@@ -1,3 +1,10 @@
+## [2.14.9](https://github.com/medic/cht-user-management/compare/v2.14.8...v2.14.9) (2026-11-25)
+
+
+### Bug Fixes
+
+* add error descriptions for validation in config files ([#414](https://github.com/medic/cht-user-management/issues/414)) ([5f2417c](https://github.com/medic/cht-user-management/commit/5f2417c7c9e546f0e7c94a633678bdfecad5b41c))
+
 ## [2.14.8](https://github.com/medic/cht-user-management/compare/v2.14.7...v2.14.8) (2026-11-25)
 
 
