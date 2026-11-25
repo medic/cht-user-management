@@ -33,3 +33,6 @@
   overflow-wrap: break-word;
   white-space: normal;
 }
+.tag.auth-error {
+  font-size: 0.875rem;
+}
