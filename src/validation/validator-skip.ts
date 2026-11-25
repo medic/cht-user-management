@@ -1,7 +1,7 @@
 import { IValidator } from '.';
 
 export default class ValidatorSkip implements IValidator {
-  isValid() : boolean | string {
+  isValid(): boolean {
     return true;
   }
 
@@ -9,7 +9,7 @@ export default class ValidatorSkip implements IValidator {
     return input;
   }
 
-  get defaultError(): string {
-    throw 'never';
+  defaultError(): string {
+    return '';
   }
 }

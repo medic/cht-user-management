@@ -21,7 +21,7 @@ export default class ValidatorDateOfBirth implements IValidator {
     return asISODate ?? input;
   }
 
-  get defaultError(): string {
+  defaultError(): string {
     return 'Not a valid Date of Birth (eg. 1990-02-26 or 26/2/1985 or 38)';
   }
 
