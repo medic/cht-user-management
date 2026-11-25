@@ -17,6 +17,11 @@
   right: 8;
 }
 
+.control.has-icons-right .icon.password-toggle {
+  cursor: pointer;
+  pointer-events: auto;
+}
+
 .scroll-box {
   width: 100%;
   max-height: 20rem;
