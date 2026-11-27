@@ -17,13 +17,27 @@
   right: 8;
 }
 
+.control.has-icons-right .icon.password-toggle {
+  cursor: pointer;
+  pointer-events: auto;
+}
+
 .scroll-box {
+  width: 100%;
   max-height: 20rem;
-  overflow-y: scroll;
+  overflow-y: auto;
 }
 
 .cell-wrap {
   word-break: break-word;
   overflow-wrap: break-word;
   white-space: normal;
+}
+.tag.auth-error {
+  font-size: 0.875rem;
+  width: 100%;
+  height: auto;
+  white-space: normal;
+  word-break: break-word;
+  padding: 0.6em;
 }
