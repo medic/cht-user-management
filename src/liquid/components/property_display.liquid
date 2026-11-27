@@ -1,0 +1,9 @@
+{%- if property.type == 'select_one' or property.type == 'select_multiple' -%}
+  {%- assign selectedKeys = value | split: ' ' -%}
+  {%- for key in selectedKeys -%}
+    {{- property.parameter[key] | default: key | escape -}}
+    {%- unless forloop.last %}, {% endunless -%}
+  {%- endfor -%}
+{%- else -%}
+  {{- value | escape -}}
+{%- endif -%}

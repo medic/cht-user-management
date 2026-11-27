@@ -21,7 +21,10 @@
                 data-tooltip="{{ places[0].validationErrors[propertyName] | escape }}"
               {% endif %}
             >
-              {{ places[0].contact.properties[contact_property.property_name] }}
+              {% render 'components/property_display.liquid',
+                property: contact_property,
+                value: places[0].contact.properties[contact_property.property_name]
+              %}
             </span>
           </div>
         {% endif %}
