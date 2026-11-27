@@ -1,3 +1,10 @@
+# [2.15.0](https://github.com/medic/cht-user-management/compare/v2.14.9...v2.15.0) (2026-11-27)
+
+
+### Features
+
+* update layout structure for form components ([#419](https://github.com/medic/cht-user-management/issues/419)) ([16f8b36](https://github.com/medic/cht-user-management/commit/16f8b36c46a7f01cd5c6db1565abdce9b0cb4c45))
+
 ## [2.14.9](https://github.com/medic/cht-user-management/compare/v2.14.8...v2.14.9) (2026-11-25)
 
 
