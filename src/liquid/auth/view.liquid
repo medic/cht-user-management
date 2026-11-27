@@ -5,19 +5,22 @@
     <script src="/public/auth.js"></script>
     <link rel="stylesheet" href="/public/bulma.min.css">
     <link rel="stylesheet" href="/public/material-symbols.css">
+    <link rel="stylesheet" href="/public/app.css">
   </head>
 
   <body>
     <div class="container is-fluid">
-      <section class="hero">
+      <section class="hero has-text-centered">
         <div class="hero-body">
-          <p class="title">
-            <img src="{{ logo }}">
-            User Management Tool
-          </p>
+          <img class="is-block mx-auto mb-4" src="{{ logo }}" alt="Logo">
+          <h1 class="title">User Management Tool</h1>
         </div>
       </section>
-      {% render 'auth/authentication_form.liquid', domains: domains %}
+      <div class="columns is-centered">
+        <div class="column is-8-tablet is-6-desktop is-5-widescreen">
+          {% render 'auth/authentication_form.liquid', domains: domains %}
+        </div>
+      </div>
     </div>
   </body>
 </html>
